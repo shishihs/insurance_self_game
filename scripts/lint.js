@@ -1,39 +1,32 @@
 #!/usr/bin/env node
-
-import { spawn } from 'child_process';
+import { execSync } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.join(__dirname, '..');
 
 console.log('🔍 Running ESLint...');
 
-const projectRoot = path.join(__dirname, '..');
-const eslintCmd = process.platform === 'win32' ? 'eslint.cmd' : 'eslint';
-const eslintPath = path.join(projectRoot, 'node_modules', '.bin', eslintCmd);
-
-console.log(`ESLint path: ${eslintPath}`);
-
-const spawnArgs = process.platform === 'win32' 
-  ? ['cmd', ['/c', eslintPath, '.', '--fix']]
-  : ['node', [eslintPath, '.', '--fix']];
-
-const child = spawn(spawnArgs[0], spawnArgs[1], {
-  cwd: projectRoot,
-  stdio: 'inherit'
-});
-
-child.on('close', (code) => {
-  if (code === 0) {
-    console.log('✅ ESLint passed successfully!');
+try {
+  process.chdir(projectRoot);
+  
+  // Use direct ESLint execution to avoid shell issues
+  if (process.platform === 'win32') {
+    execSync('.\\node_modules\\.bin\\eslint.cmd . --fix', { 
+      stdio: 'inherit',
+      encoding: 'utf8',
+      shell: 'cmd.exe'
+    });
   } else {
-    console.log(`❌ ESLint found issues. Exit code: ${code}`);
-    process.exit(code);
+    execSync('./node_modules/.bin/eslint . --fix', { 
+      stdio: 'inherit',
+      encoding: 'utf8'
+    });
   }
-});
-
-child.on('error', (err) => {
-  console.error('Error running ESLint:', err);
-  process.exit(1);
-});
+  
+  console.log('✅ ESLint passed successfully!');
+} catch (error) {
+  console.log('❌ ESLint found issues or failed to run');
+  process.exit(error.status || 1);
+}
