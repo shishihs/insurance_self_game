@@ -207,6 +207,7 @@ export class GameScene extends BaseScene {
    */
   private createActionButtons(): void {
     const buttonContainer = this.add.container(this.gameWidth - 150, 150)
+    buttonContainer.setName('action-buttons')
 
     // ドローボタン
     const drawButton = this.createButton(
@@ -220,6 +221,7 @@ export class GameScene extends BaseScene {
         color: '#ffffff'
       }
     )
+    drawButton.setName('draw-button')
 
     // チャレンジボタン
     const challengeButton = this.createButton(
@@ -233,6 +235,7 @@ export class GameScene extends BaseScene {
         color: '#ffffff'
       }
     )
+    challengeButton.setName('challenge-button')
 
     // ターン終了ボタン
     const endTurnButton = this.createButton(
@@ -246,8 +249,12 @@ export class GameScene extends BaseScene {
         color: '#ffffff'
       }
     )
+    endTurnButton.setName('end-turn-button')
 
     buttonContainer.add([drawButton, challengeButton, endTurnButton])
+    
+    // 初期状態でボタンの有効/無効を設定
+    this.updateActionButtons()
   }
 
   /**
@@ -258,6 +265,11 @@ export class GameScene extends BaseScene {
     
     // 初期手札を引く
     this.drawCards(GAME_CONSTANTS.INITIAL_DRAW)
+    
+    // ボタン状態を初期化
+    this.time.delayedCall(100, () => {
+      this.updateActionButtons()
+    })
   }
 
   /**
@@ -527,6 +539,7 @@ export class GameScene extends BaseScene {
     
     // UIを更新
     this.updateChallengeUI()
+    this.updateActionButtons()
   }
 
   /**
@@ -534,18 +547,22 @@ export class GameScene extends BaseScene {
    */
   private endTurn(): void {
     if (!this.gameInstance.isInProgress()) return
-
-    // ステージ進行チェック
-    this.checkStageProgress()
     
-    // 次のターンへ
-    this.gameInstance.nextTurn()
-    
-    // UI更新
-    this.updateUI()
-    
-    // ゲーム終了判定
-    this.checkGameEnd()
+    // フェーズをチェックして適切に処理
+    if (this.gameInstance.phase === 'resolution' || this.gameInstance.phase === 'draw') {
+      // ステージ進行チェック
+      this.checkStageProgress()
+      
+      // 次のターンへ
+      this.gameInstance.nextTurn()
+      
+      // UI更新
+      this.updateUI()
+      this.updateActionButtons()
+      
+      // ゲーム終了判定
+      this.checkGameEnd()
+    }
   }
 
   /**
@@ -568,6 +585,12 @@ export class GameScene extends BaseScene {
     const deckCount = this.children.getByName('deck-count') as Phaser.GameObjects.Text
     if (deckCount) {
       deckCount.setText(`${this.gameInstance.playerDeck.size()}`)
+    }
+    
+    // ステージ表示を更新
+    const stageText = this.children.getByName('stage-text') as Phaser.GameObjects.Text
+    if (stageText) {
+      stageText.setText(this.getStageDisplayText())
     }
   }
 
@@ -853,6 +876,12 @@ export class GameScene extends BaseScene {
       this.time.delayedCall(2000, () => {
         this.showCardSelection(result.cardChoices!)
       })
+    } else {
+      // 失敗時または選択肢がない場合は、UIをクリーンアップして通常フローに戻す
+      this.time.delayedCall(2000, () => {
+        this.cleanupChallengeUI()
+        this.updateActionButtons()
+      })
     }
     
     // 使用したカードを削除
@@ -882,12 +911,6 @@ export class GameScene extends BaseScene {
     // UI更新
     this.updateUI()
     this.arrangeHand()
-    
-    // パワー表示を削除
-    const powerDisplay = this.children.getByName('power-display')
-    if (powerDisplay) {
-      powerDisplay.destroy()
-    }
   }
 
   /**
@@ -1144,6 +1167,9 @@ export class GameScene extends BaseScene {
       duration: 500,
       ease: 'Power2'
     })
+    
+    // アクションボタンを無効化
+    this.updateActionButtons()
   }
 
   /**
@@ -1289,7 +1315,7 @@ export class GameScene extends BaseScene {
       })
     }
 
-    // カードをゲームに追加
+    // カードをゲームに追加（これにより phase が 'resolution' に変わる）
     this.gameInstance.selectCard(card.id)
 
     // カード獲得アニメーション
@@ -1375,10 +1401,84 @@ export class GameScene extends BaseScene {
         this.cardSelectionUI?.destroy()
         this.cardSelectionUI = undefined
         
+        // チャレンジUIをクリーンアップ
+        this.cleanupChallengeUI()
+        
         // 通常のゲームフローに戻る
         this.updateUI()
+        this.updateActionButtons()
       }
     })
+  }
+
+  /**
+   * アクションボタンの有効/無効を更新
+   */
+  private updateActionButtons(): void {
+    const actionButtons = this.children.getByName('action-buttons') as Phaser.GameObjects.Container
+    if (!actionButtons) return
+
+    const drawButton = actionButtons.getByName('draw-button') as Phaser.GameObjects.Container
+    const challengeButton = actionButtons.getByName('challenge-button') as Phaser.GameObjects.Container
+    const endTurnButton = actionButtons.getByName('end-turn-button') as Phaser.GameObjects.Container
+
+    const phase = this.gameInstance.phase
+    const isInProgress = this.gameInstance.isInProgress()
+
+    // フェーズに応じてボタンの有効/無効を切り替え
+    if (drawButton) {
+      this.setButtonEnabled(drawButton, isInProgress && phase === 'draw')
+    }
+
+    if (challengeButton) {
+      this.setButtonEnabled(challengeButton, isInProgress && phase === 'draw' && !this.gameInstance.currentChallenge)
+    }
+
+    if (endTurnButton) {
+      // ドローフェーズまたは解決フェーズでターン終了を可能に
+      this.setButtonEnabled(endTurnButton, isInProgress && (phase === 'draw' || phase === 'resolution'))
+    }
+  }
+
+  /**
+   * ボタンの有効/無効を切り替え
+   */
+  private setButtonEnabled(button: Phaser.GameObjects.Container, enabled: boolean): void {
+    const buttonBg = button.list[0] as Phaser.GameObjects.Rectangle
+    const buttonText = button.list[1] as Phaser.GameObjects.Text
+
+    if (enabled) {
+      buttonBg.setFillStyle(0x3498DB)
+      buttonText.setColor('#ffffff')
+      buttonBg.setInteractive()
+    } else {
+      buttonBg.setFillStyle(0x95A5A6)
+      buttonText.setColor('#cccccc')
+      buttonBg.disableInteractive()
+    }
+  }
+
+  /**
+   * チャレンジUI要素をクリーンアップ
+   */
+  private cleanupChallengeUI(): void {
+    // パワー表示を削除
+    const powerDisplay = this.children.getByName('power-display')
+    if (powerDisplay) {
+      powerDisplay.destroy()
+    }
+
+    // チャレンジ解決ボタンを削除
+    const resolveButton = this.children.getByName('resolve-challenge-button')
+    if (resolveButton) {
+      resolveButton.destroy()
+    }
+
+    // チャレンジ情報を削除
+    const challengeInfo = this.children.getByName('challenge-info')
+    if (challengeInfo) {
+      challengeInfo.destroy()
+    }
   }
 
   /**

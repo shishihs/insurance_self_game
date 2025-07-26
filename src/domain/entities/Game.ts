@@ -261,7 +261,7 @@ export class Game implements IGameState {
     // 選択肢をクリア
     this.cardChoices = undefined
     
-    // 解決フェーズに移行
+    // 解決フェーズに移行（ターン終了可能状態）
     this.phase = 'resolution'
     
     return true
