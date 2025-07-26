@@ -1,5 +1,7 @@
 # 人生充実ゲーム (Life Fulfillment Game)
 
+[![Deploy Status](https://github.com/shishihs/insurance_self_game/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/shishihs/insurance_self_game/actions)
+
 生命保険を「人生の味方」として描く革新的な一人用デッキ構築ゲーム
 
 ## 🎮 ゲーム概要
