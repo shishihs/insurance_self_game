@@ -182,7 +182,7 @@ describe('Game Entity', () => {
       
       expect(result.success).toBe(true)
       expect(result.playerPower).toBeGreaterThanOrEqual(5)
-      expect(game.phase).toBe('resolution')
+      expect(game.phase).toBe('card_selection')  // Phase 2: チャレンジ成功後はカード選択フェーズ
       expect(game.currentChallenge).toBeUndefined()
       expect(game.stats.successfulChallenges).toBe(1)
       
