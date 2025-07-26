@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        ".",
+        "./public/assets",
+        "./save-data"
+      ],
+      "description": "ファイルシステムアクセス（プロジェクト、アセット、セーブデータ）"
+    }
+  },
+  "settings": {
+    "allowedPaths": [
+      "./src",
+      "./public",
+      "./save-data",
+      "./docs"
+    ],
+    "deniedPaths": [
+      ".env",
+      ".env.*",
+      "node_modules",
+      ".git",
+      "dist",
+      "coverage"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "task:complete": "cat docs/PRINCIPLES.md && echo '✅ タスク完了！'",
+    "tc": "pnpm task:complete",
+    "test:mcp": "node scripts/test-mcp.js",
+    "mcp:start": "scripts\\start-mcp.bat"
+  }
+}

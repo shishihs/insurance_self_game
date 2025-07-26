@@ -1,0 +1,92 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|MultiEdit|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\\n🎯 === タスク完了確認 ===' && echo '' && cat docs/PRINCIPLES.md | grep -A 15 'タスク完了時の復唱' && echo '\\n✅ 上記の原則に従って実装しましたか？\\n'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "if [ -f \"$CLAUDE_FILE_PATHS\" ] && [[ \"$CLAUDE_FILE_PATHS\" =~ \\.(ts|tsx|vue)$ ]]; then pnpm prettier --write \"$CLAUDE_FILE_PATHS\" 2>/dev/null || true; fi",
+            "run_in_background": true
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Command: $(echo '$CLAUDE_TOOL_INPUT' | jq -r '.command')\" >> .claude/logs/command-history.log"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import json, sys; data=json.load(sys.stdin); path=data.get('tool_input',{}).get('file_path',''); forbidden=['.env', 'node_modules/', '.git/', 'dist/', 'coverage/']; sys.exit(2 if any(f in path for f in forbidden) else 0)\"",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import json, sys; data=json.load(sys.stdin); cmd=data.get('tool_input',{}).get('command',''); dangerous=['rm -rf /', 'dd if=', 'mkfs', ':(){:|:&};:']; sys.exit(2 if any(d in cmd for d in dangerous) else 0)\"",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\\n🎮 === タスク開始 ===' && echo '' && cat docs/PRINCIPLES.md | grep -A 10 'タスク開始時の宣言' && echo '\\n🚀 良い開発を！\\n'",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Prompt: $CLAUDE_PROMPT\" >> .claude/logs/prompt-history.log"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\\n🏁 === セッション終了 ===' && echo '\\n🎯 今日も素晴らしい開発でした！' && echo '💡 PRINCIPLES.mdの原則を守って開発できましたか？' && echo '\\n🎮 一人の時間を、最高の冒険に！\\n'",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v notify-send >/dev/null 2>&1; then notify-send '🎮 人生充実ゲーム' '$CLAUDE_NOTIFICATION'; elif command -v osascript >/dev/null 2>&1; then osascript -e 'display notification \"'\"$CLAUDE_NOTIFICATION\"'\" with title \"🎮 人生充実ゲーム\"'; fi",
+            "run_in_background": true
+          }
+        ]
+      }
+    ]
+  }
+}
