@@ -122,6 +122,80 @@ export class CardFactory {
   }
 
   /**
+   * 拡張保険カードを生成（選択肢用）
+   */
+  static createExtendedInsuranceCards(): Card[] {
+    const basicCards = this.createBasicInsuranceCards()
+    const extendedCards: Card[] = [...basicCards]
+
+    // 追加の保険カード
+    extendedCards.push(this.createInsuranceCard({
+      name: '傷害保険',
+      description: 'ケガによるリスクをカバー',
+      insuranceType: 'medical',
+      power: 3,
+      cost: 2,
+      coverage: 80
+    }))
+
+    extendedCards.push(this.createInsuranceCard({
+      name: '就業不能保険',
+      description: '長期療養時の収入補償',
+      insuranceType: 'income',
+      power: 6,
+      cost: 5,
+      coverage: 250
+    }))
+
+    extendedCards.push(this.createInsuranceCard({
+      name: '介護保険',
+      description: '介護が必要になった時の保障',
+      insuranceType: 'medical',
+      power: 5,
+      cost: 4,
+      coverage: 180
+    }))
+
+    extendedCards.push(this.createInsuranceCard({
+      name: '終身保険',
+      description: '一生涯の保障',
+      insuranceType: 'life',
+      power: 7,
+      cost: 6,
+      coverage: 300
+    }))
+
+    extendedCards.push(this.createInsuranceCard({
+      name: 'がん保険',
+      description: 'がん治療に特化した保障',
+      insuranceType: 'medical',
+      power: 4,
+      cost: 3,
+      coverage: 120
+    }))
+
+    extendedCards.push(this.createInsuranceCard({
+      name: '個人年金保険',
+      description: '老後の資金準備',
+      insuranceType: 'income',
+      power: 3,
+      cost: 3,
+      coverage: 100
+    }))
+
+    extendedCards.push(this.createInsuranceCard({
+      name: '学資保険',
+      description: '子どもの教育費を準備',
+      insuranceType: 'life',
+      power: 3,
+      cost: 2,
+      coverage: 90
+    }))
+
+    return extendedCards
+  }
+
+  /**
    * チャレンジカードを生成
    */
   static createChallengeCards(stage: GameStage): Card[] {

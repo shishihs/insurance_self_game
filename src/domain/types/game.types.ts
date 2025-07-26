@@ -20,6 +20,7 @@ export type GamePhase =
   | 'draw'            // ドロー
   | 'challenge'       // チャレンジ
   | 'resolution'      // 結果処理
+  | 'card_selection'  // カード選択（チャレンジ成功時）
   | 'upgrade'         // アップグレード（ステージクリア時）
   | 'end'            // 終了
 
@@ -54,6 +55,7 @@ export interface ChallengeResult {
   playerPower: number
   challengePower: number
   rewards?: Card[]
+  cardChoices?: Card[]  // カード選択肢（3枚）
   vitalityChange: number
   message: string
 }
@@ -79,6 +81,7 @@ export interface IGameState {
   // チャレンジ関連
   currentChallenge?: Card
   selectedCards: Card[]
+  cardChoices?: Card[]  // 現在の選択肢カード
   
   // 統計
   stats: PlayerStats

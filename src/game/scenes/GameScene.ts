@@ -13,6 +13,7 @@ export class GameScene extends BaseScene {
   private gameInstance!: Game
   private handCards: Phaser.GameObjects.Container[] = []
   private selectedCards: Set<string> = new Set()
+  private cardSelectionUI?: Phaser.GameObjects.Container
 
   constructor() {
     super({ key: 'GameScene' })
@@ -846,6 +847,14 @@ export class GameScene extends BaseScene {
     // 結果表示
     this.showChallengeResult(result)
     
+    // カード選択フェーズかチェック
+    if (result.success && result.cardChoices) {
+      // カード選択UIを表示（結果表示後に）
+      this.time.delayedCall(2000, () => {
+        this.showCardSelection(result.cardChoices!)
+      })
+    }
+    
     // 使用したカードを削除
     this.handCards = this.handCards.filter(cardContainer => {
       const card = cardContainer.getData('card') as Card
@@ -1074,6 +1083,290 @@ export class GameScene extends BaseScene {
       this.gameInstance.status = 'victory'
       this.showGameEnd(true)
     }
+  }
+
+  /**
+   * カード選択UIを表示
+   */
+  private showCardSelection(cardChoices: Card[]): void {
+    // 既存のカード選択UIがあれば削除
+    if (this.cardSelectionUI) {
+      this.cardSelectionUI.destroy()
+    }
+
+    // カード選択コンテナを作成
+    this.cardSelectionUI = this.add.container(this.centerX, this.centerY)
+    this.cardSelectionUI.setDepth(2000)
+
+    // 背景オーバーレイ
+    const overlay = this.add.rectangle(
+      0, 0,
+      this.gameWidth, this.gameHeight,
+      0x000000, 0.8
+    )
+    overlay.setOrigin(0.5)
+
+    // タイトル
+    const titleText = this.add.text(
+      0, -200,
+      '保険カードを選択してください',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '32px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // 説明文
+    const descText = this.add.text(
+      0, -150,
+      '1枚選んでデッキに追加されます',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#cccccc'
+      }
+    ).setOrigin(0.5)
+
+    this.cardSelectionUI.add([overlay, titleText, descText])
+
+    // カードを表示
+    cardChoices.forEach((card, index) => {
+      this.createSelectableCard(card, index)
+    })
+
+    // フェードイン
+    this.cardSelectionUI.setAlpha(0)
+    this.tweens.add({
+      targets: this.cardSelectionUI,
+      alpha: 1,
+      duration: 500,
+      ease: 'Power2'
+    })
+  }
+
+  /**
+   * 選択可能なカードを作成
+   */
+  private createSelectableCard(card: Card, index: number): void {
+    if (!this.cardSelectionUI) return
+
+    const cardSpacing = 220
+    const totalCards = 3 // 常に3枚のカード
+    const startX = -(totalCards - 1) * cardSpacing / 2
+    const cardX = startX + index * cardSpacing
+
+    const cardContainer = this.add.container(cardX, 0)
+    cardContainer.setScale(1.2) // 少し大きめに表示
+
+    // カード背景
+    const cardBg = this.add.image(0, 0, this.getCardTemplate(card.type))
+    cardBg.setInteractive()
+
+    // カード名
+    const cardName = this.add.text(
+      0, -80,
+      card.name,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        wordWrap: { width: 120 }
+      }
+    ).setOrigin(0.5)
+
+    // 説明文
+    const cardDesc = this.add.text(
+      0, -40,
+      card.description,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '12px',
+        color: '#cccccc',
+        wordWrap: { width: 120 },
+        align: 'center'
+      }
+    ).setOrigin(0.5)
+
+    // パワー表示
+    const powerText = this.add.text(
+      -40, 50,
+      `${card.power}`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '24px',
+        color: '#333333',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // カバレッジ表示（保険カードの場合）
+    let coverageText: Phaser.GameObjects.Text | undefined
+    if (card.coverage) {
+      coverageText = this.add.text(
+        40, 50,
+        `保障:${card.coverage}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '14px',
+          color: '#0066cc',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+    }
+
+    // 選択ボタン
+    const selectButton = this.createButton(
+      0, 120,
+      '選択',
+      () => this.onCardSelected(card),
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff'
+      }
+    )
+
+    // ホバー効果
+    cardBg.on('pointerover', () => {
+      cardContainer.setScale(1.3)
+      this.tweens.add({
+        targets: cardContainer,
+        y: -20,
+        duration: 200,
+        ease: 'Power2'
+      })
+    })
+
+    cardBg.on('pointerout', () => {
+      cardContainer.setScale(1.2)
+      this.tweens.add({
+        targets: cardContainer,
+        y: 0,
+        duration: 200,
+        ease: 'Power2'
+      })
+    })
+
+    // クリックで選択
+    cardBg.on('pointerdown', () => {
+      this.onCardSelected(card)
+    })
+
+    const cardElements = [cardBg, cardName, cardDesc, powerText, selectButton]
+    if (coverageText) cardElements.push(coverageText)
+    
+    cardContainer.add(cardElements)
+    this.cardSelectionUI.add(cardContainer)
+  }
+
+  /**
+   * カード選択時の処理
+   */
+  private onCardSelected(card: Card): void {
+    if (!this.cardSelectionUI) return
+
+    // 選択アニメーション
+    const selectedContainer = this.cardSelectionUI.list.find(child => {
+      return child instanceof Phaser.GameObjects.Container &&
+             child.list.some(element => 
+               element instanceof Phaser.GameObjects.Image && 
+               element.input?.enabled
+             )
+    }) as Phaser.GameObjects.Container
+
+    // カードをゲームに追加
+    this.gameInstance.selectCard(card.id)
+
+    // カード獲得アニメーション
+    this.showCardAcquisitionAnimation(card, () => {
+      // アニメーション完了後にUIを閉じる
+      this.hideCardSelection()
+    })
+  }
+
+  /**
+   * カード獲得アニメーション
+   */
+  private showCardAcquisitionAnimation(card: Card, onComplete: () => void): void {
+    // 選択されたカードを強調表示
+    const highlightContainer = this.add.container(this.centerX, this.centerY)
+    highlightContainer.setDepth(3000)
+
+    const cardBg = this.add.image(0, 0, this.getCardTemplate(card.type))
+    cardBg.setScale(2) // 大きく表示
+
+    const cardName = this.add.text(
+      0, -100,
+      card.name,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '24px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    const acquiredText = this.add.text(
+      0, 120,
+      'デッキに追加されました！',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: '#00ff00',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    highlightContainer.add([cardBg, cardName, acquiredText])
+
+    // パルス効果
+    this.tweens.add({
+      targets: highlightContainer,
+      scale: 1.1,
+      duration: 300,
+      yoyo: true,
+      repeat: 1,
+      ease: 'Power2',
+      onComplete: () => {
+        // フェードアウト
+        this.tweens.add({
+          targets: highlightContainer,
+          alpha: 0,
+          scale: 0.5,
+          duration: 800,
+          ease: 'Power2',
+          onComplete: () => {
+            highlightContainer.destroy()
+            onComplete()
+          }
+        })
+      }
+    })
+  }
+
+  /**
+   * カード選択UIを隠す
+   */
+  private hideCardSelection(): void {
+    if (!this.cardSelectionUI) return
+
+    this.tweens.add({
+      targets: this.cardSelectionUI,
+      alpha: 0,
+      scale: 0.8,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => {
+        this.cardSelectionUI?.destroy()
+        this.cardSelectionUI = undefined
+        
+        // 通常のゲームフローに戻る
+        this.updateUI()
+      }
+    })
   }
 
   /**

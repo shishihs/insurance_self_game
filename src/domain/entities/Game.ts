@@ -30,6 +30,7 @@ export class Game implements IGameState {
   
   currentChallenge?: Card
   selectedCards: Card[]
+  cardChoices?: Card[]
   
   stats: PlayerStats
   config: GameConfig
@@ -52,6 +53,7 @@ export class Game implements IGameState {
     this.challengeDeck = new Deck('Challenge Deck')
     
     this.selectedCards = []
+    this.cardChoices = undefined
     
     this.stats = {
       totalChallenges: 0,
@@ -212,26 +214,57 @@ export class Game implements IGameState {
         : `チャレンジ失敗... ${vitalityChange} 活力`
     }
     
-    // 報酬カード（成功時のみ）
-    if (success && Math.random() < 0.7) {
-      // 70%の確率で報酬カードを獲得
-      const allInsuranceCards = CardFactory.createBasicInsuranceCards()
-      const randomIndex = Math.floor(Math.random() * allInsuranceCards.length)
-      const rewardCard = allInsuranceCards[randomIndex]
+    // 成功時はカード選択フェーズへ
+    if (success) {
+      // 3枚のカード選択肢を生成
+      const allInsuranceCards = CardFactory.createExtendedInsuranceCards()
+      const cardChoices: Card[] = []
       
-      // 報酬カードを手札に追加
-      this.hand.push(rewardCard)
-      this.stats.cardsAcquired++
+      // 重複なしで3枚を選択
+      const availableCards = [...allInsuranceCards]
+      for (let i = 0; i < 3 && availableCards.length > 0; i++) {
+        const randomIndex = Math.floor(Math.random() * availableCards.length)
+        cardChoices.push(availableCards.splice(randomIndex, 1)[0])
+      }
       
-      result.rewards = [rewardCard]
+      this.cardChoices = cardChoices
+      result.cardChoices = cardChoices
+      this.phase = 'card_selection'
+    } else {
+      // 失敗時は通常の解決フェーズへ
+      this.phase = 'resolution'
     }
     
-    // フェーズ移行
-    this.phase = 'resolution'
     this.currentChallenge = undefined
     this.selectedCards = []
     
     return result
+  }
+
+  /**
+   * カードを選択してデッキに追加
+   */
+  selectCard(cardId: string): boolean {
+    if (this.phase !== 'card_selection' || !this.cardChoices) {
+      throw new Error('Not in card selection phase')
+    }
+    
+    const selectedCard = this.cardChoices.find(card => card.id === cardId)
+    if (!selectedCard) {
+      throw new Error('Invalid card selection')
+    }
+    
+    // カードをデッキに追加
+    this.playerDeck.addCard(selectedCard)
+    this.stats.cardsAcquired++
+    
+    // 選択肢をクリア
+    this.cardChoices = undefined
+    
+    // 解決フェーズに移行
+    this.phase = 'resolution'
+    
+    return true
   }
 
   /**
@@ -311,6 +344,7 @@ export class Game implements IGameState {
       challengeDeck: this.challengeDeck.clone(),
       currentChallenge: this.currentChallenge,
       selectedCards: [...this.selectedCards],
+      cardChoices: this.cardChoices ? [...this.cardChoices] : undefined,
       stats: { ...this.stats },
       config: { ...this.config },
       startedAt: this.startedAt,

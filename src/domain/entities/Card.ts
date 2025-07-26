@@ -95,10 +95,32 @@ export class Card implements ICard {
   }
 
   /**
+   * 保険効果を適用（ダメージ軽減など）
+   */
+  applyInsuranceEffect(damage: number): number {
+    if (!this.isInsuranceCard() || !this.coverage) {
+      return damage
+    }
+
+    // シールド効果: ダメージを軽減
+    const shieldEffect = this.effects.find(effect => effect.type === 'shield')
+    if (shieldEffect && shieldEffect.value) {
+      const reduction = Math.min(damage, shieldEffect.value)
+      return Math.max(0, damage - reduction)
+    }
+
+    return damage
+  }
+
+  /**
    * カードの表示用テキストを生成
    */
   toDisplayString(): string {
     let display = `${this.name} (Power: ${this.power}, Cost: ${this.cost})`
+    
+    if (this.coverage) {
+      display += `, Coverage: ${this.coverage}`
+    }
     
     if (this.effects.length > 0) {
       display += '\nEffects:'
