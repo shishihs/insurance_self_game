@@ -127,7 +127,7 @@ export class MainMenuScene extends BaseScene {
    */
   private startTutorial(): void {
     // TODO: チュートリアルシーンへ遷移
-    console.log('チュートリアル機能は開発中です')
+    // TODO: チュートリアル機能の実装
   }
 
   /**
@@ -135,7 +135,7 @@ export class MainMenuScene extends BaseScene {
    */
   private openSettings(): void {
     // TODO: 設定シーンへ遷移
-    console.log('設定機能は開発中です')
+    // TODO: 設定機能の実装
   }
 
   /**

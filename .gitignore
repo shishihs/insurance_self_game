@@ -35,3 +35,19 @@ coverage/
 # Game save data
 save-data/*.json
 save-data/*.save
+
+# Archive directory
+.archive/
+
+# Temporary analysis files
+docs/temp/
+docs/*_ANALYSIS_*.md
+docs/*_SUMMARY_*.md
+
+# Editor settings
+.vscode/settings.json
+
+# Personal notes
+*.personal.md
+NOTES.md
+TODO.md

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Deck } from '../entities/Deck'
 import { Card } from '../entities/Card'
-import type { ICard, CardType } from '../types/card.types'
+import type { CardType } from '../types/card.types'
 
 describe('Deck Entity', () => {
   let deck: Deck

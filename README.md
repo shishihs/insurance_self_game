@@ -33,10 +33,6 @@ pnpm install
 
 ### 開発サーバー
 ```bash
-# Windows
-run-dev.bat
-
-# または
 pnpm dev
 ```
 
@@ -44,10 +40,6 @@ http://localhost:5173 でアクセス可能
 
 ### ビルド
 ```bash
-# Windows
-run-build.bat
-
-# または
 pnpm build
 ```
 
@@ -83,12 +75,20 @@ insurance_game/
 
 ## 📖 ドキュメント
 
-- [開発原則](./PRINCIPLES.md)
-- [技術仕様](./TECH_SPEC.md)
-- [ゲームデザイン](./GAME_DESIGN.md)
-- [開発ガイド](./DEVELOPMENT.md)
-- [作業状況](./WORK_STATUS.md)
-- [ロードマップ](./ROADMAP.md)
+### 開発者向け
+- **[開発原則](./docs/development/PRINCIPLES.md)** - プロジェクトの核となる開発思想
+- [開発ガイド](./docs/development/DEVELOPMENT.md) - セットアップと開発手順
+- [技術仕様書](./docs/design/TECH_SPEC.md) - アーキテクチャと技術スタック
+
+### ゲームデザイン
+- [ゲームデザイン仕様書](./docs/design/GAME_DESIGN.md) - 最新のゲームルール
+- [ゲームマニュアル](./docs/manual/GAME_MANUAL.md) - プレイ方法とルール説明
+- [プリント＆プレイガイド](./docs/manual/PRINT_AND_PLAY_GUIDE.md) - 物理版の作成方法
+
+### プロジェクト管理
+- [ロードマップ](./docs/planning/ROADMAP.md) - 開発計画と今後の展望
+- [作業状況](./docs/planning/WORK_STATUS.md) - 現在の進捗状況
+- [ゲーム改善プロセス](./docs/planning/GAME_IMPROVEMENT_PROCESS.md) - テストプレイの進め方
 
 ## 🚀 デプロイ
 

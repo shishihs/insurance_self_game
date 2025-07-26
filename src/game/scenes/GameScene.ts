@@ -64,7 +64,7 @@ export class GameScene extends BaseScene {
       .setOrigin(0, 0)
 
     // ヘッダー
-    const headerBg = this.add.rectangle(0, 0, this.gameWidth, 80, 0x2C3E50)
+    this.add.rectangle(0, 0, this.gameWidth, 80, 0x2C3E50)
       .setOrigin(0, 0)
 
     // ステージ表示
@@ -507,14 +507,14 @@ export class GameScene extends BaseScene {
    */
   private startChallenge(): void {
     if (this.gameInstance.currentChallenge) {
-      console.log('すでにチャレンジが進行中です')
+      // すでにチャレンジが進行中
       return
     }
 
     // チャレンジカードを引く
     const challengeCard = this.gameInstance.challengeDeck.drawCard()
     if (!challengeCard) {
-      console.log('チャレンジカードがありません')
+      // チャレンジカードがありません
       return
     }
 

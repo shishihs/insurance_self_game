@@ -1,4 +1,4 @@
-import type { Phaser } from 'phaser'
+import Phaser from 'phaser'
 
 /**
  * Phaserゲームの基本設定

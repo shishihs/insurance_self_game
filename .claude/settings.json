@@ -1,5 +1,73 @@
 {
   "hooks": {
-    "post-todo-complete": "echo \"✅ タスク完了チェックリスト:\" && echo \"□ プレイヤーファーストで実装した\" && echo \"□ 可能な限りシンプルにした\" && echo \"□ テストを書いて品質を保証した\" && echo \"□ ドキュメントを更新した\" && echo \"□ 次の人が理解できるコードにした\" && echo \"\" && echo \"🎮 一人の時間を、最高の冒険に！\""
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\user-prompt-submit.js\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "TodoWrite",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\todo-updated.js\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\file-edited.js\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\bash-completed.js\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\npm-guard.js\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\dangerous-command-guard.js\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\shish\\Workspace\\insurance_game\\scripts\\session-end.js\""
+          }
+        ]
+      }
+    ]
   }
 }

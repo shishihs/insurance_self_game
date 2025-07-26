@@ -1,5 +1,6 @@
 import { Card } from './Card'
 import { Deck } from './Deck'
+import { CardFactory } from '../services/CardFactory'
 import type {
   IGameState,
   GameStatus,
@@ -8,7 +9,7 @@ import type {
   PlayerStats,
   ChallengeResult
 } from '../types/game.types'
-import type { GameStage, CardType } from '../types/card.types'
+import type { GameStage } from '../types/card.types'
 
 /**
  * ゲームエンティティ
@@ -83,6 +84,7 @@ export class Game implements IGameState {
     this.startedAt = new Date()
     this.phase = 'draw'
     this.turn = 1
+    this.stats.turnsPlayed = 1
   }
 
   /**
@@ -104,7 +106,7 @@ export class Game implements IGameState {
       }
     }
     
-    // 手札上限チェック
+    // 手札上限チェック - 古いカードを捨て札に
     while (this.hand.length > this.config.maxHandSize) {
       const discarded = this.hand.shift()
       if (discarded) {
@@ -213,7 +215,15 @@ export class Game implements IGameState {
     // 報酬カード（成功時のみ）
     if (success && Math.random() < 0.7) {
       // 70%の確率で報酬カードを獲得
-      result.rewards = [] // TODO: 報酬カード生成ロジック
+      const allInsuranceCards = CardFactory.createBasicInsuranceCards()
+      const randomIndex = Math.floor(Math.random() * allInsuranceCards.length)
+      const rewardCard = allInsuranceCards[randomIndex]
+      
+      // 報酬カードを手札に追加
+      this.hand.push(rewardCard)
+      this.stats.cardsAcquired++
+      
+      result.rewards = [rewardCard]
     }
     
     // フェーズ移行

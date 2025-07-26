@@ -1,5 +1,5 @@
 import { Card } from '../entities/Card'
-import type { ICard, CardType, LifeCardCategory, InsuranceType, GameStage } from '../types/card.types'
+import type { LifeCardCategory, InsuranceType, GameStage } from '../types/card.types'
 
 /**
  * カードファクトリー
