@@ -1277,6 +1277,18 @@ export class GameScene extends BaseScene {
              )
     }) as Phaser.GameObjects.Container
 
+    // 選択されたカードのアニメーション
+    if (selectedContainer) {
+      this.tweens.add({
+        targets: selectedContainer,
+        scaleX: 1.1,
+        scaleY: 1.1,
+        duration: 150,
+        yoyo: true,
+        ease: 'Power2'
+      })
+    }
+
     // カードをゲームに追加
     this.gameInstance.selectCard(card.id)
 
