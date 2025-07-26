@@ -36,16 +36,16 @@ jobs:
       run: pnpm install
       
     - name: Type check
-      run: pnpm type-check
+      run: pnpm run type-check
       
     - name: Lint
-      run: pnpm lint
+      run: pnpm exec eslint . --fix
       
     - name: Test
-      run: pnpm test:run
+      run: pnpm run test:run
       
     - name: Build
-      run: pnpm build
+      run: pnpm exec vue-tsc --noEmit && pnpm exec vite build
       
     - name: Setup Pages
       if: github.ref == 'refs/heads/master'
