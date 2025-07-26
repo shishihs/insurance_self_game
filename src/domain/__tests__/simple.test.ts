@@ -1,17 +1,14 @@
-import { describe, it, expect } from 'vitest'
+// 最も基本的なテスト
+import { test, expect } from 'vitest'
 
-describe('Simple Test', () => {
-  it('should pass basic arithmetic', () => {
-    expect(1 + 1).toBe(2)
-  })
+test('arithmetic', () => {
+  expect(2 + 2).toBe(4)
+})
 
-  it('should pass string comparison', () => {
-    expect('hello').toBe('hello')
-  })
+test('string', () => {
+  expect('test').toBe('test')
+})
 
-  it('should pass array check', () => {
-    const arr = [1, 2, 3]
-    expect(arr).toHaveLength(3)
-    expect(arr).toContain(2)
-  })
+test('boolean', () => {
+  expect(true).toBe(true)
 })
