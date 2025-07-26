@@ -8,6 +8,8 @@ package-lock.json
 dist/
 build/
 *.tsbuildinfo
+dist-ssr/
+*.local
 
 # IDE
 .idea/
