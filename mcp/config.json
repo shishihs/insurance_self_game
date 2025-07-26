@@ -10,6 +10,14 @@
         "./save-data"
       ],
       "description": "ファイルシステムアクセス（プロジェクト、アセット、セーブデータ）"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-playwright"
+      ],
+      "description": "Webサイト自動テスト・動作確認（デプロイ検証用）"
     }
   },
   "settings": {
