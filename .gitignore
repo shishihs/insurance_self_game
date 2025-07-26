@@ -51,3 +51,10 @@ docs/*_SUMMARY_*.md
 *.personal.md
 NOTES.md
 TODO.md
+
+# Temporary files for deployment fixes
+*.bak
+*.disabled
+*.temp
+*_temp
+*_backup

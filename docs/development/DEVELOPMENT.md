@@ -274,6 +274,73 @@ fi
 }
 ```
 
+## 🔄 一時的変更管理ガイドライン
+
+### 緊急デプロイ時の一時的変更手順
+
+#### 1. 一時的無効化の原則
+```bash
+# ❌ 削除禁止 - ファイルを削除しない
+rm problematic-file.ts
+
+# ✅ 推奨 - .bakファイルに変更
+mv problematic-file.ts problematic-file.ts.bak
+
+# ✅ または拡張子変更で無効化
+mv test.spec.ts test.spec.ts.disabled
+```
+
+#### 2. 必須TODO管理
+一時的変更を行った場合は**必ず**TodoWriteツールで復元タスクを追加：
+
+```bash
+# 例: テストファイルを一時無効化した場合
+TodoWrite: "一時的に無効化したテストファイルを復元する（ファイル名.bak）"
+TodoWrite: "無効化の根本原因を調査・修正する"
+```
+
+#### 3. コミットメッセージの明記
+```bash
+# 一時的変更であることを明記
+git commit -m "fix(temp): Temporarily disable failing tests for urgent deployment
+
+- Move Card.test.ts to Card.test.ts.bak
+- TODO: Restore tests after root cause investigation
+- Reason: CI/CD blocking critical deployment
+
+🤖 Generated with [Claude Code](https://claude.ai/code)"
+```
+
+#### 4. 復元スケジュール
+- **即座復元**: 緊急度が低い場合、同日中に復元
+- **調査後復元**: 根本原因調査が必要な場合、1週間以内
+- **段階的復元**: 複雑な場合、部分的に復元
+
+#### 5. 禁止事項
+- ❌ `.bak`ファイルをコミットに含める（.gitignoreで除外）
+- ❌ 一時的変更のまま放置する
+- ❌ TODOタスクを作成せずに一時的変更する
+- ❌ チーム通知なしに本番に影響する変更をする
+
+#### 6. .gitignoreへの追加
+```bash
+# 一時的ファイルの除外
+*.bak
+*.disabled
+*.temp
+*_temp
+*_backup
+```
+
+### 緊急デプロイチェックリスト
+```bash
+□ 一時的変更にTODOタスクを作成した
+□ コミットメッセージに「temp」「temporary」を明記した
+□ .bakファイルが.gitignoreされている
+□ 復元期限を設定した（目安：1週間以内）
+□ 根本原因調査のタスクを作成した
+```
+
 ## 🚨 トラブルシューティング
 
 ### よくある問題と解決方法
