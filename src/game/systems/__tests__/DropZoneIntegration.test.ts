@@ -473,9 +473,9 @@ describe('DropZoneIntegration', () => {
           const mockPointer = { x: 200, y: 200 }
           dragHandler(mockPointer, 200, 200)
           
-          // 位置が更新される
+          // 位置が更新される（デスクトップでtouchOffsetが{x:0, y:0}なので200のまま）
           expect(mockCardContainer.x).toBe(200)
-          expect(mockCardContainer.y).toBe(140)
+          expect(mockCardContainer.y).toBe(200)
         }
       })
 

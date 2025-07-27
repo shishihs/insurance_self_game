@@ -606,7 +606,7 @@ describe('DropZone Performance Tests', () => {
       const totalTime = endTime - startTime
       
       // 統合シナリオでも目標フレーム時間内に完了
-      expect(totalTime).toBeLessThan(TARGET_FRAME_TIME * 12) // 12フレーム分の余裕
+      expect(totalTime).toBeLessThan(16.67 * 12) // 12フレーム分の余裕（16.67ms * 12）
       
       integration.destroy()
     })
