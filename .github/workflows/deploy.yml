@@ -31,7 +31,9 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install
+      run: |
+        # Skip canvas installation which causes issues in CI
+        pnpm install --no-optional || pnpm install --ignore-scripts
       
     - name: Type check
       run: pnpm run type-check
