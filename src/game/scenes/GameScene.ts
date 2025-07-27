@@ -68,13 +68,14 @@ export class GameScene extends BaseScene {
    * UI要素を作成
    */
   private createUI(): void {
-    // 背景
-    this.add.rectangle(0, 0, this.gameWidth, this.gameHeight, 0xf5f5f5)
+    // 背景 - ダークでモダンな背景
+    this.add.rectangle(0, 0, this.gameWidth, this.gameHeight, 0x1F2937)
       .setOrigin(0, 0)
 
-    // ヘッダー
-    this.add.rectangle(0, 0, this.gameWidth, 80, 0x2C3E50)
+    // ヘッダー - グラデーション風の見た目
+    const header = this.add.rectangle(0, 0, this.gameWidth, 80, 0x4C1D95)
       .setOrigin(0, 0)
+    header.setAlpha(0.9)
 
     // ステージ表示
     const stageText = this.add.text(
@@ -84,7 +85,8 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
-        color: '#ffffff'
+        color: '#F9FAFB',
+        fontStyle: 'bold'
       }
     )
     stageText.setOrigin(0, 0.5)
@@ -101,10 +103,12 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',
-        color: '#ffffff'
+        color: '#F9FAFB',
+        fontStyle: 'bold'
       }
     )
     vitalityText.setOrigin(0.5)
+    vitalityText.setShadow(2, 2, '#000000', 0.5, true, true)
     vitalityText.setName('vitality-text')
 
     // ターン表示
@@ -115,7 +119,7 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
-        color: '#ffffff'
+        color: '#E5E7EB'
       }
     )
     turnText.setOrigin(1, 0.5)
@@ -138,9 +142,9 @@ export class GameScene extends BaseScene {
     this.burdenIndicatorContainer = this.add.container(this.gameWidth - 200, 120)
     this.burdenIndicatorContainer.setName('burden-indicator')
 
-    // 背景
-    const bg = this.add.rectangle(0, 0, 180, 50, 0x000000, 0.7)
-    bg.setStrokeStyle(2, 0xffffff)
+    // 背景 - ガラスモルフィズム風
+    const bg = this.add.rectangle(0, 0, 180, 50, 0x111827, 0.8)
+    bg.setStrokeStyle(1, 0x818CF8, 0.5)
 
     // ラベル
     const label = this.add.text(
@@ -149,7 +153,7 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '16px',
-        color: '#ffffff'
+        color: '#E5E7EB'
       }
     ).setOrigin(0, 0.5)
 
@@ -161,10 +165,11 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
-        color: burden === 0 ? '#00ff00' : '#ff4444',
+        color: burden === 0 ? '#10B981' : '#EF4444',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5)
+    burdenText.setShadow(1, 1, '#000000', 0.3, true, true)
     burdenText.setName('burden-value')
 
     this.burdenIndicatorContainer.add([bg, label, burdenText])
@@ -184,10 +189,11 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '18px',
-        color: '#ffffff',
+        color: '#F9FAFB',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5)
+    title.setShadow(1, 1, '#000000', 0.3, true, true)
 
     this.insuranceListContainer.add(title)
 
@@ -202,14 +208,15 @@ export class GameScene extends BaseScene {
     this.vitalityBarContainer = this.add.container(this.centerX, 65)
     this.vitalityBarContainer.setName('vitality-bar-container')
 
-    // 活力バーの背景
+    // 活力バーの背景 - よりモダンなスタイル
     const barBg = this.add.rectangle(
       0, 0,
       this.vitalityBarMaxWidth + 4,
       24,
-      0x000000
+      0x111827
     )
-    barBg.setStrokeStyle(2, 0xffffff)
+    barBg.setStrokeStyle(2, 0x818CF8)
+    barBg.setAlpha(0.8)
 
     // 活力バー本体
     const vitalityPercentage = this.gameInstance.vitality / this.gameInstance.maxVitality
@@ -228,7 +235,7 @@ export class GameScene extends BaseScene {
       -this.vitalityBarMaxWidth / 2 + this.vitalityBarMaxWidth, 0,
       2,
       24,
-      0xffffff
+      0x818CF8
     )
     maxMarker.setOrigin(0.5)
 
@@ -239,9 +246,9 @@ export class GameScene extends BaseScene {
    * 活力バーの色を取得
    */
   private getVitalityBarColor(percentage: number): number {
-    if (percentage > 0.6) return 0x4ade80 // 緑
-    if (percentage > 0.3) return 0xfbbf24 // 黄色
-    return 0xef4444 // 赤
+    if (percentage > 0.6) return 0x10B981 // 緑 - 高活力
+    if (percentage > 0.3) return 0xF59E0B // オレンジ - 中活力
+    return 0xEF4444 // 赤 - 低活力
   }
 
   /**
@@ -429,9 +436,21 @@ export class GameScene extends BaseScene {
       GAME_CONSTANTS.DECK_Y_POSITION
     )
 
-    // カード背景
-    const cardBg = this.add.image(0, 0, this.getCardTemplate(card.type))
-    cardBg.setInteractive()
+    // カード背景 - グラデーションと角丸
+    const graphics = this.add.graphics()
+    const cardColor = this.getCardColor(card.type)
+    
+    // グラデーション背景
+    graphics.fillGradientStyle(cardColor.top, cardColor.top, cardColor.bottom, cardColor.bottom, 1)
+    graphics.fillRoundedRect(-60, -80, 120, 160, 12)
+    
+    // ガラスモルフィズム効果
+    const glassBg = this.add.rectangle(0, 0, 116, 156, 0xffffff, 0.1)
+    glassBg.setStrokeStyle(1, 0xffffff, 0.3)
+    
+    // カードをインタラクティブに
+    const hitArea = new Phaser.Geom.Rectangle(-60, -80, 120, 160)
+    cardContainer.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains)
 
     // カード名
     const cardName = this.add.text(
@@ -441,12 +460,15 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '14px',
-        color: '#ffffff',
+        color: '#F9FAFB',
+        fontStyle: 'bold',
         wordWrap: { width: 100 }
       }
     ).setOrigin(0.5)
+    cardName.setShadow(1, 1, '#000000', 0.5, true, true)
 
     // パワー表示
+    const powerBg = this.add.circle(-40, 60, 20, 0x111827, 0.8)
     const powerText = this.add.text(
       -40,
       60,
@@ -454,12 +476,13 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',
-        color: '#333333',
+        color: '#10B981',
         fontStyle: 'bold'
       }
     ).setOrigin(0.5)
 
     // コスト表示
+    const costBg = this.add.circle(40, 60, 18, 0x111827, 0.8)
     const costText = this.add.text(
       40,
       60,
@@ -467,13 +490,21 @@ export class GameScene extends BaseScene {
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
-        color: '#666666'
+        color: '#F59E0B',
+        fontStyle: 'bold'
       }
     ).setOrigin(0.5)
 
-    cardContainer.add([cardBg, cardName, powerText, costText])
+    cardContainer.add([graphics, glassBg, cardName, powerBg, powerText, costBg, costText])
     cardContainer.setData('card', card)
     cardContainer.setData('selected', false)
+    
+    // ホバーエフェクト用のグロウ
+    const glow = this.add.rectangle(0, 0, 130, 170, 0x818CF8, 0)
+    glow.setAlpha(0)
+    cardContainer.add(glow)
+    cardContainer.sendToBack(glow)
+    cardContainer.setData('glow', glow)
     
     // インタラクション設定
     this.setupCardInteraction(cardContainer)
@@ -498,34 +529,86 @@ export class GameScene extends BaseScene {
   }
 
   /**
+   * カードの色を取得
+   */
+  private getCardColor(type: CardType): { top: number; bottom: number } {
+    switch (type) {
+      case 'life':
+        return { top: 0x667eea, bottom: 0x764ba2 }  // 紫グラデーション
+      case 'insurance':
+        return { top: 0x10B981, bottom: 0x059669 }  // 緑グラデーション
+      case 'pitfall':
+        return { top: 0xEF4444, bottom: 0xDC2626 }  // 赤グラデーション
+      case 'dream':
+        return { top: 0xFCD34D, bottom: 0xF59E0B }  // 金色グラデーション
+      default:
+        return { top: 0x6B7280, bottom: 0x4B5563 }  // グレーグラデーション
+    }
+  }
+
+  /**
    * カードのインタラクションを設定
    */
   private setupCardInteraction(cardContainer: Phaser.GameObjects.Container): void {
-    const cardBg = cardContainer.list[0] as Phaser.GameObjects.Image
-    
     // ドラッグ用の初期位置を保存
     cardContainer.setData('originalX', cardContainer.x)
     cardContainer.setData('originalY', cardContainer.y)
     cardContainer.setData('isDragging', false)
+    
+    const glow = cardContainer.getData('glow')
 
     // ドラッグ可能に設定
-    this.input.setDraggable(cardBg)
+    this.input.setDraggable(cardContainer)
 
     // ホバー効果
-    cardBg.on('pointerover', () => {
+    cardContainer.on('pointerover', () => {
       if (!cardContainer.getData('selected') && !cardContainer.getData('isDragging')) {
-        cardContainer.setScale(GAME_CONSTANTS.CARD_HOVER_SCALE)
+        // スケールアップアニメーション
+        this.tweens.add({
+          targets: cardContainer,
+          scaleX: GAME_CONSTANTS.CARD_HOVER_SCALE,
+          scaleY: GAME_CONSTANTS.CARD_HOVER_SCALE,
+          duration: 200,
+          ease: 'Power2'
+        })
+        
+        // グロウエフェクト
+        if (glow) {
+          this.tweens.add({
+            targets: glow,
+            alpha: 0.3,
+            duration: 200,
+            ease: 'Power2'
+          })
+        }
       }
     })
 
-    cardBg.on('pointerout', () => {
+    cardContainer.on('pointerout', () => {
       if (!cardContainer.getData('selected') && !cardContainer.getData('isDragging')) {
-        cardContainer.setScale(1)
+        // スケールダウンアニメーション
+        this.tweens.add({
+          targets: cardContainer,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 200,
+          ease: 'Power2'
+        })
+        
+        // グロウエフェクト消去
+        if (glow) {
+          this.tweens.add({
+            targets: glow,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2'
+          })
+        }
       }
     })
 
     // クリック（選択）
-    cardBg.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    cardContainer.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       // 右クリックでドラッグ開始を防ぐ
       if (pointer.rightButtonDown()) return
       
@@ -533,7 +616,7 @@ export class GameScene extends BaseScene {
       cardContainer.setDepth(1000) // 最前面に表示
     })
 
-    cardBg.on('pointerup', () => {
+    cardContainer.on('pointerup', () => {
       const dragStartTime = cardContainer.getData('dragStartTime')
       const isDragging = cardContainer.getData('isDragging')
       
@@ -546,7 +629,7 @@ export class GameScene extends BaseScene {
     })
 
     // ドラッグ開始
-    cardBg.on('dragstart', () => {
+    cardContainer.on('dragstart', () => {
       cardContainer.setData('isDragging', true)
       cardContainer.setScale(GAME_CONSTANTS.CARD_HOVER_SCALE)
       
@@ -557,13 +640,13 @@ export class GameScene extends BaseScene {
     })
 
     // ドラッグ中
-    cardBg.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+    cardContainer.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
       cardContainer.x = dragX
       cardContainer.y = dragY
     })
 
     // ドラッグ終了
-    cardBg.on('dragend', () => {
+    cardContainer.on('dragend', () => {
       cardContainer.setScale(1)
       
       // ドロップ先の判定
@@ -955,23 +1038,79 @@ export class GameScene extends BaseScene {
    * 活力バーを更新
    */
   private updateVitalityBar(): void {
-    if (!this.vitalityBar) return
+    if (!this.vitalityBar || !this.vitalityBarContainer) return
 
-    const vitalityPercentage = this.gameInstance.vitality / this.gameInstance.maxVitality
+    const oldVitality = this.vitalityBar.getData('currentVitality') || this.gameInstance.vitality
+    const newVitality = this.gameInstance.vitality
+    const vitalityPercentage = newVitality / this.gameInstance.maxVitality
     const targetWidth = Math.max(0, this.vitalityBarMaxWidth * vitalityPercentage)
     const newColor = this.getVitalityBarColor(vitalityPercentage)
 
-    // アニメーションで幅を変更
+    // 数値カウントアップアニメーション
+    const counter = { value: oldVitality }
+    this.tweens.add({
+      targets: counter,
+      value: newVitality,
+      duration: 800,
+      ease: 'Cubic.out',
+      onUpdate: () => {
+        const vitalityText = this.children.getByName('vitality-text') as Phaser.GameObjects.Text
+        if (vitalityText) {
+          vitalityText.setText(`活力: ${Math.floor(counter.value)} / ${this.gameInstance.maxVitality}`)
+        }
+      }
+    })
+
+    // バーのアニメーション（より滑らか）
     this.tweens.add({
       targets: this.vitalityBar,
       width: targetWidth,
-      duration: 500,
-      ease: 'Power2',
+      duration: 800,
+      ease: 'Cubic.out',
       onUpdate: () => {
-        // 色も更新
+        // 現在の割合に基づいて色を動的に更新
+        const currentPercentage = this.vitalityBar!.width / this.vitalityBarMaxWidth
+        const currentColor = this.getVitalityBarColor(currentPercentage)
+        this.vitalityBar?.setFillStyle(currentColor)
+      },
+      onComplete: () => {
+        // 最終的な色を設定
         this.vitalityBar?.setFillStyle(newColor)
       }
     })
+
+    // バイタリティが減った場合のパルスエフェクト
+    if (newVitality < oldVitality) {
+      this.tweens.add({
+        targets: this.vitalityBarContainer,
+        scaleX: 1.05,
+        scaleY: 1.05,
+        duration: 150,
+        ease: 'Power2',
+        yoyo: true,
+        repeat: 1
+      })
+    }
+    
+    // バイタリティが増えた場合のグローエフェクト
+    if (newVitality > oldVitality) {
+      const glow = this.add.rectangle(0, 0, this.vitalityBarMaxWidth + 20, 30, 0x10B981, 0.5)
+      glow.setAlpha(0)
+      this.vitalityBarContainer.add(glow)
+      
+      this.tweens.add({
+        targets: glow,
+        alpha: 0.6,
+        duration: 200,
+        ease: 'Power2',
+        yoyo: true,
+        repeat: 1,
+        onComplete: () => glow.destroy()
+      })
+    }
+
+    // 現在値を保存
+    this.vitalityBar.setData('currentVitality', newVitality)
   }
 
   /**
