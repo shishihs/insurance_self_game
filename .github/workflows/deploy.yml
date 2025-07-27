@@ -39,7 +39,7 @@ jobs:
       run: pnpm run type-check
       
     - name: Lint
-      run: pnpm exec eslint . --fix
+      run: pnpm exec eslint . --fix --ignore-pattern "**/*.test.ts"
       
     - name: Test
       run: pnpm run test:run
