@@ -522,30 +522,85 @@ export class GamePerformanceAnalyzer {
     }
   }
 
+  private lastCpuUsage: NodeJS.CpuUsage | null = null
+  private lastCpuTime: number = 0
+
   private getCpuUsage(): number {
-    // Simple CPU usage estimation based on event loop lag
-    const start = process.hrtime.bigint()
-    setImmediate(() => {
-      const lag = Number(process.hrtime.bigint() - start) / 1000000 // Convert to ms
-      return Math.min(100, lag * 10) // Rough estimation
-    })
-    
-    // Return a placeholder for now - in real implementation, 
-    // you'd use a more sophisticated CPU monitoring approach
-    return 0
+    const currentCpuUsage = process.cpuUsage()
+    const currentTime = Date.now()
+
+    if (this.lastCpuUsage && this.lastCpuTime) {
+      const elapsedTime = currentTime - this.lastCpuTime
+      const elapsedUserCPU = currentCpuUsage.user - this.lastCpuUsage.user
+      const elapsedSystemCPU = currentCpuUsage.system - this.lastCpuUsage.system
+      
+      // Convert microseconds to milliseconds and calculate percentage
+      const totalCpuTime = (elapsedUserCPU + elapsedSystemCPU) / 1000 // Convert to ms
+      const cpuUsage = (totalCpuTime / elapsedTime) * 100
+      
+      this.lastCpuUsage = currentCpuUsage
+      this.lastCpuTime = currentTime
+      
+      return Math.min(100, Math.max(0, cpuUsage))
+    } else {
+      // First measurement - initialize tracking
+      this.lastCpuUsage = currentCpuUsage
+      this.lastCpuTime = currentTime
+      return 0
+    }
   }
 
   private setupGcMonitoring(): void {
     if (!this.config.enableGcMonitoring) return
 
-    // Monitor garbage collection if available
+    // Monitor garbage collection using performance hooks
     if (typeof process !== 'undefined' && process.on) {
-      // Note: GC monitoring requires --expose-gc flag or specific Node.js setup
       try {
-        // This is a simplified version - real implementation would use
-        // performance hooks or similar GC monitoring APIs
+        // Import performance hooks dynamically to avoid errors if not available
+        const { PerformanceObserver } = require('perf_hooks')
+        
+        const obs = new PerformanceObserver((list) => {
+          const entries = list.getEntries()
+          for (const entry of entries) {
+            if (entry.entryType === 'gc') {
+              this.gcStats.count++
+              this.gcStats.totalTime += entry.duration
+            }
+          }
+        })
+        
+        // Observe GC events
+        obs.observe({ entryTypes: ['gc'] })
+        
+        // Also monitor using process events if available
+        if (process.on) {
+          process.on('exit', () => {
+            obs.disconnect()
+          })
+        }
+        
       } catch (error) {
-        // GC monitoring not available
+        // GC monitoring not available - fallback to basic monitoring
+        console.warn('Advanced GC monitoring not available, using basic monitoring')
+        
+        // Simple memory-based GC estimation
+        let lastHeapUsed = process.memoryUsage().heapUsed
+        const gcCheckInterval = setInterval(() => {
+          const currentHeapUsed = process.memoryUsage().heapUsed
+          if (currentHeapUsed < lastHeapUsed * 0.8) {
+            // Likely GC occurred (significant memory decrease)
+            this.gcStats.count++
+            this.gcStats.totalTime += 10 // Estimate 10ms per GC
+          }
+          lastHeapUsed = currentHeapUsed
+        }, 100) // Check every 100ms
+        
+        // Clean up interval on exit
+        if (process.on) {
+          process.on('exit', () => {
+            clearInterval(gcCheckInterval)
+          })
+        }
       }
     }
   }

@@ -8,8 +8,9 @@ import { Command } from 'commander'
 import chalk from 'chalk'
 import figlet from 'figlet'
 import inquirer from 'inquirer'
-import { writeFile } from 'fs/promises'
+import { writeFile, readFile } from 'fs/promises'
 import { join } from 'path'
+import { cpus } from 'os'
 
 // Import optimization and research systems
 import { GamePerformanceAnalyzer, PerformanceAnalyzerFactory } from '@/performance/GamePerformanceAnalyzer'
@@ -285,7 +286,7 @@ analyticsCommand
     
     try {
       // Load data
-      const dataContent = await require('fs/promises').readFile(options.file, 'utf8')
+      const dataContent = await readFile(options.file, 'utf8')
       const data = JSON.parse(dataContent)
       
       const statisticalTests = new StatisticalTests({
@@ -356,7 +357,7 @@ analyticsCommand
     }
     
     try {
-      const dataContent = await require('fs/promises').readFile(options.file, 'utf8')
+      const dataContent = await readFile(options.file, 'utf8')
       const data = JSON.parse(dataContent)
       
       const statisticalTests = new StatisticalTests()
@@ -689,7 +690,7 @@ benchmarkAnalysisCommand
     console.log(chalk.cyan('📊 Analyzing benchmark results...'))
     
     try {
-      const results = JSON.parse(await require('fs').promises.readFile(options.input, 'utf8'))
+      const results = JSON.parse(await readFile(options.input, 'utf8'))
       
       const analytics = options.comprehensive ? 
         GameAnalyticsFactory.createResearchAnalyzer() :
@@ -734,7 +735,7 @@ benchmarkAnalysisCommand
     console.log(chalk.cyan('⚖️ Analyzing game balance...'))
     
     try {
-      const results = JSON.parse(await require('fs').promises.readFile(options.input, 'utf8'))
+      const results = JSON.parse(await readFile(options.input, 'utf8'))
       
       const analytics = GameAnalyticsFactory.createBalanceAnalyzer()
       const balance = analytics.analyzeGameBalance(results)
@@ -1031,7 +1032,7 @@ program
     console.log(`  Node.js: ${process.version}`)
     console.log(`  Platform: ${process.platform}`)
     console.log(`  Memory: ${(process.memoryUsage().rss / 1024 / 1024).toFixed(2)}MB`)
-    console.log(`  CPU Cores: ${require('os').cpus().length}`)
+    console.log(`  CPU Cores: ${cpus().length}`)
   })
 
 program

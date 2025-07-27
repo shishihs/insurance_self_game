@@ -1,4 +1,4 @@
-import type { GameStage, Difficulty } from './card.types'
+import type { GameStage, Difficulty, InsuranceType, InsuranceDurationType } from './card.types'
 import type { Card } from '../entities/Card'
 import type { Deck } from '../entities/Deck'
 
@@ -16,13 +16,14 @@ export type GameStatus =
  * ゲームフェーズ
  */
 export type GamePhase = 
-  | 'setup'           // セットアップ
-  | 'draw'            // ドロー
-  | 'challenge'       // チャレンジ
-  | 'resolution'      // 結果処理
-  | 'card_selection'  // カード選択（チャレンジ成功時）
-  | 'upgrade'         // アップグレード（ステージクリア時）
-  | 'end'            // 終了
+  | 'setup'                    // セットアップ
+  | 'draw'                     // ドロー
+  | 'challenge'                // チャレンジ
+  | 'resolution'               // 結果処理
+  | 'card_selection'           // カード選択（チャレンジ成功時）
+  | 'insurance_type_selection' // 保険種類選択（チャレンジ成功時）
+  | 'upgrade'                  // アップグレード（ステージクリア時）
+  | 'end'                     // 終了
 
 /**
  * プレイヤー統計
@@ -48,6 +49,25 @@ export interface GameConfig {
 }
 
 /**
+ * 保険種類選択肢
+ */
+export interface InsuranceTypeChoice {
+  insuranceType: InsuranceType
+  name: string
+  description: string
+  baseCard: Omit<Card, 'id' | 'durationType' | 'remainingTurns'>
+  termOption: {
+    cost: number
+    duration: number // ターン数
+    description: string
+  }
+  wholeLifeOption: {
+    cost: number
+    description: string
+  }
+}
+
+/**
  * チャレンジ結果
  */
 export interface ChallengeResult {
@@ -56,6 +76,7 @@ export interface ChallengeResult {
   challengePower: number
   rewards?: Card[]
   cardChoices?: Card[]  // カード選択肢（3枚）
+  insuranceTypeChoices?: InsuranceTypeChoice[]  // 保険種類選択肢（3種類）
   vitalityChange: number
   message: string
   // Phase 3: パワー計算の詳細

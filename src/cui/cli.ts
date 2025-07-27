@@ -8,6 +8,7 @@
 import { Command } from 'commander'
 import chalk from 'chalk'
 import figlet from 'figlet'
+import { writeFile } from 'fs/promises'
 import { GameController, GameControllerFactory } from '@/controllers/GameController'
 import { InteractiveCUIRenderer } from './renderers/InteractiveCUIRenderer'
 import { DemoModeRenderer, SmartDemoStrategy, AggressiveDemoStrategy, ConservativeDemoStrategy } from './modes/DemoMode'
@@ -223,7 +224,7 @@ async function runBenchmark(options: any): Promise<void> {
     visualEffects: false
   }, gamesCount)
 
-  let totalStats = {
+  const totalStats = {
     victories: 0,
     gameOvers: 0,
     totalChallenges: 0,
@@ -247,7 +248,7 @@ async function runBenchmark(options: any): Promise<void> {
   // Export results if requested
   if (options.output) {
     const exportData = renderer.exportResults()
-    await require('fs').promises.writeFile(options.output, exportData)
+    await writeFile(options.output, exportData)
     console.log(chalk.green(`\n💾 Results exported to: ${options.output}`))
   }
 }
