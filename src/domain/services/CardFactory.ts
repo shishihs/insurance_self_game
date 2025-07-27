@@ -4,7 +4,8 @@ import type {
   InsuranceType, 
   GameStage,
   InsuranceDurationType,
-  InsuranceCardData
+  InsuranceCardData,
+  DreamCategory
 } from '../types/card.types'
 
 /**
@@ -230,51 +231,59 @@ export class CardFactory {
       cards.push(this.createChallengeCard({
         name: '就職活動',
         description: '新たなキャリアの始まり',
-        power: 5
+        power: 5,
+        dreamCategory: 'physical' // 体力系
       }))
 
       cards.push(this.createChallengeCard({
         name: '一人暮らし',
         description: '独立への第一歩',
-        power: 4
+        power: 4,
+        dreamCategory: 'physical' // 体力系
       }))
 
       cards.push(this.createChallengeCard({
         name: '資格試験',
         description: 'スキルアップのチャンス',
-        power: 6
+        power: 6,
+        dreamCategory: 'intellectual' // 知識系
       }))
     } else if (stage === 'middle') {
       // 中年期のチャレンジ
       cards.push(this.createChallengeCard({
         name: '子育て',
         description: '家族の成長',
-        power: 8
+        power: 8,
+        dreamCategory: 'physical' // 体力系
       }))
 
       cards.push(this.createChallengeCard({
         name: '住宅購入',
         description: '大きな決断',
-        power: 10
+        power: 10,
+        dreamCategory: 'physical' // 体力系
       }))
 
       cards.push(this.createChallengeCard({
         name: '親の介護',
         description: '家族の支え合い',
-        power: 9
+        power: 9,
+        dreamCategory: 'mixed' // 複合系
       }))
     } else {
       // 充実期のチャレンジ
       cards.push(this.createChallengeCard({
         name: '定年退職',
         description: '新しい人生のスタート',
-        power: 12
+        power: 12,
+        dreamCategory: 'intellectual' // 知識系
       }))
 
       cards.push(this.createChallengeCard({
         name: '健康管理',
         description: '健やかな老後のために',
-        power: 11
+        power: 11,
+        dreamCategory: 'mixed' // 複合系
       }))
     }
 
@@ -380,6 +389,7 @@ export class CardFactory {
     name: string
     description: string
     power: number
+    dreamCategory?: DreamCategory
   }): Card {
     return new Card({
       id: this.generateId(),
@@ -388,7 +398,8 @@ export class CardFactory {
       description: params.description,
       power: params.power,
       cost: 0,
-      effects: []
+      effects: [],
+      dreamCategory: params.dreamCategory
     })
   }
 

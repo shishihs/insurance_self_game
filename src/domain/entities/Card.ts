@@ -6,7 +6,8 @@ import type {
   LifeCardCategory, 
   InsuranceType,
   InsuranceDurationType,
-  InsuranceCardData
+  InsuranceCardData,
+  DreamCategory
 } from '../types/card.types'
 
 /**
@@ -29,6 +30,8 @@ export class Card implements ICard {
   readonly durationType?: InsuranceDurationType
   readonly remainingTurns?: number
   readonly ageBonus?: number
+  // Phase 4 夢カード用プロパティ
+  readonly dreamCategory?: DreamCategory
 
   constructor(params: ICard | InsuranceCardData) {
     this.id = params.id
@@ -49,6 +52,11 @@ export class Card implements ICard {
       this.durationType = params.durationType
       this.remainingTurns = params.remainingTurns
       this.ageBonus = params.ageBonus
+    }
+    
+    // Phase 4: 夢カードのカテゴリー
+    if ('dreamCategory' in params) {
+      this.dreamCategory = params.dreamCategory
     }
   }
 
@@ -90,6 +98,13 @@ export class Card implements ICard {
   }
 
   /**
+   * Phase 4: 夢カードかどうか
+   */
+  isDreamCard(): boolean {
+    return this.dreamCategory !== undefined
+  }
+
+  /**
    * カードのコピーを作成
    */
   clone(): Card {
@@ -110,7 +125,8 @@ export class Card implements ICard {
         durationType: this.durationType,
         remainingTurns: this.remainingTurns,
         ageBonus: this.ageBonus || 0
-      })
+      }),
+      dreamCategory: this.dreamCategory
     }
     
     return new Card(baseParams)

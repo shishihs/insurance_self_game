@@ -15,9 +15,13 @@ export class GameScene extends BaseScene {
   private handCards: Phaser.GameObjects.Container[] = []
   private selectedCards: Set<string> = new Set()
   private cardSelectionUI?: Phaser.GameObjects.Container
+  private insuranceTypeSelectionUI?: Phaser.GameObjects.Container
+  private selectedInsuranceType?: 'whole_life' | 'term'
   private vitalityBarContainer?: Phaser.GameObjects.Container
   private vitalityBar?: Phaser.GameObjects.Rectangle
   private vitalityBarMaxWidth: number = 300
+  private insuranceListContainer?: Phaser.GameObjects.Container
+  private burdenIndicatorContainer?: Phaser.GameObjects.Container
 
   constructor() {
     super({ key: 'GameScene' })
@@ -119,6 +123,76 @@ export class GameScene extends BaseScene {
 
     // アクションボタン
     this.createActionButtons()
+
+    // Phase 3-3: 保険料負担インジケーター
+    this.createBurdenIndicator()
+
+    // Phase 3-3: 保険カード一覧
+    this.createInsuranceListDisplay()
+  }
+
+  /**
+   * Phase 3-3: 保険料負担インジケーターを作成
+   */
+  private createBurdenIndicator(): void {
+    this.burdenIndicatorContainer = this.add.container(this.gameWidth - 200, 120)
+    this.burdenIndicatorContainer.setName('burden-indicator')
+
+    // 背景
+    const bg = this.add.rectangle(0, 0, 180, 50, 0x000000, 0.7)
+    bg.setStrokeStyle(2, 0xffffff)
+
+    // ラベル
+    const label = this.add.text(
+      -80, 0,
+      '保険料負担:',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0, 0.5)
+
+    // 負担値
+    const burden = this.gameInstance.insuranceBurden
+    const burdenText = this.add.text(
+      40, 0,
+      burden === 0 ? '負担なし' : `${burden}`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: burden === 0 ? '#00ff00' : '#ff4444',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+    burdenText.setName('burden-value')
+
+    this.burdenIndicatorContainer.add([bg, label, burdenText])
+  }
+
+  /**
+   * Phase 3-3: 保険カード一覧表示を作成
+   */
+  private createInsuranceListDisplay(): void {
+    this.insuranceListContainer = this.add.container(this.gameWidth - 150, 250)
+    this.insuranceListContainer.setName('insurance-list')
+
+    // タイトル
+    const title = this.add.text(
+      0, 0,
+      '有効な保険',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    this.insuranceListContainer.add(title)
+
+    // 保険カードリストを更新
+    this.updateInsuranceList()
   }
 
   /**
@@ -612,12 +686,232 @@ export class GameScene extends BaseScene {
       // 次のターンへ
       this.gameInstance.nextTurn()
       
+      // Phase 3-3: 期限切れ保険の通知
+      const expiredInsurances = this.gameInstance.getExpiredInsurances()
+      if (expiredInsurances.length > 0) {
+        expiredInsurances.forEach(insurance => {
+          this.showNotification(`保険が期限切れになりました: ${insurance.name}`, 'warning')
+        })
+        this.gameInstance.clearExpiredInsurances()
+      }
+      
+      // Phase 5-1: 期限切れ間近の保険の警告
+      this.checkExpiringInsurances()
+      
       // UI更新
       this.updateUI()
       this.updateActionButtons()
       
       // ゲーム終了判定
       this.checkGameEnd()
+    }
+  }
+
+  /**
+   * Phase 3-3: 保険カードリストを更新
+   */
+  private updateInsuranceList(): void {
+    if (!this.insuranceListContainer) return
+
+    // 既存のカードアイテムを削除（タイトル以外）
+    const itemsToRemove = this.insuranceListContainer.list.filter((item, index) => index > 0)
+    itemsToRemove.forEach(item => item.destroy())
+
+    const activeInsurances = this.gameInstance.getActiveInsurances()
+    
+    if (activeInsurances.length === 0) {
+      const noInsuranceText = this.add.text(
+        0, 30,
+        'なし',
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '14px',
+          color: '#999999'
+        }
+      ).setOrigin(0.5)
+      this.insuranceListContainer.add(noInsuranceText)
+      return
+    }
+
+    // 保険カードをリスト表示
+    activeInsurances.forEach((insurance, index) => {
+      const yPos = 30 + index * 35
+
+      // カードコンテナ
+      const cardItem = this.add.container(0, yPos)
+
+      // Phase 5-2: 期限切れ間近の点滅表示
+      const isExpiringSoon = insurance.durationType === 'term' && 
+                             insurance.remainingTurns !== undefined && 
+                             insurance.remainingTurns <= 2
+
+      // カード背景
+      const itemBg = this.add.rectangle(
+        0, 0, 240, 30,
+        insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0,
+        0.2
+      )
+      itemBg.setStrokeStyle(2, insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0)
+
+      // Phase 5-2: 期限切れ間近の点滅アニメーション
+      if (isExpiringSoon) {
+        this.tweens.add({
+          targets: itemBg,
+          alpha: 0.3,
+          duration: 500,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        })
+        itemBg.setFillStyle(0xff4444, 0.3)
+      }
+
+      // Phase 5-2: 保険種別バッジ
+      const typeBadge = this.add.rectangle(
+        -100, 0, 40, 20,
+        insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0
+      )
+      typeBadge.setStrokeStyle(1, 0xffffff)
+
+      const typeText = this.add.text(
+        -100, 0,
+        insurance.durationType === 'whole_life' ? '終身' : '定期',
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '10px',
+          color: insurance.durationType === 'whole_life' ? '#000000' : '#ffffff',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+
+      // カード名
+      const nameText = this.add.text(
+        -50, 0,
+        insurance.name.length > 8 ? insurance.name.substring(0, 8) + '...' : insurance.name,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '12px',
+          color: '#ffffff'
+        }
+      ).setOrigin(0, 0.5)
+
+      // Phase 5-2: 年齢ボーナス表示（終身保険のみ）
+      if (insurance.durationType === 'whole_life') {
+        const stage = this.gameInstance.stage
+        let bonus = 0
+        if (stage === 'middle') bonus = 0.5
+        else if (stage === 'fulfillment') bonus = 1.0
+        
+        if (bonus > 0) {
+          const bonusText = this.add.text(
+            50, 0,
+            `+${bonus}`,
+            {
+              fontFamily: 'Noto Sans JP',
+              fontSize: '12px',
+              color: '#4ade80',
+              fontStyle: 'bold'
+            }
+          ).setOrigin(0.5)
+          cardItem.add(bonusText)
+        }
+      }
+
+      // 残りターン数（定期保険の場合）
+      if (insurance.durationType === 'term' && insurance.remainingTurns !== undefined) {
+        const turnsText = this.add.text(
+          100, 0,
+          `残り${insurance.remainingTurns}T`,
+          {
+            fontFamily: 'Noto Sans JP',
+            fontSize: '12px',
+            color: insurance.remainingTurns <= 2 ? '#ff4444' : '#ffffff',
+            fontStyle: insurance.remainingTurns <= 2 ? 'bold' : 'normal'
+          }
+        ).setOrigin(1, 0.5)
+        
+        // Phase 5-2: 期限切れ間近の警告アイコン
+        if (insurance.remainingTurns <= 2) {
+          const warningIcon = this.add.text(
+            115, 0,
+            '⚠',
+            {
+              fontFamily: 'Noto Sans JP',
+              fontSize: '14px',
+              color: '#ff4444'
+            }
+          ).setOrigin(0.5)
+          cardItem.add(warningIcon)
+        }
+        
+        cardItem.add(turnsText)
+      }
+
+      cardItem.add([itemBg, typeBadge, typeText, nameText])
+      this.insuranceListContainer.add(cardItem)
+
+      // 3枚ごとに区切り線
+      if ((index + 1) % 3 === 0 && index < activeInsurances.length - 1) {
+        const divider = this.add.rectangle(
+          0, yPos + 20, 200, 2,
+          0xff4444, 0.5
+        )
+        this.insuranceListContainer.add(divider)
+      }
+    })
+
+    // 負担発生の警告
+    if (activeInsurances.length >= 3) {
+      const warningText = this.add.text(
+        0, 30 + activeInsurances.length * 35 + 10,
+        `⚠ ${Math.floor(activeInsurances.length / 3)}ポイント負担中`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '14px',
+          color: '#ff4444',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+      this.insuranceListContainer.add(warningText)
+    }
+  }
+
+  /**
+   * Phase 3-3: 保険料負担インジケーターを更新
+   */
+  private updateBurdenIndicator(): void {
+    if (!this.burdenIndicatorContainer) return
+
+    const burdenText = this.burdenIndicatorContainer.getByName('burden-value') as Phaser.GameObjects.Text
+    if (!burdenText) return
+
+    const burden = this.gameInstance.insuranceBurden
+    const previousBurden = parseInt(burdenText.text === '負担なし' ? '0' : burdenText.text)
+
+    // 負担値を更新
+    burdenText.setText(burden === 0 ? '負担なし' : `${burden}`)
+    burdenText.setColor(burden === 0 ? '#00ff00' : '#ff4444')
+
+    // 負担が増えた場合は警告アニメーション
+    if (burden < previousBurden) { // 負の値なので逆
+      this.tweens.add({
+        targets: this.burdenIndicatorContainer,
+        scaleX: 1.2,
+        scaleY: 1.2,
+        duration: 200,
+        yoyo: true,
+        ease: 'Power2',
+        onComplete: () => {
+          // 赤く点滅
+          const bg = this.burdenIndicatorContainer?.list[0] as Phaser.GameObjects.Rectangle
+          if (bg) {
+            bg.setFillStyle(0xff0000, 0.8)
+            this.time.delayedCall(300, () => {
+              bg.setFillStyle(0x000000, 0.7)
+            })
+          }
+        }
+      })
     }
   }
 
@@ -651,6 +945,10 @@ export class GameScene extends BaseScene {
     if (stageText) {
       stageText.setText(this.getStageDisplayText())
     }
+
+    // Phase 3-3: 保険関連UIを更新
+    this.updateInsuranceList()
+    this.updateBurdenIndicator()
   }
 
   /**
@@ -683,15 +981,76 @@ export class GameScene extends BaseScene {
     const powerDisplay = this.children.getByName('power-display') as Phaser.GameObjects.Container
     if (!powerDisplay) return
 
-    const selectedPower = this.calculateSelectedPower()
+    // Phase 3-3: 詳細なパワー計算
+    const selectedCardsArray = this.handCards
+      .filter(cardContainer => this.selectedCards.has(cardContainer.getData('card').id))
+      .map(cardContainer => cardContainer.getData('card') as Card)
+    
+    const powerBreakdown = this.gameInstance.calculateTotalPower(selectedCardsArray)
+    
+    // 既存のテキストを削除
+    const textsToRemove = powerDisplay.list.filter(item => 
+      item instanceof Phaser.GameObjects.Text && item.name !== 'power-text' && item.name !== 'count-text'
+    )
+    textsToRemove.forEach(text => text.destroy())
+    
     const powerText = powerDisplay.getByName('power-text') as Phaser.GameObjects.Text
     const countText = powerDisplay.getByName('count-text') as Phaser.GameObjects.Text
     
     if (powerText) {
-      powerText.setText(`選択パワー: ${selectedPower}`)
+      powerText.setText(`合計パワー: ${powerBreakdown.total}`)
+      powerText.setColor(powerBreakdown.total > 0 ? '#00ff00' : '#ff4444')
     }
     if (countText) {
       countText.setText(`選択カード: ${this.selectedCards.size}枚`)
+    }
+
+    // Phase 3-3: パワーの内訳を表示
+    let yOffset = 40
+    
+    // 基本パワー
+    if (powerBreakdown.base > 0) {
+      const baseText = this.add.text(
+        0, yOffset,
+        `基本: +${powerBreakdown.base}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '14px',
+          color: '#ffffff'
+        }
+      ).setOrigin(0.5)
+      powerDisplay.add(baseText)
+      yOffset += 20
+    }
+
+    // 保険ボーナス
+    if (powerBreakdown.insurance > 0) {
+      const insuranceText = this.add.text(
+        0, yOffset,
+        `保険: +${powerBreakdown.insurance}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '14px',
+          color: '#4ade80'
+        }
+      ).setOrigin(0.5)
+      powerDisplay.add(insuranceText)
+      yOffset += 20
+    }
+
+    // 保険料負担
+    if (powerBreakdown.burden < 0) {
+      const burdenText = this.add.text(
+        0, yOffset,
+        `負担: ${powerBreakdown.burden}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '14px',
+          color: '#ff4444',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+      powerDisplay.add(burdenText)
     }
   }
 
@@ -869,12 +1228,12 @@ export class GameScene extends BaseScene {
     const powerDisplay = this.add.container(this.gameWidth - 150, 300)
     powerDisplay.setName('power-display')
 
-    const bg = this.add.rectangle(0, 0, 200, 80, 0x000000, 0.8)
+    const bg = this.add.rectangle(0, 0, 200, 140, 0x000000, 0.8)
     
     const selectedPower = this.calculateSelectedPower()
     const text = this.add.text(
       0,
-      -20,
+      -50,
       `選択パワー: ${selectedPower}`,
       {
         fontFamily: 'Noto Sans JP',
@@ -887,7 +1246,7 @@ export class GameScene extends BaseScene {
 
     const subText = this.add.text(
       0,
-      10,
+      -20,
       `選択カード: ${this.selectedCards.size}枚`,
       {
         fontFamily: 'Noto Sans JP',
@@ -899,6 +1258,9 @@ export class GameScene extends BaseScene {
     subText.setName('count-text')
 
     powerDisplay.add([bg, text, subText])
+
+    // 初回表示時にパワーの内訳を更新
+    this.updatePowerDisplay()
 
     // チャレンジ解決ボタン
     const resolveButton = this.createButton(
@@ -954,9 +1316,9 @@ export class GameScene extends BaseScene {
     
     // カード選択フェーズかチェック
     if (result.success && result.cardChoices) {
-      // カード選択UIを表示（結果表示後に）
+      // Phase 2: 保険種別選択UIを先に表示
       this.time.delayedCall(2000, () => {
-        this.showCardSelection(result.cardChoices!)
+        this.showInsuranceTypeSelection()
       })
     } else {
       // 失敗時または選択肢がない場合は、UIをクリーンアップして通常フローに戻す
@@ -1001,11 +1363,11 @@ export class GameScene extends BaseScene {
   private showChallengeResult(result: ChallengeResult): void {
     const resultContainer = this.add.container(this.centerX, this.centerY)
     
-    const bg = this.add.rectangle(0, 0, 400, 200, 0x000000, 0.9)
+    const bg = this.add.rectangle(0, 0, 500, 300, 0x000000, 0.9)
     
     const titleText = this.add.text(
       0,
-      -60,
+      -100,
       result.success ? 'チャレンジ成功！' : 'チャレンジ失敗...',
       {
         fontFamily: 'Noto Sans JP',
@@ -1015,22 +1377,62 @@ export class GameScene extends BaseScene {
       }
     ).setOrigin(0.5)
     
+    // Phase 3-3: パワー計算の内訳を表示
+    let detailContent = `チャレンジパワー: ${result.challengePower}\n\n`
+    
+    if (result.powerBreakdown) {
+      detailContent += 'あなたのパワー内訳:\n'
+      if (result.powerBreakdown.base > 0) {
+        detailContent += `  基本パワー: +${result.powerBreakdown.base}\n`
+      }
+      if (result.powerBreakdown.insurance > 0) {
+        detailContent += `  保険ボーナス: +${result.powerBreakdown.insurance}\n`
+      }
+      if (result.powerBreakdown.burden < 0) {
+        detailContent += `  保険料負担: ${result.powerBreakdown.burden}\n`
+      }
+      detailContent += `  合計: ${result.powerBreakdown.total}\n\n`
+    } else {
+      detailContent += `あなたのパワー: ${result.playerPower}\n\n`
+    }
+    
+    detailContent += `活力変化: ${result.vitalityChange > 0 ? '+' : ''}${result.vitalityChange}`
+    
     const detailText = this.add.text(
       0,
-      0,
-      `あなたのパワー: ${result.playerPower}\nチャレンジパワー: ${result.challengePower}\n活力変化: ${result.vitalityChange > 0 ? '+' : ''}${result.vitalityChange}`,
+      -20,
+      detailContent,
       {
         fontFamily: 'Noto Sans JP',
-        fontSize: '18px',
+        fontSize: '16px',
         color: '#ffffff',
         align: 'center',
         lineSpacing: 5
       }
     ).setOrigin(0.5)
+
+    // Phase 3-3: 保険料負担が勝敗に影響した場合の特別メッセージ
+    if (!result.success && result.powerBreakdown && result.powerBreakdown.burden < 0) {
+      const withoutBurden = result.powerBreakdown.base + result.powerBreakdown.insurance
+      if (withoutBurden >= result.challengePower) {
+        const burdenImpactText = this.add.text(
+          0,
+          90,
+          '⚠ 保険料負担により敗北しました',
+          {
+            fontFamily: 'Noto Sans JP',
+            fontSize: '14px',
+            color: '#ff9999',
+            fontStyle: 'bold'
+          }
+        ).setOrigin(0.5)
+        resultContainer.add(burdenImpactText)
+      }
+    }
     
     const closeButton = this.createButton(
       0,
-      70,
+      120,
       '閉じる',
       () => {
         this.tweens.add({
@@ -1131,7 +1533,7 @@ export class GameScene extends BaseScene {
     
     const text = this.add.text(
       0,
-      -40,
+      -80,
       `${stageName}へ突入！`,
       {
         fontFamily: 'Noto Sans JP',
@@ -1144,7 +1546,7 @@ export class GameScene extends BaseScene {
     // 体力減少メッセージ
     const vitalityChangeText = this.add.text(
       0,
-      20,
+      -20,
       `体力が衰えました (最大値: ${previousMaxVitality} → ${newMaxVitality})`,
       {
         fontFamily: 'Noto Sans JP',
@@ -1153,25 +1555,63 @@ export class GameScene extends BaseScene {
       }
     ).setOrigin(0.5)
     
-    transitionContainer.add([bg, text, vitalityChangeText])
+    // Phase 5-1: 保険見直し推奨メッセージ
+    const reviewRecommendation = this.getInsuranceReviewRecommendation(stageName)
+    const reviewText = this.add.text(
+      0,
+      40,
+      reviewRecommendation,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: '#00ff00',
+        align: 'center'
+      }
+    ).setOrigin(0.5)
+
+    // Phase 5-1: 保険見直しボタン
+    const reviewButton = this.createButton(
+      0,
+      100,
+      '保険を見直す',
+      () => {
+        this.showInsuranceReviewDialog()
+        transitionContainer.destroy()
+      },
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff'
+      }
+    )
+
+    const skipButton = this.createButton(
+      0,
+      150,
+      'あとで見直す',
+      () => {
+        this.tweens.add({
+          targets: transitionContainer,
+          alpha: 0,
+          duration: 500,
+          onComplete: () => transitionContainer.destroy()
+        })
+      },
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#cccccc'
+      }
+    )
+    
+    transitionContainer.add([bg, text, vitalityChangeText, reviewText, reviewButton, skipButton])
     transitionContainer.setAlpha(0)
     
     // フェードイン
     this.tweens.add({
       targets: transitionContainer,
       alpha: 1,
-      duration: 500,
-      onComplete: () => {
-        // 一定時間表示後、フェードアウト
-        this.time.delayedCall(2000, () => {
-          this.tweens.add({
-            targets: transitionContainer,
-            alpha: 0,
-            duration: 500,
-            onComplete: () => transitionContainer.destroy()
-          })
-        })
-      }
+      duration: 500
     })
     
     // ステージ表示を更新
@@ -1182,6 +1622,122 @@ export class GameScene extends BaseScene {
     
     // 活力バーの最大値変更をアニメーション
     this.animateMaxVitalityChange()
+  }
+
+  /**
+   * Phase 5-1: 保険見直し推奨メッセージを取得
+   */
+  private getInsuranceReviewRecommendation(stageName: string): string {
+    if (stageName === '中年期') {
+      return '📌 保険見直しの機会\n定期保険から終身保険への変更を検討しましょう'
+    } else if (stageName === '充実期') {
+      return '📌 総合的な保険見直し\n終身保険の価値が大幅に上昇します！'
+    }
+    return ''
+  }
+
+  /**
+   * Phase 5-1: 保険見直しダイアログを表示
+   */
+  private showInsuranceReviewDialog(): void {
+    // TODO: 保険見直しダイアログの実装
+    this.showNotification('保険見直し機能は開発中です', 'info')
+  }
+
+  /**
+   * Phase 5-1: 期限切れ間近の保険をチェック
+   */
+  private checkExpiringInsurances(): void {
+    const activeInsurances = this.gameInstance.getActiveInsurances()
+    const expiringInsurances = activeInsurances.filter(insurance => 
+      insurance.durationType === 'term' && 
+      insurance.remainingTurns !== undefined &&
+      insurance.remainingTurns === 2
+    )
+
+    if (expiringInsurances.length > 0) {
+      expiringInsurances.forEach(insurance => {
+        this.showExpiringInsuranceWarning(insurance)
+      })
+    }
+  }
+
+  /**
+   * Phase 5-1: 期限切れ間近の保険警告を表示
+   */
+  private showExpiringInsuranceWarning(insurance: Card): void {
+    const warningContainer = this.add.container(this.centerX, 300)
+    warningContainer.setDepth(2000)
+
+    const bg = this.add.rectangle(0, 0, 400, 120, 0xff4444, 0.95)
+    bg.setStrokeStyle(3, 0xffffff)
+
+    const iconText = this.add.text(
+      -170, 0,
+      '⚠',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '48px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5)
+
+    const messageText = this.add.text(
+      20, -20,
+      `${insurance.name}が\nあと${insurance.remainingTurns}ターンで期限切れです！`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    const actionText = this.add.text(
+      20, 20,
+      '更新または終身保険への切り替えを検討しましょう',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '14px',
+        color: '#ffcccc'
+      }
+    ).setOrigin(0.5)
+
+    warningContainer.add([bg, iconText, messageText, actionText])
+    warningContainer.setScale(0)
+    warningContainer.setAlpha(0)
+
+    // 警告アニメーション
+    this.tweens.add({
+      targets: warningContainer,
+      scale: 1.1,
+      alpha: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // パルスエフェクト
+        this.tweens.add({
+          targets: warningContainer,
+          scale: 1,
+          duration: 800,
+          yoyo: true,
+          repeat: 2,
+          ease: 'Sine.easeInOut'
+        })
+
+        // 自動で消える
+        this.time.delayedCall(5000, () => {
+          this.tweens.add({
+            targets: warningContainer,
+            scale: 0.8,
+            alpha: 0,
+            duration: 500,
+            ease: 'Power2',
+            onComplete: () => warningContainer.destroy()
+          })
+        })
+      }
+    })
   }
 
   /**
@@ -1233,6 +1789,524 @@ export class GameScene extends BaseScene {
       this.gameInstance.status = 'victory'
       this.showGameEnd(true)
     }
+  }
+
+  /**
+   * 保険種別選択UIを表示（Phase 2）
+   */
+  private showInsuranceTypeSelection(): void {
+    // 既存の保険種別選択UIがあれば削除
+    if (this.insuranceTypeSelectionUI) {
+      this.insuranceTypeSelectionUI.destroy()
+    }
+
+    // 保険種別選択コンテナを作成
+    this.insuranceTypeSelectionUI = this.add.container(this.centerX, this.centerY)
+    this.insuranceTypeSelectionUI.setDepth(2000)
+
+    // 背景オーバーレイ
+    const overlay = this.add.rectangle(
+      0, 0,
+      this.gameWidth, this.gameHeight,
+      0x000000, 0.8
+    )
+    overlay.setOrigin(0.5)
+
+    // タイトル
+    const titleText = this.add.text(
+      0, -200,
+      '保険種別を選択してください',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '36px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // 年齢に応じた推奨テキスト
+    const recommendationText = this.getInsuranceRecommendation()
+    const recommendText = this.add.text(
+      0, -140,
+      recommendationText,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: '#00ff00'
+      }
+    ).setOrigin(0.5)
+
+    this.insuranceTypeSelectionUI.add([overlay, titleText, recommendText])
+
+    // 終身保険選択ボタン
+    this.createInsuranceTypeButton(
+      -180, 0,
+      '終身保険',
+      '一生涯の保障\n高コスト・高効果',
+      0xFFD700, // 金色
+      'whole_life'
+    )
+
+    // 定期保険選択ボタン
+    this.createInsuranceTypeButton(
+      180, 0,
+      '定期保険',
+      '10ターンの保障\n低コスト・標準効果',
+      0xC0C0C0, // 銀色
+      'term'
+    )
+
+    // ボタンのスタガーアニメーション設定
+    const buttons = this.insuranceTypeSelectionUI.list.filter(child => 
+      child instanceof Phaser.GameObjects.Container && child !== overlay
+    )
+    
+    buttons.forEach((button) => {
+      if (button instanceof Phaser.GameObjects.Container) {
+        button.setScale(0)
+        button.setAlpha(0)
+      }
+    })
+
+    // フェードイン
+    this.insuranceTypeSelectionUI.setAlpha(0)
+    this.tweens.add({
+      targets: this.insuranceTypeSelectionUI,
+      alpha: 1,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => {
+        // ボタンを順番に表示
+        buttons.forEach((button, index) => {
+          if (button instanceof Phaser.GameObjects.Container) {
+            this.time.delayedCall(index * 200, () => {
+              this.tweens.add({
+                targets: button,
+                scale: 1,
+                alpha: 1,
+                duration: 500,
+                ease: 'Back.easeOut'
+              })
+            })
+          }
+        })
+      }
+    })
+  }
+
+  /**
+   * 保険種別選択ボタンを作成
+   */
+  private createInsuranceTypeButton(
+    x: number,
+    y: number,
+    title: string,
+    description: string,
+    color: number,
+    insuranceType: 'whole_life' | 'term'
+  ): void {
+    if (!this.insuranceTypeSelectionUI) return
+
+    const buttonContainer = this.add.container(x, y)
+
+    // カード風の背景
+    const cardBg = this.add.rectangle(0, 0, 300, 400, 0x2C3E50)
+    cardBg.setStrokeStyle(4, color)
+    cardBg.setInteractive()
+    
+    // 光彩エフェクト（終身保険のみ）
+    if (insuranceType === 'whole_life') {
+      const glow = this.add.rectangle(0, 0, 310, 410, color, 0.2)
+      glow.setAlpha(0.5)
+      buttonContainer.addAt(glow, 0)
+      
+      // パルスエフェクト
+      this.tweens.add({
+        targets: glow,
+        alpha: 0.2,
+        scale: 1.05,
+        duration: 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      })
+    }
+
+    // タイトル背景
+    const titleBg = this.add.rectangle(0, -150, 280, 60, color)
+
+    // タイトルテキスト
+    const titleText = this.add.text(
+      0, -150,
+      title,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '28px',
+        color: '#000000',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // 説明テキスト
+    const descText = this.add.text(
+      0, -50,
+      description,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff',
+        align: 'center',
+        lineSpacing: 10
+      }
+    ).setOrigin(0.5)
+
+    // 特徴アイコンと説明
+    const features = insuranceType === 'whole_life' 
+      ? ['永続的な保障', 'パワー +2', 'コスト +2']
+      : ['期間限定保障', '標準パワー', '標準コスト']
+
+    features.forEach((feature, index) => {
+      const featureText = this.add.text(
+        0, 50 + index * 30,
+        `• ${feature}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '16px',
+          color: '#cccccc'
+        }
+      ).setOrigin(0.5)
+      buttonContainer.add(featureText)
+    })
+
+    // Phase 5-1: 詳細な推奨理由を追加
+    const detailBg = this.add.rectangle(0, 280, 280, 80, 0x000000, 0.5)
+    detailBg.setStrokeStyle(1, 0x666666)
+    
+    const detailText = this.add.text(
+      0, 280,
+      this.getDetailedInsuranceRecommendation(insuranceType),
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '12px',
+        color: '#aaaaaa',
+        align: 'center',
+        lineSpacing: 5,
+        wordWrap: { width: 260 }
+      }
+    ).setOrigin(0.5)
+    
+    buttonContainer.add([detailBg, detailText])
+
+    // 選択ボタン
+    const selectButton = this.createButton(
+      0, 160,
+      '選択する',
+      () => this.onInsuranceTypeSelected(insuranceType),
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: '#ffffff'
+      }
+    )
+
+    // ホバー効果
+    cardBg.on('pointerover', () => {
+      buttonContainer.setScale(1.05)
+      cardBg.setFillStyle(0x34495E)
+      this.tweens.add({
+        targets: buttonContainer,
+        y: y - 10,
+        duration: 200,
+        ease: 'Power2'
+      })
+    })
+
+    cardBg.on('pointerout', () => {
+      buttonContainer.setScale(1)
+      cardBg.setFillStyle(0x2C3E50)
+      this.tweens.add({
+        targets: buttonContainer,
+        y: y,
+        duration: 200,
+        ease: 'Power2'
+      })
+    })
+
+    // クリックで選択
+    cardBg.on('pointerdown', () => {
+      this.onInsuranceTypeSelected(insuranceType)
+    })
+
+    buttonContainer.add([cardBg, titleBg, titleText, descText, selectButton])
+    this.insuranceTypeSelectionUI.add(buttonContainer)
+  }
+
+  /**
+   * 年齢に応じた保険推奨を取得
+   */
+  private getInsuranceRecommendation(): string {
+    const stage = this.gameInstance.stage
+    
+    switch (stage) {
+      case 'youth':
+        return '💡 青年期は定期保険がおすすめ - コストを抑えて活力に投資'
+      case 'middle':
+        return '💡 中年期は終身保険も検討 - 将来への備えを強化'
+      case 'fulfillment':
+        return '💡 充実期は終身保険が有利 - 年齢ボーナスで効果最大化'
+      default:
+        return '保険種別を選んでください'
+    }
+  }
+
+  /**
+   * 年齢に応じた詳細な保険推奨理由を取得
+   */
+  private getDetailedInsuranceRecommendation(insuranceType: 'whole_life' | 'term'): string {
+    const stage = this.gameInstance.stage
+    
+    if (insuranceType === 'whole_life') {
+      switch (stage) {
+        case 'youth':
+          return '終身保険は高コストですが、結婚や学資など\n人生の基盤となる保障には適しています。\n長期的な視点で選択しましょう。'
+        case 'middle':
+          return '中年期の終身保険は+0.5ボーナス付き。\n残りの人生を考えると、今が終身保険への\n切り替えを検討する良いタイミングです。'
+        case 'fulfillment':
+          return '充実期の終身保険は+1.0ボーナス！\n年齢による価値上昇を最大限活用できます。\n安定した老後の基盤作りに最適です。'
+        default:
+          return '永続的な保障を提供します。'
+      }
+    } else {
+      switch (stage) {
+        case 'youth':
+          return '定期保険は低コストで効率的な選択です。\n若い時期は変化も多いため、柔軟に\n見直せる定期保険が有利です。'
+        case 'middle':
+          return '定期保険は期限があるため要注意。\n10ターン後の更新時にはコストが上がります。\n長期的な保障は終身への切り替えも検討を。'
+        case 'fulfillment':
+          return '充実期では終身保険のボーナスが大きいため、\n定期保険の相対的価値は下がります。\n一時的な保障のみに使用を推奨します。'
+        default:
+          return '10ターンの期間限定保障です。'
+      }
+    }
+  }
+
+  /**
+   * Phase 5-1: 年齢による難易度調整の表示を取得
+   */
+  private getAgeAdjustmentDisplay(challengeCard: Card): Phaser.GameObjects.Container | null {
+    // challengeCategoryが定義されていない場合は何も表示しない
+    if (!challengeCard.challengeCategory) return null
+
+    const stage = this.gameInstance.stage
+    let adjustment = 0
+    let color = 0xffffff
+    let icon = ''
+
+    // カテゴリに応じて調整値を計算
+    if (challengeCard.challengeCategory === 'physical') {
+      // 体力系: 年齢とともに難しくなる
+      if (stage === 'middle') {
+        adjustment = 3
+        color = 0xff9999
+        icon = '↑'
+      } else if (stage === 'fulfillment') {
+        adjustment = 6
+        color = 0xff4444
+        icon = '↑↑'
+      }
+    } else if (challengeCard.challengeCategory === 'knowledge') {
+      // 知識系: 年齢とともに簡単になる
+      if (stage === 'middle') {
+        adjustment = -2
+        color = 0x99ff99
+        icon = '↓'
+      } else if (stage === 'fulfillment') {
+        adjustment = -4
+        color = 0x44ff44
+        icon = '↓↓'
+      }
+    }
+
+    if (adjustment === 0) return null
+
+    const container = this.add.container(60, 20)
+
+    // 背景
+    const bg = this.add.rectangle(0, 0, 40, 25, color, 0.3)
+    bg.setStrokeStyle(1, color)
+
+    // アイコンと数値
+    const text = this.add.text(
+      0, 0,
+      `${icon}${Math.abs(adjustment)}`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '14px',
+        color: `#${color.toString(16).padStart(6, '0')}`,
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    container.add([bg, text])
+    return container
+  }
+
+  /**
+   * Phase 5-1: 難易度ツールチップを追加
+   */
+  private addDifficultyTooltip(challengeContainer: Phaser.GameObjects.Container, challengeCard: Card): void {
+    const cardBg = challengeContainer.list[0] as Phaser.GameObjects.Image
+    if (!cardBg) return
+
+    let tooltipText = ''
+    const stage = this.gameInstance.stage
+
+    if (challengeCard.challengeCategory === 'physical') {
+      tooltipText = '体力系チャレンジ\n'
+      if (stage === 'middle') {
+        tooltipText += '中年期: 必要パワー+3\n体力の衰えにより難易度上昇'
+      } else if (stage === 'fulfillment') {
+        tooltipText += '充実期: 必要パワー+6\n大幅な体力低下により高難度'
+      } else {
+        tooltipText += '青年期: 標準難易度\n体力が充実している時期'
+      }
+    } else if (challengeCard.challengeCategory === 'knowledge') {
+      tooltipText = '知識系チャレンジ\n'
+      if (stage === 'middle') {
+        tooltipText += '中年期: 必要パワー-2\n経験の蓄積により容易化'
+      } else if (stage === 'fulfillment') {
+        tooltipText += '充実期: 必要パワー-4\n豊富な知識で大幅に容易化'
+      } else {
+        tooltipText += '青年期: 標準難易度\n経験はまだ浅い時期'
+      }
+    } else if (challengeCard.challengeCategory === 'balanced') {
+      tooltipText = '複合系チャレンジ\n年齢による難易度変化なし\n体力と知識のバランスが重要'
+    }
+
+    if (!tooltipText) return
+
+    // ツールチップコンテナ（初期は非表示）
+    const tooltipContainer = this.add.container(0, -120)
+    tooltipContainer.setVisible(false)
+    tooltipContainer.setDepth(1000)
+
+    const bg = this.add.rectangle(0, 0, 250, 80, 0x000000, 0.9)
+    bg.setStrokeStyle(2, 0xffffff)
+
+    const text = this.add.text(
+      0, 0,
+      tooltipText,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '12px',
+        color: '#ffffff',
+        align: 'center',
+        lineSpacing: 5
+      }
+    ).setOrigin(0.5)
+
+    tooltipContainer.add([bg, text])
+    challengeContainer.add(tooltipContainer)
+
+    // ホバーでツールチップ表示
+    cardBg.setInteractive()
+    cardBg.on('pointerover', () => {
+      tooltipContainer.setVisible(true)
+      this.tweens.add({
+        targets: tooltipContainer,
+        alpha: 1,
+        duration: 200
+      })
+    })
+
+    cardBg.on('pointerout', () => {
+      this.tweens.add({
+        targets: tooltipContainer,
+        alpha: 0,
+        duration: 200,
+        onComplete: () => tooltipContainer.setVisible(false)
+      })
+    })
+  }
+
+  /**
+   * 保険種別選択時の処理
+   */
+  private onInsuranceTypeSelected(insuranceType: 'whole_life' | 'term'): void {
+    if (!this.insuranceTypeSelectionUI) return
+
+    this.selectedInsuranceType = insuranceType
+
+    // 選択アニメーション
+    const selectedTypeText = insuranceType === 'whole_life' ? '終身保険' : '定期保険'
+    const confirmText = this.add.text(
+      0, 250,
+      `${selectedTypeText}を選択しました`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '24px',
+        color: '#00ff00',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+    confirmText.setAlpha(0)
+    this.insuranceTypeSelectionUI.add(confirmText)
+    
+    // 選択エフェクト
+    this.tweens.add({
+      targets: confirmText,
+      alpha: 1,
+      scale: 1.2,
+      duration: 300,
+      yoyo: true,
+      ease: 'Power2'
+    })
+
+    // 選択後、カード選択画面へ遷移
+    this.time.delayedCall(1000, () => {
+      this.hideInsuranceTypeSelection(() => {
+        // 選択した保険種別に基づいてカードを生成
+        const cardChoices = this.generateInsuranceCards(insuranceType)
+        this.showCardSelection(cardChoices)
+      })
+    })
+  }
+
+  /**
+   * 保険種別選択UIを隠す
+   */
+  private hideInsuranceTypeSelection(onComplete?: () => void): void {
+    if (!this.insuranceTypeSelectionUI) return
+
+    this.tweens.add({
+      targets: this.insuranceTypeSelectionUI,
+      alpha: 0,
+      scale: 0.8,
+      duration: 500,
+      ease: 'Power2',
+      onComplete: () => {
+        this.insuranceTypeSelectionUI?.destroy()
+        this.insuranceTypeSelectionUI = undefined
+        if (onComplete) onComplete()
+      }
+    })
+  }
+
+  /**
+   * 選択した保険種別に基づいてカードを生成
+   */
+  private generateInsuranceCards(insuranceType: 'whole_life' | 'term'): Card[] {
+    // CardFactoryから拡張保険カードを取得
+    const allInsuranceCards = CardFactory.createExtendedInsuranceCards(this.gameInstance.stage)
+    
+    // 選択した保険種別でフィルタリング
+    const filteredCards = allInsuranceCards.filter(card => 
+      card.durationType === insuranceType
+    )
+    
+    // ランダムに3枚選択
+    const shuffled = [...filteredCards].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, 3)
   }
 
   /**
@@ -1370,6 +2444,43 @@ export class GameScene extends BaseScene {
       ).setOrigin(0.5)
     }
 
+    // Phase 2: 保険期間の表示
+    let durationText: Phaser.GameObjects.Text | undefined
+    if (card.durationType) {
+      const durationLabel = card.durationType === 'whole_life' ? '終身' : '10ターン'
+      durationText = this.add.text(
+        0, 80,
+        durationLabel,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '16px',
+          color: card.durationType === 'whole_life' ? '#FFD700' : '#C0C0C0',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+    }
+
+    // Phase 2: カード枠線の色を保険種別に応じて変更
+    if (card.durationType === 'whole_life') {
+      // 終身保険は金色の輝きとパーティクルエフェクト
+      const goldGlow = this.add.rectangle(0, 0, GAME_CONSTANTS.CARD_WIDTH + 10, GAME_CONSTANTS.CARD_HEIGHT + 10, 0xFFD700, 0.3)
+      goldGlow.setAlpha(0.6)
+      cardContainer.addAt(goldGlow, 0)
+      
+      this.tweens.add({
+        targets: goldGlow,
+        alpha: 0.2,
+        scale: 1.1,
+        duration: 1500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      })
+    } else if (card.durationType === 'term') {
+      // 定期保険は銀色のシンプルな枠
+      cardBg.setStrokeStyle(3, 0xC0C0C0)
+    }
+
     // 選択ボタン
     const selectButton = this.createButton(
       0, 120,
@@ -1410,6 +2521,7 @@ export class GameScene extends BaseScene {
 
     const cardElements = [cardBg, cardName, cardDesc, powerText, selectButton]
     if (coverageText) cardElements.push(coverageText)
+    if (durationText) cardElements.push(durationText)
     
     cardContainer.add(cardElements)
     this.cardSelectionUI.add(cardContainer)
@@ -1420,6 +2532,16 @@ export class GameScene extends BaseScene {
    */
   private onCardSelected(card: Card): void {
     if (!this.cardSelectionUI) return
+
+    // Phase 5-2: 保険料負担の境界警告
+    const activeInsurances = this.gameInstance.getActiveInsurances()
+    const currentCount = activeInsurances.length
+    const nextCount = currentCount + 1
+    
+    // 3枚目、6枚目、9枚目の時に警告
+    if (nextCount % 3 === 0) {
+      this.showInsuranceBurdenWarning(nextCount)
+    }
 
     // 選択アニメーション
     const selectedContainer = this.cardSelectionUI.list.find(child => {
@@ -1449,6 +2571,116 @@ export class GameScene extends BaseScene {
     this.showCardAcquisitionAnimation(card, () => {
       // アニメーション完了後にUIを閉じる
       this.hideCardSelection()
+    })
+  }
+
+  /**
+   * Phase 5-2: 保険料負担の境界警告を表示
+   */
+  private showInsuranceBurdenWarning(insuranceCount: number): void {
+    const burdenAmount = Math.floor(insuranceCount / 3)
+    const warningContainer = this.add.container(this.centerX, 200)
+    warningContainer.setDepth(3500)
+
+    const bg = this.add.rectangle(0, 0, 450, 150, 0xff4444, 0.95)
+    bg.setStrokeStyle(3, 0xffffff)
+
+    // 警告アイコン
+    const iconText = this.add.text(
+      -180, 0,
+      '🚨',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '48px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5)
+
+    // 警告メッセージ
+    const titleText = this.add.text(
+      20, -30,
+      '保険料負担が発生します！',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '24px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    const detailText = this.add.text(
+      20, 10,
+      `保険${insuranceCount}枚目で負担が${burdenAmount}ポイントに増加します`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#ffcccc'
+      }
+    ).setOrigin(0.5)
+
+    const adviceText = this.add.text(
+      20, 40,
+      '本当に必要な保険か、もう一度考えましょう',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '14px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5)
+
+    warningContainer.add([bg, iconText, titleText, detailText, adviceText])
+    warningContainer.setScale(0)
+    warningContainer.setAlpha(0)
+
+    // 警告アニメーション
+    this.tweens.add({
+      targets: warningContainer,
+      scale: 1.2,
+      alpha: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // 揺れアニメーション
+        this.tweens.add({
+          targets: warningContainer,
+          angle: -5,
+          duration: 100,
+          yoyo: true,
+          repeat: 3,
+          ease: 'Sine.easeInOut',
+          onComplete: () => {
+            // フェードアウト
+            this.time.delayedCall(3000, () => {
+              this.tweens.add({
+                targets: warningContainer,
+                scale: 0.8,
+                alpha: 0,
+                duration: 500,
+                ease: 'Power2',
+                onComplete: () => warningContainer.destroy()
+              })
+            })
+          }
+        })
+      }
+    })
+
+    // 画面全体を一瞬赤くフラッシュ
+    const flashOverlay = this.add.rectangle(
+      this.centerX,
+      this.centerY,
+      this.gameWidth,
+      this.gameHeight,
+      0xff0000,
+      0.3
+    )
+    flashOverlay.setDepth(3000)
+    
+    this.tweens.add({
+      targets: flashOverlay,
+      alpha: 0,
+      duration: 200,
+      onComplete: () => flashOverlay.destroy()
     })
   }
 
@@ -1735,6 +2967,60 @@ export class GameScene extends BaseScene {
       targets: endContainer,
       alpha: 1,
       duration: 1000
+    })
+  }
+
+  /**
+   * Phase 3-3: 通知を表示
+   */
+  private showNotification(message: string, type: 'info' | 'warning' | 'success' = 'info'): void {
+    const notificationContainer = this.add.container(this.centerX, 200)
+    notificationContainer.setDepth(2500)
+
+    const colors = {
+      info: 0x3498db,
+      warning: 0xf39c12,
+      success: 0x2ecc71
+    }
+
+    const bg = this.add.rectangle(0, 0, 400, 60, colors[type], 0.9)
+    bg.setStrokeStyle(2, 0xffffff)
+
+    const text = this.add.text(
+      0, 0,
+      message,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    notificationContainer.add([bg, text])
+    notificationContainer.setScale(0)
+    notificationContainer.setAlpha(0)
+
+    // アニメーション
+    this.tweens.add({
+      targets: notificationContainer,
+      scale: 1,
+      alpha: 1,
+      duration: 300,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // 3秒後にフェードアウト
+        this.time.delayedCall(3000, () => {
+          this.tweens.add({
+            targets: notificationContainer,
+            scale: 0.8,
+            alpha: 0,
+            duration: 300,
+            ease: 'Power2',
+            onComplete: () => notificationContainer.destroy()
+          })
+        })
+      }
     })
   }
 }

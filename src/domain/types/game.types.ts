@@ -58,6 +58,13 @@ export interface ChallengeResult {
   cardChoices?: Card[]  // カード選択肢（3枚）
   vitalityChange: number
   message: string
+  // Phase 3: パワー計算の詳細
+  powerBreakdown?: {
+    base: number
+    insurance: number
+    burden: number
+    total: number
+  }
 }
 
 /**
@@ -93,6 +100,15 @@ export const AGE_PARAMETERS: Record<GameStage, AgeParameters> = {
   }
 }
 
+/**
+ * 夢カードの年齢調整値
+ */
+export const DREAM_AGE_ADJUSTMENTS = {
+  physical: 3,      // 体力系：年齢で+3パワー必要
+  intellectual: -2, // 知識系：年齢で-2パワー
+  mixed: 0         // 複合系：変化なし
+}
+
 export interface IGameState {
   id: string
   status: GameStatus
@@ -112,6 +128,13 @@ export interface IGameState {
   currentChallenge?: Card
   selectedCards: Card[]
   cardChoices?: Card[]  // 現在の選択肢カード
+  
+  // Phase 2-4: 保険カード管理
+  insuranceCards?: Card[]  // 現在有効な保険カード
+  expiredInsurances?: Card[]  // 期限切れになった保険カード
+  
+  // Phase 3: 保険料負担
+  insuranceBurden?: number  // 保険料による負担（負の値）
   
   // 統計
   stats: PlayerStats

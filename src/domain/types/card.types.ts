@@ -85,6 +85,9 @@ export interface ICard {
   
   // 落とし穴カード固有
   penalty?: number // ペナルティ値
+  
+  // Phase 4: 夢カード固有
+  dreamCategory?: DreamCategory
 }
 
 /**
