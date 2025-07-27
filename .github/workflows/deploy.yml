@@ -45,12 +45,14 @@ jobs:
     - name: Build
       run: pnpm exec vue-tsc --noEmit && pnpm exec vite build
       
-    - name: Copy JS for cache compatibility
+    - name: Debug build output
       run: |
-        # Create fallback for cached HTML references
-        if [ -f dist/js/index-*.js ]; then
-          cp dist/js/index-*.js dist/js/index-XTF7au9U.js 2>/dev/null || true
-        fi
+        echo "=== Build output verification ==="
+        ls -la dist/
+        echo "=== HTML content ==="
+        head -10 dist/index.html
+        echo "=== JS files ==="
+        ls -la dist/js/ || echo "No js directory"
       
     - name: Setup Pages
       if: github.ref == 'refs/heads/master'
