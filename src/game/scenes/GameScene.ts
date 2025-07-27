@@ -4,7 +4,7 @@ import { Card } from '@/domain/entities/Card'
 import { CardFactory } from '@/domain/services/CardFactory'
 import { GAME_CONSTANTS } from '../config/gameConfig'
 import type { CardType } from '@/domain/types/card.types'
-import type { ChallengeResult } from '@/domain/types/game.types'
+import type { ChallengeResult, InsuranceRenewalOption } from '@/domain/types/game.types'
 import { AGE_PARAMETERS } from '@/domain/types/game.types'
 
 /**
@@ -22,6 +22,7 @@ export class GameScene extends BaseScene {
   private vitalityBarMaxWidth: number = 300
   private insuranceListContainer?: Phaser.GameObjects.Container
   private burdenIndicatorContainer?: Phaser.GameObjects.Container
+  private insuranceRenewalDialogUI?: Phaser.GameObjects.Container
 
   constructor() {
     super({ key: 'GameScene' })
@@ -769,13 +770,25 @@ export class GameScene extends BaseScene {
       // 次のターンへ
       this.gameInstance.nextTurn()
       
-      // Phase 3-3: 期限切れ保険の通知
-      const expiredInsurances = this.gameInstance.getExpiredInsurances()
-      if (expiredInsurances.length > 0) {
-        expiredInsurances.forEach(insurance => {
-          this.showNotification(`保険が期限切れになりました: ${insurance.name}`, 'warning')
+      // Phase 3-3: 期限切れ保険の更新選択処理
+      const expiredRenewals = this.gameInstance.pendingRenewals.filter(
+        renewal => renewal.remainingTurns === 0
+      )
+      
+      if (expiredRenewals.length > 0) {
+        // 最初の期限切れ保険の更新ダイアログを表示
+        this.time.delayedCall(1000, () => {
+          this.showInsuranceRenewalDialog(expiredRenewals[0])
         })
-        this.gameInstance.clearExpiredInsurances()
+      } else {
+        // 従来の期限切れ保険通知（更新対象でない場合）
+        const expiredInsurances = this.gameInstance.getExpiredInsurances()
+        if (expiredInsurances.length > 0) {
+          expiredInsurances.forEach(insurance => {
+            this.showNotification(`保険が期限切れになりました: ${insurance.name}`, 'warning')
+          })
+          this.gameInstance.clearExpiredInsurances()
+        }
       }
       
       // Phase 5-1: 期限切れ間近の保険の警告
@@ -823,36 +836,62 @@ export class GameScene extends BaseScene {
       // カードコンテナ
       const cardItem = this.add.container(0, yPos)
 
-      // Phase 5-2: 期限切れ間近の点滅表示
+      // Phase 5-2: 期限切れ間近の警告表示
       const isExpiringSoon = insurance.durationType === 'term' && 
                              insurance.remainingTurns !== undefined && 
                              insurance.remainingTurns <= 2
+      const isExpiringSoonTwoTurns = isExpiringSoon && insurance.remainingTurns === 2
+      const isExpiringSoonOneTurn = isExpiringSoon && insurance.remainingTurns === 1
+
+      // カード背景色の決定
+      let bgColor = insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0
+      let strokeColor = bgColor
+      
+      if (isExpiringSoonTwoTurns) {
+        bgColor = 0xFFA500  // オレンジ色（警告）
+        strokeColor = 0xFFA500
+      } else if (isExpiringSoonOneTurn) {
+        bgColor = 0xFF4444  // 赤色（危険）
+        strokeColor = 0xFF4444
+      }
 
       // カード背景
       const itemBg = this.add.rectangle(
         0, 0, 240, 30,
-        insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0,
+        bgColor,
         0.2
       )
-      itemBg.setStrokeStyle(2, insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0)
+      itemBg.setStrokeStyle(2, strokeColor)
 
       // Phase 5-2: 期限切れ間近の点滅アニメーション
       if (isExpiringSoon) {
+        const animationDuration = isExpiringSoonOneTurn ? 300 : 500  // 1ターン残りは速い点滅
         this.tweens.add({
           targets: itemBg,
           alpha: 0.3,
-          duration: 500,
+          duration: animationDuration,
           yoyo: true,
           repeat: -1,
           ease: 'Sine.easeInOut'
         })
-        itemBg.setFillStyle(0xff4444, 0.3)
+        itemBg.setFillStyle(bgColor, 0.3)
       }
 
-      // Phase 5-2: 保険種別バッジ
+      // Phase 5-2: 保険種別バッジ（警告状況に応じて色変更）
+      let badgeColor = insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0
+      let textColor = insurance.durationType === 'whole_life' ? '#000000' : '#ffffff'
+      
+      if (isExpiringSoonTwoTurns) {
+        badgeColor = 0xFFA500  // オレンジ色（警告）
+        textColor = '#000000'
+      } else if (isExpiringSoonOneTurn) {
+        badgeColor = 0xFF4444  // 赤色（危険）
+        textColor = '#ffffff'
+      }
+
       const typeBadge = this.add.rectangle(
         -100, 0, 40, 20,
-        insurance.durationType === 'whole_life' ? 0xFFD700 : 0xC0C0C0
+        badgeColor
       )
       typeBadge.setStrokeStyle(1, 0xffffff)
 
@@ -862,7 +901,7 @@ export class GameScene extends BaseScene {
         {
           fontFamily: 'Noto Sans JP',
           fontSize: '10px',
-          color: insurance.durationType === 'whole_life' ? '#000000' : '#ffffff',
+          color: textColor,
           fontStyle: 'bold'
         }
       ).setOrigin(0.5)
@@ -902,26 +941,35 @@ export class GameScene extends BaseScene {
 
       // 残りターン数（定期保険の場合）
       if (insurance.durationType === 'term' && insurance.remainingTurns !== undefined) {
+        // 残りターン数に応じた色分け
+        let turnsTextColor = '#ffffff'
+        if (insurance.remainingTurns === 2) {
+          turnsTextColor = '#FFA500'  // オレンジ色（警告）
+        } else if (insurance.remainingTurns === 1) {
+          turnsTextColor = '#FF4444'  // 赤色（危険）
+        }
+
         const turnsText = this.add.text(
           100, 0,
           `残り${insurance.remainingTurns}T`,
           {
             fontFamily: 'Noto Sans JP',
             fontSize: '12px',
-            color: insurance.remainingTurns <= 2 ? '#ff4444' : '#ffffff',
+            color: turnsTextColor,
             fontStyle: insurance.remainingTurns <= 2 ? 'bold' : 'normal'
           }
         ).setOrigin(1, 0.5)
         
-        // Phase 5-2: 期限切れ間近の警告アイコン
+        // Phase 5-2: 期限切れ間近の警告アイコン（色分け対応）
         if (insurance.remainingTurns <= 2) {
+          const warningIconColor = insurance.remainingTurns === 1 ? '#FF4444' : '#FFA500'
           const warningIcon = this.add.text(
             115, 0,
-            '⚠',
+            insurance.remainingTurns === 1 ? '🚨' : '⚠',
             {
               fontFamily: 'Noto Sans JP',
               fontSize: '14px',
-              color: '#ff4444'
+              color: warningIconColor
             }
           ).setOrigin(0.5)
           cardItem.add(warningIcon)
@@ -1787,16 +1835,12 @@ export class GameScene extends BaseScene {
    * Phase 5-1: 期限切れ間近の保険をチェック
    */
   private checkExpiringInsurances(): void {
-    const activeInsurances = this.gameInstance.getActiveInsurances()
-    const expiringInsurances = activeInsurances.filter(insurance => 
-      insurance.durationType === 'term' && 
-      insurance.remainingTurns !== undefined &&
-      insurance.remainingTurns === 2
-    )
-
-    if (expiringInsurances.length > 0) {
-      expiringInsurances.forEach(insurance => {
-        this.showExpiringInsuranceWarning(insurance)
+    // getPendingRenewalInsurances()を使用して期限切れ予定保険を取得
+    const pendingRenewals = this.gameInstance.getPendingRenewalInsurances()
+    
+    if (pendingRenewals.length > 0) {
+      pendingRenewals.forEach(renewal => {
+        this.showInsuranceExpirationWarning(renewal)
       })
     }
   }
@@ -1866,6 +1910,108 @@ export class GameScene extends BaseScene {
 
         // 自動で消える
         this.time.delayedCall(5000, () => {
+          this.tweens.add({
+            targets: warningContainer,
+            scale: 0.8,
+            alpha: 0,
+            duration: 500,
+            ease: 'Power2',
+            onComplete: () => warningContainer.destroy()
+          })
+        })
+      }
+    })
+  }
+
+  /**
+   * 保険期限切れ警告システム - 改良版
+   * getPendingRenewalInsurances()と連携し、残り1-2ターンの保険に対応
+   */
+  private showInsuranceExpirationWarning(renewal: InsuranceRenewalOption): void {
+    const remainingTurns = renewal.remainingTurns
+    // renewalOptionから保険情報を取得（cardNameを使用）
+    const insuranceName = renewal.cardName
+    
+    // 警告レベルに応じた色とメッセージを決定
+    let warningColor = 0xFFA500  // デフォルト：オレンジ（警告）
+    let iconEmoji = '⚠'
+    let urgencyText = ''
+    
+    if (remainingTurns === 1) {
+      warningColor = 0xFF4444  // 赤色（危険）
+      iconEmoji = '🚨'
+      urgencyText = '緊急！'
+    } else if (remainingTurns === 2) {
+      warningColor = 0xFFA500  // オレンジ色（警告）
+      iconEmoji = '⚠'
+      urgencyText = '警告：'
+    }
+
+    const warningContainer = this.add.container(this.centerX, 350)
+    warningContainer.setDepth(2000)
+
+    const bg = this.add.rectangle(0, 0, 450, 130, warningColor, 0.95)
+    bg.setStrokeStyle(3, 0xffffff)
+
+    const iconText = this.add.text(
+      -190, 0,
+      iconEmoji,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '48px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5)
+
+    const messageText = this.add.text(
+      20, -25,
+      `${urgencyText} ${insuranceName}が\n残り${remainingTurns}ターンで期限切れです`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        align: 'center'
+      }
+    ).setOrigin(0.5)
+
+    const actionText = this.add.text(
+      20, 25,
+      '更新手続きまたは終身保険への切り替えをご検討ください',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '14px',
+        color: '#ffcccc'
+      }
+    ).setOrigin(0.5)
+
+    warningContainer.add([bg, iconText, messageText, actionText])
+    warningContainer.setScale(0)
+    warningContainer.setAlpha(0)
+
+    // 警告アニメーション（緊急度に応じた速度）
+    const animationDuration = remainingTurns === 1 ? 200 : 300
+    this.tweens.add({
+      targets: warningContainer,
+      scale: 1.1,
+      alpha: 1,
+      duration: animationDuration,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // パルスエフェクト（緊急度に応じた回数）
+        const pulseRepeats = remainingTurns === 1 ? 4 : 2
+        this.tweens.add({
+          targets: warningContainer,
+          scale: 1,
+          duration: remainingTurns === 1 ? 400 : 600,
+          yoyo: true,
+          repeat: pulseRepeats,
+          ease: 'Sine.easeInOut'
+        })
+
+        // 自動で消える（緊急度に応じた表示時間）
+        const displayTime = remainingTurns === 1 ? 7000 : 5000
+        this.time.delayedCall(displayTime, () => {
           this.tweens.add({
             targets: warningContainer,
             scale: 0.8,
@@ -3161,5 +3307,308 @@ export class GameScene extends BaseScene {
         })
       }
     })
+  }
+
+  /**
+   * 保険更新選択ダイアログを表示
+   */
+  private showInsuranceRenewalDialog(renewalOption: InsuranceRenewalOption): void {
+    // 既存の更新ダイアログがあれば削除
+    if (this.insuranceRenewalDialogUI) {
+      this.insuranceRenewalDialogUI.destroy()
+    }
+
+    // 保険更新選択コンテナを作成
+    this.insuranceRenewalDialogUI = this.add.container(this.centerX, this.centerY)
+    this.insuranceRenewalDialogUI.setDepth(2100)
+
+    // 背景オーバーレイ
+    const overlay = this.add.rectangle(
+      0, 0,
+      this.gameWidth, this.gameHeight,
+      0x000000, 0.8
+    )
+    overlay.setOrigin(0.5)
+
+    // カード情報の背景
+    const cardInfoBg = this.add.rectangle(0, -50, 600, 400, 0x2C3E50)
+    cardInfoBg.setStrokeStyle(4, 0xFFD700)
+
+    // タイトル
+    const titleText = this.add.text(
+      0, -220,
+      '保険更新の選択',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '36px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // 保険名表示
+    const insuranceNameText = this.add.text(
+      0, -170,
+      renewalOption.cardName,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '28px',
+        color: '#FFD700',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // コスト情報表示
+    const currentVitality = this.gameInstance.vitality
+    const canAffordRenewal = currentVitality >= renewalOption.renewalCost
+    const costColor = canAffordRenewal ? '#00ff00' : '#ff4444'
+
+    const costInfoText = this.add.text(
+      0, -120,
+      `現在コスト: ${renewalOption.currentCost} → 更新コスト: ${renewalOption.renewalCost} (+${renewalOption.costIncrease})`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: costColor,
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // 活力状況表示
+    const vitalityStatusText = this.add.text(
+      0, -80,
+      `現在の活力: ${currentVitality}`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '18px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5)
+
+    // 年齢による増加理由
+    const ageReason = this.getAgeIncreaseReason()
+    const ageReasonText = this.add.text(
+      0, -50,
+      ageReason,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#cccccc'
+      }
+    ).setOrigin(0.5)
+
+    // 活力不足警告（必要に応じて表示）
+    let insufficientVitalityWarning: Phaser.GameObjects.Text | null = null
+    if (!canAffordRenewal) {
+      insufficientVitalityWarning = this.add.text(
+        0, -10,
+        '⚠ 活力不足で更新できません',
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '18px',
+          color: '#ff4444',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+    }
+
+    this.insuranceRenewalDialogUI.add([
+      overlay, 
+      cardInfoBg, 
+      titleText, 
+      insuranceNameText, 
+      costInfoText, 
+      vitalityStatusText, 
+      ageReasonText
+    ])
+
+    if (insufficientVitalityWarning) {
+      this.insuranceRenewalDialogUI.add(insufficientVitalityWarning)
+    }
+
+    // 更新ボタン（活力不足でも表示するが、効果的には失効する）
+    this.createRenewalButton(
+      -150, 80,
+      '更新する',
+      `コスト: ${renewalOption.renewalCost}`,
+      canAffordRenewal ? 0x4CAF50 : 0x9E9E9E, // グリーンまたはグレー
+      () => this.onRenewalSelected(renewalOption, true),
+      canAffordRenewal
+    )
+
+    // 失効ボタン
+    this.createRenewalButton(
+      150, 80,
+      '失効させる',
+      'リスクを受け入れる',
+      0xF44336, // レッド
+      () => this.onRenewalSelected(renewalOption, false),
+      true
+    )
+
+    // フェードイン
+    this.insuranceRenewalDialogUI.setAlpha(0)
+    this.tweens.add({
+      targets: this.insuranceRenewalDialogUI,
+      alpha: 1,
+      duration: 500,
+      ease: 'Power2'
+    })
+  }
+
+  /**
+   * 更新選択ボタンを作成
+   */
+  private createRenewalButton(
+    x: number,
+    y: number,
+    title: string,
+    subtitle: string,
+    color: number,
+    callback: () => void,
+    enabled: boolean
+  ): void {
+    if (!this.insuranceRenewalDialogUI) return
+
+    const buttonContainer = this.add.container(x, y)
+    
+    // ボタン背景
+    const buttonBg = this.add.rectangle(0, 0, 250, 100, color)
+    buttonBg.setStrokeStyle(3, enabled ? 0xffffff : 0x666666)
+    
+    if (enabled) {
+      buttonBg.setInteractive()
+    }
+    
+    // タイトルテキスト
+    const titleText = this.add.text(
+      0, -15,
+      title,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '20px',
+        color: enabled ? '#ffffff' : '#666666',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+
+    // サブタイトルテキスト
+    const subtitleText = this.add.text(
+      0, 15,
+      subtitle,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '14px',
+        color: enabled ? '#ffffff' : '#666666'
+      }
+    ).setOrigin(0.5)
+
+    if (enabled) {
+      // ホバー効果
+      buttonBg.on('pointerover', () => {
+        buttonContainer.setScale(1.05)
+        buttonBg.setFillStyle(Phaser.Display.Color.ValueToColor(color).brighten(20).color)
+      })
+
+      buttonBg.on('pointerout', () => {
+        buttonContainer.setScale(1)
+        buttonBg.setFillStyle(color)
+      })
+
+      // クリック処理
+      buttonBg.on('pointerdown', () => {
+        // 即座にUI応答
+        buttonContainer.setScale(0.95)
+        
+        this.time.delayedCall(100, () => {
+          buttonContainer.setScale(1)
+          callback()
+        })
+      })
+    }
+
+    buttonContainer.add([buttonBg, titleText, subtitleText])
+    this.insuranceRenewalDialogUI.add(buttonContainer)
+  }
+
+  /**
+   * 更新選択時の処理
+   */
+  private onRenewalSelected(renewalOption: InsuranceRenewalOption, shouldRenew: boolean): void {
+    // UIを閉じる
+    if (this.insuranceRenewalDialogUI) {
+      this.tweens.add({
+        targets: this.insuranceRenewalDialogUI,
+        alpha: 0,
+        scale: 0.8,
+        duration: 300,
+        ease: 'Power2',
+        onComplete: () => {
+          this.insuranceRenewalDialogUI?.destroy()
+          this.insuranceRenewalDialogUI = undefined
+        }
+      })
+    }
+
+    try {
+      let result
+      if (shouldRenew) {
+        result = this.gameInstance.renewInsurance(renewalOption.cardId)
+      } else {
+        result = this.gameInstance.expireInsurance(renewalOption.cardId)
+      }
+
+      // 結果メッセージを表示
+      const messageType = result.action === 'renewed' ? 'success' : 'warning'
+      this.showNotification(result.message, messageType)
+
+      // UIを更新
+      this.time.delayedCall(500, () => {
+        this.updateInsuranceDisplay()
+        this.updateVitalityDisplay()
+        
+        // 他に期限切れの保険があるかチェック
+        this.checkForAdditionalRenewals()
+      })
+
+    } catch (error) {
+      console.error('Insurance renewal error:', error)
+      this.showNotification('保険処理でエラーが発生しました', 'error')
+    }
+  }
+
+  /**
+   * 年齢による増加理由を取得
+   */
+  private getAgeIncreaseReason(): string {
+    const stage = this.gameInstance.stage
+    
+    switch (stage) {
+      case 'youth':
+        return '青年期のため基本コストで更新可能'
+      case 'middle':
+        return '中年期のため更新コストが増加 (+2)'
+      case 'fulfillment':
+        return '充実期のため更新コストが大幅増加 (+4)'
+      default:
+        return '年齢に応じてコストが調整されます'
+    }
+  }
+
+  /**
+   * 追加の期限切れ保険をチェック
+   */
+  private checkForAdditionalRenewals(): void {
+    // remainingTurns = 0の保険を探して順次処理
+    const expiredRenewals = this.gameInstance.pendingRenewals.filter(
+      renewal => renewal.remainingTurns === 0
+    )
+    
+    if (expiredRenewals.length > 0) {
+      // 次の期限切れ保険を処理
+      this.time.delayedCall(1000, () => {
+        this.showInsuranceRenewalDialog(expiredRenewals[0])
+      })
+    }
   }
 }
