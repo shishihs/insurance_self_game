@@ -3,7 +3,7 @@ import { Game } from '../../entities/Game'
 import { Card } from '../../entities/Card'
 import { Deck } from '../../entities/Deck'
 import { CardFactory } from '../../services/CardFactory'
-import { GameApplicationService } from '../../../application/services/GameApplicationService'
+import { Vitality } from '../../valueObjects/Vitality'
 
 describe('後方互換性テスト', () => {
   let game: Game
@@ -248,87 +248,6 @@ describe('後方互換性テスト', () => {
     })
   })
 
-  describe('GameApplicationServiceとの統合互換性', () => {
-    it('既存のGameエンティティとGameApplicationServiceが協調動作する', () => {
-      const gameService = new GameApplicationService(game)
-      
-      // ゲーム開始
-      gameService.startGame()
-      expect(game.phase).toBe('preparation')
-
-      // チャレンジ開始（既存のGameメソッドを内部で使用）
-      const challengeCard = new Card({
-        id: 'ch-compat',
-        name: '互換性チャレンジ',
-        description: 'サービステスト',
-        type: 'challenge',
-        power: 40,
-        cost: 0,
-        effects: []
-      })
-
-      const challenge = gameService.startChallenge(challengeCard)
-      expect(game.phase).toBe('challenge')
-      expect(game.currentChallenge).toBe(challengeCard)
-
-      // カード選択と解決
-      const responseCard = cardFactory.createLifeCard({
-        category: 'work',
-        basePower: 45,
-        baseCost: 8
-      })
-
-      gameService.selectCardForChallenge(responseCard)
-      const result = gameService.resolveChallenge()
-
-      // Gameエンティティの状態が正しく更新される
-      expect(game.phase).toBe('resolution')
-      expect(game.challengesCompleted).toBe(1)
-      expect(result.isSuccess()).toBe(true)
-    })
-
-    it('保険機能が既存のGameエンティティと連携する', () => {
-      const gameService = new GameApplicationService(game)
-      gameService.startGame()
-
-      // 初期体力を記録
-      const initialVitality = game.vitality
-
-      // 保険を有効化
-      const insuranceCard = new Card({
-        id: 'ins-compat',
-        name: '互換性保険',
-        description: 'テスト',
-        type: 'insurance',
-        power: 0,
-        cost: 8,
-        effects: [],
-        insuranceType: 'health',
-        coverage: 35,
-        durationType: 'whole_life'
-      })
-
-      gameService.activateInsurance(insuranceCard)
-
-      // チャレンジで失敗してダメージを受ける
-      const challenge = new Card({
-        id: 'ch-damage',
-        name: 'ダメージチャレンジ',
-        description: 'ダメージテスト',
-        type: 'challenge',
-        power: 50,
-        cost: 0,
-        effects: []
-      })
-
-      gameService.startChallenge(challenge)
-      gameService.resolveChallenge() // カードを選択せずに失敗
-
-      // ダメージが保険でカバーされる
-      const expectedDamage = 50 - 35 // チャレンジパワー - 保険カバレッジ
-      expect(game.vitality).toBe(initialVitality - expectedDamage)
-    })
-  })
 
   describe('エラーケースの後方互換性', () => {
     it('既存のエラーハンドリングが維持される', () => {

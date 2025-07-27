@@ -4692,4 +4692,257 @@ export class GameScene extends BaseScene {
     // 親クラスのクリーンアップを呼び出し
     super.destroy()
   }
+
+  // === GameRenderer Interface Support Methods ===
+
+  /**
+   * ゲーム状態を更新
+   */
+  updateGameState(game: Game): void {
+    this.gameInstance = game
+    this.updateVitalityDisplay(game.vitality, game.getMaxVitality())
+    this.updateProgressDisplay(game.stage, game.turn)
+  }
+
+  /**
+   * 手札カードを表示
+   */
+  displayHandCards(cards: Card[]): void {
+    this.clearHandDisplay()
+    cards.forEach((card, index) => {
+      this.createHandCard(card, index)
+    })
+  }
+
+  /**
+   * 現在のチャレンジを表示
+   */
+  displayCurrentChallenge(challenge: Card): void {
+    this.updateChallengeDisplay(challenge)
+  }
+
+  /**
+   * 保険表示を更新
+   */
+  updateInsuranceDisplay(insurances: Card[]): void {
+    this.updateInsuranceList(insurances)
+  }
+
+  /**
+   * 保険料負担表示を更新
+   */
+  updateInsuranceBurdenDisplay(burden: number): void {
+    this.updateBurdenIndicator(burden)
+  }
+
+  /**
+   * 進捗表示を更新
+   */
+  updateProgressDisplay(stage: string, turn: number): void {
+    if (this.stageText) {
+      this.stageText.setText(`${stage} - ターン ${turn}`)
+    }
+  }
+
+  /**
+   * カード選択UIを表示
+   */
+  showCardSelectionUI(
+    cards: Card[],
+    minSelection: number,
+    maxSelection: number,
+    message: string,
+    callback: (selectedCards: Card[]) => void
+  ): void {
+    this.createCardSelectionInterface(cards, minSelection, maxSelection, message, callback)
+  }
+
+  /**
+   * チャレンジアクションUIを表示
+   */
+  showChallengeActionUI(
+    challenge: Card,
+    callback: (action: 'start' | 'skip') => void
+  ): void {
+    this.createChallengeActionInterface(challenge, callback)
+  }
+
+  /**
+   * 保険選択UIを表示
+   */
+  showInsuranceSelectionUI(
+    cards: Card[],
+    message: string,
+    callback: (selectedInsurance: Card) => void
+  ): void {
+    this.createInsuranceSelectionInterface(cards, message, callback)
+  }
+
+  /**
+   * 確認UIを表示
+   */
+  showConfirmationUI(
+    message: string,
+    defaultChoice: 'yes' | 'no',
+    callback: (choice: 'yes' | 'no') => void
+  ): void {
+    this.createConfirmationDialog(message, defaultChoice, callback)
+  }
+
+  /**
+   * チャレンジ結果を表示
+   */
+  displayChallengeResult(result: ChallengeResult): void {
+    this.showChallengeResultScreen(result)
+  }
+
+  /**
+   * メッセージを表示
+   */
+  showMessage(message: string, level: 'info' | 'success' | 'warning' = 'info'): void {
+    const color = level === 'success' ? '#4CAF50' : level === 'warning' ? '#FF9800' : '#2196F3'
+    this.createTemporaryMessage(message, color)
+  }
+
+  /**
+   * エラーメッセージを表示
+   */
+  showError(error: string): void {
+    this.createTemporaryMessage(error, '#F44336')
+  }
+
+  /**
+   * ゲームオーバー画面を表示
+   */
+  showGameOverScreen(stats: PlayerStats): void {
+    this.createGameOverScreen(stats)
+  }
+
+  /**
+   * 勝利画面を表示
+   */
+  showVictoryScreen(stats: PlayerStats): void {
+    this.createVictoryScreen(stats)
+  }
+
+  /**
+   * ステージクリア画面を表示
+   */
+  showStageClearScreen(stage: string, stats: PlayerStats): void {
+    this.createStageClearScreen(stage, stats)
+  }
+
+  /**
+   * 画面をクリア
+   */
+  clearDisplay(): void {
+    this.clearAllUI()
+  }
+
+  // === Helper Methods for UI Creation ===
+
+  private createCardSelectionInterface(
+    cards: Card[],
+    minSelection: number,
+    maxSelection: number,
+    message: string,
+    callback: (selectedCards: Card[]) => void
+  ): void {
+    // カード選択インターフェースの実装（簡略化版）
+    callback(cards.slice(0, Math.min(maxSelection, cards.length)))
+  }
+
+  private createChallengeActionInterface(
+    challenge: Card,
+    callback: (action: 'start' | 'skip') => void
+  ): void {
+    // チャレンジアクション選択の実装（簡略化版：自動でstartを選択）
+    callback('start')
+  }
+
+  private createInsuranceSelectionInterface(
+    cards: Card[],
+    message: string,
+    callback: (selectedInsurance: Card) => void
+  ): void {
+    // 保険選択インターフェースの実装（簡略化版：最初のカードを選択）
+    if (cards.length > 0) {
+      callback(cards[0])
+    }
+  }
+
+  private createConfirmationDialog(
+    message: string,
+    defaultChoice: 'yes' | 'no',
+    callback: (choice: 'yes' | 'no') => void
+  ): void {
+    // 確認ダイアログの実装（簡略化版：デフォルト選択を返す）
+    callback(defaultChoice)
+  }
+
+  private showChallengeResultScreen(result: ChallengeResult): void {
+    // チャレンジ結果画面の実装
+    console.log('Challenge result:', result)
+  }
+
+  private createTemporaryMessage(message: string, color: string): void {
+    // 一時的なメッセージ表示
+    const messageText = this.add.text(
+      this.cameras.main.centerX,
+      this.cameras.main.centerY - 100,
+      message,
+      {
+        fontSize: '24px',
+        color: color,
+        stroke: '#000000',
+        strokeThickness: 2
+      }
+    )
+    messageText.setOrigin(0.5)
+    messageText.setDepth(1000)
+
+    // 3秒後に削除
+    this.time.delayedCall(3000, () => {
+      messageText.destroy()
+    })
+  }
+
+  private createGameOverScreen(stats: PlayerStats): void {
+    // ゲームオーバー画面の実装
+    console.log('Game Over:', stats)
+  }
+
+  private createVictoryScreen(stats: PlayerStats): void {
+    // 勝利画面の実装
+    console.log('Victory:', stats)
+  }
+
+  private createStageClearScreen(stage: string, stats: PlayerStats): void {
+    // ステージクリア画面の実装
+    console.log('Stage Clear:', stage, stats)
+  }
+
+  private clearAllUI(): void {
+    // すべてのUI要素をクリア
+    this.clearHandDisplay()
+    this.clearSelectionUI()
+  }
+
+  private clearHandDisplay(): void {
+    // 手札表示をクリア
+    this.handCards.forEach(card => card.destroy())
+    this.handCards = []
+  }
+
+  private clearSelectionUI(): void {
+    // 選択UI要素をクリア
+    if (this.cardSelectionUI) {
+      this.cardSelectionUI.destroy()
+      this.cardSelectionUI = undefined
+    }
+    if (this.insuranceTypeSelectionUI) {
+      this.insuranceTypeSelectionUI.destroy()
+      this.insuranceTypeSelectionUI = undefined
+    }
+  }
 }

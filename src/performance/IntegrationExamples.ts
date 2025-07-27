@@ -411,11 +411,18 @@ async function simulateGameExecution(games: number): Promise<void> {
   console.log(chalk.dim(`  Simulated ${games} games in ${duration}ms`))
 }
 
+interface SimulatedGameData {
+  id: number
+  cards: Array<{ id: number; value: number }>
+  stats: number[]
+  timestamp: number
+}
+
 /**
  * Simulate extended gameplay that might cause memory growth
  */
 async function simulateExtendedGameplay(iterations: number): Promise<void> {
-  const data: any[] = []
+  const data: SimulatedGameData[] = []
   
   for (let i = 0; i < iterations; i++) {
     // Simulate memory allocation that might cause leaks

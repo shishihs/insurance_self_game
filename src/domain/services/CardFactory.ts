@@ -22,115 +22,60 @@ export class CardFactory {
   }
 
   /**
+   * 年齢ボーナスを計算
+   */
+  private static calculateAgeBonus(stage: GameStage): number {
+    switch(stage) {
+      case 'middle': return 0.5
+      case 'fulfillment': return 1.0
+      default: return 0
+    }
+  }
+
+  /**
+   * カード配列から実際のカードを生成
+   */
+  private static createCardsFromDefinitions<T extends { name: string }>(definitions: T[], createFn: (def: T) => Card): Card[] {
+    return definitions.map(def => createFn(def))
+  }
+
+  /**
    * 初期デッキ用の人生カードを生成
    */
   static createStarterLifeCards(): Card[] {
-    const cards: Card[] = []
+    const starterCardDefinitions = [
+      // 健康カード
+      { name: '朝のジョギング', description: '健康的な一日の始まり', category: 'health' as LifeCardCategory, power: 2, cost: 1 },
+      { name: '栄養バランスの良い食事', description: '体調管理の基本', category: 'health' as LifeCardCategory, power: 3, cost: 2 },
+      // キャリアカード
+      { name: '新しいスキルの習得', description: '成長への投資', category: 'career' as LifeCardCategory, power: 3, cost: 2 },
+      { name: 'チームワーク', description: '仲間との協力', category: 'career' as LifeCardCategory, power: 2, cost: 1 },
+      // 家族カード
+      { name: '家族との団らん', description: '心の充電', category: 'family' as LifeCardCategory, power: 2, cost: 1 },
+      // 趣味カード
+      { name: '趣味の時間', description: 'リフレッシュタイム', category: 'hobby' as LifeCardCategory, power: 2, cost: 1 },
+      // 金融カード
+      { name: '計画的な貯蓄', description: '将来への備え', category: 'finance' as LifeCardCategory, power: 3, cost: 2 }
+    ]
 
-    // 健康カード
-    cards.push(this.createLifeCard({
-      name: '朝のジョギング',
-      description: '健康的な一日の始まり',
-      category: 'health',
-      power: 2,
-      cost: 1
-    }))
-
-    cards.push(this.createLifeCard({
-      name: '栄養バランスの良い食事',
-      description: '体調管理の基本',
-      category: 'health',
-      power: 3,
-      cost: 2
-    }))
-
-    // キャリアカード
-    cards.push(this.createLifeCard({
-      name: '新しいスキルの習得',
-      description: '成長への投資',
-      category: 'career',
-      power: 3,
-      cost: 2
-    }))
-
-    cards.push(this.createLifeCard({
-      name: 'チームワーク',
-      description: '仲間との協力',
-      category: 'career',
-      power: 2,
-      cost: 1
-    }))
-
-    // 家族カード
-    cards.push(this.createLifeCard({
-      name: '家族との団らん',
-      description: '心の充電',
-      category: 'family',
-      power: 2,
-      cost: 1
-    }))
-
-    // 趣味カード
-    cards.push(this.createLifeCard({
-      name: '趣味の時間',
-      description: 'リフレッシュタイム',
-      category: 'hobby',
-      power: 2,
-      cost: 1
-    }))
-
-    // 金融カード
-    cards.push(this.createLifeCard({
-      name: '計画的な貯蓄',
-      description: '将来への備え',
-      category: 'finance',
-      power: 3,
-      cost: 2
-    }))
-
-    return cards
+    return this.createCardsFromDefinitions(starterCardDefinitions, def => this.createLifeCard(def))
   }
 
   /**
    * 基本的な保険カードを生成（簡素化版：すべて終身保険、永続効果）
    */
   static createBasicInsuranceCards(stage: GameStage = 'youth'): Card[] {
-    const cards: Card[] = []
+    const ageBonus = this.calculateAgeBonus(stage)
     
-    // 年齢ボーナスの設定
-    const ageBonus = stage === 'middle' ? 0.5 : stage === 'fulfillment' ? 1.0 : 0
+    const basicInsuranceDefinitions = [
+      { name: '医療保険', description: '病気やケガに備える永続保障', insuranceType: 'medical' as InsuranceType, power: 4, cost: 3, coverage: 100 },
+      { name: '生命保険', description: '家族を守る永続保障', insuranceType: 'life' as InsuranceType, power: 5, cost: 4, coverage: 200 },
+      { name: '収入保障保険', description: '働けなくなった時の永続保障', insuranceType: 'income' as InsuranceType, power: 4, cost: 3, coverage: 150 }
+    ]
 
-    cards.push(this.createInsuranceCard({
-      name: '医療保険',
-      description: '病気やケガに備える永続保障',
-      insuranceType: 'medical',
-      power: 4,
-      cost: 3,
-      coverage: 100,
-      ageBonus: ageBonus
-    }))
-
-    cards.push(this.createInsuranceCard({
-      name: '生命保険',
-      description: '家族を守る永続保障',
-      insuranceType: 'life',
-      power: 5,
-      cost: 4,
-      coverage: 200,
-      ageBonus: ageBonus
-    }))
-
-    cards.push(this.createInsuranceCard({
-      name: '収入保障保険',
-      description: '働けなくなった時の永続保障',
-      insuranceType: 'income',
-      power: 4,
-      cost: 3,
-      coverage: 150,
-      ageBonus: ageBonus
-    }))
-
-    return cards
+    return this.createCardsFromDefinitions(basicInsuranceDefinitions, def => 
+      this.createInsuranceCard({ ...def, ageBonus })
+    )
   }
 
   /**
@@ -140,7 +85,7 @@ export class CardFactory {
     const extendedCards: Card[] = []
     
     // 年齢ボーナスの設定
-    const ageBonus = stage === 'middle' ? 0.5 : stage === 'fulfillment' ? 1.0 : 0
+    const ageBonus = this.calculateAgeBonus(stage)
     
     // 基本保険カード
     const baseInsurances = [
@@ -150,8 +95,8 @@ export class CardFactory {
     ]
     
     // 基本保険カードを追加
-    baseInsurances.forEach(insurance => {
-      extendedCards.push(this.createInsuranceCard({
+    const baseCards = this.createCardsFromDefinitions(baseInsurances, insurance => 
+      this.createInsuranceCard({
         name: insurance.name,
         description: `${insurance.name}の永続保障`,
         insuranceType: insurance.insuranceType,
@@ -159,8 +104,9 @@ export class CardFactory {
         cost: insurance.cost,
         coverage: insurance.coverage,
         ageBonus: ageBonus
-      }))
-    })
+      })
+    )
+    extendedCards.push(...baseCards)
 
     // 追加の特殊保険カード
     const additionalInsurances = [
@@ -173,8 +119,8 @@ export class CardFactory {
     ]
     
     // 追加保険カードを追加
-    additionalInsurances.forEach(insurance => {
-      extendedCards.push(this.createInsuranceCard({
+    const additionalCards = this.createCardsFromDefinitions(additionalInsurances, insurance => 
+      this.createInsuranceCard({
         name: insurance.name,
         description: `${insurance.name}の永続保障`,
         insuranceType: insurance.insuranceType,
@@ -182,8 +128,9 @@ export class CardFactory {
         cost: insurance.cost,
         coverage: insurance.coverage,
         ageBonus: ageBonus
-      }))
-    })
+      })
+    )
+    extendedCards.push(...additionalCards)
 
     return extendedCards
   }
@@ -195,7 +142,7 @@ export class CardFactory {
     const choices: InsuranceTypeChoice[] = []
     
     // 年齢ボーナスの設定
-    const ageBonus = stage === 'middle' ? 0.5 : stage === 'fulfillment' ? 1.0 : 0
+    const ageBonus = this.calculateAgeBonus(stage)
     
     // 基本保険タイプの定義
     const baseInsuranceTypes = [
@@ -319,100 +266,38 @@ export class CardFactory {
    * チャレンジカードを生成
    */
   static createChallengeCards(stage: GameStage): Card[] {
-    const cards: Card[] = []
-
-    if (stage === 'youth') {
-      // 青年期のチャレンジ
-      cards.push(this.createChallengeCard({
-        name: '就職活動',
-        description: '新たなキャリアの始まり',
-        power: 5,
-        dreamCategory: 'physical' // 体力系
-      }))
-
-      cards.push(this.createChallengeCard({
-        name: '一人暮らし',
-        description: '独立への第一歩',
-        power: 4,
-        dreamCategory: 'physical' // 体力系
-      }))
-
-      cards.push(this.createChallengeCard({
-        name: '資格試験',
-        description: 'スキルアップのチャンス',
-        power: 6,
-        dreamCategory: 'intellectual' // 知識系
-      }))
-    } else if (stage === 'middle') {
-      // 中年期のチャレンジ
-      cards.push(this.createChallengeCard({
-        name: '子育て',
-        description: '家族の成長',
-        power: 8,
-        dreamCategory: 'physical' // 体力系
-      }))
-
-      cards.push(this.createChallengeCard({
-        name: '住宅購入',
-        description: '大きな決断',
-        power: 10,
-        dreamCategory: 'physical' // 体力系
-      }))
-
-      cards.push(this.createChallengeCard({
-        name: '親の介護',
-        description: '家族の支え合い',
-        power: 9,
-        dreamCategory: 'mixed' // 複合系
-      }))
-    } else {
-      // 充実期のチャレンジ
-      cards.push(this.createChallengeCard({
-        name: '定年退職',
-        description: '新しい人生のスタート',
-        power: 12,
-        dreamCategory: 'intellectual' // 知識系
-      }))
-
-      cards.push(this.createChallengeCard({
-        name: '健康管理',
-        description: '健やかな老後のために',
-        power: 11,
-        dreamCategory: 'mixed' // 複合系
-      }))
+    const challengeDefinitionsByStage = {
+      youth: [
+        { name: '就職活動', description: '新たなキャリアの始まり', power: 5, dreamCategory: 'physical' as DreamCategory },
+        { name: '一人暮らし', description: '独立への第一歩', power: 4, dreamCategory: 'physical' as DreamCategory },
+        { name: '資格試験', description: 'スキルアップのチャンス', power: 6, dreamCategory: 'intellectual' as DreamCategory }
+      ],
+      middle: [
+        { name: '子育て', description: '家族の成長', power: 8, dreamCategory: 'physical' as DreamCategory },
+        { name: '住宅購入', description: '大きな決断', power: 10, dreamCategory: 'physical' as DreamCategory },
+        { name: '親の介護', description: '家族の支え合い', power: 9, dreamCategory: 'mixed' as DreamCategory }
+      ],
+      fulfillment: [
+        { name: '定年退職', description: '新しい人生のスタート', power: 12, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '健康管理', description: '健やかな老後のために', power: 11, dreamCategory: 'mixed' as DreamCategory }
+      ]
     }
 
-    return cards
+    const definitions = challengeDefinitionsByStage[stage] || challengeDefinitionsByStage.fulfillment
+    return this.createCardsFromDefinitions(definitions, def => this.createChallengeCard(def))
   }
 
   /**
    * 落とし穴カードを生成
    */
   static createPitfallCards(): Card[] {
-    const cards: Card[] = []
+    const pitfallDefinitions = [
+      { name: '急な入院', description: '予期せぬ医療費', power: 0, penalty: 3 },
+      { name: '失業', description: '収入の途絶', power: 0, penalty: 4 },
+      { name: '事故', description: '予期せぬトラブル', power: 0, penalty: 2 }
+    ]
 
-    cards.push(this.createPitfallCard({
-      name: '急な入院',
-      description: '予期せぬ医療費',
-      power: 0,
-      penalty: 3
-    }))
-
-    cards.push(this.createPitfallCard({
-      name: '失業',
-      description: '収入の途絶',
-      power: 0,
-      penalty: 4
-    }))
-
-    cards.push(this.createPitfallCard({
-      name: '事故',
-      description: '予期せぬトラブル',
-      power: 0,
-      penalty: 2
-    }))
-
-    return cards
+    return this.createCardsFromDefinitions(pitfallDefinitions, def => this.createPitfallCard(def))
   }
 
   /**

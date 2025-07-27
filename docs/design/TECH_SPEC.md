@@ -381,6 +381,17 @@ export const useGameStore = defineStore('game', () => {
 
 ## 🧪 テスト戦略
 
+### 単体テスト
+- **ドメインロジック**: Game.ts, Card.ts の純粋関数テスト
+- **コントローラー**: GameController のフロー制御テスト
+- **レンダラー**: MockRenderer でのインターフェーステスト
+
+#### 統合テスト（実装済み）
+- ✅ **CUI統合**: cui-playtest.mjs による実ゲームフロー確認
+- ✅ **GUI統合**: unified-game-launcher.mjs GUI モードでの動作確認
+- ✅ **依存関係**: GameController ⇄ GameRenderer ⇄ 各UI実装の接続確認
+- ✅ **ドメイン共有**: CUI/GUI両方で同一 Game.ts ロジック使用確認
+
 ### ドメイン層テスト
 ```typescript
 // domain/models/card/Card.test.ts

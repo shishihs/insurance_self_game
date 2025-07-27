@@ -334,6 +334,86 @@ export interface BalanceRecommendation {
   riskLevel: 'low' | 'medium' | 'high'
 }
 
+// Additional type definitions for analytics methods
+
+export interface WinRateDistribution {
+  mean: number
+  median: number
+  standardDeviation: number
+}
+
+export interface GameLengthAnalysis {
+  optimalLength: number
+  averageLength: number
+}
+
+export interface ChallengeData {
+  challengeId: string
+  successRate: number
+  attemptCount: number
+  stage: GameStage
+}
+
+export interface ChallengeBalanceResult {
+  balanceScore: number
+  recommendations: string[]
+}
+
+export interface StrategyBalanceAnalysis {
+  overpoweredStrategies: string[]
+  balanceIssues: string[]
+}
+
+export interface BalanceMetricsResult {
+  overallBalance: number
+  stageBalance: Record<GameStage, number>
+  recommendations: string[]
+}
+
+export interface PlayerArchetype {
+  type: 'aggressive' | 'conservative' | 'balanced'
+  percentage: number
+}
+
+export interface LearningProgressionAnalysis {
+  improvementRate: number
+  learningCurve: 'steep' | 'steady' | 'flat'
+  recommendations: string[]
+}
+
+export interface EngagementMetricsResult {
+  averageSessionLength: number
+  retentionRate: number
+  engagementScore: number
+}
+
+export interface PerformanceBottleneckAnalysis {
+  bottlenecks: string[]
+  optimizationSuggestions: string[]
+}
+
+export interface MemoryPatternAnalysis {
+  memoryUsage: 'stable' | 'growing' | 'leaking'
+  leaks: string[]
+  optimizations: string[]
+}
+
+export interface PerformanceBenchmarkResult {
+  averageFrameRate: number
+  loadTime: number
+  performanceScore: number
+}
+
+export interface PatternDiscoveryResult {
+  patterns: string[]
+  insights: string[]
+}
+
+export interface ClusterResult {
+  centroid: number[]
+  members: number
+}
+
 /**
  * Comprehensive game analytics engine
  */
@@ -359,7 +439,7 @@ export class GameAnalytics {
   /**
    * Analyze win rate distribution
    */
-  analyzeWinRateDistribution(gameData: GameResultSummary[]): any {
+  analyzeWinRateDistribution(gameData: GameResultSummary[]): WinRateDistribution {
     const winRates = gameData.map(game => game.stats.successfulChallenges / game.stats.totalChallenges || 0)
     return {
       mean: winRates.reduce((a, b) => a + b, 0) / winRates.length,
@@ -371,7 +451,7 @@ export class GameAnalytics {
   /**
    * Analyze optimal game length
    */
-  analyzeOptimalGameLength(gameData: GameResultSummary[]): any {
+  analyzeOptimalGameLength(gameData: GameResultSummary[]): GameLengthAnalysis {
     const gameLengths = gameData.map(game => game.stats.turnsPlayed)
     return {
       optimalLength: this.calculateMedian(gameLengths),
@@ -382,7 +462,7 @@ export class GameAnalytics {
   /**
    * Analyze challenge balance
    */
-  analyzeChallengeBalance(challengeData: any[]): any {
+  analyzeChallengeBalance(challengeData: ChallengeData[]): ChallengeBalanceResult {
     return {
       balanceScore: 75, // Placeholder
       recommendations: []
@@ -392,7 +472,7 @@ export class GameAnalytics {
   /**
    * Detect overpowered strategies
    */
-  detectOverpoweredStrategies(gameData: GameResultSummary[]): any {
+  detectOverpoweredStrategies(gameData: GameResultSummary[]): StrategyBalanceAnalysis {
     return {
       overpoweredStrategies: [],
       balanceIssues: []
@@ -417,7 +497,7 @@ export class GameAnalytics {
   /**
    * Calculate balance metrics
    */
-  calculateBalanceMetrics(gameData: GameResultSummary[]): any {
+  calculateBalanceMetrics(gameData: GameResultSummary[]): BalanceMetricsResult {
     return {
       overallBalance: 75,
       stageBalance: {},
@@ -428,7 +508,7 @@ export class GameAnalytics {
   /**
    * Identify player archetypes
    */
-  identifyPlayerArchetypes(gameData: GameResultSummary[]): any {
+  identifyPlayerArchetypes(gameData: GameResultSummary[]): PlayerArchetype[] {
     return [
       { type: 'aggressive', percentage: 30 },
       { type: 'conservative', percentage: 40 },
@@ -439,7 +519,7 @@ export class GameAnalytics {
   /**
    * Analyze learning progression
    */
-  analyzeLearningProgression(gameData: GameResultSummary[]): any {
+  analyzeLearningProgression(gameData: GameResultSummary[]): LearningProgressionAnalysis {
     return {
       improvementRate: 0.15,
       learningCurve: 'steady',
@@ -450,7 +530,7 @@ export class GameAnalytics {
   /**
    * Calculate engagement metrics
    */
-  calculateEngagementMetrics(gameData: GameResultSummary[]): any {
+  calculateEngagementMetrics(gameData: GameResultSummary[]): EngagementMetricsResult {
     return {
       averageSessionLength: 25,
       retentionRate: 0.7,
@@ -461,7 +541,7 @@ export class GameAnalytics {
   /**
    * Analyze performance bottlenecks
    */
-  analyzePerformanceBottlenecks(gameData: GameResultSummary[]): any {
+  analyzePerformanceBottlenecks(gameData: GameResultSummary[]): PerformanceBottleneckAnalysis {
     return {
       bottlenecks: [],
       optimizationSuggestions: []
@@ -471,7 +551,7 @@ export class GameAnalytics {
   /**
    * Analyze memory patterns
    */
-  analyzeMemoryPatterns(gameData: GameResultSummary[]): any {
+  analyzeMemoryPatterns(gameData: GameResultSummary[]): MemoryPatternAnalysis {
     return {
       memoryUsage: 'stable',
       leaks: [],
@@ -482,7 +562,7 @@ export class GameAnalytics {
   /**
    * Benchmark performance
    */
-  benchmarkPerformance(gameData: GameResultSummary[]): any {
+  benchmarkPerformance(gameData: GameResultSummary[]): PerformanceBenchmarkResult {
     return {
       averageFrameRate: 60,
       loadTime: 2.5,
@@ -493,7 +573,7 @@ export class GameAnalytics {
   /**
    * Discover patterns
    */
-  discoverPatterns(gameData: GameResultSummary[]): any {
+  discoverPatterns(gameData: GameResultSummary[]): PatternDiscoveryResult {
     return {
       patterns: [],
       insights: []
@@ -503,7 +583,7 @@ export class GameAnalytics {
   /**
    * Perform clustering
    */
-  performClustering(gameData: GameResultSummary[]): any {
+  performClustering(gameData: GameResultSummary[]): ClusterResult[] {
     return [
       { centroid: [0.5, 0.5], members: 10 },
       { centroid: [0.3, 0.7], members: 8 }
@@ -680,7 +760,7 @@ export class GameAnalytics {
 
   private analyzeStageBalance(): Record<GameStage, StageBalanceMetrics> {
     const stages: GameStage[] = ['youth', 'adult', 'middle_age', 'elderly']
-    const stageBalance: Record<GameStage, StageBalanceMetrics> = {} as any
+    const stageBalance = {} as Record<GameStage, StageBalanceMetrics>
 
     for (const stage of stages) {
       const stageData = this.processedData.filter(game => game.stage === stage)
@@ -1230,18 +1310,90 @@ export class GameAnalytics {
   private calculateOptimalDifficultyPath(): DifficultyPathpoint[] { return [] }
   private calculateCurveSmoothness(): number { return 0.8 }
   private analyzeOptimalDecisions(): DecisionAnalysis[] { return [] }
-  private analyzeStageStrategies(): Record<GameStage, StrategyEffectiveness> { return {} as any }
+  private analyzeStageStrategies(): Record<GameStage, StrategyEffectiveness> {
+    const stages: GameStage[] = ['youth', 'adult', 'middle_age', 'elderly']
+    const result = {} as Record<GameStage, StrategyEffectiveness>
+    stages.forEach(stage => {
+      result[stage] = {
+        strategy: 'balanced',
+        winRate: 0.5,
+        averageScore: 1000,
+        popularityRank: 1
+      }
+    })
+    return result
+  }
   private analyzeMetaEvolution(): MetaGameTrend[] { return [] }
   private analyzeDecisionPatterns(): DecisionPattern[] { return [] }
   private analyzeRiskBehavior(): RiskAnalysis { return { averageRiskTolerance: 0.5, riskVsReward: 1.2, conservativeRate: 0.4, aggressiveRate: 0.3 } }
   private analyzeLearningCurves(): LearningCurveData { return { improvementRate: 0.1, plateauPoints: [], skillCeiling: 0.8, averageLearningTime: 100 } }
   private analyzeEngagement(): EngagementMetrics { return { averageSessionLength: 900, retentionRate: 0.7, completionRate: 0.6, replayability: 0.8 } }
   private identifyPlayerSegments(): PlayerSegment[] { return [] }
-  private generateBasicPredictions(): PredictiveAnalytics { return {} as any }
-  private buildWinPredictionModel(): WinPredictionModel { return {} as any }
-  private buildLengthPredictionModel(): LengthPredictionModel { return {} as any }
-  private buildProgressionModel(): ProgressionModel { return {} as any }
-  private buildBalanceImpactModel(): BalanceImpactModel { return {} as any }
+  private generateBasicPredictions(): PredictiveAnalytics {
+    return {
+      winProbability: {
+        accuracy: 0.7,
+        features: ['vitality', 'challenges_completed'],
+        importance: { vitality: 0.6, challenges_completed: 0.4 },
+        predictions: {}
+      },
+      lengthPrediction: {
+        accuracy: 0.65,
+        averageError: 3.5,
+        predictions: {}
+      },
+      progressionForecast: {
+        playerTypes: ['aggressive', 'conservative', 'balanced'],
+        progressionPaths: {},
+        bottlenecks: []
+      },
+      balanceImpact: {
+        proposedChanges: [],
+        predictedImpact: {},
+        confidence: 0.75
+      }
+    }
+  }
+  private buildWinPredictionModel(): WinPredictionModel {
+    return {
+      accuracy: 0.8,
+      features: ['vitality', 'challenges_completed', 'insurance_count'],
+      importance: {
+        vitality: 0.5,
+        challenges_completed: 0.3,
+        insurance_count: 0.2
+      },
+      predictions: {}
+    }
+  }
+  private buildLengthPredictionModel(): LengthPredictionModel {
+    return {
+      accuracy: 0.75,
+      averageError: 2.8,
+      predictions: {}
+    }
+  }
+  private buildProgressionModel(): ProgressionModel {
+    return {
+      playerTypes: ['aggressive', 'conservative', 'balanced'],
+      progressionPaths: {
+        aggressive: [1.2, 1.5, 1.8, 2.0],
+        conservative: [0.8, 1.0, 1.2, 1.4],
+        balanced: [1.0, 1.2, 1.4, 1.6]
+      },
+      bottlenecks: ['middle_age_transition', 'resource_shortage']
+    }
+  }
+  private buildBalanceImpactModel(): BalanceImpactModel {
+    return {
+      proposedChanges: ['increase_starting_vitality', 'reduce_challenge_difficulty'],
+      predictedImpact: {
+        increase_starting_vitality: 0.15,
+        reduce_challenge_difficulty: 0.25
+      },
+      confidence: 0.85
+    }
+  }
   private generateExecutiveSummary(balance: GameBalanceAnalysis, strategies: StrategyAnalysis, behavior: PlayerBehaviorAnalysis): string { return 'Comprehensive analysis complete' }
   private generateExecutiveRecommendations(balance: GameBalanceAnalysis, strategies: StrategyAnalysis, behavior: PlayerBehaviorAnalysis): string[] { return [] }
   private getMethodologyDescription(): string { return 'Statistical analysis using Chi-square, t-tests, and correlation analysis' }
@@ -1277,45 +1429,69 @@ export interface AnalyticsReport {
   }
 }
 
+import { BaseFactory, ConfigPreset } from '@/common/BaseFactory'
+
 /**
  * Factory for creating analytics instances
  */
-export class GameAnalyticsFactory {
+export class GameAnalyticsFactory extends BaseFactory<GameAnalytics, AnalyticsConfig> {
+  // Register presets
+  static {
+    this.registerPreset('balance', {
+      name: 'balance',
+      description: 'Analytics for balance testing',
+      config: {
+        enableAdvancedStats: true,
+        enableMLInsights: false,
+        confidenceLevel: 0.95,
+        minSampleSize: 1000,
+        exportDetailedReports: true
+      }
+    })
+
+    this.registerPreset('research', {
+      name: 'research',
+      description: 'Analytics for research with ML insights',
+      config: {
+        enableAdvancedStats: true,
+        enableMLInsights: true,
+        confidenceLevel: 0.99,
+        minSampleSize: 5000,
+        exportDetailedReports: true
+      }
+    })
+
+    this.registerPreset('development', {
+      name: 'development',
+      description: 'Quick analytics for development',
+      config: {
+        enableAdvancedStats: false,
+        enableMLInsights: false,
+        confidenceLevel: 0.90,
+        minSampleSize: 100,
+        exportDetailedReports: false
+      }
+    })
+  }
+
   /**
    * Create analytics for balance testing
    */
   static createBalanceAnalyzer(): GameAnalytics {
-    return new GameAnalytics({
-      enableAdvancedStats: true,
-      enableMLInsights: false,
-      confidenceLevel: 0.95,
-      minSampleSize: 1000
-    })
+    return this.createWithPreset('balance', (config) => new GameAnalytics(config))
   }
 
   /**
    * Create analytics for research
    */
   static createResearchAnalyzer(): GameAnalytics {
-    return new GameAnalytics({
-      enableAdvancedStats: true,
-      enableMLInsights: true,
-      confidenceLevel: 0.99,
-      minSampleSize: 5000,
-      exportDetailedReports: true
-    })
+    return this.createWithPreset('research', (config) => new GameAnalytics(config))
   }
 
   /**
    * Create quick analytics for development
    */
   static createQuickAnalyzer(): GameAnalytics {
-    return new GameAnalytics({
-      enableAdvancedStats: false,
-      enableMLInsights: false,
-      confidenceLevel: 0.90,
-      minSampleSize: 100,
-      exportDetailedReports: false
-    })
+    return this.createWithPreset('development', (config) => new GameAnalytics(config))
   }
 }

@@ -1,6 +1,30 @@
 import { writeFile } from 'fs/promises'
 import { join } from 'path'
 
+// Import Node.js types
+import type { PerformanceObserver } from 'perf_hooks'
+
+// Type definitions
+interface HeapStatistics {
+  total_heap_size: number
+  total_heap_size_executable: number
+  total_physical_size: number
+  total_available_size: number
+  used_heap_size: number
+  heap_size_limit: number
+  malloced_memory: number
+  peak_malloced_memory?: number
+  does_zap_garbage?: number
+  number_of_native_contexts?: number
+  number_of_detached_contexts?: number
+}
+
+interface MemoryTrend {
+  trend: 'stable' | 'increasing' | 'decreasing' | 'volatile'
+  growthRate: number
+  confidence: number
+}
+
 /**
  * Detailed memory analysis results
  */
@@ -90,7 +114,7 @@ export class MemoryProfiler {
   private maxSnapshots: number = 1000
   private heapDumpPath: string = './heap-dumps'
   private enableHeapDumps: boolean = false
-  private gcObserver: any = null
+  private gcObserver: PerformanceObserver | null = null
 
   constructor(config?: {
     samplingInterval?: number
@@ -353,7 +377,7 @@ export class MemoryProfiler {
   private createSnapshot(): MemorySnapshot {
     const memUsage = process.memoryUsage()
     
-    let heapStats: any = {}
+    let heapStats: HeapStatistics = {} as HeapStatistics
     try {
       const v8 = require('v8')
       heapStats = v8.getHeapStatistics()
@@ -636,7 +660,7 @@ export class MemoryProfiler {
     return Math.max(0, 1 - coefficientOfVariation)
   }
 
-  private calculateLeakScore(trend: any): number {
+  private calculateLeakScore(trend: MemoryTrend): number {
     if (trend.trend === 'increasing') {
       // Convert growth rate to a 0-100 score (higher is worse)
       return Math.min(100, trend.growthRate * 10)
@@ -690,57 +714,94 @@ export class MemoryProfiler {
   }
 }
 
+import { BaseFactory } from '@/common/BaseFactory'
+
+interface MemoryProfilerConfig {
+  samplingInterval?: number
+  leakDetectionThreshold?: number
+  maxSnapshots?: number
+  heapDumpPath?: string
+  enableHeapDumps?: boolean
+}
+
 /**
  * Factory for creating memory profilers with preset configurations
  */
-export class MemoryProfilerFactory {
+export class MemoryProfilerFactory extends BaseFactory<MemoryProfiler, MemoryProfilerConfig> {
+  // Register presets
+  static {
+    this.registerPreset('development', {
+      name: 'development',
+      description: 'Profiler for development use',
+      config: {
+        samplingInterval: 1000, // 1 second
+        leakDetectionThreshold: 2, // 2MB per minute
+        maxSnapshots: 500,
+        enableHeapDumps: false
+      }
+    })
+
+    this.registerPreset('production', {
+      name: 'production',
+      description: 'Profiler for production monitoring',
+      config: {
+        samplingInterval: 10000, // 10 seconds
+        leakDetectionThreshold: 5, // 5MB per minute
+        maxSnapshots: 1000,
+        enableHeapDumps: false
+      }
+    })
+
+    this.registerPreset('analysis', {
+      name: 'analysis',
+      description: 'Profiler for detailed analysis',
+      config: {
+        samplingInterval: 500, // 500ms
+        leakDetectionThreshold: 1, // 1MB per minute
+        maxSnapshots: 2000,
+        enableHeapDumps: true,
+        heapDumpPath: './analysis/heap-dumps'
+      }
+    })
+
+    this.registerPreset('stress-test', {
+      name: 'stress-test',
+      description: 'Profiler for stress testing',
+      config: {
+        samplingInterval: 100, // 100ms
+        leakDetectionThreshold: 0.5, // 0.5MB per minute
+        maxSnapshots: 5000,
+        enableHeapDumps: false
+      }
+    })
+  }
+
   /**
    * Create profiler for development use
    */
   static createDevelopmentProfiler(): MemoryProfiler {
-    return new MemoryProfiler({
-      samplingInterval: 1000, // 1 second
-      leakDetectionThreshold: 2, // 2MB per minute
-      maxSnapshots: 500,
-      enableHeapDumps: false
-    })
+    return this.createWithPreset('development', (config) => new MemoryProfiler(config))
   }
 
   /**
    * Create profiler for production monitoring
    */
   static createProductionProfiler(): MemoryProfiler {
-    return new MemoryProfiler({
-      samplingInterval: 10000, // 10 seconds
-      leakDetectionThreshold: 5, // 5MB per minute
-      maxSnapshots: 1000,
-      enableHeapDumps: false
-    })
+    return this.createWithPreset('production', (config) => new MemoryProfiler(config))
   }
 
   /**
    * Create profiler for detailed analysis
    */
   static createAnalysisProfiler(): MemoryProfiler {
-    return new MemoryProfiler({
-      samplingInterval: 500, // 500ms
-      leakDetectionThreshold: 1, // 1MB per minute
-      maxSnapshots: 2000,
-      enableHeapDumps: true,
-      heapDumpPath: './analysis/heap-dumps'
-    })
+    return this.createWithPreset('analysis', (config) => new MemoryProfiler(config))
   }
 
   /**
    * Create profiler for stress testing
    */
   static createStressTestProfiler(): MemoryProfiler {
-    return new MemoryProfiler({
-      samplingInterval: 100, // 100ms
-      leakDetectionThreshold: 0.5, // 0.5MB per minute
-      maxSnapshots: 5000,
-      enableHeapDumps: false
-    })
+    return this.createWithPreset('stress-test', (config) => new MemoryProfiler(config))
   }
 }
 

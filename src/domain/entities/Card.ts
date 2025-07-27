@@ -257,4 +257,54 @@ export class Card implements ICard {
       this.remainingTurns--
     }
   }
+
+  // === 静的ファクトリーメソッド（TDD: Green Phase） ===
+
+  /**
+   * ライフカードを作成
+   */
+  static createLifeCard(name: string, power: number): Card {
+    const powerSign = power > 0 ? '+' : ''
+    return new Card({
+      id: `life_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      description: `パワー: ${powerSign}${power}`,
+      type: 'life',
+      power,
+      cost: 0,
+      effects: []
+    })
+  }
+
+  /**
+   * チャレンジカードを作成
+   */
+  static createChallengeCard(name: string, power: number): Card {
+    const card = new Card({
+      id: `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      description: `必要パワー: ${power}`,
+      type: 'challenge',
+      power,
+      cost: 0,
+      effects: []
+    })
+    
+    return card
+  }
+
+  /**
+   * 保険カードを作成
+   */
+  static createInsuranceCard(name: string, power: number, ...effects: CardEffect[]): Card {
+    return new Card({
+      id: `insurance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      description: `保険カード - パワー: +${power}`,
+      type: 'insurance',
+      power,
+      cost: 1,
+      effects: effects
+    })
+  }
 }

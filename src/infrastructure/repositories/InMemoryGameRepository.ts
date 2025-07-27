@@ -33,7 +33,7 @@ export class InMemoryGameRepository implements IGameRepository {
     return inProgressGames
   }
 
-  async findLatestByUserId(userId: string): Promise<Game | null> {
+  async findLatestByUserId(_userId: string): Promise<Game | null> {
     // インメモリ実装では簡略化（実際はユーザーIDとの関連付けが必要）
     let latestGame: Game | null = null
     let latestDate: Date | null = null

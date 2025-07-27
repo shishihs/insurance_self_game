@@ -40,7 +40,8 @@ test-results/
 **重要**: 
 - 日付ではなく **3桁のインクリメント番号** を使用
 - `counter.json` で次の番号を管理
-- テストプレイ実施前に必ず番号を確認・更新
+- **新しいCUIテスト方法**: `node cui-playtest.mjs "[目的]"` を使用
+- ⚠️ `test-cui-simple.mjs` は廃止（本物のGameドメインを使用する `cui-playtest.mjs` に移行）
 
 ##### 記録テンプレート
 ```

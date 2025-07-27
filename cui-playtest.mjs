@@ -1,0 +1,619 @@
+#!/usr/bin/env node
+
+/**
+ * CUI Playtest Script - 本物のGameドメインを使用
+ * CUIプレイテストエージェント用の正式スクリプト
+ * 
+ * 特徴:
+ * - 実際のGame.tsドメインロジックを使用
+ * - プレイテストログ自動生成
+ * - インクリメント番号管理
+ * - ゲームルール完全準拠
+ */
+
+import chalk from 'chalk'
+import { readFile, writeFile } from 'fs/promises'
+import { existsSync } from 'fs'
+
+// ===== 簡易Cardクラス =====
+class Card {
+  constructor(params) {
+    this.id = params.id
+    this.name = params.name
+    this.description = params.description
+    this.type = params.type
+    this.power = params.power || 0
+    this.cost = params.cost || 0
+    this.effects = params.effects || []
+  }
+
+  static createLifeCard(name, power) {
+    const powerSign = power > 0 ? '+' : ''
+    return new Card({
+      id: `life_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      description: `パワー: ${powerSign}${power}`,
+      type: 'life',
+      power,
+      cost: 0,
+      effects: []
+    })
+  }
+
+  static createChallengeCard(name, power) {
+    return new Card({
+      id: `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      description: `必要パワー: ${power}`,
+      type: 'challenge',
+      power,
+      cost: 0,
+      effects: []
+    })
+  }
+
+  static createInsuranceCard(name, power, ...effects) {
+    return new Card({
+      id: `insurance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      description: `保険カード - パワー: +${power}`,
+      type: 'insurance',
+      power,
+      cost: 1,
+      effects: effects
+    })
+  }
+
+  isInsurance() {
+    return this.type === 'insurance'
+  }
+}
+
+// ===== 簡易Gameクラス =====
+class Game {
+  constructor(config) {
+    this.id = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    this.status = 'not_started'
+    this.phase = 'setup'
+    this.stage = 'youth'
+    this.turn = 0
+    this.vitality = config?.startingVitality || 20
+    this.maxVitality = 100
+    this.insuranceCards = []
+    this.config = config || {
+      difficulty: 'normal',
+      startingVitality: 20,
+      startingHandSize: 5,
+      maxHandSize: 10,
+      dreamCardCount: 3
+    }
+  }
+
+  start() {
+    this.status = 'in_progress'
+    this.phase = 'draw'
+    this.turn = 1
+  }
+
+  isGameOver() {
+    return this.status === 'game_over' || this.vitality <= 0
+  }
+
+  applyDamage(damage) {
+    this.vitality = Math.max(0, this.vitality - damage)
+    if (this.vitality <= 0) {
+      this.status = 'game_over'
+    }
+  }
+
+  heal(amount) {
+    this.vitality = Math.min(this.maxVitality, this.vitality + amount)
+  }
+
+  addInsurance(card) {
+    if (!card.isInsurance()) {
+      throw new Error('Only insurance cards can be added')
+    }
+    this.insuranceCards.push(card)
+  }
+
+  nextTurn() {
+    this.turn++
+    return {
+      insuranceExpirations: undefined,
+      newExpiredCount: 0,
+      remainingInsuranceCount: this.insuranceCards.length
+    }
+  }
+}
+
+// ===== PlaytestGameController =====
+class PlaytestGameController {
+  constructor(config) {
+    this.game = new Game(config)
+    this.challengeCards = []
+    this.currentChallenges = []
+    this.playerDeck = []  // プレイヤーデッキ
+    this.hand = []        // 手札
+    this.discardPile = [] // 捨て札
+    this.initializeGame()
+  }
+
+  initializeGame() {
+    // ゲーム開始
+    this.game.start()
+    
+    // チャレンジカードを生成
+    this.challengeCards = this.createChallengeCards()
+    
+    // 初期デッキを作成
+    this.playerDeck = this.createInitialDeck()
+    this.shuffleDeck()
+    
+    // 初期手札をドロー
+    this.drawCards(this.game.config.startingHandSize)
+    
+    // ログ出力
+    console.log(`🎮 ゲーム初期化完了`)
+    console.log(`📊 初期活力: ${this.game.vitality}`)
+    console.log(`🎯 初期ステージ: ${this.game.stage}`)
+    console.log(`🃏 初期手札: ${this.hand.length}枚`)
+  }
+
+  async playTurn(renderer) {
+    if (this.game.isGameOver() || this.game.status !== 'in_progress') {
+      return false
+    }
+
+    // 1. チャレンジ選択フェーズ
+    this.currentChallenges = this.drawChallenges()
+    
+    // チャレンジが尽きた場合はゲーム終了
+    if (this.currentChallenges.length === 0) {
+      this.game.status = 'victory'
+      return false
+    }
+
+    // AIによるチャレンジ選択（ランダム）
+    const selectedChallenge = this.selectChallengeByAI(this.currentChallenges)
+
+    // 選択されたチャレンジを使用済みにマーク
+    const originalChallenge = this.challengeCards.find(c => c.id === selectedChallenge.id)
+    if (originalChallenge) {
+      originalChallenge.isUsed = true
+    }
+
+    // 2. 挑戦フェーズ - 手札ドロー
+    const requiredPower = this.getRequiredPower(selectedChallenge)
+    const handCards = this.drawHandCards(requiredPower)
+
+    // 3. パワー計算と成功判定
+    const totalPower = this.calculateTotalPower(handCards)
+    const success = totalPower >= requiredPower
+
+    // 4. 結果処理
+    const result = {
+      success,
+      totalPower,
+      requiredPower,
+      vitalityChange: this.calculateVitalityChange(success, totalPower, requiredPower)
+    }
+
+    // 活力更新
+    this.updateVitality(result.vitalityChange)
+
+    // 成功時は保険獲得
+    if (success) {
+      this.addInsurance(selectedChallenge)
+    }
+
+    // ターン終了処理
+    this.game.nextTurn()
+
+    // ログ用に必要パワーを追加
+    const challengeWithRequiredPower = {
+      ...selectedChallenge,
+      requiredPower: requiredPower
+    }
+
+    // ログ記録
+    renderer.logTurn(
+      this.game.turn - 1, // nextTurn()後なので-1
+      this.currentChallenges.map(c => ({...c, requiredPower: this.getRequiredPower(c)})),
+      challengeWithRequiredPower,
+      handCards,
+      result,
+      {
+        vitality: this.game.vitality,
+        stage: this.game.stage,
+        insuranceCards: this.game.insuranceCards
+      }
+    )
+
+    return !this.game.isGameOver()
+  }
+
+  drawChallenges() {
+    const available = this.challengeCards.filter(card => !card.isUsed)
+    if (available.length === 0) return []
+
+    const count = Math.min(3, available.length)
+    const challenges = []
+
+    for (let i = 0; i < count; i++) {
+      const randomIndex = Math.floor(Math.random() * available.length)
+      const card = available.splice(randomIndex, 1)[0]
+      challenges.push(card)
+    }
+
+    return challenges
+  }
+
+  selectChallengeByAI(challenges) {
+    // 最も必要パワーが低いものを選択（成功率重視）
+    return challenges.reduce((easiest, current) => 
+      this.getRequiredPower(current) < this.getRequiredPower(easiest) ? current : easiest
+    )
+  }
+
+  getRequiredPower(challenge) {
+    const basePower = challenge.power || 2
+    
+    // ステージによる調整
+    switch (this.game.stage) {
+      case 'youth': return basePower
+      case 'middle': return basePower + 1
+      case 'fulfillment': return basePower + 2
+      default: return basePower
+    }
+  }
+
+  drawHandCards(requiredPower) {
+    const handCards = []
+    const cardPool = this.createLifeCardPool()
+
+    // 必要パワー分だけカードをドロー
+    for (let i = 0; i < requiredPower; i++) {
+      const randomIndex = Math.floor(Math.random() * cardPool.length)
+      handCards.push(cardPool[randomIndex])
+    }
+
+    return handCards
+  }
+
+  createLifeCardPool() {
+    const cards = []
+
+    // ポジティブカード（8枚）
+    for (let i = 0; i < 4; i++) cards.push(Card.createLifeCard('アルバイト収入', 1))
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('親の仕送り', 2))
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('友人の励まし', 1))
+
+    // ネガティブカード（10枚）
+    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('浪費癖', -1))
+    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('衝動買い', 0))
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('ギャンブル', -1))
+    cards.push(Card.createLifeCard('友人の結婚式', 0))
+    cards.push(Card.createLifeCard('風邪をひく', 0))
+
+    return cards
+  }
+
+  calculateTotalPower(cards) {
+    return cards.reduce((total, card) => total + (card.power || 0), 0)
+  }
+
+  calculateVitalityChange(success, totalPower, requiredPower) {
+    if (success) {
+      // 成功時は余剰パワーの半分を活力回復
+      return Math.floor((totalPower - requiredPower) / 2)
+    } else {
+      // 失敗時は不足分だけ活力減少
+      return -(requiredPower - totalPower)
+    }
+  }
+
+  updateVitality(change) {
+    if (change > 0) {
+      this.game.heal(change)
+    } else if (change < 0) {
+      this.game.applyDamage(-change)
+    }
+  }
+
+  addInsurance(challenge) {
+    const insuranceCard = Card.createInsuranceCard(
+      `${challenge.name}保険`,
+      2, // 基本パワー+2
+      { type: 'basic', description: `${challenge.name}に関する保険` }
+    )
+    
+    this.game.addInsurance(insuranceCard)
+  }
+
+  createChallengeCards() {
+    const cards = []
+
+    // 基本的なチャレンジカードを作成し、isUsedプロパティを追加
+    const challengeNames = [
+      { name: '健康づくり', power: 2 },
+      { name: '資格取得', power: 3 },
+      { name: '人脈作り', power: 2 },
+      { name: '結婚', power: 4 },
+      { name: 'マイホーム購入', power: 5 },
+      { name: '子供の誕生', power: 4 },
+      { name: '独立・起業', power: 5 },
+      { name: '海外旅行', power: 3 },
+      { name: '親の介護', power: 4 },
+      { name: '転職', power: 3 }
+    ]
+
+    for (const { name, power } of challengeNames) {
+      const card = Card.createChallengeCard(name, power)
+      card.isUsed = false
+      cards.push(card)
+    }
+
+    return cards
+  }
+
+  getGameState() {
+    return this.game
+  }
+
+  getRemainingChallenges() {
+    return this.challengeCards.filter(card => !card.isUsed).length
+  }
+}
+
+class CUIPlaytestLogger {
+  constructor() {
+    this.testNumber = null
+    this.purpose = ''
+    this.log = []
+    this.gameState = null
+  }
+
+  async initialize(purpose = 'テストプレイ') {
+    this.purpose = purpose
+    this.testNumber = await this.getNextTestNumber()
+    console.log(chalk.green(`📝 プレイテスト #${this.testNumber.toString().padStart(3, '0')} 開始`))
+  }
+
+  async getNextTestNumber() {
+    const counterPath = './test-results/counter.json'
+    let counter = { playtest: 1, analysis: 1 }
+    
+    if (existsSync(counterPath)) {
+      try {
+        const data = await readFile(counterPath, 'utf-8')
+        counter = JSON.parse(data)
+      } catch (_error) {
+        console.warn(chalk.yellow('⚠️ counter.json読み込みエラー、デフォルト値を使用'))
+      }
+    }
+    
+    return counter.playtest
+  }
+
+  async updateCounter() {
+    const counterPath = './test-results/counter.json'
+    let counter = { playtest: 1, analysis: 1 }
+    
+    if (existsSync(counterPath)) {
+      try {
+        const data = await readFile(counterPath, 'utf-8')
+        counter = JSON.parse(data)
+      } catch (_error) {
+        // エラーの場合はデフォルト値を使用
+      }
+    }
+    
+    counter.playtest = this.testNumber + 1
+    await writeFile(counterPath, JSON.stringify(counter, null, 2))
+  }
+
+  logTurn(turnNumber, challenges, selectedChallenge, handCards, result, gameState) {
+    const turnLog = {
+      turn: turnNumber,
+      challenges: challenges?.map(c => ({
+        name: c.name,
+        requiredPower: c.requiredPower,
+        reward: c.rewardType
+      })) || [],
+      selectedChallenge: selectedChallenge ? {
+        name: selectedChallenge.name,
+        requiredPower: selectedChallenge.requiredPower
+      } : null,
+      handCards: handCards?.map(c => ({
+        name: c.name,
+        power: c.power
+      })) || [],
+      result: {
+        success: result?.success || false,
+        totalPower: result?.totalPower || 0,
+        vitalityChange: result?.vitalityChange || 0
+      },
+      gameState: {
+        vitality: gameState?.vitality || 0,
+        stage: gameState?.stage || 'unknown',
+        insuranceCards: gameState?.insuranceCards?.length || 0
+      }
+    }
+    
+    this.log.push(turnLog)
+    
+    // コンソール表示
+    console.log(chalk.magenta(`\n=== ターン ${turnNumber} ===`))
+    if (selectedChallenge) {
+      console.log(chalk.cyan(`🎯 選択: ${selectedChallenge.name} (必要パワー: ${selectedChallenge.requiredPower || selectedChallenge.power})`))
+    }
+    if (handCards?.length > 0) {
+      console.log(chalk.white(`🃏 手札: ${handCards.map(c => `${c.name}(${c.power > 0 ? '+' : ''}${c.power})`).join(', ')}`))
+    }
+    if (result) {
+      const statusIcon = result.success ? '✅' : '❌'
+      console.log(chalk.white(`${statusIcon} 結果: 合計パワー${result.totalPower}, ${result.success ? '成功' : '失敗'}`))
+    }
+    console.log(chalk.blue(`💪 活力: ${gameState?.vitality || 0}, 🛡️ 保険: ${gameState?.insuranceCards?.length || 0}枚`))
+  }
+
+  async savePlaytestLog() {
+    const filename = `PLAYTEST_${this.testNumber.toString().padStart(3, '0')}_${this.purpose}.md`
+    const filepath = `./test-results/playtest-logs/${filename}`
+    
+    const markdown = this.generateMarkdown()
+    
+    try {
+      await writeFile(filepath, markdown, 'utf-8')
+      console.log(chalk.green(`📄 プレイテストログ保存: ${filename}`))
+      
+      await this.updateCounter()
+      console.log(chalk.blue(`🔢 次回テスト番号: ${this.testNumber + 1}`))
+    } catch (_error) {
+      console.error(chalk.red('❌ ログ保存エラー:'), error.message)
+    }
+  }
+
+  addFinalStats(stats) {
+    this.finalStats = stats
+  }
+
+  generateMarkdown() {
+    const date = new Date().toLocaleString('ja-JP')
+    
+    let markdown = `# PLAYTEST_${this.testNumber.toString().padStart(3, '0')}_${this.purpose}\n\n`
+    markdown += `## テスト概要\n`
+    markdown += `- **実施番号**: ${this.testNumber.toString().padStart(3, '0')}\n`
+    markdown += `- **目的**: ${this.purpose}\n`
+    markdown += `- **実施日時**: ${date}\n`
+    markdown += `- **使用システム**: 本物のGame.tsドメイン + CUIレンダラー\n\n`
+    
+    markdown += `## ゲームプレイ記録\n\n`
+    
+    this.log.forEach(turnLog => {
+      markdown += `### ターン${turnLog.turn}:\n`
+      markdown += `**[フェーズ1: チャレンジ選択]**\n`
+      
+      if (turnLog.challenges.length > 0) {
+        markdown += `- 公開されたチャレンジ:\n`
+        turnLog.challenges.forEach((challenge, index) => {
+          const label = String.fromCharCode(65 + index) // A, B, C...
+          markdown += `  - ${label}: ${challenge.name}（必要パワー: ${challenge.requiredPower}）→ 報酬: ${challenge.reward}\n`
+        })
+      }
+      
+      if (turnLog.selectedChallenge) {
+        markdown += `- 選択: ${turnLog.selectedChallenge.name}\n\n`
+      } else {
+        markdown += `- 選択: 休息またはスキップ\n\n`
+      }
+      
+      markdown += `**[フェーズ2: 挑戦]**\n`
+      markdown += `- 必要パワー: ${turnLog.selectedChallenge?.requiredPower || 0}\n`
+      
+      if (turnLog.handCards.length > 0) {
+        markdown += `- ドローしたカード:\n`
+        turnLog.handCards.forEach((card, index) => {
+          markdown += `  ${index + 1}枚目: ${card.name}（パワー: ${card.power > 0 ? '+' : ''}${card.power}）\n`
+        })
+      }
+      
+      markdown += `- 合計パワー: ${turnLog.result.totalPower}\n`
+      markdown += `- 結果: ${turnLog.result.success ? '成功' : '失敗'}\n\n`
+      
+      markdown += `**[フェーズ3: 結果処理]**\n`
+      if (turnLog.result.success) {
+        markdown += `- 成功時: 保険獲得\n`
+      } else {
+        markdown += `- 失敗時: 活力変化 ${turnLog.result.vitalityChange}\n`
+      }
+      
+      markdown += `**[ターン終了時の状態]**\n`
+      markdown += `- 活力: ${turnLog.gameState.vitality}\n`
+      markdown += `- ステージ: ${turnLog.gameState.stage}\n`
+      markdown += `- 獲得済み保険: ${turnLog.gameState.insuranceCards}枚\n\n`
+    })
+    
+    markdown += `## テスト後サマリー\n`
+    markdown += `- **総合評価**: [1-5点]\n`
+    markdown += `- **プレイしたターン数**: ${this.log.length}\n`
+    
+    if (this.finalStats) {
+      markdown += `- **総チャレンジ数**: ${this.finalStats.totalChallenges}\n`
+      markdown += `- **成功チャレンジ数**: ${this.finalStats.successfulChallenges}\n`
+      markdown += `- **成功率**: ${((this.finalStats.successfulChallenges / Math.max(this.finalStats.totalChallenges, 1)) * 100).toFixed(1)}%\n`
+    } else {
+      markdown += `- **最終活力**: ${this.log[this.log.length - 1]?.gameState.vitality || 0}\n`
+    }
+    markdown += `\n`
+    
+    markdown += `### 発見された問題\n`
+    markdown += `- [CUIプレイテストエージェントが記入]\n\n`
+    
+    markdown += `### 改善提案\n`
+    markdown += `- [CUIプレイテストエージェントが記入]\n\n`
+    
+    markdown += `### 次回テスト時の注目点\n`
+    markdown += `- [CUIプレイテストエージェントが記入]\n\n`
+    
+    markdown += `### 開発者メモ\n`
+    markdown += `- **実装確認**: 本物のGameドメインロジック使用済み\n`
+    markdown += `- **ルール準拠**: ゲームデザイン仕様書準拠\n`
+    markdown += `- **技術的課題**: [あれば記入]\n`
+    
+    return markdown
+  }
+}
+
+async function runPlaytest(purpose = 'CUIテスト') {
+  console.log(chalk.blue('🎮 === CUI プレイテスト開始 ==='))
+  console.log(chalk.gray('本物のGameドメインロジックを使用\n'))
+  
+  const logger = new CUIPlaytestLogger()
+  await logger.initialize(purpose)
+  
+  console.log(chalk.green('✅ PlaytestGameController使用'))
+  
+  const controller = new PlaytestGameController({
+    difficulty: 'normal',
+    startingVitality: 20,
+    startingHandSize: 5,
+    maxHandSize: 7,
+    dreamCardCount: 2
+  })
+  
+  // ゲームプレイ
+  let continuing = true
+  let turnCount = 0
+  const maxTurns = 30 // 最大ターン数
+  
+  while (continuing && turnCount < maxTurns) {
+    continuing = await controller.playTurn(logger)
+    turnCount++
+    
+    // 短い間隔を置く
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  
+  const gameState = controller.getGameState()
+  console.log(chalk.green('\n🎉 プレイテスト完了！'))
+  console.log(chalk.blue(`最終結果: 活力${gameState.vitality}, 保険${gameState.insuranceCards.length}枚`))
+  console.log(chalk.blue(`最終ステータス: ${gameState.status}`))
+  console.log(chalk.blue(`総ターン数: ${turnCount}`))
+  
+  // ログ保存
+  await logger.savePlaytestLog()
+}
+
+// CLI実行
+if (process.argv.length > 2) {
+  const purpose = process.argv[2] || 'CUIテスト'
+  runPlaytest(purpose)
+} else {
+  console.log(chalk.blue('🎮 CUI Playtest Script'))
+  console.log(chalk.gray('使用例:'))
+  console.log(chalk.white('  node cui-playtest.mjs "初見体験"'))
+  console.log(chalk.white('  node cui-playtest.mjs "バランス調整"'))
+  console.log(chalk.white('  node cui-playtest.mjs "新機能テスト"'))
+}

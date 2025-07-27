@@ -47,12 +47,41 @@ export interface GameResult {
 }
 
 /**
+ * AI action types
+ */
+export type AIAction = 
+  | { type: 'select_cards'; cards: Card[] }
+  | { type: 'attempt_challenge'; challenge: Card }
+  | { type: 'skip_challenge' }
+  | { type: 'select_insurance'; insuranceType: 'whole_life' | 'term' }
+  | { type: 'renew_insurance'; insurance: Card }
+  | { type: 'skip_insurance_renewal'; insurance: Card }
+
+/**
+ * Decision context types
+ */
+export type DecisionContext = 
+  | { type: 'card_selection'; requiredPower: number; availableCards: Card[] }
+  | { type: 'challenge_attempt'; challenge: Card; availableCards: Card[] }
+  | { type: 'insurance_choice'; availableTypes: ('whole_life' | 'term')[] }
+  | { type: 'insurance_renewal'; insurance: Card; cost: number }
+
+/**
+ * Decision choice types
+ */
+export type DecisionChoice =
+  | { type: 'card_selection'; selectedCards: Card[] }
+  | { type: 'challenge_attempt'; attemptChallenge: boolean }
+  | { type: 'insurance_choice'; selectedType: 'whole_life' | 'term' }
+  | { type: 'insurance_renewal'; renewInsurance: boolean }
+
+/**
  * AI decision tracking
  */
 export interface Decision {
   type: 'card_selection' | 'challenge_attempt' | 'insurance_choice' | 'insurance_renewal'
-  context: any
-  choice: any
+  context: DecisionContext
+  choice: DecisionChoice
   outcome: 'good' | 'neutral' | 'bad'
   impact: number
 }
@@ -98,12 +127,12 @@ export interface GeneticIndividual {
  */
 export interface MCTSNode {
   state: GameState
-  action?: any
+  action?: AIAction
   parent?: MCTSNode
   children: MCTSNode[]
   visits: number
   wins: number
-  untriedActions: any[]
+  untriedActions: AIAction[]
 }
 
 /**
@@ -731,7 +760,7 @@ export class MCTSStrategy implements AIStrategy {
     }
   }
 
-  private createNode(state: GameState, action?: any, parent?: MCTSNode): MCTSNode {
+  private createNode(state: GameState, action?: AIAction, parent?: MCTSNode): MCTSNode {
     return {
       state,
       action,
@@ -812,14 +841,55 @@ export class MCTSStrategy implements AIStrategy {
     return exploitation + exploration
   }
 
-  private getValidActions(state: GameState): any[] {
-    // Simplified action space
-    return ['action1', 'action2', 'action3']
+  private getValidActions(state: GameState): AIAction[] {
+    // Simplified action space - in real implementation, this would generate valid actions based on game state
+    const actions: AIAction[] = []
+    
+    // Add card selection actions if in card selection phase
+    if (state.playerHand.length > 0) {
+      actions.push({ type: 'select_cards', cards: [state.playerHand[0]] })
+    }
+    
+    // Add challenge actions if there's a current challenge
+    if (state.currentChallenge) {
+      actions.push({ type: 'attempt_challenge', challenge: state.currentChallenge })
+      actions.push({ type: 'skip_challenge' })
+    }
+    
+    return actions
   }
 
-  private applyAction(state: GameState, action: any): GameState {
-    // Simplified state transition
-    return { ...state, turn: state.turn + 1 }
+  private applyAction(state: GameState, action: AIAction): GameState {
+    // Simplified state transition - in real implementation, this would properly update state based on action
+    const newState = { ...state }
+    
+    switch (action.type) {
+      case 'select_cards':
+        // Remove selected cards from hand
+        newState.playerHand = state.playerHand.filter(card => !action.cards.includes(card))
+        break
+      case 'attempt_challenge':
+        // Update challenge state
+        newState.currentChallenge = undefined
+        break
+      case 'skip_challenge':
+        // Skip challenge, may reduce vitality
+        newState.vitality = Math.max(0, state.vitality - 5)
+        newState.currentChallenge = undefined
+        break
+      case 'select_insurance':
+        // Add insurance logic
+        break
+      case 'renew_insurance':
+        // Renew insurance logic
+        break
+      case 'skip_insurance_renewal':
+        // Skip renewal logic
+        break
+    }
+    
+    newState.turn = state.turn + 1
+    return newState
   }
 
   private isTerminal(state: GameState): boolean {
@@ -832,15 +902,16 @@ export class MCTSStrategy implements AIStrategy {
     return state.vitality / state.maxVitality
   }
 
-  private runSimulations(state: GameState, actions: any[], iterations: number): Record<string, number> {
-    const results: Record<string, number> = {}
+  private runSimulations(state: GameState, actions: AIAction[], iterations: number): Map<AIAction, number> {
+    const results = new Map<AIAction, number>()
     
     for (const action of actions) {
-      results[action] = 0
+      let score = 0
       for (let i = 0; i < iterations; i++) {
         const newState = this.applyAction(state, action)
-        results[action] += this.simulate(this.createNode(newState))
+        score += this.simulate(this.createNode(newState))
       }
+      results.set(action, score)
     }
     
     return results

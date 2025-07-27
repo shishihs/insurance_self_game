@@ -741,64 +741,87 @@ export class GamePerformanceAnalyzer {
   }
 }
 
+import { BaseFactory } from '@/common/BaseFactory'
+
 /**
  * Factory for creating performance analyzers with preset configurations
  */
-export class PerformanceAnalyzerFactory {
+export class PerformanceAnalyzerFactory extends BaseFactory<GamePerformanceAnalyzer, PerformanceConfig> {
+  // Register presets
+  static {
+    this.registerPreset('development', {
+      name: 'development',
+      description: 'Analyzer for development environment',
+      config: {
+        enableMemoryMonitoring: true,
+        enableCpuMonitoring: true,
+        enableGcMonitoring: true,
+        samplingInterval: 100,
+        memoryLeakThreshold: 25,
+        thresholds: {
+          memoryUsage: 50,
+          cpuUsage: 70,
+          executionTime: 500,
+          gcTime: 25
+        }
+      }
+    })
+
+    this.registerPreset('benchmark', {
+      name: 'benchmark',
+      description: 'Analyzer for production benchmarking',
+      config: {
+        enableMemoryMonitoring: true,
+        enableCpuMonitoring: false, // Reduced overhead
+        enableGcMonitoring: true,
+        samplingInterval: 0, // Manual sampling only
+        memoryLeakThreshold: 100,
+        thresholds: {
+          memoryUsage: 200,
+          cpuUsage: 90,
+          executionTime: 2000,
+          gcTime: 100
+        }
+      }
+    })
+
+    this.registerPreset('memory-leak', {
+      name: 'memory-leak',
+      description: 'Analyzer for memory leak detection',
+      config: {
+        enableMemoryMonitoring: true,
+        enableCpuMonitoring: false,
+        enableGcMonitoring: true,
+        samplingInterval: 50, // More frequent sampling
+        memoryLeakThreshold: 10, // Very sensitive
+        thresholds: {
+          memoryUsage: 30,
+          cpuUsage: 100,
+          executionTime: 10000,
+          gcTime: 10
+        }
+      }
+    })
+  }
+
   /**
    * Create analyzer for development environment
    */
   static createDevelopmentAnalyzer(): GamePerformanceAnalyzer {
-    return new GamePerformanceAnalyzer({
-      enableMemoryMonitoring: true,
-      enableCpuMonitoring: true,
-      enableGcMonitoring: true,
-      samplingInterval: 100,
-      memoryLeakThreshold: 25,
-      thresholds: {
-        memoryUsage: 50,
-        cpuUsage: 70,
-        executionTime: 500,
-        gcTime: 25
-      }
-    })
+    return this.createWithPreset('development', (config) => new GamePerformanceAnalyzer(config))
   }
 
   /**
    * Create analyzer for production benchmarking
    */
   static createBenchmarkAnalyzer(): GamePerformanceAnalyzer {
-    return new GamePerformanceAnalyzer({
-      enableMemoryMonitoring: true,
-      enableCpuMonitoring: false, // Reduced overhead
-      enableGcMonitoring: true,
-      samplingInterval: 0, // Manual sampling only
-      memoryLeakThreshold: 100,
-      thresholds: {
-        memoryUsage: 200,
-        cpuUsage: 90,
-        executionTime: 2000,
-        gcTime: 100
-      }
-    })
+    return this.createWithPreset('benchmark', (config) => new GamePerformanceAnalyzer(config))
   }
 
   /**
    * Create analyzer for memory leak detection
    */
   static createMemoryLeakAnalyzer(): GamePerformanceAnalyzer {
-    return new GamePerformanceAnalyzer({
-      enableMemoryMonitoring: true,
-      enableCpuMonitoring: false,
-      enableGcMonitoring: true,
-      samplingInterval: 50, // More frequent sampling
-      memoryLeakThreshold: 10, // Very sensitive
-      thresholds: {
-        memoryUsage: 30,
-        cpuUsage: 100,
-        executionTime: 10000,
-        gcTime: 10
-      }
-    })
+    return this.createWithPreset('memory-leak', (config) => new GamePerformanceAnalyzer(config))
   }
 }

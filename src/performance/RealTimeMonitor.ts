@@ -4,6 +4,7 @@ import { MemoryProfiler } from './MemoryProfiler'
 import { OptimizationSuite } from '../optimization'
 import type { PerformanceMetrics } from './GamePerformanceAnalyzer'
 import type { MemorySnapshot } from './MemoryProfiler'
+import type { OptimizationReport } from '../optimization'
 
 /**
  * Configuration for real-time monitoring
@@ -188,7 +189,7 @@ export class RealTimeMonitor {
     timestamp: string
     performance: PerformanceMetrics | undefined
     memory: MemorySnapshot | undefined
-    optimization: any
+    optimization: OptimizationReport
   } {
     return {
       timestamp: new Date().toISOString(),

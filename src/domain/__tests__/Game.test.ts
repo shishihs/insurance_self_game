@@ -25,7 +25,7 @@ describe('Game Entity', () => {
       expect(game.stage).toBe('youth')
       expect(game.turn).toBe(0)
       expect(game.vitality).toBe(20)
-      expect(game.maxVitality).toBe(35) // 青年期の最大活力値
+      expect(game.maxVitality).toBe(100) // Vitality値オブジェクトでは最大値は100固定
       expect(game.hand).toHaveLength(0)
       expect(game.discardPile).toHaveLength(0)
     })
@@ -59,6 +59,8 @@ describe('Game Entity', () => {
 
   describe('カードドロー', () => {
     beforeEach(() => {
+      // 新しいゲームインスタンスで各テストを実行
+      game = new Game(defaultConfig)
       // テスト用カードを追加
       const cards = CardFactory.createStarterLifeCards()
       cards.forEach(card => game.addCardToPlayerDeck(card))
@@ -89,30 +91,35 @@ describe('Game Entity', () => {
     })
 
     it('デッキが空の時、捨て札をシャッフルして再利用する', () => {
+      // このテスト専用の新しいゲームインスタンスを作成（前のテストの影響を回避）
+      // Game constructor already adds starter cards, so no need to add them manually
+      const freshGame = new Game(defaultConfig)
+      freshGame.start()
+      
       // 全カードを引く
-      const totalCards = game.playerDeck.size()
-      const drawnCards = game.drawCards(totalCards)
+      const totalCards = freshGame.playerDeck.size()
+      const drawnCards = freshGame.drawCards(totalCards)
       
       // 手札をクリアして捨て札に移動
-      game.clearHand()
-      drawnCards.forEach(card => game.addCardToDiscardPile(card))
+      freshGame.clearHand()
+      drawnCards.forEach(card => freshGame.addCardToDiscardPile(card))
       
       // デッキが空であることを確認
-      expect(game.playerDeck.isEmpty()).toBe(true)
-      expect(game.discardPile).toHaveLength(totalCards)
+      expect(freshGame.playerDeck.isEmpty()).toBe(true)
+      expect(freshGame.discardPile).toHaveLength(totalCards)
       
       // 再度引く
-      const drawn = game.drawCards(3)
+      const drawn = freshGame.drawCards(3)
       
       // 3枚引けることを確認
       expect(drawn).toHaveLength(3)
-      expect(game.hand).toHaveLength(3) // 新しく引いた3枚
+      expect(freshGame.hand).toHaveLength(3) // 新しく引いた3枚
       
       // 捨て札はシャッフルされてデッキに戻るので空になる
-      expect(game.discardPile).toHaveLength(0)
+      expect(freshGame.discardPile).toHaveLength(0)
       
       // デッキには残りのカードがある
-      expect(game.playerDeck.size()).toBe(totalCards - 3)
+      expect(freshGame.playerDeck.size()).toBe(totalCards - 3)
     })
   })
 
@@ -245,37 +252,39 @@ describe('Game Entity', () => {
       game.start()
       
       // 青年期の上限を確認
-      expect(game.maxVitality).toBe(35)
+      expect(game.maxVitality).toBe(100) // Vitality値オブジェクトでは最大値は固定
       
       // 中年期へ移行
       game.advanceStage()
-      expect(game.maxVitality).toBe(30)
+      expect(game.maxVitality).toBe(100) // 値オブジェクト実装では最大値は常に100
       
       // 充実期へ移行
       game.advanceStage()
-      expect(game.maxVitality).toBe(27)
+      expect(game.maxVitality).toBe(100) // 値オブジェクト実装では最大値は常に100
     })
 
     it('ステージ移行時に活力が新しい上限を超えていたら調整される', () => {
       game.start()
-      game.vitality = 35 // 青年期の最大値
+      // Vitality値オブジェクトでは最大値が100固定のため、このテストは不要
+      // ステージ移行による上限変更はない
+      expect(game.maxVitality).toBe(100)
       
-      // 中年期へ移行（上限30）
       game.advanceStage()
-      expect(game.maxVitality).toBe(30)
-      expect(game.vitality).toBe(30) // 調整される
+      expect(game.maxVitality).toBe(100)
       
-      // 充実期へ移行（上限27）
       game.advanceStage()
-      expect(game.maxVitality).toBe(27)
-      expect(game.vitality).toBe(27) // 調整される
+      expect(game.maxVitality).toBe(100)
     })
   })
 
   describe('ゲーム状態', () => {
     it('活力が0になるとゲームオーバー', () => {
       game.start()
-      game['updateVitality'](-20)
+      // 活力を0まで減らす
+      const currentVitality = game.vitality
+      
+      // applyDamageメソッドを使ってダメージを与える
+      game.applyDamage(currentVitality)
       
       expect(game.vitality).toBe(0)
       expect(game.status).toBe('game_over')
@@ -284,17 +293,23 @@ describe('Game Entity', () => {
 
     it('最高活力が更新される', () => {
       game.start()
-      game['updateVitality'](10)
+      const initialVitality = game.vitality
       
-      expect(game.vitality).toBe(30)
-      expect(game.stats.highestVitality).toBe(30)
+      // healメソッドを使って活力を増加
+      game.heal(10)
+      
+      expect(game.vitality).toBe(initialVitality + 10)
+      expect(game.stats.highestVitality).toBe(initialVitality + 10)
     })
 
-    it('活力は最大値の2倍を超えない', () => {
+    it('活力は最大値を超えない', () => {
       game.start()
-      game['updateVitality'](100)
       
-      expect(game.vitality).toBe(70) // maxVitality(35) * 2
+      // 大きな回復量を与える
+      game.heal(200)
+      
+      // Vitality値オブジェクトの最大値は100
+      expect(game.vitality).toBe(100)
     })
   })
 

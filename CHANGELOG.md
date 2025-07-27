@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🏗 Architecture Improvements
+- 保険料計算ドメインサービス実装 - t-wadaクオリティ準拠
+- Game集約の責務削減とリポジトリパターン実装
+- TDD/DDDに基づく大規模リファクタリング実装
+
+### 🐛 Fixed
+- Cardエンティティのcloneメソッドエラーを修正 + 統合テスト追加
+- TypeScript型エラーを根本的に修正
+- テストファイルをビルド対象から除外
+
 ### 📚 Documentation
+- TDD/DDD実装完了レポートを追加
 - GUI/CUI使い分けガイドライン作成
 - WORK_STATUS.md更新（最新の開発状況を反映）
 - TECHNICAL_DEBT_REPORT.md更新（CUIシステム完成を記録）

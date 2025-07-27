@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/cui/PlaytestGameController.ts",
+    "src/domain/entities/Game.ts",
+    "src/domain/entities/Card.ts",
+    "src/domain/entities/Deck.ts",
+    "src/domain/valueObjects/*.ts",
+    "src/domain/services/CardFactory.ts",
+    "src/domain/types/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

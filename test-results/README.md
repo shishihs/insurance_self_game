@@ -34,12 +34,20 @@ test-results/
 3. ファイル作成後、counter.json を更新（playtest: 6）
 
 ### CUIテストエージェント利用時
-CUIテストエージェントを使用する際は、以下を必ず指定してください：
+CUIテストエージェントを使用する際は、以下のコマンドを実行してください：
 
+```bash
+# 新しいCUIテスト方法（推奨）
+node cui-playtest.mjs "[テスト目的]"
+
+# 例：
+node cui-playtest.mjs "初見体験"
+node cui-playtest.mjs "バランス調整" 
+node cui-playtest.mjs "新機能検証"
 ```
-次のプレイテストファイルは PLAYTEST_[現在のcounter+1]_[目的] で作成してください。
-counter.jsonも合わせて更新してください。
-```
+
+**重要**: 以前の `test-cui-simple.mjs` は廃止されました。
+新しい `cui-playtest.mjs` は本物のGameドメインを使用し、自動的にプレイテストログを生成します。
 
 ## テンプレートの使用方法
 
