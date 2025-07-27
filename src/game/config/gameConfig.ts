@@ -70,12 +70,30 @@ export const GAME_CONSTANTS = {
   // 勝利条件
   VICTORY_VITALITY: 30,  // 活力30以上でクリア
   
+  // ドラッグ&ドロップ
+  DRAG_DROP: {
+    SNAP_DISTANCE: 100,           // スナップが発動する距離（px）
+    DRAG_ALPHA: 0.8,              // ドラッグ中の透明度
+    DRAG_SCALE: 1.15,             // ドラッグ中の拡大率
+    DROP_ZONE_SCALE: 1.2,         // ドロップゾーンハイライト時の拡大率
+    SNAP_DURATION: 200,           // スナップアニメーション時間（ms）
+    BOUNCE_DURATION: 400,         // バウンス効果時間（ms）
+    VIBRATION_DURATION: 150,      // 振動効果時間（ms）
+    MOBILE_TOUCH_OFFSET: 60,      // モバイルでの指オフセット（px）
+    GLOW_PULSE_DURATION: 1000,    // グロウパルス周期（ms）
+  },
+  
   // カラー
   COLORS: {
     LIFE_CARD: 0x4C6EF5,
     INSURANCE_CARD: 0x51CF66,
     PITFALL_CARD: 0xFF6B6B,
     HIGHLIGHT: 0xFFD43B,
-    SELECTED: 0x748FFC
+    SELECTED: 0x748FFC,
+    DROP_ZONE_VALID: 0x51CF66,    // 有効ドロップゾーン
+    DROP_ZONE_INVALID: 0xFF6B6B,  // 無効ドロップゾーン
+    DROP_ZONE_HOVER: 0xFFD43B,    // ホバー中ドロップゾーン
+    DRAG_SHADOW: 0x000000,        // ドラッグ時シャドウ
+    MAGNETIC_GLOW: 0x00FFFF,      // マグネット効果グロウ
   }
 }

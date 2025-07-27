@@ -23,6 +23,13 @@ export class GameScene extends BaseScene {
   private insuranceListContainer?: Phaser.GameObjects.Container
   private burdenIndicatorContainer?: Phaser.GameObjects.Container
   private insuranceRenewalDialogUI?: Phaser.GameObjects.Container
+  
+  // ドラッグ&ドロップ関連
+  private dropZones: Map<string, Phaser.GameObjects.Container> = new Map()
+  private dropZoneHighlights: Map<string, Phaser.GameObjects.Graphics> = new Map()
+  private isDragInProgress: boolean = false
+  private dragTrail?: Phaser.GameObjects.Graphics
+  private magneticEffect?: Phaser.GameObjects.Graphics
 
   constructor() {
     super({ key: 'GameScene' })
@@ -338,6 +345,187 @@ export class GameScene extends BaseScene {
 
     challengeArea.add([challengePlaceholder, challengeLabel])
     challengeArea.setName('challenge-area')
+    
+    // ドロップゾーンの初期化
+    this.initializeDropZones()
+  }
+
+  /**
+   * ドロップゾーンを初期化
+   */
+  private initializeDropZones(): void {
+    // チャレンジエリアのドロップゾーンを登録
+    const challengeArea = this.children.getByName('challenge-area') as Phaser.GameObjects.Container
+    if (challengeArea) {
+      this.dropZones.set('challenge', challengeArea)
+      this.createDropZoneHighlight('challenge', challengeArea.x, challengeArea.y, GAME_CONSTANTS.CARD_WIDTH + 20, GAME_CONSTANTS.CARD_HEIGHT + 20)
+    }
+    
+    // 捨て札エリアのドロップゾーンを登録
+    const discardArea = this.children.getByName('discard-area') as Phaser.GameObjects.Container
+    if (discardArea) {
+      this.dropZones.set('discard', discardArea)
+      this.createDropZoneHighlight('discard', discardArea.x, discardArea.y, GAME_CONSTANTS.CARD_WIDTH + 20, GAME_CONSTANTS.CARD_HEIGHT + 20)
+    }
+    
+    // ドラッグトレイル用のグラフィックスを作成
+    this.dragTrail = this.add.graphics()
+    this.dragTrail.setDepth(900) // カードより下、通常要素より上
+    
+    // マグネティック効果用のグラフィックスを作成
+    this.magneticEffect = this.add.graphics()
+    this.magneticEffect.setDepth(950) // ドラッグトレイルより上
+  }
+
+  /**
+   * ドロップゾーンのハイライトを作成
+   */
+  private createDropZoneHighlight(zoneName: string, x: number, y: number, width: number, height: number): void {
+    const highlight = this.add.graphics()
+    highlight.setPosition(x, y)
+    highlight.setAlpha(0) // 初期状態では非表示
+    highlight.setDepth(100) // カードより下に表示
+    
+    this.dropZoneHighlights.set(zoneName, highlight)
+  }
+
+  /**
+   * ドロップゾーンハイライトを表示
+   */
+  private showDropZoneHighlights(draggedCard?: Phaser.GameObjects.Container): void {
+    this.dropZoneHighlights.forEach((highlight, zoneName) => {
+      const isValid = this.isValidDropZone(zoneName, draggedCard)
+      const color = isValid ? GAME_CONSTANTS.COLORS.DROP_ZONE_VALID : GAME_CONSTANTS.COLORS.DROP_ZONE_INVALID
+      const alpha = isValid ? 0.3 : 0.15
+      
+      // ハイライトの描画をクリア
+      highlight.clear()
+      
+      // 円形のハイライトを描画
+      const radius = (GAME_CONSTANTS.CARD_WIDTH + 40) / 2
+      highlight.fillStyle(color, alpha)
+      highlight.fillCircle(0, 0, radius)
+      
+      // 境界線を描画
+      highlight.lineStyle(3, color, 0.8)
+      highlight.strokeCircle(0, 0, radius)
+      
+      // パルス効果のアニメーション
+      this.tweens.add({
+        targets: highlight,
+        alpha: alpha * 1.5,
+        scaleX: 1.1,
+        scaleY: 1.1,
+        duration: GAME_CONSTANTS.DRAG_DROP.GLOW_PULSE_DURATION / 2,
+        ease: 'Sine.easeInOut',
+        yoyo: true,
+        repeat: -1
+      })
+      
+      // フェードイン
+      this.tweens.add({
+        targets: highlight,
+        alpha: alpha,
+        duration: 200,
+        ease: 'Power2'
+      })
+    })
+  }
+
+  /**
+   * ドロップゾーンハイライトを隠す
+   */
+  private hideDropZoneHighlights(): void {
+    this.dropZoneHighlights.forEach((highlight) => {
+      // アニメーション停止
+      this.tweens.killTweensOf(highlight)
+      
+      // フェードアウト
+      this.tweens.add({
+        targets: highlight,
+        alpha: 0,
+        scaleX: 1,
+        scaleY: 1,
+        duration: 200,
+        ease: 'Power2',
+        onComplete: () => {
+          highlight.clear()
+        }
+      })
+    })
+  }
+
+  /**
+   * ドロップゾーンが有効かどうかを判定
+   */
+  private isValidDropZone(zoneName: string, draggedCard?: Phaser.GameObjects.Container): boolean {
+    if (!draggedCard) return true
+    
+    const card = draggedCard.getData('card') as Card
+    
+    switch (zoneName) {
+      case 'challenge':
+        // チャレンジエリアは、チャレンジが開始されている、かつ現在チャレンジカードがない場合に有効
+        return this.gameInstance.currentChallenge !== null && !this.gameInstance.currentChallenge.isCardPlaced
+      case 'discard':
+        // 捨て札エリアは常に有効
+        return true
+      default:
+        return false
+    }
+  }
+
+  /**
+   * ドラッグ中のマグネティック効果を更新
+   */
+  private updateMagneticEffect(cardX: number, cardY: number): string | null {
+    let closestZone: string | null = null
+    let minDistance = GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE
+    
+    // マグネティック効果をクリア
+    if (this.magneticEffect) {
+      this.magneticEffect.clear()
+    }
+    
+    this.dropZones.forEach((zone, zoneName) => {
+      const distance = Phaser.Math.Distance.Between(cardX, cardY, zone.x, zone.y)
+      
+      if (distance < GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE && distance < minDistance) {
+        minDistance = distance
+        closestZone = zoneName
+      }
+    })
+    
+    // 最も近いゾーンにマグネティック効果を表示
+    if (closestZone && this.magneticEffect) {
+      const zone = this.dropZones.get(closestZone)
+      if (zone && this.isValidDropZone(closestZone)) {
+        // マグネティック効果のグロウを描画
+        this.magneticEffect.clear()
+        this.magneticEffect.fillStyle(GAME_CONSTANTS.COLORS.MAGNETIC_GLOW, 0.4)
+        this.magneticEffect.fillCircle(zone.x, zone.y, (GAME_CONSTANTS.CARD_WIDTH + 60) / 2)
+        
+        // 引力線を描画
+        this.magneticEffect.lineStyle(3, GAME_CONSTANTS.COLORS.MAGNETIC_GLOW, 0.6)
+        this.magneticEffect.beginPath()
+        this.magneticEffect.moveTo(cardX, cardY)
+        this.magneticEffect.lineTo(zone.x, zone.y)
+        this.magneticEffect.strokePath()
+      }
+    }
+    
+    return closestZone
+  }
+
+  /**
+   * ドラッグトレイルを更新
+   */
+  private updateDragTrail(cardX: number, cardY: number): void {
+    if (!this.dragTrail) return
+    
+    // トレイル効果を描画
+    this.dragTrail.fillStyle(GAME_CONSTANTS.COLORS.DRAG_SHADOW, 0.2)
+    this.dragTrail.fillCircle(cardX - 5, cardY + 5, 30) // 少しオフセットしたシャドウ
   }
 
   /**
@@ -632,7 +820,19 @@ export class GameScene extends BaseScene {
     // ドラッグ開始
     cardContainer.on('dragstart', () => {
       cardContainer.setData('isDragging', true)
-      cardContainer.setScale(GAME_CONSTANTS.CARD_HOVER_SCALE)
+      this.isDragInProgress = true
+      
+      // 新しいビジュアル効果
+      cardContainer.setScale(GAME_CONSTANTS.DRAG_DROP.DRAG_SCALE)
+      cardContainer.setAlpha(GAME_CONSTANTS.DRAG_DROP.DRAG_ALPHA)
+      
+      // ドロップゾーンハイライトを表示
+      this.showDropZoneHighlights(cardContainer)
+      
+      // ドラッグトレイルをクリア
+      if (this.dragTrail) {
+        this.dragTrail.clear()
+      }
       
       // ドラッグ中は選択を解除
       if (cardContainer.getData('selected')) {
@@ -642,29 +842,66 @@ export class GameScene extends BaseScene {
 
     // ドラッグ中
     cardContainer.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      // モバイル端末でのタッチオフセット調整
+      const isMobile = this.scale.orientation === Phaser.Scale.LANDSCAPE || this.scale.orientation === Phaser.Scale.PORTRAIT
+      const offsetY = isMobile ? -GAME_CONSTANTS.DRAG_DROP.MOBILE_TOUCH_OFFSET : 0
+      
       cardContainer.x = dragX
-      cardContainer.y = dragY
+      cardContainer.y = dragY + offsetY
+      
+      // ドラッグトレイルを更新
+      this.updateDragTrail(cardContainer.x, cardContainer.y)
+      
+      // マグネティック効果を更新
+      const closestZone = this.updateMagneticEffect(cardContainer.x, cardContainer.y)
+      
+      // マグネティックスナップ
+      if (closestZone && this.isValidDropZone(closestZone, cardContainer)) {
+        const zone = this.dropZones.get(closestZone)
+        if (zone) {
+          const distance = Phaser.Math.Distance.Between(cardContainer.x, cardContainer.y, zone.x, zone.y)
+          if (distance < GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE) {
+            // マグネティックスナップアニメーション
+            this.tweens.add({
+              targets: cardContainer,
+              x: zone.x,
+              y: zone.y,
+              duration: GAME_CONSTANTS.DRAG_DROP.SNAP_DURATION,
+              ease: 'Power2.out'
+            })
+          }
+        }
+      }
     })
 
     // ドラッグ終了
     cardContainer.on('dragend', () => {
+      this.isDragInProgress = false
+      
+      // ビジュアル効果をリセット
       cardContainer.setScale(1)
+      cardContainer.setAlpha(1)
       
-      // ドロップ先の判定
-      const dropZone = this.getDropZone(cardContainer.x, cardContainer.y)
+      // ドロップゾーンハイライトを隠す
+      this.hideDropZoneHighlights()
       
-      if (dropZone === 'challenge') {
-        // チャレンジエリアにドロップ
-        this.handleCardDropToChallenge(cardContainer)
+      // マグネティック効果とドラッグトレイルをクリア
+      if (this.magneticEffect) {
+        this.magneticEffect.clear()
+      }
+      if (this.dragTrail) {
+        this.dragTrail.clear()
+      }
+      
+      // ドロップ先の判定（新しいgetDropZoneV2を使用）
+      const dropZone = this.getDropZoneV2(cardContainer.x, cardContainer.y)
+      
+      if (dropZone && this.isValidDropZone(dropZone, cardContainer)) {
+        // 有効なドロップゾーンにドロップ
+        this.handleValidDrop(dropZone, cardContainer)
       } else {
-        // 元の位置に戻す
-        this.tweens.add({
-          targets: cardContainer,
-          x: cardContainer.getData('originalX'),
-          y: cardContainer.getData('originalY'),
-          duration: GAME_CONSTANTS.CARD_MOVE_DURATION,
-          ease: 'Power2'
-        })
+        // 無効なドロップ - 元の位置に戻す（振動効果付き）
+        this.handleInvalidDrop(cardContainer)
       }
       
       cardContainer.setDepth(0) // 通常の深度に戻す
