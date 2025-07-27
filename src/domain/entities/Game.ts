@@ -10,7 +10,9 @@ import type {
   PlayerStats,
   ChallengeResult,
   TurnResult,
-  InsuranceExpirationNotice
+  InsuranceExpirationNotice,
+  InsuranceTypeChoice,
+  InsuranceTypeSelectionResult
 } from '../types/game.types'
 import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
@@ -41,6 +43,9 @@ export class Game implements IGameState {
   
   // Phase 3: 保険料負担
   insuranceBurden: number
+  
+  // 保険種類選択
+  insuranceTypeChoices?: InsuranceTypeChoice[]
   
   
   startedAt?: Date
@@ -194,22 +199,13 @@ export class Game implements IGameState {
       powerBreakdown
     }
     
-    // 成功時はカード選択フェーズへ
+    // 成功時は保険種類選択フェーズへ
     if (success) {
-      // 3枚のカード選択肢を生成
-      const allInsuranceCards = CardFactory.createExtendedInsuranceCards()
-      const cardChoices: Card[] = []
-      
-      // 重複なしで3枚を選択
-      const availableCards = [...allInsuranceCards]
-      for (let i = 0; i < 3 && availableCards.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * availableCards.length)
-        cardChoices.push(availableCards.splice(randomIndex, 1)[0])
-      }
-      
-      this.cardManager.setCardChoices(cardChoices)
-      result.cardChoices = cardChoices
-      this.phase = 'card_selection'
+      // 保険種類選択肢を生成
+      const insuranceTypeChoices = CardFactory.createInsuranceTypeChoices(this.stage)
+      this.insuranceTypeChoices = insuranceTypeChoices
+      result.insuranceTypeChoices = insuranceTypeChoices
+      this.phase = 'insurance_type_selection'
     } else {
       // 失敗時は通常の解決フェーズへ
       this.phase = 'resolution'
@@ -222,7 +218,7 @@ export class Game implements IGameState {
   }
 
   /**
-   * カードを選択してデッキに追加
+   * カードを選択してデッキに追加（従来のカード選択フェーズ用）
    */
   selectCard(cardId: string): boolean {
     if (this.phase !== 'card_selection') {
@@ -252,6 +248,61 @@ export class Game implements IGameState {
     this.phase = 'resolution'
     
     return true
+  }
+
+  /**
+   * 保険種類を選択してカードを作成・追加
+   */
+  selectInsuranceType(insuranceType: string, durationType: 'term' | 'whole_life'): InsuranceTypeSelectionResult {
+    if (this.phase !== 'insurance_type_selection') {
+      throw new Error('Not in insurance type selection phase')
+    }
+    
+    if (!this.insuranceTypeChoices) {
+      throw new Error('No insurance type choices available')
+    }
+    
+    // 指定された保険種類の選択肢を探す
+    const choice = this.insuranceTypeChoices.find(choice => choice.insuranceType === insuranceType)
+    if (!choice) {
+      return {
+        success: false,
+        message: 'Invalid insurance type selection'
+      }
+    }
+    
+    // 選択された種類に応じてカードを作成
+    let selectedCard: Card
+    if (durationType === 'term') {
+      selectedCard = CardFactory.createTermInsuranceCard(choice)
+    } else {
+      selectedCard = CardFactory.createWholeLifeInsuranceCard(choice)
+    }
+    
+    // カードをデッキに追加
+    this.cardManager.addToPlayerDeck(selectedCard)
+    this.stats.cardsAcquired++
+    
+    // 保険カードの場合は管理リストに追加
+    this.insuranceCards.push(selectedCard)
+    // Phase 3: 保険料負担を更新
+    this.updateInsuranceBurden()
+    
+    // 選択肢をクリア
+    this.insuranceTypeChoices = undefined
+    
+    // 解決フェーズに移行（ターン終了可能状態）
+    this.phase = 'resolution'
+    
+    const durationText = durationType === 'term' 
+      ? `定期保険（${choice.termOption.duration}ターン）` 
+      : '終身保険'
+    
+    return {
+      success: true,
+      selectedCard,
+      message: `${choice.name}（${durationText}）を選択しました。コスト: ${selectedCard.cost}`
+    }
   }
 
   /**
@@ -365,6 +416,13 @@ export class Game implements IGameState {
    */
   get cardChoices(): Card[] | undefined {
     return this.cardManager.getState().cardChoices
+  }
+
+  /**
+   * 保険種類選択肢を取得
+   */
+  get currentInsuranceTypeChoices(): InsuranceTypeChoice[] | undefined {
+    return this.insuranceTypeChoices
   }
 
   /**
@@ -641,6 +699,7 @@ export class Game implements IGameState {
       currentChallenge: this.currentChallenge,
       selectedCards: cardState.selectedCards,
       cardChoices: cardState.cardChoices,
+      insuranceTypeChoices: this.insuranceTypeChoices,
       insuranceCards: [...this.insuranceCards],
       expiredInsurances: [...this.expiredInsurances],
       insuranceBurden: this.insuranceBurden,

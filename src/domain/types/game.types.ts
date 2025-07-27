@@ -108,6 +108,15 @@ export interface TurnResult {
 }
 
 /**
+ * 保険種類選択結果
+ */
+export interface InsuranceTypeSelectionResult {
+  success: boolean
+  selectedCard?: Card
+  message: string
+}
+
+/**
  * ゲーム状態
  */
 /**
@@ -170,6 +179,7 @@ export interface IGameState {
   currentChallenge?: Card
   selectedCards: Card[]
   cardChoices?: Card[]  // 現在の選択肢カード
+  insuranceTypeChoices?: InsuranceTypeChoice[]  // 現在の保険種類選択肢
   
   // Phase 2-4: 保険カード管理
   insuranceCards?: Card[]  // 現在有効な保険カード

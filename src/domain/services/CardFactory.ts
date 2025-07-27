@@ -3,8 +3,10 @@ import type {
   LifeCardCategory, 
   InsuranceType, 
   GameStage,
-  DreamCategory
+  DreamCategory,
+  InsuranceDurationType
 } from '../types/card.types'
+import type { InsuranceTypeChoice } from '../types/game.types'
 
 /**
  * カードファクトリー
@@ -185,6 +187,133 @@ export class CardFactory {
     })
 
     return extendedCards
+  }
+
+  /**
+   * 保険種類選択肢を生成（定期保険と終身保険の選択肢）
+   */
+  static createInsuranceTypeChoices(stage: GameStage = 'youth'): InsuranceTypeChoice[] {
+    const choices: InsuranceTypeChoice[] = []
+    
+    // 年齢ボーナスの設定
+    const ageBonus = stage === 'middle' ? 0.5 : stage === 'fulfillment' ? 1.0 : 0
+    
+    // 基本保険タイプの定義
+    const baseInsuranceTypes = [
+      { 
+        type: 'medical' as InsuranceType, 
+        name: '医療保険', 
+        description: '病気やケガに備える保障',
+        power: 5, 
+        baseCost: 4, 
+        coverage: 100 
+      },
+      { 
+        type: 'life' as InsuranceType, 
+        name: '生命保険', 
+        description: '家族を守る保障',
+        power: 6, 
+        baseCost: 5, 
+        coverage: 200 
+      },
+      { 
+        type: 'income' as InsuranceType, 
+        name: '収入保障保険', 
+        description: '働けなくなった時の保障',
+        power: 5, 
+        baseCost: 4, 
+        coverage: 150 
+      }
+    ]
+    
+    // 3つからランダムに選択（重複なし）
+    const availableTypes = [...baseInsuranceTypes]
+    for (let i = 0; i < 3 && availableTypes.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * availableTypes.length)
+      const selectedType = availableTypes.splice(randomIndex, 1)[0]
+      
+      // 定期保険の期間設定（10ターン）
+      const termDuration = 10
+      
+      // 定期保険のコスト（基本コストの70%）
+      const termCost = Math.ceil(selectedType.baseCost * 0.7)
+      
+      // 終身保険のコスト（基本コスト）
+      const wholeLifeCost = selectedType.baseCost
+      
+      const choice: InsuranceTypeChoice = {
+        insuranceType: selectedType.type,
+        name: selectedType.name,
+        description: selectedType.description,
+        baseCard: {
+          name: selectedType.name,
+          description: selectedType.description,
+          type: 'insurance',
+          power: selectedType.power,
+          cost: selectedType.baseCost, // ベースコスト
+          insuranceType: selectedType.type,
+          coverage: selectedType.coverage,
+          effects: [{
+            type: 'shield',
+            value: selectedType.coverage,
+            description: `${selectedType.coverage}ポイントの保障`
+          }],
+          ageBonus: ageBonus
+        },
+        termOption: {
+          cost: termCost,
+          duration: termDuration,
+          description: `${termDuration}ターン限定の保障（低コスト）`
+        },
+        wholeLifeOption: {
+          cost: wholeLifeCost,
+          description: '生涯にわたる永続保障（高コスト）'
+        }
+      }
+      
+      choices.push(choice)
+    }
+    
+    return choices
+  }
+
+  /**
+   * 定期保険カードを作成
+   */
+  static createTermInsuranceCard(choice: InsuranceTypeChoice): Card {
+    return new Card({
+      id: this.generateId(),
+      type: 'insurance',
+      name: `定期${choice.name}`,
+      description: `${choice.baseCard.description}（${choice.termOption.duration}ターン限定）`,
+      power: choice.baseCard.power,
+      cost: choice.termOption.cost,
+      insuranceType: choice.insuranceType,
+      coverage: choice.baseCard.coverage,
+      effects: choice.baseCard.effects,
+      ageBonus: choice.baseCard.ageBonus,
+      durationType: 'term',
+      remainingTurns: choice.termOption.duration
+    })
+  }
+
+  /**
+   * 終身保険カードを作成
+   */
+  static createWholeLifeInsuranceCard(choice: InsuranceTypeChoice): Card {
+    return new Card({
+      id: this.generateId(),
+      type: 'insurance',
+      name: `終身${choice.name}`,
+      description: `${choice.baseCard.description}（永続保障）`,
+      power: choice.baseCard.power,
+      cost: choice.wholeLifeOption.cost,
+      insuranceType: choice.insuranceType,
+      coverage: choice.baseCard.coverage,
+      effects: choice.baseCard.effects,
+      ageBonus: choice.baseCard.ageBonus,
+      durationType: 'whole_life'
+    })
   }
 
   /**

@@ -187,7 +187,7 @@ describe('Game Entity', () => {
       
       expect(result.success).toBe(true)
       expect(result.playerPower).toBeGreaterThanOrEqual(5)
-      expect(game.phase).toBe('card_selection')  // Phase 2: チャレンジ成功後はカード選択フェーズ
+      expect(game.phase).toBe('insurance_type_selection')  // 新システム: チャレンジ成功後は保険種類選択フェーズ
       expect(game.currentChallenge).toBeUndefined()
       expect(game.stats.successfulChallenges).toBe(1)
       
@@ -195,11 +195,11 @@ describe('Game Entity', () => {
       const expectedHandSize = handSizeBefore - selectedCardCount + (result.rewards ? result.rewards.length : 0)
       expect(game.hand.length).toBe(expectedHandSize)
       
-      // 報酬カードを獲得した場合
-      if (result.rewards && result.rewards.length > 0) {
-        expect(game.stats.cardsAcquired).toBe(cardsAcquiredBefore + result.rewards.length)
-        expect(result.rewards[0].type).toBe('insurance')
-      }
+      // 保険種類選択肢が提供される
+      expect(result.insuranceTypeChoices).toBeDefined()
+      expect(result.insuranceTypeChoices).toHaveLength(3)
+      expect(game.currentInsuranceTypeChoices).toBeDefined()
+      expect(game.currentInsuranceTypeChoices).toHaveLength(3)
     })
 
     it('チャレンジを解決できる（失敗）', () => {
