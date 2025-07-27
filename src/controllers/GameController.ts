@@ -270,7 +270,7 @@ export class GameController {
   /**
    * チャレンジ失敗時の処理
    */
-  private async handleChallengeFailure(result: ChallengeResult): Promise<void> {
+  private async handleChallengeFailure(_result: ChallengeResult): Promise<void> {
     this.game.stats.failedChallenges++
     
     // 体力がなくなった場合はゲームオーバー
@@ -446,7 +446,7 @@ export class GameController {
   /**
    * ログ出力
    */
-  private log(message: string, level: 'info' | 'error' = 'info'): void {
+  private log(message: string, _level: 'info' | 'error' = 'info'): void {
     if (this.debugMode) {
       console.log(`[GameController] ${message}`)
     }

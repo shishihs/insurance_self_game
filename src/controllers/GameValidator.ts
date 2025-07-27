@@ -183,7 +183,7 @@ export class GameValidator {
     
     // パワー計算の妥当性チェック
     const totalPower = selectedCards.reduce((sum, card) => sum + (card.power || 0), 0)
-    const requiredPower = challengeCard.power || 0
+    // const requiredPower = challengeCard.power || 0  // 現在未使用だが将来的に使用予定
     
     if (totalPower === 0 && selectedCards.length > 0) {
       warnings.push('選択されたカードにパワーが設定されていません')
