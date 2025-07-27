@@ -11,6 +11,29 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ゲームUIのカラーパレット */
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --primary-dark: #4C1D95;
+  --primary-light: #818CF8;
+  
+  /* 活力を表すグリーン系 */
+  --vitality-high: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --vitality-medium: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  --vitality-low: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  
+  /* 背景 - 深みのあるダークトーン */
+  --bg-primary: #1F2937;
+  --bg-secondary: #111827;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  
+  /* アクセント */
+  --accent-gold: #FCD34D;
+  --accent-silver: #E5E7EB;
+  
+  /* 影とエフェクト */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(129, 140, 248, 0.4);
 }
 
 a {
