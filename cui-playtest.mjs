@@ -165,6 +165,9 @@ class PlaytestGameController {
       return false
     }
 
+    // ドローフェーズ - 手札補充
+    this.refillHand()
+
     // 1. チャレンジ選択フェーズ
     this.currentChallenges = this.drawChallenges()
     
@@ -183,13 +186,16 @@ class PlaytestGameController {
       originalChallenge.isUsed = true
     }
 
-    // 2. 挑戦フェーズ - 手札ドロー
+    // 2. 挑戦フェーズ - 手札から選択
     const requiredPower = this.getRequiredPower(selectedChallenge)
-    const handCards = this.drawHandCards(requiredPower)
+    const selectedCards = this.selectCardsForChallenge(requiredPower)
 
     // 3. パワー計算と成功判定
-    const totalPower = this.calculateTotalPower(handCards)
+    const totalPower = this.calculateTotalPower(selectedCards)
     const success = totalPower >= requiredPower
+
+    // 使用したカードを捨て札へ
+    this.discardCards(selectedCards)
 
     // 4. 結果処理
     const result = {
@@ -221,7 +227,7 @@ class PlaytestGameController {
       this.game.turn - 1, // nextTurn()後なので-1
       this.currentChallenges.map(c => ({...c, requiredPower: this.getRequiredPower(c)})),
       challengeWithRequiredPower,
-      handCards,
+      selectedCards,
       result,
       {
         vitality: this.game.vitality,
@@ -268,20 +274,8 @@ class PlaytestGameController {
     }
   }
 
-  drawHandCards(requiredPower) {
-    const handCards = []
-    const cardPool = this.createLifeCardPool()
-
-    // 必要パワー分だけカードをドロー
-    for (let i = 0; i < requiredPower; i++) {
-      const randomIndex = Math.floor(Math.random() * cardPool.length)
-      handCards.push(cardPool[randomIndex])
-    }
-
-    return handCards
-  }
-
-  createLifeCardPool() {
+  // 初期デッキを作成
+  createInitialDeck() {
     const cards = []
 
     // ポジティブカード（8枚）
@@ -297,6 +291,62 @@ class PlaytestGameController {
     cards.push(Card.createLifeCard('風邪をひく', 0))
 
     return cards
+  }
+
+  // デッキをシャッフル
+  shuffleDeck() {
+    for (let i = this.playerDeck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.playerDeck[i], this.playerDeck[j]] = [this.playerDeck[j], this.playerDeck[i]]
+    }
+  }
+
+  // カードをドロー
+  drawCards(count) {
+    for (let i = 0; i < count; i++) {
+      if (this.playerDeck.length === 0) {
+        // デッキが空の場合、捨て札をシャッフルしてデッキに戻す
+        this.playerDeck = [...this.discardPile]
+        this.discardPile = []
+        this.shuffleDeck()
+      }
+      if (this.playerDeck.length > 0) {
+        this.hand.push(this.playerDeck.pop())
+      }
+    }
+  }
+
+  // 手札を補充
+  refillHand() {
+    const cardsToDrawn = Math.max(0, this.game.config.maxHandSize - this.hand.length)
+    this.drawCards(cardsToDrawn)
+  }
+
+  // チャレンジ用にカードを選択（AI）
+  selectCardsForChallenge(requiredPower) {
+    // 簡易AI: パワーが高いカードから選択
+    const sortedHand = [...this.hand].sort((a, b) => b.power - a.power)
+    const selectedCards = []
+    let totalPower = 0
+
+    for (const card of sortedHand) {
+      selectedCards.push(card)
+      totalPower += card.power
+      if (totalPower >= requiredPower) break
+    }
+
+    return selectedCards
+  }
+
+  // カードを捨て札へ
+  discardCards(cards) {
+    for (const card of cards) {
+      const index = this.hand.indexOf(card)
+      if (index >= 0) {
+        this.hand.splice(index, 1)
+        this.discardPile.push(card)
+      }
+    }
   }
 
   calculateTotalPower(cards) {
