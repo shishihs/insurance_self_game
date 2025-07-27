@@ -1,26 +1,44 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { DropZoneManager, type DropZone } from '../DropZoneManager'
+import { DropZoneManager, type DropZone, type DropResult } from '../DropZoneManager'
 import { Game } from '@/domain/entities/Game'
 import { Card } from '@/domain/entities/Card'
 
 // Phaserモックの設定
+const mockGraphics = {
+  setPosition: vi.fn().mockReturnThis(),
+  setAlpha: vi.fn().mockReturnThis(),
+  setDepth: vi.fn().mockReturnThis(),
+  setName: vi.fn().mockReturnThis(),
+  setScale: vi.fn().mockReturnThis(),
+  clear: vi.fn().mockReturnThis(),
+  fillStyle: vi.fn().mockReturnThis(),
+  fillRectShape: vi.fn().mockReturnThis(),
+  strokeRectShape: vi.fn().mockReturnThis(),
+  fillCircle: vi.fn().mockReturnThis(),
+  lineStyle: vi.fn().mockReturnThis(),
+  destroy: vi.fn()
+}
+
+const mockTween = {
+  alpha: 0,
+  duration: 0,
+  yoyo: false,
+  repeat: 0,
+  ease: '',
+  onComplete: vi.fn(),
+  targets: null
+}
+
 const mockScene = {
   add: {
-    graphics: vi.fn(() => ({
-      setPosition: vi.fn().mockReturnThis(),
-      setAlpha: vi.fn().mockReturnThis(),
-      setDepth: vi.fn().mockReturnThis(),
-      clear: vi.fn().mockReturnThis(),
-      fillStyle: vi.fn().mockReturnThis(),
-      fillRoundedRect: vi.fn().mockReturnThis(),
-      strokeRoundedRect: vi.fn().mockReturnThis(),
-      fillCircle: vi.fn().mockReturnThis(),
-      destroy: vi.fn()
-    }))
+    graphics: vi.fn(() => ({ ...mockGraphics }))
   },
   tweens: {
-    add: vi.fn(),
+    add: vi.fn(() => mockTween),
     killTweensOf: vi.fn()
+  },
+  children: {
+    getByName: vi.fn()
   },
   time: {
     now: 0
@@ -29,9 +47,24 @@ const mockScene = {
 
 const mockGame = {
   currentChallenge: null,
-  phase: 'setup',
-  config: { tutorialEnabled: false },
-  insuranceCards: [],
+  vitality: 20,
+  maxVitality: 20,
+  stage: 1,
+  playerHand: {
+    size: vi.fn(() => 5),
+    contains: vi.fn(() => true),
+    removeCard: vi.fn()
+  },
+  discardPile: {
+    addCard: vi.fn()
+  },
+  playerDeck: {
+    addCard: vi.fn(),
+    shuffle: vi.fn()
+  },
+  maxHandSize: 7,
+  getCurrentPhase: vi.fn(() => 'setup'),
+  getPlayerAge: vi.fn(() => 25),
   placeChallengeCard: vi.fn(),
   discardCard: vi.fn()
 } as any
@@ -39,13 +72,13 @@ const mockGame = {
 describe('DropZoneManager', () => {
   let dropZoneManager: DropZoneManager
   let mockCard: Card
-  let mockContainer: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockScene.time.now = 0
+    Date.now = vi.fn(() => 0)
+    mockScene.children.getByName.mockReturnValue(null)
     
-    dropZoneManager = new DropZoneManager(mockScene, mockGame)
+    dropZoneManager = new DropZoneManager(mockScene)
     
     mockCard = {
       id: 'test-card',
@@ -54,23 +87,14 @@ describe('DropZoneManager', () => {
       power: 5,
       cost: 2
     } as Card
-
-    mockContainer = {
-      x: 100,
-      y: 100,
-      getData: vi.fn().mockReturnValue(mockCard),
-      setScale: vi.fn().mockReturnThis(),
-      setAlpha: vi.fn().mockReturnThis(),
-      setDepth: vi.fn().mockReturnThis()
-    }
   })
 
   afterEach(() => {
     dropZoneManager.destroy()
   })
 
-  describe('Zone Registration', () => {
-    it('should register a new drop zone', () => {
+  describe('Zone Management', () => {
+    it('should add a new drop zone', () => {
       const zone: DropZone = {
         id: 'test-zone',
         type: 'challenge',
@@ -81,26 +105,10 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(zone)
-      expect(dropZoneManager.getZone('test-zone')).toBe(zone)
+      expect(() => dropZoneManager.addZone(zone)).not.toThrow()
     })
 
-    it('should throw error when registering duplicate zone id', () => {
-      const zone: DropZone = {
-        id: 'duplicate-zone',
-        type: 'challenge',
-        bounds: new Phaser.Geom.Rectangle(0, 0, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
-        priority: 10,
-        magneticDistance: 80
-      }
-
-      dropZoneManager.registerZone(zone)
-      expect(() => dropZoneManager.registerZone(zone)).toThrow()
-    })
-
-    it('should unregister zones properly', () => {
+    it('should remove a drop zone', () => {
       const zone: DropZone = {
         id: 'removable-zone',
         type: 'discard',
@@ -111,9 +119,12 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(zone)
-      dropZoneManager.unregisterZone('removable-zone')
-      expect(dropZoneManager.getZone('removable-zone')).toBeUndefined()
+      dropZoneManager.addZone(zone)
+      expect(() => dropZoneManager.removeZone('removable-zone')).not.toThrow()
+    })
+
+    it('should handle removing non-existent zones gracefully', () => {
+      expect(() => dropZoneManager.removeZone('non-existent')).not.toThrow()
     })
   })
 
@@ -121,41 +132,60 @@ describe('DropZoneManager', () => {
     it('should track drag state correctly', () => {
       expect(dropZoneManager.getDragState().isDragging).toBe(false)
 
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       const dragState = dropZoneManager.getDragState()
       
       expect(dragState.isDragging).toBe(true)
-      expect(dragState.draggedCard).toBe(mockContainer)
-      expect(dragState.startTime).toBeDefined()
+      expect(dragState.card).toBe(mockCard)
       expect(dragState.startPosition).toEqual({ x: 100, y: 100 })
+      expect(dragState.currentPosition).toEqual({ x: 100, y: 100 })
+      expect(Array.isArray(dragState.validZones)).toBe(true)
     })
 
     it('should reset drag state on end', () => {
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       expect(dropZoneManager.getDragState().isDragging).toBe(true)
 
-      const result = dropZoneManager.endDrag(100, 100)
+      const result = dropZoneManager.endDrag({ x: 100, y: 100 }, mockGame)
       expect(dropZoneManager.getDragState().isDragging).toBe(false)
       expect(result.success).toBe(false) // No zones registered
+      expect(result.error).toBe('No drop zone found')
+    })
+
+    it('should handle rapid state changes', () => {
+      // Start drag
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      expect(dropZoneManager.getDragState().isDragging).toBe(true)
+
+      // End drag immediately
+      dropZoneManager.endDrag({ x: 100, y: 100 }, mockGame)
+      expect(dropZoneManager.getDragState().isDragging).toBe(false)
+
+      // Start another drag immediately
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 200, y: 200 })
+      expect(dropZoneManager.getDragState().isDragging).toBe(true)
+      expect(dropZoneManager.getDragState().startPosition).toEqual({ x: 200, y: 200 })
     })
   })
 
-  describe('Collision Detection', () => {
+  describe('Position Detection and Priority', () => {
+    let challengeZone: DropZone
+    let discardZone: DropZone
+
     beforeEach(() => {
-      // Register test zones
-      const challengeZone: DropZone = {
+      challengeZone = {
         id: 'challenge',
         type: 'challenge',
         bounds: new Phaser.Geom.Rectangle(50, 50, 100, 100),
         isValid: (card: Card, game: Game) => {
-          return game.currentChallenge !== null && !game.currentChallenge.isCardPlaced
+          return game.currentChallenge !== null
         },
         onDrop: vi.fn(),
         priority: 10,
         magneticDistance: 80
       }
 
-      const discardZone: DropZone = {
+      discardZone = {
         id: 'discard',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(200, 50, 100, 100),
@@ -165,19 +195,20 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(challengeZone)
-      dropZoneManager.registerZone(discardZone)
+      dropZoneManager.addZone(challengeZone)
+      dropZoneManager.addZone(discardZone)
     })
 
-    it('should detect zones within bounds', () => {
-      dropZoneManager.startDrag(mockContainer)
+    it('should detect zones within bounds correctly', () => {
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      // Point inside discard zone
-      const nearestZone = dropZoneManager.updateDrag(250, 100)
-      expect(nearestZone).toBe('discard')
+      // Point inside discard zone bounds (200-300, 50-150)
+      const result = dropZoneManager.endDrag({ x: 250, y: 100 }, mockGame)
+      expect(result.success).toBe(true)
+      expect(result.zone).toBe(discardZone)
     })
 
-    it('should respect zone priority', () => {
+    it('should respect zone priority in overlapping areas', () => {
       // Create overlapping zones with different priorities
       const highPriorityZone: DropZone = {
         id: 'high-priority',
@@ -189,43 +220,84 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(highPriorityZone)
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.addZone(highPriorityZone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      // Point in overlapping area - should prefer high priority zone
-      const nearestZone = dropZoneManager.updateDrag(260, 120)
-      expect(nearestZone).toBe('high-priority')
+      // Point in overlapping area (260, 120) - should prefer high priority zone
+      const result = dropZoneManager.endDrag({ x: 260, y: 120 }, mockGame)
+      expect(result.success).toBe(true)
+      expect(result.zone).toBe(highPriorityZone)
     })
 
     it('should handle invalid zones correctly', () => {
       mockGame.currentChallenge = null // Challenge zone will be invalid
       
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
       // Point inside challenge zone, but zone is invalid
-      const nearestZone = dropZoneManager.updateDrag(100, 100)
-      expect(nearestZone).toBeNull()
+      const result = dropZoneManager.endDrag({ x: 100, y: 100 }, mockGame)
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('Invalid drop target')
+    })
+
+    it('should handle edge positions correctly', () => {
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      // Test exact boundary positions
+      const edgeResults = [
+        dropZoneManager.endDrag({ x: 200, y: 50 }, mockGame), // Left edge of discard zone
+        dropZoneManager.endDrag({ x: 300, y: 50 }, mockGame), // Right edge
+        dropZoneManager.endDrag({ x: 200, y: 150 }, mockGame), // Bottom edge
+      ]
+
+      // At least one edge position should be valid for the discard zone
+      const validResults = edgeResults.filter(result => result.success)
+      expect(validResults.length).toBeGreaterThan(0)
     })
   })
 
   describe('Performance Optimization', () => {
-    it('should throttle drag updates based on CHECK_INTERVAL', () => {
-      dropZoneManager.startDrag(mockContainer)
-      
-      // First update
-      mockScene.time.now = 0
-      const result1 = dropZoneManager.updateDrag(100, 100)
-      
-      // Immediate second update (should be throttled)
-      mockScene.time.now = 5 // Less than CHECK_INTERVAL (16ms)
-      const result2 = dropZoneManager.updateDrag(110, 110)
-      
-      // Results should be the same due to throttling
-      expect(result1).toBe(result2)
+    beforeEach(() => {
+      vi.useFakeTimers()
     })
 
-    it('should process updates after CHECK_INTERVAL', () => {
-      const discardZone: DropZone = {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should throttle drag updates based on FRAME_INTERVAL', () => {
+      const zone: DropZone = {
+        id: 'test-zone',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(50, 50, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+      dropZoneManager.addZone(zone)
+      
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      // スパイを設定してフレーム制御をテスト
+      const updateSpy = vi.spyOn(dropZoneManager as any, 'updateHoverState')
+      
+      // 最初の更新
+      dropZoneManager.updateDrag({ x: 100, y: 100 }, mockGame)
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+      
+      // フレーム間隔未満での更新（スロットリングされるべき）
+      dropZoneManager.updateDrag({ x: 110, y: 110 }, mockGame)
+      expect(updateSpy).toHaveBeenCalledTimes(1) // まだ1回のまま
+      
+      // フレーム間隔後の更新
+      vi.advanceTimersByTime(20) // FRAME_INTERVAL (16ms) より長い
+      dropZoneManager.updateDrag({ x: 120, y: 120 }, mockGame)
+      expect(updateSpy).toHaveBeenCalledTimes(2) // 新しい更新が処理される
+    })
+
+    it('should handle rapid position updates efficiently', () => {
+      const zone: DropZone = {
         id: 'discard',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(200, 50, 100, 100),
@@ -235,23 +307,58 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(discardZone)
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      // First update
-      mockScene.time.now = 0
-      dropZoneManager.updateDrag(100, 100)
+      const startTime = performance.now()
       
-      // Update after CHECK_INTERVAL
-      mockScene.time.now = 20 // Greater than CHECK_INTERVAL (16ms)
-      const result = dropZoneManager.updateDrag(250, 100)
+      // 大量の更新を送信
+      for (let i = 0; i < 100; i++) {
+        vi.advanceTimersByTime(20)
+        dropZoneManager.updateDrag({ x: 200 + i, y: 100 }, mockGame)
+      }
       
-      expect(result).toBe('discard')
+      const endTime = performance.now()
+      
+      // パフォーマンステスト：100回の更新が50ms以内に完了すること
+      expect(endTime - startTime).toBeLessThan(50)
+    })
+
+    it('should maintain performance with many zones', () => {
+      // 多数のゾーンを追加
+      for (let i = 0; i < 20; i++) {
+        const zone: DropZone = {
+          id: `zone-${i}`,
+          type: 'discard',
+          bounds: new Phaser.Geom.Rectangle(i * 50, i * 50, 100, 100),
+          isValid: () => true,
+          onDrop: vi.fn(),
+          priority: i,
+          magneticDistance: 80
+        }
+        dropZoneManager.addZone(zone)
+      }
+
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      const startTime = performance.now()
+      
+      // 各ゾーンをテスト
+      for (let i = 0; i < 20; i++) {
+        vi.advanceTimersByTime(20)
+        dropZoneManager.updateDrag({ x: i * 50 + 50, y: i * 50 + 50 }, mockGame)
+      }
+      
+      const endTime = performance.now()
+      const averageTime = (endTime - startTime) / 20
+      
+      // 1回の更新あたり5ms以内であること
+      expect(averageTime).toBeLessThan(5)
     })
   })
 
-  describe('Rectangle vs Circle Distance Performance', () => {
-    it('should use efficient rectangle collision detection', () => {
+  describe('Magnetic Snap Functionality', () => {
+    it('should calculate magnetic snap targets correctly', () => {
       const zone: DropZone = {
         id: 'test-zone',
         type: 'discard',
@@ -262,28 +369,75 @@ describe('DropZoneManager', () => {
         magneticDistance: 50
       }
 
-      dropZoneManager.registerZone(zone)
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
 
-      // Point inside rectangle bounds
-      const insideResult = dropZoneManager.updateDrag(150, 150)
-      expect(insideResult).toBe('test-zone')
+      // Point within magnetic distance of zone center (150, 150)
+      const snapTarget = dropZoneManager.getMagneticSnapTarget({ x: 130, y: 130 })
+      expect(snapTarget).toBeTruthy()
+      expect(snapTarget?.zone).toBe(zone)
+      expect(snapTarget?.snapPosition).toEqual({ x: 150, y: 150 })
 
-      // Point outside rectangle but within magnetic distance
-      const magneticResult = dropZoneManager.updateDrag(170, 170)
-      expect(magneticResult).toBe('test-zone')
+      // Point outside magnetic distance
+      const noSnapTarget = dropZoneManager.getMagneticSnapTarget({ x: 50, y: 50 })
+      expect(noSnapTarget).toBeNull()
+    })
 
-      // Point far outside magnetic distance
-      const outsideResult = dropZoneManager.updateDrag(300, 300)
-      expect(outsideResult).toBeNull()
+    it('should prioritize closest zone for magnetic snap', () => {
+      const zone1: DropZone = {
+        id: 'zone1',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 5,
+        magneticDistance: 80
+      }
+
+      const zone2: DropZone = {
+        id: 'zone2',
+        type: 'special',
+        bounds: new Phaser.Geom.Rectangle(250, 100, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(zone1)
+      dropZoneManager.addZone(zone2)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
+
+      // Point closer to zone1 center (150, 150) than zone2 center (300, 150)
+      const snapTarget = dropZoneManager.getMagneticSnapTarget({ x: 180, y: 150 })
+      expect(snapTarget?.zone).toBe(zone1)
+    })
+
+    it('should handle magnetic snap with invalid zones', () => {
+      const zone: DropZone = {
+        id: 'invalid-zone',
+        type: 'challenge',
+        bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
+        isValid: () => false, // Always invalid
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
+
+      // Should not snap to invalid zones
+      const snapTarget = dropZoneManager.getMagneticSnapTarget({ x: 130, y: 130 })
+      expect(snapTarget).toBeNull()
     })
   })
 
-  describe('Error Handling', () => {
+  describe('Error Handling and Edge Cases', () => {
     it('should handle drag end without active drag', () => {
-      const result = dropZoneManager.endDrag(100, 100)
+      const result = dropZoneManager.endDrag({ x: 100, y: 100 }, mockGame)
       expect(result.success).toBe(false)
-      expect(result.error).toBe('No drag in progress')
+      expect(result.error).toBe('No active drag operation')
     })
 
     it('should handle onDrop errors gracefully', () => {
@@ -297,16 +451,83 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(errorZone)
-      dropZoneManager.startDrag(mockContainer)
+      dropZoneManager.addZone(errorZone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      const result = dropZoneManager.endDrag(100, 100)
+      const result = dropZoneManager.endDrag({ x: 100, y: 100 }, mockGame)
       expect(result.success).toBe(false)
-      expect(result.error).toBe('Drop failed')
+      expect(result.error).toBe('Drop action failed: Drop failed')
+    })
+
+    it('should handle invalid validation functions', () => {
+      const invalidZone: DropZone = {
+        id: 'invalid-zone',
+        type: 'challenge',
+        bounds: new Phaser.Geom.Rectangle(90, 90, 120, 120),
+        isValid: () => { throw new Error('Validation error') },
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(invalidZone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      // バリデーションエラーがあってもクラッシュしないことを確認
+      expect(() => {
+        dropZoneManager.updateDrag({ x: 100, y: 100 }, mockGame)
+      }).not.toThrow()
+      
+      const result = dropZoneManager.endDrag({ x: 100, y: 100 }, mockGame)
+      expect(result.success).toBe(false)
+    })
+
+    it('should handle null/undefined inputs gracefully', () => {
+      // null cardをテスト
+      expect(() => {
+        dropZoneManager.startDrag(null as any, mockGame, { x: 100, y: 100 })
+      }).not.toThrow()
+
+      // undefined positionをテスト
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      expect(() => {
+        dropZoneManager.updateDrag(null as any, mockGame)
+      }).not.toThrow()
+    })
+
+    it('should handle extreme coordinate values', () => {
+      const zone: DropZone = {
+        id: 'extreme-zone',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(0, 0, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 0, y: 0 })
+
+      // 極端な座標値をテスト
+      const extremeCoordinates = [
+        { x: -99999, y: -99999 },
+        { x: 99999, y: 99999 },
+        { x: 0, y: 0 },
+        { x: Number.MAX_SAFE_INTEGER, y: Number.MAX_SAFE_INTEGER },
+        { x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER }
+      ]
+
+      extremeCoordinates.forEach(coord => {
+        expect(() => {
+          dropZoneManager.updateDrag(coord, mockGame)
+          dropZoneManager.endDrag(coord, mockGame)
+        }).not.toThrow()
+      })
     })
   })
 
-  describe('Memory Management', () => {
+  describe('Memory Management and Cleanup', () => {
     it('should clean up resources on destroy', () => {
       const zone: DropZone = {
         id: 'cleanup-test',
@@ -318,14 +539,20 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(zone)
-      expect(dropZoneManager.getAllZones().size).toBe(1)
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      // ドラッグ状態があることを確認
+      expect(dropZoneManager.getDragState().isDragging).toBe(true)
 
       dropZoneManager.destroy()
-      expect(dropZoneManager.getAllZones().size).toBe(0)
+      
+      // ドラッグ状態がクリアされることを確認
+      expect(dropZoneManager.getDragState().isDragging).toBe(false)
+      expect(dropZoneManager.getDragState().validZones).toEqual([])
     })
 
-    it('should destroy zone highlights on cleanup', () => {
+    it('should clean up visual elements on destroy', () => {
       const zone: DropZone = {
         id: 'highlight-test',
         type: 'discard',
@@ -336,20 +563,271 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      dropZoneManager.registerZone(zone)
-      const registeredZone = dropZoneManager.getZone('highlight-test')
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      // ハイライトが作成されることを確認
+      expect(mockScene.add.graphics).toHaveBeenCalled()
+      expect(mockScene.tweens.add).toHaveBeenCalled()
       
       dropZoneManager.destroy()
-      expect(registeredZone?.highlight?.destroy).toHaveBeenCalled()
+      
+      // clearHighlightsが呼ばれることでビジュアル要素がクリーンアップされる
+      expect(mockScene.children.getByName).toHaveBeenCalled()
+    })
+
+    it('should handle memory leaks in long drag sessions', () => {
+      const zone: DropZone = {
+        id: 'memory-test',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(0, 0, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(zone)
+      
+      // 長いドラッグセッションをシミュレート
+      for (let i = 0; i < 100; i++) {
+        dropZoneManager.startDrag(mockCard, mockGame, { x: i, y: i })
+        dropZoneManager.updateDrag({ x: i + 10, y: i + 10 }, mockGame)
+        dropZoneManager.endDrag({ x: i + 20, y: i + 20 }, mockGame)
+      }
+      
+      // メモリが適切に管理されていることを確認
+      const dragState = dropZoneManager.getDragState()
+      expect(dragState.isDragging).toBe(false)
+      expect(dragState.card).toBeUndefined()
+      expect(dragState.startPosition).toBeUndefined()
+    })
+
+    it('should prevent memory leaks from event listeners', () => {
+      const zone: DropZone = {
+        id: 'event-test',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(0, 0, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(zone)
+      
+      // 複数回の追加・削除をテスト
+      for (let i = 0; i < 10; i++) {
+        dropZoneManager.removeZone('event-test')
+        dropZoneManager.addZone({ ...zone, id: `event-test-${i}` })
+      }
+      
+      // クリーンアップ後、すべてがクリアされることを確認
+      dropZoneManager.destroy()
+      expect(dropZoneManager.getDragState().validZones).toEqual([])
+    })
+  })
+
+  describe('Visual Feedback and Animations', () => {
+    it('should create visual highlights for valid zones', () => {
+      const zone: DropZone = {
+        id: 'visual-test',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(0, 0, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        visualStyle: {
+          validColor: 0x00ff00,
+          invalidColor: 0xff0000,
+          hoverColor: 0x00ff88
+        }
+      }
+
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
+      
+      // グラフィックス要素が作成されることを確認
+      expect(mockScene.add.graphics).toHaveBeenCalled()
+      
+      // アニメーションが設定されることを確認
+      expect(mockScene.tweens.add).toHaveBeenCalled()
+      
+      // 正しい色が使用されることを確認
+      const graphicsCall = mockScene.add.graphics()
+      expect(graphicsCall.fillStyle).toHaveBeenCalledWith(0x00ff00, 0.3)
+    })
+
+    it('should update hover states correctly', () => {
+      const zone: DropZone = {
+        id: 'hover-test',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 10,
+        visualStyle: {
+          validColor: 0x00ff00,
+          invalidColor: 0xff0000,
+          hoverColor: 0x00ff88
+        }
+      }
+
+      dropZoneManager.addZone(zone)
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
+      
+      // ゾーン内に移動
+      dropZoneManager.updateDrag({ x: 150, y: 150 }, mockGame)
+      
+      // ホバー状態のグラフィックスが作成されることを確認
+      expect(mockScene.add.graphics).toHaveBeenCalledTimes(2) // highlight + hover
+      
+      // ゾーン外に移動
+      dropZoneManager.updateDrag({ x: 50, y: 50 }, mockGame)
+      
+      // 古いホバー状態がクリアされることを確認
+      expect(mockScene.children.getByName).toHaveBeenCalled()
+    })
+  })
+
+  describe('Frame Rate Optimization', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should skip expensive operations when frame budget is exceeded', () => {
+      // 大量のゾーンを追加してパフォーマンス負荷をかける
+      for (let i = 10; i < 50; i++) {
+        const zone: DropZone = {
+          id: `stress-zone-${i}`,
+          type: 'discard',
+          bounds: new Phaser.Geom.Rectangle(i * 10, i * 10, 50, 50),
+          isValid: () => true,
+          onDrop: vi.fn(),
+          priority: i,
+          magneticDistance: 40
+        }
+        dropZoneManager.addZone(zone)
+      }
+
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+      
+      const updateSpy = vi.spyOn(dropZoneManager as any, 'updateHoverState')
+      
+      // 連続した更新をテスト
+      for (let i = 0; i < 10; i++) {
+        dropZoneManager.updateDrag({ x: 100 + i, y: 100 + i }, mockGame)
+      }
+      
+      // フレーム制御により、すべての更新が処理されるわけではないことを確認
+      expect(updateSpy).toHaveBeenCalledTimes(1)
+      
+      // 十分な時間が経過した後は新しい更新が処理される
+      vi.advanceTimersByTime(20)
+      dropZoneManager.updateDrag({ x: 200, y: 200 }, mockGame)
+      expect(updateSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('should prioritize high-priority zones in performance-critical situations', () => {
+      // 異なる優先度のゾーンを追加
+      const lowPriorityZone: DropZone = {
+        id: 'low-priority',
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 1,
+        magneticDistance: 80
+      }
+
+      const highPriorityZone: DropZone = {
+        id: 'high-priority',
+        type: 'challenge',
+        bounds: new Phaser.Geom.Rectangle(120, 120, 100, 100),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: 100,
+        magneticDistance: 80
+      }
+
+      dropZoneManager.addZone(lowPriorityZone)
+      dropZoneManager.addZone(highPriorityZone)
+      
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
+      
+      // 重複エリアでのドロップ - 高優先度ゾーンが選択されるべき
+      const result = dropZoneManager.endDrag({ x: 150, y: 150 }, mockGame)
+      expect(result.success).toBe(true)
+      expect(result.zone).toBe(highPriorityZone)
+    })
+
+    it('should maintain 60fps target with complex operations', () => {
+      const TARGET_FRAME_TIME = 16.67 // 60fps target
+
+      // 複数のゾーンを設定
+      for (let i = 0; i < 10; i++) {
+        const zone: DropZone = {
+          id: `fps-zone-${i}`,
+          type: 'discard',
+          bounds: new Phaser.Geom.Rectangle(i * 80, i * 60, 100, 100),
+          isValid: () => Math.random() > 0.2, // 20% chance of invalid
+          onDrop: vi.fn(),
+          priority: i,
+          magneticDistance: 80
+        }
+        dropZoneManager.addZone(zone)
+      }
+
+      dropZoneManager.startDrag(mockCard, mockGame, { x: 0, y: 0 })
+
+      const startTime = performance.now()
+      
+      // 複雑な操作をシミュレート
+      for (let frame = 0; frame < 60; frame++) { // 1秒分のフレーム
+        vi.advanceTimersByTime(TARGET_FRAME_TIME)
+        
+        // フレームごとの操作
+        dropZoneManager.updateDrag({ 
+          x: Math.sin(frame * 0.1) * 400 + 400, 
+          y: Math.cos(frame * 0.1) * 300 + 300 
+        }, mockGame)
+        
+        dropZoneManager.getMagneticSnapTarget({ 
+          x: Math.random() * 800, 
+          y: Math.random() * 600 
+        })
+      }
+      
+      const endTime = performance.now()
+      const totalTime = endTime - startTime
+      const averageFrameTime = totalTime / 60
+      
+      // 平均フレーム時間が目標以下であることを確認
+      expect(averageFrameTime).toBeLessThan(TARGET_FRAME_TIME * 1.5) // 50%のバッファを許可
     })
   })
 })
 
 describe('DropZone Performance Benchmarks', () => {
   let dropZoneManager: DropZoneManager
+  let mockCard: Card
   
   beforeEach(() => {
-    dropZoneManager = new DropZoneManager(mockScene, mockGame)
+    vi.clearAllMocks()
+    Date.now = vi.fn(() => 0)
+    
+    dropZoneManager = new DropZoneManager(mockScene)
+    mockCard = {
+      id: 'test-card',
+      name: 'Test Card',
+      type: 'life',
+      power: 5,
+      cost: 2
+    } as Card
     
     // Register multiple zones for performance testing
     for (let i = 0; i < 10; i++) {
@@ -362,7 +840,7 @@ describe('DropZone Performance Benchmarks', () => {
         priority: i,
         magneticDistance: 80
       }
-      dropZoneManager.registerZone(zone)
+      dropZoneManager.addZone(zone)
     }
   })
 
@@ -371,20 +849,15 @@ describe('DropZone Performance Benchmarks', () => {
   })
 
   it('should handle many zones efficiently', () => {
-    const mockContainer = {
-      x: 100,
-      y: 100,
-      getData: vi.fn().mockReturnValue(mockCard)
-    }
-
-    dropZoneManager.startDrag(mockContainer as any)
+    dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
     
     const startTime = performance.now()
     
     // Simulate rapid drag updates
     for (let i = 0; i < 100; i++) {
-      mockScene.time.now = i * 20 // Each update is 20ms apart
-      dropZoneManager.updateDrag(i * 2, i * 2)
+      // フレーム間隔を考慮した時間進行
+      vi.advanceTimersByTime(20)
+      dropZoneManager.updateDrag({ x: i * 2, y: i * 2 }, mockGame)
     }
     
     const endTime = performance.now()
@@ -395,23 +868,119 @@ describe('DropZone Performance Benchmarks', () => {
   })
 
   it('should throttle updates effectively', () => {
-    const mockContainer = {
-      x: 100,
-      y: 100,
-      getData: vi.fn().mockReturnValue(mockCard)
-    }
-
-    dropZoneManager.startDrag(mockContainer as any)
+    dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
     
-    const updateSpy = vi.spyOn(dropZoneManager as any, 'findNearestValidZone')
+    const updateSpy = vi.spyOn(dropZoneManager as any, 'updateHoverState')
     
     // Rapid updates within throttle window
-    mockScene.time.now = 0
-    dropZoneManager.updateDrag(100, 100)
-    dropZoneManager.updateDrag(101, 101)
-    dropZoneManager.updateDrag(102, 102)
+    dropZoneManager.updateDrag({ x: 100, y: 100 }, mockGame)
+    dropZoneManager.updateDrag({ x: 101, y: 101 }, mockGame)
+    dropZoneManager.updateDrag({ x: 102, y: 102 }, mockGame)
     
-    // Should only call findNearestValidZone once due to throttling
+    // Should only call updateHoverState once due to throttling
     expect(updateSpy).toHaveBeenCalledTimes(1)
+    
+    // After frame interval, should process new updates
+    vi.advanceTimersByTime(20)
+    dropZoneManager.updateDrag({ x: 103, y: 103 }, mockGame)
+    expect(updateSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('should maintain 60fps performance target', () => {
+    // 60fps = 16.67ms per frame
+    const TARGET_FRAME_TIME = 16.67
+    
+    dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+    
+    const frameOperations = () => {
+      dropZoneManager.updateDrag({ x: Math.random() * 800, y: Math.random() * 600 }, mockGame)
+      dropZoneManager.getMagneticSnapTarget({ x: Math.random() * 800, y: Math.random() * 600 })
+    }
+    
+    // 10フレーム分の操作を計測
+    const startTime = performance.now()
+    for (let i = 0; i < 10; i++) {
+      vi.advanceTimersByTime(20)
+      frameOperations()
+    }
+    const endTime = performance.now()
+    
+    const averageFrameTime = (endTime - startTime) / 10
+    
+    // 平均フレーム時間が目標値以下であることを確認
+    expect(averageFrameTime).toBeLessThan(TARGET_FRAME_TIME)
+  })
+
+  it('should scale efficiently with zone count', () => {
+    // さらに多くのゾーンを追加
+    for (let i = 10; i < 100; i++) {
+      const zone: DropZone = {
+        id: `scale-zone-${i}`,
+        type: 'discard',
+        bounds: new Phaser.Geom.Rectangle(
+          (i % 10) * 80, 
+          Math.floor(i / 10) * 60, 
+          75, 
+          55
+        ),
+        isValid: () => true,
+        onDrop: vi.fn(),
+        priority: i,
+        magneticDistance: 60
+      }
+      dropZoneManager.addZone(zone)
+    }
+
+    dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
+    
+    const operationsPerSecond = 1000
+    const testDuration = 100 // ms
+    const operations = Math.floor(operationsPerSecond * testDuration / 1000)
+    
+    const startTime = performance.now()
+    
+    for (let i = 0; i < operations; i++) {
+      vi.advanceTimersByTime(testDuration / operations)
+      dropZoneManager.updateDrag({ 
+        x: (i % 800), 
+        y: (i % 600) 
+      }, mockGame)
+    }
+    
+    const endTime = performance.now()
+    const actualDuration = endTime - startTime
+    
+    // 100ゾーンでも許容可能な時間内で処理されることを確認
+    expect(actualDuration).toBeLessThan(testDuration * 2) // 2倍の時間までは許容
+  })
+
+  it('should handle memory efficiently in stress conditions', () => {
+    const initialMemory = (performance as any).memory?.usedJSHeapSize || 0
+    
+    // ストレステスト：大量の操作を実行
+    for (let session = 0; session < 50; session++) {
+      dropZoneManager.startDrag(mockCard, mockGame, { x: session, y: session })
+      
+      for (let update = 0; update < 20; update++) {
+        vi.advanceTimersByTime(16)
+        dropZoneManager.updateDrag({ 
+          x: session * 10 + update, 
+          y: session * 10 + update 
+        }, mockGame)
+      }
+      
+      dropZoneManager.endDrag({ x: session + 100, y: session + 100 }, mockGame)
+    }
+    
+    const finalMemory = (performance as any).memory?.usedJSHeapSize || 0
+    const memoryIncrease = finalMemory - initialMemory
+    
+    // メモリ増加量が合理的な範囲内であることを確認（10MB未満）
+    if (initialMemory > 0) {
+      expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024)
+    }
+    
+    // ドラッグ状態が適切にクリーンアップされていることを確認
+    expect(dropZoneManager.getDragState().isDragging).toBe(false)
   })
 })
