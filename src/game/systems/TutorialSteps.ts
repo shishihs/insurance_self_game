@@ -1,4 +1,4 @@
-import type { TutorialConfig, TutorialStep } from '@/domain/types/tutorial.types'
+import type { TutorialConfig } from '@/domain/types/tutorial.types'
 
 /**
  * チュートリアルステップ定義

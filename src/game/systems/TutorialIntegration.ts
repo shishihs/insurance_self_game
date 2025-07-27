@@ -4,7 +4,7 @@
  */
 
 import { TutorialManager } from './TutorialManager'
-import { MAIN_TUTORIAL_CONFIG, QUICK_TUTORIAL_CONFIG, getRecommendedTutorial } from './TutorialSteps'
+import { MAIN_TUTORIAL_CONFIG, QUICK_TUTORIAL_CONFIG } from './TutorialSteps'
 import type { TutorialEventData } from '@/domain/types/tutorial.types'
 
 /**

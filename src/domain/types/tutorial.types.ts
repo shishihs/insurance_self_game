@@ -7,7 +7,7 @@
  */
 export interface GameActionValidation {
   type: 'draw_card' | 'select_cards' | 'resolve_challenge' | 'select_reward_card' | 'end_turn' | 'custom'
-  validation: (gameState: any) => boolean
+  validation: (gameState: Record<string, unknown>) => boolean
   timeout?: number  // タイムアウト時間（ms）
 }
 

@@ -77,9 +77,11 @@ export const INTERACTIVE_GAME_TUTORIAL: TutorialConfig = {
       action: 'wait_for_game_action',
       gameAction: {
         type: 'draw_card',
-        validation: (gameState: any) => {
+        validation: (gameState: Record<string, unknown>) => {
           // 手札が初期枚数より増えているか確認
-          return gameState.hand.length > gameState.config.startingHandSize
+          const hand = gameState.hand as unknown[]
+          const config = gameState.config as { startingHandSize: number }
+          return hand.length > config.startingHandSize
         }
       },
       highlightOptions: {
@@ -132,8 +134,9 @@ export const INTERACTIVE_GAME_TUTORIAL: TutorialConfig = {
       action: 'wait_for_game_action',
       gameAction: {
         type: 'select_cards',
-        validation: (gameState: any) => {
-          return gameState.selectedCards.length > 0
+        validation: (gameState: Record<string, unknown>) => {
+          const selectedCards = gameState.selectedCards as unknown[]
+          return selectedCards.length > 0
         }
       },
       highlightOptions: {
@@ -154,7 +157,7 @@ export const INTERACTIVE_GAME_TUTORIAL: TutorialConfig = {
       action: 'wait_for_game_action',
       gameAction: {
         type: 'resolve_challenge',
-        validation: (gameState: any) => {
+        validation: (gameState: Record<string, unknown>) => {
           return gameState.phase === 'resolution' || gameState.phase === 'card_selection'
         }
       },
@@ -178,13 +181,13 @@ export const INTERACTIVE_GAME_TUTORIAL: TutorialConfig = {
       action: 'wait_for_game_action',
       gameAction: {
         type: 'select_reward_card',
-        validation: (gameState: any) => {
+        validation: (gameState: Record<string, unknown>) => {
           return gameState.phase === 'resolution'
         }
       },
       skipCondition: () => {
         // チャレンジ失敗時はスキップ
-        const gameState = (window as any).__gameState
+        const gameState = (window as Window & { __gameState?: { lastChallengeResult?: { success?: boolean } } }).__gameState
         return gameState?.lastChallengeResult?.success === false
       },
       highlightOptions: {
@@ -204,8 +207,8 @@ export const INTERACTIVE_GAME_TUTORIAL: TutorialConfig = {
       action: 'wait_for_game_action',
       gameAction: {
         type: 'end_turn',
-        validation: (gameState: any) => {
-          return gameState.turn > 1
+        validation: (gameState: Record<string, unknown>) => {
+          return (gameState.turn as number) > 1
         }
       },
       highlightOptions: {

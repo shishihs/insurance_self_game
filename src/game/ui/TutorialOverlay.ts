@@ -568,7 +568,7 @@ export class TutorialOverlay {
    * レスポンシブ対応：画面サイズ変更時の調整
    */
   public onResize(): void {
-    const camera = this.scene.cameras.main
+    // const camera = this.scene.cameras.main // 未使用のため削除
     
     // ベースオーバーレイの再描画
     this.createBaseOverlay()

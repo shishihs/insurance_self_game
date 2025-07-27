@@ -53,7 +53,7 @@ onMounted(async () => {
       window.addEventListener('startTutorial', handleTutorialEvent)
       
       // クリーンアップ用に参照を保存
-      ;(window as any)._tutorialEventHandler = handleTutorialEvent
+      ;(window as Window & { _tutorialEventHandler?: typeof handleTutorialEvent })._tutorialEventHandler = handleTutorialEvent
       
     } catch (error) {
       console.error('❌ ゲームの初期化に失敗しました:', error)
@@ -74,10 +74,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   // イベントリスナーをクリーンアップ
-  const handler = (window as any)._tutorialEventHandler
+  const handler = (window as Window & { _tutorialEventHandler?: Function })._tutorialEventHandler
   if (handler) {
     window.removeEventListener('startTutorial', handler)
-    delete (window as any)._tutorialEventHandler
+    delete (window as Window & { _tutorialEventHandler?: Function })._tutorialEventHandler
   }
   
   // ゲームを破棄

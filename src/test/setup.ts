@@ -35,7 +35,7 @@ const mockPhaser = {
         return this.y + this.height / 2
       }
 
-      getRandomPoint(point?: any): any {
+      getRandomPoint(_point?: unknown): { x: number; y: number } {
         return {
           x: this.x + Math.random() * this.width,
           y: this.y + Math.random() * this.height
@@ -52,7 +52,7 @@ const mockPhaser = {
   },
   Utils: {
     Objects: {
-      GetValue: (obj: any, key: string, defaultValue?: any) => {
+      GetValue: (obj: Record<string, unknown>, key: string, defaultValue?: unknown) => {
         return obj?.[key] ?? defaultValue
       }
     }
@@ -60,7 +60,7 @@ const mockPhaser = {
 }
 
 // PhaserをグローバルにモックとしてInjection
-;(globalThis as any).Phaser = mockPhaser
+;(globalThis as typeof globalThis & { Phaser: typeof mockPhaser }).Phaser = mockPhaser
 
 // HTMLCanvasElementのgetContextをモック
 if (typeof HTMLCanvasElement !== 'undefined') {
@@ -113,12 +113,12 @@ if (typeof HTMLCanvasElement !== 'undefined') {
 
 // performance.memory をモック (メモリテスト用)
 if (typeof globalThis !== 'undefined') {
-  if (!(globalThis as any).performance) {
-    ;(globalThis as any).performance = {}
+  if (!(globalThis as typeof globalThis & { performance?: Performance }).performance) {
+    ;(globalThis as typeof globalThis & { performance: Partial<Performance> }).performance = {}
   }
 
-  if (!(globalThis as any).performance.memory) {
-    ;(globalThis as any).performance.memory = {
+  if (!(globalThis as typeof globalThis & { performance: { memory?: unknown } }).performance.memory) {
+    ;(globalThis as typeof globalThis & { performance: { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } } }).performance.memory = {
       usedJSHeapSize: 1000000,
       totalJSHeapSize: 2000000,
       jsHeapSizeLimit: 4000000
@@ -126,17 +126,17 @@ if (typeof globalThis !== 'undefined') {
   }
 
   // performance.now をモック
-  if (!(globalThis as any).performance.now) {
+  if (!(globalThis as typeof globalThis & { performance: { now?: () => number } }).performance.now) {
     let mockTime = 0
-    ;(globalThis as any).performance.now = vi.fn(() => {
+    ;(globalThis as typeof globalThis & { performance: { now: () => number } }).performance.now = vi.fn(() => {
       mockTime += 16.67 // Simulate 60fps
       return mockTime
     })
   }
 
   // window オブジェクトをモック
-  if (!(globalThis as any).window) {
-    ;(globalThis as any).window = {
+  if (!(globalThis as typeof globalThis & { window?: Window }).window) {
+    ;(globalThis as typeof globalThis & { window: { innerWidth: number; innerHeight: number; devicePixelRatio: number } }).window = {
       innerWidth: 1920,
       innerHeight: 1080,
       devicePixelRatio: 1
@@ -144,10 +144,10 @@ if (typeof globalThis !== 'undefined') {
   }
 
   // requestAnimationFrame をモック
-  ;(globalThis as any).requestAnimationFrame = vi.fn((callback) => {
+  ;(globalThis as typeof globalThis & { requestAnimationFrame: (callback: FrameRequestCallback) => number }).requestAnimationFrame = vi.fn((callback) => {
     setTimeout(callback, 16.67)
     return 1
   })
 
-  ;(globalThis as any).cancelAnimationFrame = vi.fn()
+  ;(globalThis as typeof globalThis & { cancelAnimationFrame: (handle: number) => void }).cancelAnimationFrame = vi.fn()
 }

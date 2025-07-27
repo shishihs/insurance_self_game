@@ -1979,7 +1979,7 @@ export class GameScene extends BaseScene {
     const result = this.gameInstance.resolveChallenge()
     
     // チュートリアル用にゲーム状態を更新
-    const gameState = (window as any).__gameState || {}
+    const gameState = (window as Window & { __gameState?: Record<string, unknown> }).__gameState || {}
     gameState.lastChallengeResult = result
     this.updateGameStateForTutorial()
     
@@ -3552,7 +3552,7 @@ export class GameScene extends BaseScene {
       lastChallengeResult: null as ChallengeResult | null
     };
     
-    (window as any).__gameState = gameState;
+    (window as Window & { __gameState?: typeof gameState }).__gameState = gameState;
     this.data.set('gameState', gameState);
   }
 

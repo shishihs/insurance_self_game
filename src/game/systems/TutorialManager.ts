@@ -6,7 +6,6 @@ import type {
   TutorialEventData,
   TutorialState,
   TutorialManagerOptions,
-  StepExecutionResult,
   HighlightOptions
 } from '@/domain/types/tutorial.types'
 import { TUTORIAL_STORAGE_KEYS } from '@/domain/types/tutorial.types'
@@ -504,7 +503,7 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
     const checkInterval = setInterval(() => {
       try {
         // ゲーム状態を取得（GameSceneから）
-        const gameState = (window as any).__gameState || this.scene.data.get('gameState')
+        const gameState = (window as Window & { __gameState?: Record<string, unknown> }).__gameState || this.scene.data.get('gameState')
         
         if (!gameState) {
           this.logDebug('Game state not available yet')
