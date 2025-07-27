@@ -210,7 +210,7 @@ export class GameScene extends BaseScene {
     buttonContainer.setName('action-buttons')
 
     // ドローボタン
-    const drawButton = this.createButton(
+    const drawButton = this.createContainerButton(
       0,
       0,
       'カードを引く',
@@ -224,7 +224,7 @@ export class GameScene extends BaseScene {
     drawButton.setName('draw-button')
 
     // チャレンジボタン
-    const challengeButton = this.createButton(
+    const challengeButton = this.createContainerButton(
       0,
       60,
       'チャレンジ',
@@ -238,7 +238,7 @@ export class GameScene extends BaseScene {
     challengeButton.setName('challenge-button')
 
     // ターン終了ボタン
-    const endTurnButton = this.createButton(
+    const endTurnButton = this.createContainerButton(
       0,
       120,
       'ターン終了',
@@ -1441,11 +1441,64 @@ export class GameScene extends BaseScene {
   }
 
   /**
+   * コンテナベースのボタンを作成
+   */
+  private createContainerButton(
+    x: number,
+    y: number,
+    text: string,
+    onClick: () => void,
+    style?: Phaser.Types.GameObjects.Text.TextStyle
+  ): Phaser.GameObjects.Container {
+    const container = this.add.container(x, y)
+    
+    // ボタン背景
+    const bg = this.add.rectangle(0, 0, 150, 40, 0x3498DB)
+    bg.setInteractive({ useHandCursor: true })
+    
+    // ボタンテキスト
+    const textObj = this.add.text(0, 0, text, style || {
+      fontFamily: 'Noto Sans JP',
+      fontSize: '18px',
+      color: '#ffffff'
+    })
+    textObj.setOrigin(0.5)
+    
+    container.add([bg, textObj])
+    
+    // クリックイベント
+    bg.on('pointerdown', onClick)
+    
+    // ホバー効果
+    bg.on('pointerover', () => {
+      bg.setFillStyle(0x2980B9)
+      container.setScale(1.05)
+    })
+    
+    bg.on('pointerout', () => {
+      bg.setFillStyle(0x3498DB)
+      container.setScale(1)
+    })
+    
+    return container
+  }
+
+  /**
    * ボタンの有効/無効を切り替え
    */
   private setButtonEnabled(button: Phaser.GameObjects.Container, enabled: boolean): void {
+    if (!button || !button.list || button.list.length < 2) {
+      console.warn('Invalid button structure')
+      return
+    }
+
     const buttonBg = button.list[0] as Phaser.GameObjects.Rectangle
     const buttonText = button.list[1] as Phaser.GameObjects.Text
+
+    if (!buttonBg || !buttonText) {
+      console.warn('Button components not found')
+      return
+    }
 
     if (enabled) {
       buttonBg.setFillStyle(0x3498DB)
