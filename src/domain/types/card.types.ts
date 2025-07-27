@@ -24,6 +24,16 @@ export type InsuranceType =
   | 'asset'     // 資産形成保険
 
 /**
+ * 保険期間タイプ
+ */
+export type InsuranceDurationType = 'term' | 'whole_life'
+
+/**
+ * 夢カードカテゴリー
+ */
+export type DreamCategory = 'physical' | 'intellectual' | 'mixed'
+
+/**
  * カード効果タイプ
  */
 export type CardEffectType = 
@@ -75,4 +85,22 @@ export interface ICard {
   
   // 落とし穴カード固有
   penalty?: number // ペナルティ値
+}
+
+/**
+ * 拡張保険カードインターフェース
+ */
+export interface InsuranceCardData extends ICard {
+  durationType: InsuranceDurationType
+  remainingTurns?: number // 定期保険用
+  ageBonus: number // 年齢による効果ボーナス
+}
+
+/**
+ * 夢カードインターフェース
+ */
+export interface DreamCard extends ICard {
+  category: DreamCategory
+  baseRequiredPower: number
+  ageAdjustment: number // 年齢調整値
 }

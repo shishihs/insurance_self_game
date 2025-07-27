@@ -1,5 +1,11 @@
 import { Card } from '../entities/Card'
-import type { LifeCardCategory, InsuranceType, GameStage } from '../types/card.types'
+import type { 
+  LifeCardCategory, 
+  InsuranceType, 
+  GameStage,
+  InsuranceDurationType,
+  InsuranceCardData
+} from '../types/card.types'
 
 /**
  * カードファクトリー
@@ -86,10 +92,13 @@ export class CardFactory {
   }
 
   /**
-   * 基本的な保険カードを生成
+   * 基本的な保険カードを生成（Phase 2: デフォルトは終身保険として生成）
    */
-  static createBasicInsuranceCards(): Card[] {
+  static createBasicInsuranceCards(stage: GameStage = 'youth'): Card[] {
     const cards: Card[] = []
+    
+    // 年齢ボーナスの設定
+    const ageBonus = stage === 'middle' ? 0.5 : stage === 'fulfillment' ? 1.0 : 0
 
     cards.push(this.createInsuranceCard({
       name: '医療保険',
@@ -97,7 +106,9 @@ export class CardFactory {
       insuranceType: 'medical',
       power: 4,
       cost: 3,
-      coverage: 100
+      coverage: 100,
+      durationType: 'whole_life', // デフォルトは終身保険
+      ageBonus: ageBonus
     }))
 
     cards.push(this.createInsuranceCard({
@@ -106,7 +117,9 @@ export class CardFactory {
       insuranceType: 'life',
       power: 5,
       cost: 4,
-      coverage: 200
+      coverage: 200,
+      durationType: 'whole_life',
+      ageBonus: ageBonus
     }))
 
     cards.push(this.createInsuranceCard({
@@ -115,82 +128,93 @@ export class CardFactory {
       insuranceType: 'income',
       power: 4,
       cost: 3,
-      coverage: 150
+      coverage: 150,
+      durationType: 'whole_life',
+      ageBonus: ageBonus
     }))
 
     return cards
   }
 
   /**
-   * 拡張保険カードを生成（選択肢用）
+   * 拡張保険カードを生成（Phase 2: 終身・定期バリエーション対応）
    */
-  static createExtendedInsuranceCards(): Card[] {
-    const basicCards = this.createBasicInsuranceCards()
-    const extendedCards: Card[] = [...basicCards]
+  static createExtendedInsuranceCards(stage: GameStage = 'youth'): Card[] {
+    const extendedCards: Card[] = []
+    
+    // 年齢ボーナスの設定
+    const ageBonus = stage === 'middle' ? 0.5 : stage === 'fulfillment' ? 1.0 : 0
+    
+    // 基本保険カードの終身・定期バリエーション
+    const baseInsurances = [
+      { name: '医療保険', insuranceType: 'medical' as InsuranceType, basePower: 4, baseCost: 3, coverage: 100 },
+      { name: '生命保険', insuranceType: 'life' as InsuranceType, basePower: 5, baseCost: 4, coverage: 200 },
+      { name: '収入保障保険', insuranceType: 'income' as InsuranceType, basePower: 4, baseCost: 3, coverage: 150 }
+    ]
+    
+    // 各保険に終身・定期のバリエーションを作成
+    baseInsurances.forEach(insurance => {
+      // 終身保険バージョン
+      extendedCards.push(this.createInsuranceCard({
+        name: `${insurance.name}（終身）`,
+        description: `一生涯の保障`,
+        insuranceType: insurance.insuranceType,
+        power: insurance.basePower + 2, // 終身はパワー+2
+        cost: insurance.baseCost + 2,   // 終身はコスト+2
+        coverage: insurance.coverage,
+        durationType: 'whole_life',
+        ageBonus: ageBonus
+      }))
+      
+      // 定期保険バージョン
+      extendedCards.push(this.createInsuranceCard({
+        name: `${insurance.name}（定期）`,
+        description: `10ターンの保障`,
+        insuranceType: insurance.insuranceType,
+        power: insurance.basePower,     // 定期は標準パワー
+        cost: insurance.baseCost,       // 定期は標準コスト
+        coverage: insurance.coverage,
+        durationType: 'term',
+        ageBonus: ageBonus
+      }))
+    })
 
-    // 追加の保険カード
-    extendedCards.push(this.createInsuranceCard({
-      name: '傷害保険',
-      description: 'ケガによるリスクをカバー',
-      insuranceType: 'medical',
-      power: 3,
-      cost: 2,
-      coverage: 80
-    }))
-
-    extendedCards.push(this.createInsuranceCard({
-      name: '就業不能保険',
-      description: '長期療養時の収入補償',
-      insuranceType: 'income',
-      power: 6,
-      cost: 5,
-      coverage: 250
-    }))
-
-    extendedCards.push(this.createInsuranceCard({
-      name: '介護保険',
-      description: '介護が必要になった時の保障',
-      insuranceType: 'medical',
-      power: 5,
-      cost: 4,
-      coverage: 180
-    }))
-
-    extendedCards.push(this.createInsuranceCard({
-      name: '終身保険',
-      description: '一生涯の保障',
-      insuranceType: 'life',
-      power: 7,
-      cost: 6,
-      coverage: 300
-    }))
-
-    extendedCards.push(this.createInsuranceCard({
-      name: 'がん保険',
-      description: 'がん治療に特化した保障',
-      insuranceType: 'medical',
-      power: 4,
-      cost: 3,
-      coverage: 120
-    }))
-
-    extendedCards.push(this.createInsuranceCard({
-      name: '個人年金保険',
-      description: '老後の資金準備',
-      insuranceType: 'income',
-      power: 3,
-      cost: 3,
-      coverage: 100
-    }))
-
-    extendedCards.push(this.createInsuranceCard({
-      name: '学資保険',
-      description: '子どもの教育費を準備',
-      insuranceType: 'life',
-      power: 3,
-      cost: 2,
-      coverage: 90
-    }))
+    // 追加の特殊保険カード
+    const additionalInsurances = [
+      { name: '傷害保険', insuranceType: 'medical' as InsuranceType, power: 3, cost: 2, coverage: 80 },
+      { name: '就業不能保険', insuranceType: 'income' as InsuranceType, power: 6, cost: 5, coverage: 250 },
+      { name: '介護保険', insuranceType: 'medical' as InsuranceType, power: 5, cost: 4, coverage: 180 },
+      { name: 'がん保険', insuranceType: 'medical' as InsuranceType, power: 4, cost: 3, coverage: 120 },
+      { name: '個人年金保険', insuranceType: 'income' as InsuranceType, power: 3, cost: 3, coverage: 100 },
+      { name: '学資保険', insuranceType: 'life' as InsuranceType, power: 3, cost: 2, coverage: 90 }
+    ]
+    
+    // 追加保険も終身・定期バリエーションを作成
+    additionalInsurances.forEach(insurance => {
+      // 終身バージョン
+      extendedCards.push(this.createInsuranceCard({
+        name: `${insurance.name}（終身）`,
+        description: `一生涯の保障`,
+        insuranceType: insurance.insuranceType,
+        power: insurance.power + 2,
+        cost: insurance.cost + 2,
+        coverage: insurance.coverage,
+        durationType: 'whole_life',
+        ageBonus: ageBonus
+      }))
+      
+      // 定期バージョン
+      extendedCards.push(this.createInsuranceCard({
+        name: `${insurance.name}（定期）`,
+        description: `10ターンの保障`,
+        insuranceType: insurance.insuranceType,
+        power: insurance.power,
+        cost: insurance.cost,
+        coverage: insurance.coverage,
+        durationType: 'term',
+        ageBonus: ageBonus
+      }))
+    })
 
     return extendedCards
   }
@@ -310,7 +334,7 @@ export class CardFactory {
   }
 
   /**
-   * 保険カードを作成
+   * 保険カードを作成（Phase 2対応）
    */
   private static createInsuranceCard(params: {
     name: string
@@ -319,8 +343,10 @@ export class CardFactory {
     power: number
     cost: number
     coverage: number
+    durationType?: InsuranceDurationType
+    ageBonus?: number
   }): Card {
-    return new Card({
+    const cardData: InsuranceCardData = {
       id: this.generateId(),
       type: 'insurance',
       name: params.name,
@@ -333,8 +359,18 @@ export class CardFactory {
         type: 'shield',
         value: params.coverage,
         description: `${params.coverage}ポイントの保障`
-      }]
-    })
+      }],
+      // Phase 2: デフォルトは終身保険
+      durationType: params.durationType || 'whole_life',
+      ageBonus: params.ageBonus || 0
+    }
+    
+    // 定期保険の場合は残りターン数を設定
+    if (cardData.durationType === 'term') {
+      cardData.remainingTurns = 10
+    }
+    
+    return new Card(cardData)
   }
 
   /**

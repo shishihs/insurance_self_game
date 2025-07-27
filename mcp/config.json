@@ -18,6 +18,17 @@
         "@modelcontextprotocol/server-playwright"
       ],
       "description": "Webサイト自動テスト・動作確認（デプロイ検証用）"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub API連携（リポジトリ操作、Issues、PRs、Actions確認）"
     }
   },
   "settings": {

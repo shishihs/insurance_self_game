@@ -26,6 +26,32 @@ SubAgent に依頼した方が良さそうなことがあればどんどん依�
 ### パフォーマンス最適化
 /agents use performance-optimizer
 
+## 🔗 MCP (Model Context Protocol) 統合
+
+### 利用可能なツール
+**[🛠️ MCP セットアップガイド](./docs/development/MCP_SETUP.md)** - **初回設定方法とトラブルシューティング**
+
+- **filesystem**: プロジェクトファイルの安全なアクセス
+- **playwright**: デプロイ後のWebサイト動作確認・自動テスト
+- **github**: GitHub Actions確認、Issues管理、PR操作
+
+### GitHub MCP の活用例
+```bash
+# デプロイ状況の確認
+GitHub Actions の最新実行結果を確認
+
+# Issue 管理
+新しいバグレポートや機能要望をIssueとして作成
+
+# PR レビュー
+Pull Request の作成・レビュー・マージ操作
+```
+
+### セキュリティ設定
+- Personal Access Token は適切な権限のみ付与
+- プロジェクトファイルのみアクセス許可
+- `.env` ファイルや `node_modules` はアクセス禁止
+
 ## 🎯 プロジェクトビジョン
 
 ### 最高理念

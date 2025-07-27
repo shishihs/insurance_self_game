@@ -9,6 +9,7 @@ import type {
   PlayerStats,
   ChallengeResult
 } from '../types/game.types'
+import { AGE_PARAMETERS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 
 /**
@@ -45,7 +46,7 @@ export class Game implements IGameState {
     this.stage = 'youth'
     this.turn = 0
     this.vitality = config.startingVitality
-    this.maxVitality = config.startingVitality
+    this.maxVitality = AGE_PARAMETERS[this.stage].maxVitality
     
     this.playerDeck = new Deck('Player Deck')
     this.hand = []
@@ -282,6 +283,19 @@ export class Game implements IGameState {
   }
 
   /**
+   * ステージに応じて活力上限を更新
+   */
+  private updateMaxVitalityForAge(): void {
+    const newMaxVitality = AGE_PARAMETERS[this.stage].maxVitality
+    this.maxVitality = newMaxVitality
+    
+    // 現在の活力が新しい上限を超えていたら調整
+    if (this.vitality > newMaxVitality) {
+      this.vitality = newMaxVitality
+    }
+  }
+
+  /**
    * 次のターンへ
    */
   nextTurn(): void {
@@ -303,8 +317,10 @@ export class Game implements IGameState {
   advanceStage(): void {
     if (this.stage === 'youth') {
       this.stage = 'middle'
+      this.updateMaxVitalityForAge()
     } else if (this.stage === 'middle') {
       this.stage = 'fulfillment'
+      this.updateMaxVitalityForAge()
     } else {
       // 最終ステージクリア
       this.status = 'victory'

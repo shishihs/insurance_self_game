@@ -25,7 +25,7 @@ describe('Game Entity', () => {
       expect(game.stage).toBe('youth')
       expect(game.turn).toBe(0)
       expect(game.vitality).toBe(20)
-      expect(game.maxVitality).toBe(20)
+      expect(game.maxVitality).toBe(35) // 青年期の最大活力値
       expect(game.hand).toHaveLength(0)
       expect(game.discardPile).toHaveLength(0)
     })
@@ -235,6 +235,36 @@ describe('Game Entity', () => {
       expect(game.status).toBe('victory')
       expect(game.completedAt).toBeDefined()
     })
+
+    it('ステージ移行時に活力上限が更新される', () => {
+      game.start()
+      
+      // 青年期の上限を確認
+      expect(game.maxVitality).toBe(35)
+      
+      // 中年期へ移行
+      game.advanceStage()
+      expect(game.maxVitality).toBe(30)
+      
+      // 充実期へ移行
+      game.advanceStage()
+      expect(game.maxVitality).toBe(27)
+    })
+
+    it('ステージ移行時に活力が新しい上限を超えていたら調整される', () => {
+      game.start()
+      game.vitality = 35 // 青年期の最大値
+      
+      // 中年期へ移行（上限30）
+      game.advanceStage()
+      expect(game.maxVitality).toBe(30)
+      expect(game.vitality).toBe(30) // 調整される
+      
+      // 充実期へ移行（上限27）
+      game.advanceStage()
+      expect(game.maxVitality).toBe(27)
+      expect(game.vitality).toBe(27) // 調整される
+    })
   })
 
   describe('ゲーム状態', () => {
@@ -259,7 +289,7 @@ describe('Game Entity', () => {
       game.start()
       game['updateVitality'](100)
       
-      expect(game.vitality).toBe(40) // maxVitality * 2
+      expect(game.vitality).toBe(70) // maxVitality(35) * 2
     })
   })
 

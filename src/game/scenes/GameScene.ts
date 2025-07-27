@@ -5,6 +5,7 @@ import { CardFactory } from '@/domain/services/CardFactory'
 import { GAME_CONSTANTS } from '../config/gameConfig'
 import type { CardType } from '@/domain/types/card.types'
 import type { ChallengeResult } from '@/domain/types/game.types'
+import { AGE_PARAMETERS } from '@/domain/types/game.types'
 
 /**
  * メインゲームシーン
@@ -14,6 +15,9 @@ export class GameScene extends BaseScene {
   private handCards: Phaser.GameObjects.Container[] = []
   private selectedCards: Set<string> = new Set()
   private cardSelectionUI?: Phaser.GameObjects.Container
+  private vitalityBarContainer?: Phaser.GameObjects.Container
+  private vitalityBar?: Phaser.GameObjects.Rectangle
+  private vitalityBarMaxWidth: number = 300
 
   constructor() {
     super({ key: 'GameScene' })
@@ -82,6 +86,9 @@ export class GameScene extends BaseScene {
     stageText.setOrigin(0, 0.5)
     stageText.setName('stage-text')
 
+    // 活力バーコンテナ
+    this.createVitalityBar()
+
     // 活力表示
     const vitalityText = this.add.text(
       this.centerX,
@@ -112,6 +119,55 @@ export class GameScene extends BaseScene {
 
     // アクションボタン
     this.createActionButtons()
+  }
+
+  /**
+   * 活力バーを作成
+   */
+  private createVitalityBar(): void {
+    this.vitalityBarContainer = this.add.container(this.centerX, 65)
+    this.vitalityBarContainer.setName('vitality-bar-container')
+
+    // 活力バーの背景
+    const barBg = this.add.rectangle(
+      0, 0,
+      this.vitalityBarMaxWidth + 4,
+      24,
+      0x000000
+    )
+    barBg.setStrokeStyle(2, 0xffffff)
+
+    // 活力バー本体
+    const vitalityPercentage = this.gameInstance.vitality / this.gameInstance.maxVitality
+    const barWidth = Math.max(0, this.vitalityBarMaxWidth * vitalityPercentage)
+    
+    this.vitalityBar = this.add.rectangle(
+      -this.vitalityBarMaxWidth / 2, 0,
+      barWidth,
+      20,
+      this.getVitalityBarColor(vitalityPercentage)
+    )
+    this.vitalityBar.setOrigin(0, 0.5)
+
+    // 最大値マーカー（現在のステージの最大値を示す）
+    const maxMarker = this.add.rectangle(
+      -this.vitalityBarMaxWidth / 2 + this.vitalityBarMaxWidth, 0,
+      2,
+      24,
+      0xffffff
+    )
+    maxMarker.setOrigin(0.5)
+
+    this.vitalityBarContainer.add([barBg, this.vitalityBar, maxMarker])
+  }
+
+  /**
+   * 活力バーの色を取得
+   */
+  private getVitalityBarColor(percentage: number): number {
+    if (percentage > 0.6) return 0x4ade80 // 緑
+    if (percentage > 0.3) return 0xfbbf24 // 黄色
+    return 0xef4444 // 赤
   }
 
   /**
@@ -575,6 +631,9 @@ export class GameScene extends BaseScene {
       vitalityText.setText(`活力: ${this.gameInstance.vitality} / ${this.gameInstance.maxVitality}`)
     }
 
+    // 活力バーを更新
+    this.updateVitalityBar()
+
     // ターン数表示を更新
     const turnText = this.children.getByName('turn-text') as Phaser.GameObjects.Text
     if (turnText) {
@@ -592,6 +651,29 @@ export class GameScene extends BaseScene {
     if (stageText) {
       stageText.setText(this.getStageDisplayText())
     }
+  }
+
+  /**
+   * 活力バーを更新
+   */
+  private updateVitalityBar(): void {
+    if (!this.vitalityBar) return
+
+    const vitalityPercentage = this.gameInstance.vitality / this.gameInstance.maxVitality
+    const targetWidth = Math.max(0, this.vitalityBarMaxWidth * vitalityPercentage)
+    const newColor = this.getVitalityBarColor(vitalityPercentage)
+
+    // アニメーションで幅を変更
+    this.tweens.add({
+      targets: this.vitalityBar,
+      width: targetWidth,
+      duration: 500,
+      ease: 'Power2',
+      onUpdate: () => {
+        // 色も更新
+        this.vitalityBar?.setFillStyle(newColor)
+      }
+    })
   }
 
   /**
@@ -981,18 +1063,13 @@ export class GameScene extends BaseScene {
    * ステージ表示テキストを取得
    */
   private getStageDisplayText(): string {
-    const stageNames = {
-      youth: '青年期',
-      middle: '中年期',
-      fulfillment: '充実期'
-    }
     const currentStage = this.gameInstance.stage
-    const stageName = stageNames[currentStage] || '不明'
+    const stageName = AGE_PARAMETERS[currentStage].label
     
     const turnsInStage = this.getTurnsInCurrentStage()
     const maxTurns = GAME_CONSTANTS.STAGE_TURNS[currentStage]
     
-    return `ステージ: ${stageName} (${turnsInStage}/${maxTurns})`
+    return `${stageName} (${turnsInStage}/${maxTurns})`
   }
 
   /**
@@ -1018,13 +1095,15 @@ export class GameScene extends BaseScene {
     const stage = this.gameInstance.stage
     
     if (stage === 'youth' && turn >= GAME_CONSTANTS.STAGE_TURNS.youth) {
+      const previousMaxVitality = this.gameInstance.maxVitality
       this.gameInstance.advanceStage()
-      this.showStageTransition('中年期')
+      this.showStageTransition('中年期', previousMaxVitality, this.gameInstance.maxVitality)
       this.updateChallengeDeck()
     } else if (stage === 'middle' && 
                turn >= GAME_CONSTANTS.STAGE_TURNS.youth + GAME_CONSTANTS.STAGE_TURNS.middle) {
+      const previousMaxVitality = this.gameInstance.maxVitality
       this.gameInstance.advanceStage()
-      this.showStageTransition('充実期')
+      this.showStageTransition('充実期', previousMaxVitality, this.gameInstance.maxVitality)
       this.updateChallengeDeck()
     }
   }
@@ -1045,14 +1124,14 @@ export class GameScene extends BaseScene {
   /**
    * ステージ遷移演出を表示
    */
-  private showStageTransition(stageName: string): void {
+  private showStageTransition(stageName: string, previousMaxVitality: number, newMaxVitality: number): void {
     const transitionContainer = this.add.container(this.centerX, this.centerY)
     
     const bg = this.add.rectangle(0, 0, this.gameWidth, this.gameHeight, 0x000000, 0.8)
     
     const text = this.add.text(
       0,
-      0,
+      -40,
       `${stageName}へ突入！`,
       {
         fontFamily: 'Noto Sans JP',
@@ -1062,7 +1141,19 @@ export class GameScene extends BaseScene {
       }
     ).setOrigin(0.5)
     
-    transitionContainer.add([bg, text])
+    // 体力減少メッセージ
+    const vitalityChangeText = this.add.text(
+      0,
+      20,
+      `体力が衰えました (最大値: ${previousMaxVitality} → ${newMaxVitality})`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '24px',
+        color: '#ff9999'
+      }
+    ).setOrigin(0.5)
+    
+    transitionContainer.add([bg, text, vitalityChangeText])
     transitionContainer.setAlpha(0)
     
     // フェードイン
@@ -1088,6 +1179,42 @@ export class GameScene extends BaseScene {
     if (stageText) {
       stageText.setText(this.getStageDisplayText())
     }
+    
+    // 活力バーの最大値変更をアニメーション
+    this.animateMaxVitalityChange()
+  }
+
+  /**
+   * 最大活力変更時のアニメーション
+   */
+  private animateMaxVitalityChange(): void {
+    if (!this.vitalityBarContainer) return
+
+    // 最大値マーカーを点滅させる
+    const maxMarker = this.vitalityBarContainer.list[2] as Phaser.GameObjects.Rectangle
+    if (maxMarker) {
+      this.tweens.add({
+        targets: maxMarker,
+        alpha: 0.3,
+        duration: 300,
+        yoyo: true,
+        repeat: 3,
+        ease: 'Power2'
+      })
+    }
+
+    // 活力バーコンテナを揺らす
+    this.tweens.add({
+      targets: this.vitalityBarContainer,
+      y: this.vitalityBarContainer.y - 5,
+      duration: 100,
+      yoyo: true,
+      repeat: 2,
+      ease: 'Power2'
+    })
+
+    // UI を更新
+    this.updateUI()
   }
 
   /**

@@ -63,6 +63,36 @@ export interface ChallengeResult {
 /**
  * ゲーム状態
  */
+/**
+ * 年齢別パラメータ
+ */
+export interface AgeParameters {
+  maxVitality: number
+  label: string
+  ageMultiplier: number  // 保険効果の年齢倍率
+}
+
+/**
+ * 年齢別設定
+ */
+export const AGE_PARAMETERS: Record<GameStage, AgeParameters> = {
+  youth: { 
+    maxVitality: 35, 
+    label: '青年期',
+    ageMultiplier: 0
+  },
+  middle: { 
+    maxVitality: 30, 
+    label: '中年期',
+    ageMultiplier: 0.5
+  },
+  fulfillment: { 
+    maxVitality: 27, 
+    label: '充実期',
+    ageMultiplier: 1.0
+  }
+}
+
 export interface IGameState {
   id: string
   status: GameStatus
