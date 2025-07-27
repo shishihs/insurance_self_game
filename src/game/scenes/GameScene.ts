@@ -71,6 +71,13 @@ export class GameScene extends BaseScene {
 
     // ゲーム開始
     this.startGame()
+
+    // メニューからチュートリアルが要求された場合は自動開始
+    if (this.shouldStartTutorial) {
+      this.time.delayedCall(500, () => {
+        this.autoStartTutorial()
+      })
+    }
   }
 
   /**
@@ -727,13 +734,6 @@ export class GameScene extends BaseScene {
 
     // ゲーム状態を公開（チュートリアル用）
     this.updateGameStateForTutorial()
-
-    // チュートリアルの自動開始
-    if (this.shouldStartTutorial) {
-      this.time.delayedCall(500, () => {
-        this.autoStartTutorial()
-      })
-    }
   }
 
   /**
