@@ -11,6 +11,16 @@ const isDev = import.meta.env.DEV
 onMounted(async () => {
   console.log('GameCanvas: onMounted開始')
   
+  // gameContainerが利用可能になるまで待機
+  let attempts = 0
+  const maxAttempts = 10
+  
+  while (!gameContainer.value && attempts < maxAttempts) {
+    console.log(`GameCanvas: gameContainer待機中... (${attempts + 1}/${maxAttempts})`)
+    await new Promise(resolve => setTimeout(resolve, 100))
+    attempts++
+  }
+  
   if (gameContainer.value) {
     console.log('GameCanvas: gameContainer が見つかりました')
     try {
@@ -30,6 +40,21 @@ onMounted(async () => {
       
       isLoading.value = false
       console.log('GameCanvas: 読み込み完了')
+      
+      // チュートリアル開始イベントリスナーを設定
+      const handleTutorialEvent = () => {
+        console.log('GameCanvas: チュートリアル開始イベントを受信')
+        if (gameManager.value) {
+          // GameSceneに直接移動してチュートリアルを開始
+          gameManager.value.switchScene('GameScene', { startTutorial: true })
+        }
+      }
+      
+      window.addEventListener('startTutorial', handleTutorialEvent)
+      
+      // クリーンアップ用に参照を保存
+      ;(window as any)._tutorialEventHandler = handleTutorialEvent
+      
     } catch (error) {
       console.error('❌ ゲームの初期化に失敗しました:', error)
       console.error('❌ エラー詳細:', {
@@ -48,6 +73,13 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  // イベントリスナーをクリーンアップ
+  const handler = (window as any)._tutorialEventHandler
+  if (handler) {
+    window.removeEventListener('startTutorial', handler)
+    delete (window as any)._tutorialEventHandler
+  }
+  
   // ゲームを破棄
   if (gameManager.value) {
     gameManager.value.destroy()
@@ -97,7 +129,7 @@ defineExpose({
     </div>
     
     <!-- Phaserゲームがここにマウントされる -->
-    <div v-else ref="gameContainer" id="game-container" class="game-container"></div>
+    <div ref="gameContainer" id="game-container" class="game-container" :style="{ display: !isLoading && !errorMessage ? 'block' : 'none' }"></div>
     
     <!-- デバッグ用コントロール（開発中のみ表示） -->
     <div v-if="isDev && !isLoading" class="debug-controls">

@@ -10,7 +10,7 @@ import { TutorialManager } from '../systems/TutorialManager'
 import { TutorialOverlay } from '../ui/TutorialOverlay'
 import type { TutorialConfig, TutorialStep } from '@/domain/types/tutorial.types'
 import { setupGlobalTutorialTests } from '../tutorial/TutorialTestHelper'
-import { SAMPLE_TUTORIAL_CONFIG } from '../tutorial/SampleTutorialConfig'
+import { INTERACTIVE_GAME_TUTORIAL } from '../tutorial/InteractiveTutorialConfig'
 import { DropZoneIntegration } from '../systems/DropZoneIntegration'
 
 /**
@@ -635,6 +635,9 @@ export class GameScene extends BaseScene {
       this.updateActionButtons()
     })
 
+    // ゲーム状態を公開（チュートリアル用）
+    this.updateGameStateForTutorial()
+
     // チュートリアルの自動開始
     if (this.shouldStartTutorial) {
       this.time.delayedCall(500, () => {
@@ -658,6 +661,8 @@ export class GameScene extends BaseScene {
     // 手札を再配置
     this.time.delayedCall(count * 100 + 100, () => {
       this.arrangeHand()
+      // チュートリアル用にゲーム状態を更新
+      this.updateGameStateForTutorial()
     })
   }
 
@@ -1062,6 +1067,9 @@ export class GameScene extends BaseScene {
       // UI更新
       this.updateUI()
       this.updateActionButtons()
+      
+      // チュートリアル用にゲーム状態を更新
+      this.updateGameStateForTutorial()
       
       // ゲーム終了判定
       this.checkGameEnd()
@@ -1970,6 +1978,11 @@ export class GameScene extends BaseScene {
     // チャレンジ解決
     const result = this.gameInstance.resolveChallenge()
     
+    // チュートリアル用にゲーム状態を更新
+    const gameState = (window as any).__gameState || {}
+    gameState.lastChallengeResult = result
+    this.updateGameStateForTutorial()
+    
     // 結果表示
     this.showChallengeResult(result)
     
@@ -2305,16 +2318,11 @@ export class GameScene extends BaseScene {
 
   /**
    * Phase 5-1: 期限切れ間近の保険をチェック
+   * DISABLED: 保険更新システムが削除されたため無効化
    */
   private checkExpiringInsurances(): void {
-    // getPendingRenewalInsurances()を使用して期限切れ予定保険を取得
-    const pendingRenewals = this.gameInstance.getPendingRenewalInsurances()
-    
-    if (pendingRenewals.length > 0) {
-      pendingRenewals.forEach(renewal => {
-        this.showInsuranceExpirationWarning(renewal)
-      })
-    }
+    // 保険更新システムが削除されたため、この機能は無効化
+    return
   }
 
   /**
@@ -3528,6 +3536,27 @@ export class GameScene extends BaseScene {
   }
 
   /**
+   * ゲーム状態をチュートリアル用に公開
+   */
+  private updateGameStateForTutorial(): void {
+    // ゲーム状態をグローバルとSceneデータの両方に設定
+    const gameState = {
+      hand: this.gameInstance.hand,
+      selectedCards: this.gameInstance.selectedCards,
+      phase: this.gameInstance.phase,
+      turn: this.gameInstance.turn,
+      vitality: this.gameInstance.vitality,
+      maxVitality: this.gameInstance.maxVitality,
+      insuranceCards: this.gameInstance.insuranceCards,
+      config: this.gameInstance.config,
+      lastChallengeResult: null as ChallengeResult | null
+    };
+    
+    (window as any).__gameState = gameState;
+    this.data.set('gameState', gameState);
+  }
+
+  /**
    * アクションボタンの有効/無効を更新
    */
   private updateActionButtons(): void {
@@ -3783,12 +3812,12 @@ export class GameScene extends BaseScene {
 
   /**
    * 保険更新選択ダイアログを表示
+   * DISABLED: 保険更新システムが削除されたため無効化
    */
-  private showInsuranceRenewalDialog(renewalOption: InsuranceRenewalOption): void {
-    // 既存の更新ダイアログがあれば削除
-    if (this.insuranceRenewalDialogUI) {
-      this.insuranceRenewalDialogUI.destroy()
-    }
+  private showInsuranceRenewalDialog(renewalOption: any): void {
+    // 保険更新システムが削除されたため、この機能は無効化
+    console.warn('showInsuranceRenewalDialog: 保険更新システムが削除されました')
+    return
 
     // 保険更新選択コンテナを作成
     this.insuranceRenewalDialogUI = this.add.container(this.centerX, this.centerY)
@@ -4069,19 +4098,11 @@ export class GameScene extends BaseScene {
 
   /**
    * 追加の期限切れ保険をチェック
+   * DISABLED: 保険更新システムが削除されたため無効化
    */
   private checkForAdditionalRenewals(): void {
-    // remainingTurns = 0の保険を探して順次処理
-    const expiredRenewals = this.gameInstance.pendingRenewals.filter(
-      renewal => renewal.remainingTurns === 0
-    )
-    
-    if (expiredRenewals.length > 0) {
-      // 次の期限切れ保険を処理
-      this.time.delayedCall(1000, () => {
-        this.showInsuranceRenewalDialog(expiredRenewals[0])
-      })
-    }
+    // 保険更新システムが削除されたため、この機能は無効化
+    return
   }
 
   // ===================
@@ -4285,8 +4306,8 @@ export class GameScene extends BaseScene {
   private autoStartTutorial(): void {
     console.log('Auto-starting tutorial from menu')
     
-    // サンプルチュートリアルを開始
-    this.startTutorial(SAMPLE_TUTORIAL_CONFIG)
+    // インタラクティブチュートリアルを開始
+    this.startTutorial(INTERACTIVE_GAME_TUTORIAL)
       .then(() => {
         console.log('Tutorial started successfully')
       })

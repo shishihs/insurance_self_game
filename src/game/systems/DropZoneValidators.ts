@@ -1,293 +1,303 @@
-import type { Card } from '../../domain/entities/Card'
-import type { Game } from '../../domain/entities/Game'
+import { Card } from '@/domain/entities/Card'
+import { Game } from '@/domain/entities/Game'
+import type { CardType } from '@/domain/types/card.types'
 
 /**
- * バリデーション結果インターフェース
+ * バリデーター関数の型定義
  */
-export interface ValidationResult {
-  isValid: boolean
-  reason?: string
-  suggestion?: string
-}
+export type DropZoneValidator = (card: Card, game: Game) => boolean
 
 /**
- * カスタムバリデーター関数の型定義
+ * アクション関数の型定義
  */
-export type DropZoneValidator = (card: Card, game: Game) => ValidationResult
+export type DropZoneAction = (card: Card, game: Game) => void
 
 /**
- * 一般的なドロップゾーンバリデーター関数群
- * 再利用可能で組み合わせ可能な設計
+ * ドロップゾーンバリデーターのユーティリティクラス
  */
 export class DropZoneValidators {
-  
   /**
-   * チャレンジエリア用バリデーター
+   * カードタイプのみを許可するバリデーター
    */
-  static challengeArea(): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      // チャレンジが開始されているかチェック
-      if (!game.currentChallenge) {
-        return {
-          isValid: false,
-          reason: 'No active challenge',
-          suggestion: 'Start a challenge first'
-        }
-      }
-
-      // すでにチャレンジカードが配置されているかチェック
-      if (game.currentChallenge.isCardPlaced) {
-        return {
-          isValid: false,
-          reason: 'Challenge card already placed',
-          suggestion: 'Complete current challenge or place card elsewhere'
-        }
-      }
-
-      // カードタイプのチェック（基本的には全カード受け入れ可能）
-      return { isValid: true }
-    }
+  static cardTypeOnly(allowedTypes: CardType[]): DropZoneValidator {
+    return (card: Card) => allowedTypes.includes(card.type)
   }
 
   /**
-   * 捨て札エリア用バリデーター
-   */
-  static discardArea(): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      // 捨て札は基本的に常に有効
-      // ただし、特殊な状況下では制限する可能性がある
-      
-      // 例：チュートリアル中は特定のカードのみ捨て札可能
-      if (game.config.tutorialEnabled && game.phase === 'tutorial') {
-        // チュートリアル固有のロジックをここに追加
-      }
-
-      return { isValid: true }
-    }
-  }
-
-  /**
-   * 保険エリア用バリデーター
-   */
-  static insuranceArea(): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      // 保険カードのみ受け入れ
-      if (card.type !== 'insurance') {
-        return {
-          isValid: false,
-          reason: 'Only insurance cards allowed',
-          suggestion: 'Use insurance cards for this area'
-        }
-      }
-
-      // ゲームフェーズのチェック
-      if (game.phase !== 'purchase' && game.phase !== 'renewal') {
-        return {
-          isValid: false,
-          reason: 'Insurance purchase not available in current phase',
-          suggestion: 'Wait for insurance purchase phase'
-        }
-      }
-
-      // 重複チェック（同じ保険カードを複数購入できない場合）
-      const existingInsurance = game.insuranceCards.find(
-        existing => existing.id === card.id
-      )
-      if (existingInsurance) {
-        return {
-          isValid: false,
-          reason: 'Insurance already purchased',
-          suggestion: 'Choose a different insurance'
-        }
-      }
-
-      return { isValid: true }
-    }
-  }
-
-  /**
-   * カードタイプ制限バリデーター
-   */
-  static cardTypeOnly(allowedTypes: string[]): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      if (!allowedTypes.includes(card.type)) {
-        return {
-          isValid: false,
-          reason: `Only ${allowedTypes.join(', ')} cards allowed`,
-          suggestion: `Use a ${allowedTypes[0]} card instead`
-        }
-      }
-      return { isValid: true }
-    }
-  }
-
-  /**
-   * ゲームフェーズ制限バリデーター
+   * 特定の段階でのみ許可するバリデーター
    */
   static phaseOnly(allowedPhases: string[]): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      if (!allowedPhases.includes(game.phase)) {
-        return {
-          isValid: false,
-          reason: `Not available in ${game.phase} phase`,
-          suggestion: `Wait for ${allowedPhases[0]} phase`
-        }
-      }
-      return { isValid: true }
+    return (card: Card, game: Game) => {
+      const currentPhase = game.getCurrentPhase?.() || 'unknown'
+      return allowedPhases.includes(currentPhase)
     }
   }
 
   /**
-   * カスタムロジックバリデーター
+   * 最小パワー要件のバリデーター
    */
-  static custom(validationFn: (card: Card, game: Game) => boolean, 
-                errorMessage: string = 'Custom validation failed',
-                suggestion?: string): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      const isValid = validationFn(card, game)
-      return {
-        isValid,
-        reason: isValid ? undefined : errorMessage,
-        suggestion: isValid ? undefined : suggestion
-      }
+  static minimumPower(minPower: number): DropZoneValidator {
+    return (card: Card) => card.power >= minPower
+  }
+
+  /**
+   * 最大パワー制限のバリデーター
+   */
+  static maximumPower(maxPower: number): DropZoneValidator {
+    return (card: Card) => card.power <= maxPower
+  }
+
+  /**
+   * コスト制限のバリデーター
+   */
+  static costLimit(maxCost: number): DropZoneValidator {
+    return (card: Card) => card.cost <= maxCost
+  }
+
+  /**
+   * 現在の活力チェックのバリデーター
+   */
+  static vitalityCheck(requiredVitality: number): DropZoneValidator {
+    return (card: Card, game: Game) => game.vitality >= requiredVitality
+  }
+
+  /**
+   * チャレンジ中でないことをチェック
+   */
+  static notInChallenge(): DropZoneValidator {
+    return (card: Card, game: Game) => !game.currentChallenge
+  }
+
+  /**
+   * チャレンジ中であることをチェック
+   */
+  static inChallenge(): DropZoneValidator {
+    return (card: Card, game: Game) => !!game.currentChallenge
+  }
+
+  /**
+   * 手札に余裕があることをチェック
+   */
+  static handSpaceAvailable(): DropZoneValidator {
+    return (card: Card, game: Game) => {
+      const currentHandSize = game.playerHand?.size() || 0
+      const maxHandSize = game.maxHandSize || 7
+      return currentHandSize < maxHandSize
     }
   }
 
   /**
-   * 複数のバリデーターを結合（AND条件）
+   * カードが手札にあることをチェック
+   */
+  static cardInHand(): DropZoneValidator {
+    return (card: Card, game: Game) => {
+      return game.playerHand?.contains(card.id) || false
+    }
+  }
+
+  /**
+   * ステージ制限のバリデーター
+   */
+  static stageOnly(allowedStages: number[]): DropZoneValidator {
+    return (card: Card, game: Game) => allowedStages.includes(game.stage)
+  }
+
+  /**
+   * 年齢制限のバリデーター
+   */
+  static ageRange(minAge: number, maxAge: number): DropZoneValidator {
+    return (card: Card, game: Game) => {
+      const age = game.getPlayerAge?.() || 20
+      return age >= minAge && age <= maxAge
+    }
+  }
+
+  /**
+   * カスタムバリデーター
+   */
+  static custom(validator: DropZoneValidator): DropZoneValidator {
+    return validator
+  }
+
+  /**
+   * 複数のバリデーターを組み合わせる（AND条件）
    */
   static combine(...validators: DropZoneValidator[]): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      for (const validator of validators) {
-        const result = validator(card, game)
-        if (!result.isValid) {
-          return result
-        }
-      }
-      return { isValid: true }
+    return (card: Card, game: Game) => {
+      return validators.every(validator => validator(card, game))
     }
   }
 
   /**
-   * 複数のバリデーターのいずれかが通れば有効（OR条件）
+   * 複数のバリデーターのいずれかを満たす（OR条件）
    */
   static either(...validators: DropZoneValidator[]): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      const failureReasons: string[] = []
-      
-      for (const validator of validators) {
-        const result = validator(card, game)
-        if (result.isValid) {
-          return result
-        }
-        if (result.reason) {
-          failureReasons.push(result.reason)
-        }
-      }
-      
-      return {
-        isValid: false,
-        reason: `None of the conditions met: ${failureReasons.join('; ')}`,
-        suggestion: 'Check the requirements for this area'
-      }
+    return (card: Card, game: Game) => {
+      return validators.some(validator => validator(card, game))
     }
+  }
+
+  /**
+   * バリデーターを否定する（NOT条件）
+   */
+  static not(validator: DropZoneValidator): DropZoneValidator {
+    return (card: Card, game: Game) => !validator(card, game)
   }
 
   /**
    * 条件付きバリデーター
    */
   static conditional(
-    condition: (game: Game) => boolean,
-    whenTrue: DropZoneValidator,
-    whenFalse: DropZoneValidator
+    condition: DropZoneValidator,
+    thenValidator: DropZoneValidator,
+    elseValidator?: DropZoneValidator
   ): DropZoneValidator {
-    return (card: Card, game: Game): ValidationResult => {
-      const validator = condition(game) ? whenTrue : whenFalse
-      return validator(card, game)
+    return (card: Card, game: Game) => {
+      if (condition(card, game)) {
+        return thenValidator(card, game)
+      } else if (elseValidator) {
+        return elseValidator(card, game)
+      }
+      return true
     }
   }
 
   /**
-   * デバッグ用：常に無効なバリデーター
+   * 常に許可
    */
-  static never(reason: string = 'Always invalid'): DropZoneValidator {
-    return (): ValidationResult => ({
-      isValid: false,
-      reason,
-      suggestion: 'This zone is currently disabled'
-    })
+  static always(): DropZoneValidator {
+    return () => true
   }
 
   /**
-   * デバッグ用：常に有効なバリデーター
+   * 常に拒否
    */
-  static always(): DropZoneValidator {
-    return (): ValidationResult => ({ isValid: true })
+  static never(): DropZoneValidator {
+    return () => false
   }
 }
 
 /**
- * ドロップゾーンアクションの型定義
- */
-export type DropZoneAction = (card: Card, game: Game) => void | Promise<void>
-
-/**
- * 一般的なドロップゾーンアクション関数群
+ * ドロップゾーンアクションのユーティリティクラス
  */
 export class DropZoneActions {
-  
   /**
-   * チャレンジエリアにカードを配置
+   * チャレンジを開始するアクション
    */
-  static placeOnChallenge(): DropZoneAction {
-    return (card: Card, game: Game): void => {
+  static startChallenge(): DropZoneAction {
+    return (card: Card, game: Game) => {
       if (!game.currentChallenge) {
-        throw new Error('No active challenge to place card on')
-      }
-      
-      try {
-        game.placeChallengeCard(card)
-      } catch (error) {
-        console.error('Failed to place challenge card:', error)
-        throw error
+        game.startChallenge(card)
       }
     }
   }
 
   /**
-   * 捨て札エリアにカードを移動
+   * カードを捨て札に送るアクション
    */
   static discardCard(): DropZoneAction {
-    return (card: Card, game: Game): void => {
-      try {
-        game.discardCard(card)
-      } catch (error) {
-        console.error('Failed to discard card:', error)
-        throw error
+    return (card: Card, game: Game) => {
+      game.playerHand?.removeCard(card.id)
+      game.discardPile?.addCard(card)
+    }
+  }
+
+  /**
+   * カードをデッキに戻すアクション
+   */
+  static returnToDeck(shuffle = false): DropZoneAction {
+    return (card: Card, game: Game) => {
+      game.playerHand?.removeCard(card.id)
+      game.playerDeck?.addCard(card)
+      if (shuffle) {
+        game.playerDeck?.shuffle()
       }
     }
   }
 
   /**
-   * 保険を購入
+   * 活力を消費するアクション
    */
-  static purchaseInsurance(): DropZoneAction {
-    return (card: Card, game: Game): void => {
-      if (card.type !== 'insurance') {
-        throw new Error('Only insurance cards can be purchased')
+  static consumeVitality(amount: number): DropZoneAction {
+    return (card: Card, game: Game) => {
+      game.vitality = Math.max(0, game.vitality - amount)
+    }
+  }
+
+  /**
+   * 活力を回復するアクション
+   */
+  static restoreVitality(amount: number): DropZoneAction {
+    return (card: Card, game: Game) => {
+      const maxVitality = game.maxVitality || 20
+      game.vitality = Math.min(maxVitality, game.vitality + amount)
+    }
+  }
+
+  /**
+   * カードをプレイするアクション
+   */
+  static playCard(): DropZoneAction {
+    return (card: Card, game: Game) => {
+      // カードの効果を適用
+      if (card.type === 'life' && card.power > 0) {
+        game.vitality = Math.min(game.maxVitality || 20, game.vitality + card.power)
       }
       
-      try {
-        // 保険購入ロジック（実装に応じて調整）
-        game.insuranceCards.push(card)
-        // 手札から削除
-        const cardManager = (game as any).cardManager
-        if (cardManager) {
-          cardManager.removeFromHand(card)
-        }
-      } catch (error) {
-        console.error('Failed to purchase insurance:', error)
-        throw error
+      // 手札から削除
+      game.playerHand?.removeCard(card.id)
+      
+      // プレイエリアに追加（実装によって異なる）
+      game.playedCards?.addCard(card)
+    }
+  }
+
+  /**
+   * 特殊効果を発動するアクション
+   */
+  static triggerSpecialEffect(effectName: string): DropZoneAction {
+    return (card: Card, game: Game) => {
+      // 特殊効果の実装（ゲーム固有）
+      console.log(`Triggering special effect: ${effectName} for card ${card.name}`)
+      
+      // 例：保険カードの効果
+      if (card.type === 'insurance') {
+        // 保険効果の適用ロジック
+      }
+    }
+  }
+
+  /**
+   * ログを出力するアクション
+   */
+  static log(message: string): DropZoneAction {
+    return (card: Card, game: Game) => {
+      console.log(`[DropZone] ${message}`, { card: card.name, gameState: game.stage })
+    }
+  }
+
+  /**
+   * 複数のアクションを順次実行
+   */
+  static sequence(...actions: DropZoneAction[]): DropZoneAction {
+    return (card: Card, game: Game) => {
+      actions.forEach(action => action(card, game))
+    }
+  }
+
+  /**
+   * 条件付きアクション
+   */
+  static conditional(
+    condition: DropZoneValidator,
+    thenAction: DropZoneAction,
+    elseAction?: DropZoneAction
+  ): DropZoneAction {
+    return (card: Card, game: Game) => {
+      if (condition(card, game)) {
+        thenAction(card, game)
+      } else if (elseAction) {
+        elseAction(card, game)
       }
     }
   }
@@ -295,60 +305,98 @@ export class DropZoneActions {
   /**
    * カスタムアクション
    */
-  static custom(actionFn: (card: Card, game: Game) => void): DropZoneAction {
-    return actionFn
+  static custom(action: DropZoneAction): DropZoneAction {
+    return action
   }
 
   /**
-   * 複数のアクションを順次実行
+   * 何もしないアクション
    */
-  static sequence(...actions: DropZoneAction[]): DropZoneAction {
-    return async (card: Card, game: Game): Promise<void> => {
-      for (const action of actions) {
-        await action(card, game)
-      }
+  static noop(): DropZoneAction {
+    return () => {}
+  }
+
+  /**
+   * エラーをスローするアクション（デバッグ用）
+   */
+  static throwError(message: string): DropZoneAction {
+    return () => {
+      throw new Error(message)
+    }
+  }
+}
+
+/**
+ * よく使用されるバリデーター・アクションの組み合わせ
+ */
+export class DropZonePresets {
+  /**
+   * チャレンジゾーンの設定
+   */
+  static challengeZone() {
+    return {
+      validator: DropZoneValidators.combine(
+        DropZoneValidators.cardTypeOnly(['life']),
+        DropZoneValidators.notInChallenge(),
+        DropZoneValidators.cardInHand()
+      ),
+      action: DropZoneActions.sequence(
+        DropZoneActions.log('Starting challenge'),
+        DropZoneActions.startChallenge()
+      )
     }
   }
 
   /**
-   * エラーハンドリング付きアクション
+   * 捨て札ゾーンの設定
    */
-  static withErrorHandling(
-    action: DropZoneAction,
-    onError?: (error: Error, card: Card, game: Game) => void
-  ): DropZoneAction {
-    return async (card: Card, game: Game): Promise<void> => {
-      try {
-        await action(card, game)
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error))
-        if (onError) {
-          onError(err, card, game)
-        } else {
-          console.error('DropZone action failed:', err)
-        }
-        throw err
-      }
+  static discardZone() {
+    return {
+      validator: DropZoneValidators.combine(
+        DropZoneValidators.cardInHand(),
+        DropZoneValidators.not(DropZoneValidators.inChallenge())
+      ),
+      action: DropZoneActions.sequence(
+        DropZoneActions.log('Discarding card'),
+        DropZoneActions.discardCard()
+      )
     }
   }
 
   /**
-   * ログ付きアクション
+   * 保険プレイゾーンの設定
    */
-  static withLogging(action: DropZoneAction, logPrefix: string = ''): DropZoneAction {
-    return async (card: Card, game: Game): Promise<void> => {
-      console.log(`${logPrefix}Executing action for card:`, card.id)
-      const startTime = performance.now()
-      
-      try {
-        await action(card, game)
-        const duration = performance.now() - startTime
-        console.log(`${logPrefix}Action completed in ${duration.toFixed(2)}ms`)
-      } catch (error) {
-        const duration = performance.now() - startTime
-        console.error(`${logPrefix}Action failed after ${duration.toFixed(2)}ms:`, error)
-        throw error
-      }
+  static insurancePlayZone() {
+    return {
+      validator: DropZoneValidators.combine(
+        DropZoneValidators.cardTypeOnly(['insurance']),
+        DropZoneValidators.cardInHand(),
+        DropZoneValidators.vitalityCheck(1)
+      ),
+      action: DropZoneActions.sequence(
+        DropZoneActions.log('Playing insurance card'),
+        DropZoneActions.playCard(),
+        DropZoneActions.consumeVitality(1)
+      )
+    }
+  }
+
+  /**
+   * 特殊能力ゾーンの設定
+   */
+  static specialAbilityZone(requiredCardType: CardType, vitalityCost: number) {
+    return {
+      validator: DropZoneValidators.combine(
+        DropZoneValidators.cardTypeOnly([requiredCardType]),
+        DropZoneValidators.vitalityCheck(vitalityCost),
+        DropZoneValidators.cardInHand()
+      ),
+      action: DropZoneActions.sequence(
+        DropZoneActions.log(`Using special ability (cost: ${vitalityCost})`),
+        DropZoneActions.consumeVitality(vitalityCost),
+        DropZoneActions.triggerSpecialEffect('special-ability'),
+        DropZoneActions.discardCard()
+      )
     }
   }
 }

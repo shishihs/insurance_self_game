@@ -406,6 +406,11 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
         }, step.waitTime)
       }
 
+      // ゲームアクション待機の場合
+      if (step.action === 'wait_for_game_action' && step.gameAction) {
+        this.startGameActionValidation(step)
+      }
+
     } catch (error) {
       this.handleError('Failed to enter step', error as Error)
     }
@@ -425,6 +430,18 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
       if (this.stepChangeTimeout) {
         clearTimeout(this.stepChangeTimeout)
         this.stepChangeTimeout = null
+      }
+
+      // ゲームアクション検証をクリーンアップ
+      const interval = this.scene.data.get('_tutorialValidationInterval')
+      const timeout = this.scene.data.get('_tutorialValidationTimeout')
+      if (interval) {
+        clearInterval(interval)
+        this.scene.data.remove('_tutorialValidationInterval')
+      }
+      if (timeout) {
+        clearTimeout(timeout)
+        this.scene.data.remove('_tutorialValidationTimeout')
       }
 
       // ハイライトをクリア
@@ -471,6 +488,63 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
     } catch (error) {
       this.handleError('Failed to complete current step', error as Error)
     }
+  }
+
+  /**
+   * ゲームアクションの検証を開始
+   */
+  private startGameActionValidation(step: TutorialStep): void {
+    if (!step.gameAction) return
+
+    const { type, validation, timeout = 30000 } = step.gameAction
+    
+    this.log(`Starting game action validation: ${type}`)
+    
+    // ゲーム状態の監視を開始
+    const checkInterval = setInterval(() => {
+      try {
+        // ゲーム状態を取得（GameSceneから）
+        const gameState = (window as any).__gameState || this.scene.data.get('gameState')
+        
+        if (!gameState) {
+          this.logDebug('Game state not available yet')
+          return
+        }
+        
+        // 検証実行
+        if (validation(gameState)) {
+          this.log(`Game action validated: ${type}`)
+          clearInterval(checkInterval)
+          clearTimeout(timeoutId)
+          
+          // クリーンアップ
+          this.scene.data.remove('_tutorialValidationInterval')
+          this.scene.data.remove('_tutorialValidationTimeout')
+          
+          // 自動的に次のステップへ
+          this.nextStep()
+        }
+      } catch (error) {
+        this.handleError('Error during game action validation', error as Error)
+      }
+    }, 250) // 250msごとにチェック
+    
+    // タイムアウト処理
+    const timeoutId = setTimeout(() => {
+      clearInterval(checkInterval)
+      this.log(`Game action validation timeout: ${type}`)
+      
+      // クリーンアップ
+      this.scene.data.remove('_tutorialValidationInterval')
+      this.scene.data.remove('_tutorialValidationTimeout')
+      
+      // タイムアウト時は手動で進められるようにする
+      this.emit('tutorial:action:timeout', { step, actionType: type })
+    }, timeout)
+    
+    // クリーンアップ用に保存
+    this.scene.data.set('_tutorialValidationInterval', checkInterval)
+    this.scene.data.set('_tutorialValidationTimeout', timeoutId)
   }
 
   /**

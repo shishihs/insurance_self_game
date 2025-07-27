@@ -3,6 +3,15 @@
  */
 
 /**
+ * ゲームアクション検証用
+ */
+export interface GameActionValidation {
+  type: 'draw_card' | 'select_cards' | 'resolve_challenge' | 'select_reward_card' | 'end_turn' | 'custom'
+  validation: (gameState: any) => boolean
+  timeout?: number  // タイムアウト時間（ms）
+}
+
+/**
  * チュートリアルステップの基本型
  */
 export interface TutorialStep {
@@ -11,8 +20,9 @@ export interface TutorialStep {
   description: string
   targetElement?: string  // セレクタまたは要素名
   position?: 'top' | 'bottom' | 'left' | 'right' | 'center'
-  action?: 'click' | 'hover' | 'wait' | 'auto'  // 進行条件
+  action?: 'click' | 'hover' | 'wait' | 'auto' | 'wait_for_game_action'  // 進行条件
   waitTime?: number  // auto actionの場合の待機時間（ms）
+  gameAction?: GameActionValidation  // ゲームアクション待機の詳細
   skipCondition?: () => boolean  // このステップをスキップする条件
   onEnter?: () => void  // ステップ開始時の処理
   onExit?: () => void   // ステップ終了時の処理
