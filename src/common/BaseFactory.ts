@@ -15,6 +15,7 @@ export abstract class BaseFactory<TInstance, TConfig> {
   /**
    * Registry of configuration presets
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected static presets = new Map<string, Map<string, ConfigPreset<any>>>()
 
   /**
@@ -69,6 +70,7 @@ export abstract class BaseFactory<TInstance, TConfig> {
   /**
    * Get preset details
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static getPresetDetails(name: string): ConfigPreset<any> | undefined {
     return this.getPreset(name)
   }
@@ -123,14 +125,18 @@ export abstract class SimpleFactory<TInstance, TConfig> extends BaseFactory<TIns
 /**
  * Factory mixin for adding factory methods to existing classes
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-object-type
 export function FactoryMixin<TBase extends new(...args: any[]) => {}>(Base: TBase) {
   return class extends Base {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static presets = new Map<string, ConfigPreset<any>>()
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static registerPreset(name: string, preset: ConfigPreset<any>): void {
       this.presets.set(name, preset)
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static createFromPreset(presetName: string, ...args: any[]): InstanceType<TBase> {
       const preset = this.presets.get(presetName)
       if (!preset) {

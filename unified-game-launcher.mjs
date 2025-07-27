@@ -71,7 +71,7 @@ async function launchGUI() {
   
   try {
     const { exec } = await import('child_process')
-    const { promisify } = await import('util')
+    // const { promisify } = await import('util') // 未使用
     // const execAsync = promisify(exec) // 未使用のため一時的にコメントアウト
     
     console.log(chalk.yellow('📦 開発サーバーを起動中...'))

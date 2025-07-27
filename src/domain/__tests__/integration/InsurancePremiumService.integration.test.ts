@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Game } from '../../entities/Game'
 import { Card } from '../../entities/Card'
-import { InsurancePremium } from '../../valueObjects/InsurancePremium'
+// import { InsurancePremium } from '../../valueObjects/InsurancePremium' // 未使用
 
 describe('保険料計算サービス統合テスト', () => {
   let game: Game

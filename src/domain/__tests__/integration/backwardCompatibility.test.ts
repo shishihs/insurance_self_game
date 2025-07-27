@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { Game } from '../../entities/Game'
 import { Card } from '../../entities/Card'
 import { Deck } from '../../entities/Deck'

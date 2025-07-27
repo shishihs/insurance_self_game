@@ -65,7 +65,7 @@ describe('集約間の統合テスト', () => {
       )
 
       // チャレンジ解決
-      const result = gameService.resolveChallenge()
+      gameService.resolveChallenge()
       expect(result.isSuccess()).toBe(true)
       expect(result.getTotalPower().getValue()).toBe(35)
       expect(game.challengesCompleted).toBe(1)
@@ -98,7 +98,7 @@ describe('集約間の統合テスト', () => {
       const vitalityBefore = game.vitality
       
       // チャレンジ解決（失敗）
-      const result = gameService.resolveChallenge()
+      gameService.resolveChallenge()
       expect(result.isSuccess()).toBe(false)
       
       // ダメージが適用されていることを確認
@@ -146,7 +146,7 @@ describe('集約間の統合テスト', () => {
       gameService.startChallenge(challengeCard)
 
       // チャレンジを失敗させる（カードを選択しない）
-      const result = gameService.resolveChallenge()
+      gameService.resolveChallenge()
       expect(result.isSuccess()).toBe(false)
 
       // ダメージが保険でカバーされることを確認
@@ -211,7 +211,7 @@ describe('集約間の統合テスト', () => {
       })
 
       gameService.startChallenge(challengeCard)
-      const result = gameService.resolveChallenge()
+      gameService.resolveChallenge()
 
       // ダメージ計算: 60 - (20 + 30) = 10
       expect(game.vitality).toBe(initialVitality - 10)

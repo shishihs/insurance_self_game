@@ -272,7 +272,7 @@ describe('エンドツーエンドシナリオテスト', () => {
         { power: 30, response: 20 }  // ダメージ10
       ]
 
-      let totalDamageAbsorbed = 0
+      // let totalDamageAbsorbed = 0 // 未使用のためコメントアウト
 
       challenges.forEach(({ power, response }, index) => {
         const challengeCard = new Card({

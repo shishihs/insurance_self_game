@@ -4,7 +4,7 @@ import { Challenge } from '../../domain/aggregates/challenge'
 import { Insurance } from '../../domain/aggregates/insurance'
 import { ChallengeResult } from '../../domain/aggregates/challenge/types'
 import { DomainEvent } from '../../domain/aggregates/challenge/events'
-import { Vitality } from '../../domain/valueObjects/Vitality'
+// import { Vitality } from '../../domain/valueObjects/Vitality' // 未使用のためコメントアウト
 import { InsurancePremium } from '../../domain/valueObjects/InsurancePremium'
 
 /**
@@ -94,7 +94,7 @@ export class GameApplicationService {
     this.currentChallenge = undefined
     
     // Game集約に結果を反映
-    const gameResult = this.game.resolveChallenge(
+    this.game.resolveChallenge(
       result.getTotalPower().getValue(),
       result.isSuccess()
     )
@@ -179,7 +179,7 @@ export class GameApplicationService {
     }
     
     // 合計保険料を計算
-    const totalPremium = InsurancePremium.sum(premiums)
+    // const totalPremium = InsurancePremium.sum(premiums) // TODO: 将来的に実装
     
     // Game集約に反映（簡略化のため、直接設定）
     // 本来はGame集約のメソッドを通じて更新すべき
