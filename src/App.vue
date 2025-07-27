@@ -67,31 +67,31 @@ const backToHome = () => {
         <div class="card">
           <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
             <span>🎮</span>
-            最新アップデート v0.2.2
+            最新アップデート v0.2.4
           </h2>
           <div class="text-left space-y-3">
             <div>
-              <h3 class="font-semibold text-lg mb-2">保険更新システム完全実装</h3>
+              <h3 class="font-semibold text-lg mb-2">高度なドラッグ&ドロップシステム</h3>
               <ul class="space-y-1 text-sm">
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>期限切れ警告</strong>: 残り2ターンで警告、1ターンで危険表示</span>
+                  <span><strong>マグネティックスナップ</strong>: 80-120px範囲での磁気吸着機能</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>保険更新選択</strong>: 期限切れ時に更新or失効を選択可能</span>
+                  <span><strong>60fps維持</strong>: 最適化されたフレームレート制御</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>年齢別コスト</strong>: 青年期+1、中年期+2、充実期+3</span>
+                  <span><strong>モバイル最適化</strong>: タッチオフセット調整と振動フィードバック</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>活力不足対応</strong>: 更新不可時の視覚的フィードバック</span>
+                  <span><strong>ビジュアルフィードバック</strong>: ゾーンハイライト、成功/失敗エフェクト</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>自動処理</strong>: ターン進行時の期限切れ保険検出</span>
+                  <span><strong>パフォーマンス最適化</strong>: 100+ゾーンでも効率的な動作</span>
                 </li>
               </ul>
             </div>

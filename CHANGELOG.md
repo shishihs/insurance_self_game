@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 📚 Documentation
+- GUI/CUI使い分けガイドライン作成
+- WORK_STATUS.md更新（最新の開発状況を反映）
+- TECHNICAL_DEBT_REPORT.md更新（CUIシステム完成を記録）
+- README.md更新（最新バージョンと機能を反映）
+- package.jsonのバージョン番号を0.2.4に更新
+
 ### 🚀 今後のロードマップ
 
 #### 短期（1-2週間）

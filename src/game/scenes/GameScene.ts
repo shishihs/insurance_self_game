@@ -780,6 +780,14 @@ export class GameScene extends BaseScene {
     // カードをインタラクティブに
     const hitArea = new Phaser.Geom.Rectangle(-60, -80, 120, 160)
     cardContainer.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains)
+    
+    // カードクリックイベント（チャレンジ中の選択用）
+    cardContainer.on('pointerdown', () => {
+      // チャレンジ中なら選択トグル
+      if (this.gameInstance.currentChallenge && !cardContainer.getData('isDragging')) {
+        this.toggleCardSelection(cardContainer)
+      }
+    })
 
     // カード名
     const cardName = this.add.text(
@@ -1132,6 +1140,11 @@ export class GameScene extends BaseScene {
    * カードの選択状態を切り替え
    */
   private toggleCardSelection(cardContainer: Phaser.GameObjects.Container): void {
+    // チャレンジ中でない場合は選択できない
+    if (!this.gameInstance.currentChallenge) {
+      return
+    }
+    
     const card = cardContainer.getData('card') as Card
     const isSelected = cardContainer.getData('selected')
     
@@ -1145,14 +1158,42 @@ export class GameScene extends BaseScene {
       if (highlight) {
         highlight.destroy()
       }
+      
+      // 選択解除時のアニメーション
+      this.tweens.add({
+        targets: cardContainer,
+        scale: 1,
+        duration: 200,
+        ease: 'Back.easeOut'
+      })
     } else {
       this.selectedCards.add(card.id)
       cardContainer.setData('selected', true)
       
+      // 選択時のアニメーション
+      this.tweens.add({
+        targets: cardContainer,
+        scale: 1.1,
+        duration: 200,
+        ease: 'Back.easeOut'
+      })
+      
       // ハイライト追加
-      const highlight = this.add.image(0, 0, 'card-highlight')
-      highlight.setName('highlight')
-      cardContainer.addAt(highlight, 0)
+      const graphics = this.add.graphics()
+      graphics.lineStyle(4, 0x00ff00, 1)
+      graphics.strokeRoundedRect(-62, -82, 124, 164, 12)
+      graphics.setName('highlight')
+      cardContainer.addAt(graphics, 0)
+      
+      // グロウ効果
+      this.tweens.add({
+        targets: graphics,
+        alpha: 0.5,
+        duration: 500,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      })
     }
 
     // チャレンジ中ならパワー表示を更新
@@ -1211,6 +1252,9 @@ export class GameScene extends BaseScene {
     // UIを更新
     this.updateChallengeUI()
     this.updateActionButtons()
+    
+    // 手札のカードを選択可能にする
+    this.enableHandCardSelection()
   }
 
   /**
@@ -2190,6 +2234,9 @@ export class GameScene extends BaseScene {
         onComplete: () => challengeCard.destroy()
       })
     }
+    
+    // 手札の選択状態をクリア
+    this.clearHandSelection()
 
     // UI更新
     this.updateUI()
@@ -3888,6 +3935,31 @@ export class GameScene extends BaseScene {
     if (challengeInfo) {
       challengeInfo.destroy()
     }
+    
+    // 手札の選択状態をクリア
+    this.clearHandSelection()
+  }
+
+  /**
+   * 手札の選択状態をクリア
+   */
+  private clearHandSelection(): void {
+    this.handCards.forEach(cardContainer => {
+      // 選択状態をクリア
+      if (cardContainer.getData('selected')) {
+        cardContainer.setData('selected', false)
+        cardContainer.setScale(1)
+        
+        // ハイライト削除
+        const highlight = cardContainer.getByName('highlight')
+        if (highlight) {
+          highlight.destroy()
+        }
+      }
+    })
+    
+    // 選択カードセットをクリア
+    this.selectedCards.clear()
   }
 
   /**
