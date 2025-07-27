@@ -547,7 +547,7 @@ export class TutorialOverlay {
       ease: 'Sine.easeInOut'
     })
     
-    this.arrows.push(arrow as any) // TypeScript型の問題を回避
+    this.arrows.push(arrow as Phaser.GameObjects.Graphics) // 型を明確に指定
   }
 
   /**

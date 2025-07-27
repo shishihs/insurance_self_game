@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import type { GameManager } from '@/game/GameManager'
+import type { WindowWithTutorialEvents } from '@/types/game-events'
 
 const gameContainer = ref<HTMLDivElement>()
 const gameManager = ref<GameManager | null>(null)
@@ -53,7 +54,7 @@ onMounted(async () => {
       window.addEventListener('startTutorial', handleTutorialEvent)
       
       // クリーンアップ用に参照を保存
-      ;(window as Window & { _tutorialEventHandler?: typeof handleTutorialEvent })._tutorialEventHandler = handleTutorialEvent
+      ;(window as WindowWithTutorialEvents)._tutorialEventHandler = handleTutorialEvent
       
     } catch (error) {
       console.error('❌ ゲームの初期化に失敗しました:', error)
@@ -74,10 +75,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   // イベントリスナーをクリーンアップ
-  const handler = (window as Window & { _tutorialEventHandler?: Function })._tutorialEventHandler
+  const handler = (window as WindowWithTutorialEvents)._tutorialEventHandler
   if (handler) {
-    window.removeEventListener('startTutorial', handler)
-    delete (window as Window & { _tutorialEventHandler?: Function })._tutorialEventHandler
+    window.removeEventListener('startTutorial', handler as EventListener)
+    delete (window as WindowWithTutorialEvents)._tutorialEventHandler
   }
   
   // ゲームを破棄

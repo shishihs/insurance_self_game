@@ -397,7 +397,7 @@ export class TutorialIntegration {
   /**
    * チュートリアル完了を記録
    */
-  private recordTutorialCompletion(tutorialId: string, progress: any): void {
+  private recordTutorialCompletion(tutorialId: string, progress: { completedSteps: { length: number }, skippedSteps: { length: number }, startedAt: string }): void {
     try {
       const record = {
         tutorialId,

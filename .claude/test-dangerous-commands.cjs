@@ -93,15 +93,15 @@ function testDangerousCommands(commands, expectedSeverity) {
             });
             console.log(`   ❌ FAILED: Command "${command}" was NOT blocked!`);
             failed.push(command);
-        } catch (error) {
+        } catch (_error) {
             console.log(`   ✅ BLOCKED: "${command}"`);
             blockedCount++;
             
             // 重要度レベルの検証
-            if (expectedSeverity === 'CRITICAL' && !error.stderr.includes('CRITICAL SECURITY ALERT')) {
+            if (expectedSeverity === 'CRITICAL' && !_error.stderr.includes('CRITICAL SECURITY ALERT')) {
                 console.log(`   ⚠️  WARNING: CRITICAL command did not show proper alert level`);
             }
-            if (expectedSeverity === 'HIGH' && !error.stderr.includes('HIGH RISK WARNING')) {
+            if (expectedSeverity === 'HIGH' && !_error.stderr.includes('HIGH RISK WARNING')) {
                 console.log(`   ⚠️  WARNING: HIGH command did not show proper alert level`);
             }
         }
@@ -128,7 +128,7 @@ function testSafeCommands(commands) {
             });
             console.log(`   ✅ APPROVED: "${command}"`);
             approvedCount++;
-        } catch (error) {
+        } catch {
             console.log(`   ❌ FAILED: Command "${command}" was incorrectly blocked!`);
             failed.push(command);
         }
@@ -164,7 +164,7 @@ function runSecurityAssessment() {
                 stdio: 'pipe'
             });
             console.log(`   💀 CRITICAL FAILURE: "${pattern}" was not blocked!`);
-        } catch (error) {
+        } catch {
             console.log(`   🛡️  BLOCKED: "${pattern}"`);
             securityScore++;
         }

@@ -8,7 +8,7 @@ import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 export default defineConfigWithVueTs(
   // Global ignores
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.vscode/**', '.idea/**', '*.config.js', 'scripts/**']
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '.vscode/**', '.idea/**', '*.config.js', 'scripts/**', '.claude/**']
   },
   // Files to lint
   {

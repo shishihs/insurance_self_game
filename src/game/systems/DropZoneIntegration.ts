@@ -1,5 +1,5 @@
 import { DropZoneManager, type DropZone, type DropResult } from './DropZoneManager'
-import { DropZoneValidators, DropZoneActions, DropZonePresets } from './DropZoneValidators'
+// import { DropZoneValidators, DropZoneActions, DropZonePresets } from './DropZoneValidators'
 import { Game } from '@/domain/entities/Game'
 import { Card } from '@/domain/entities/Card'
 import { GAME_CONSTANTS } from '../config/gameConfig'
@@ -225,8 +225,8 @@ export class DropZoneIntegration {
    */
   private endDrag(
     cardContainer: Phaser.GameObjects.Container,
-    pointer: Phaser.Input.Pointer,
-    card: Card
+    _pointer: Phaser.Input.Pointer,
+    _card: Card
   ): void {
     const finalPosition = {
       x: cardContainer.x,
@@ -278,7 +278,7 @@ export class DropZoneIntegration {
   /**
    * ドロップ成功時の処理
    */
-  private handleSuccessfulDrop(cardContainer: Phaser.GameObjects.Container, result: DropResult): void {
+  private handleSuccessfulDrop(cardContainer: Phaser.GameObjects.Container, _result: DropResult): void {
     // 成功アニメーション
     this.scene.tweens.add({
       targets: cardContainer,

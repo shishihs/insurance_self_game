@@ -23,11 +23,11 @@ function testHook(hookName, args = []) {
         return true;
     } catch (error) {
         console.log(`❌ ${hookName} failed`);
-        console.log(`Error: ${error.message}`);
-        if (error.stdout) {
+        console.log(`Error: ${error instanceof Error ? error.message : String(error)}`);
+        if (error && typeof error === 'object' && 'stdout' in error && error.stdout) {
             console.log(`Stdout: ${error.stdout}`);
         }
-        if (error.stderr) {
+        if (error && typeof error === 'object' && 'stderr' in error && error.stderr) {
             console.log(`Stderr: ${error.stderr}`);
         }
         return false;
@@ -52,7 +52,7 @@ function testDangerousCommands() {
                 stdio: 'pipe'
             });
             console.log(`⚠️  Command "${command.join(' ')}" was NOT blocked (unexpected)`);
-        } catch (error) {
+        } catch {
             console.log(`✅ Command "${command.join(' ')}" was properly blocked`);
             blockedCount++;
         }
@@ -80,7 +80,7 @@ function testSafeCommands() {
             });
             console.log(`✅ Command "${command.join(' ')}" was properly approved`);
             approvedCount++;
-        } catch (error) {
+        } catch {
             console.log(`❌ Command "${command.join(' ')}" was blocked (unexpected)`);
         }
     }

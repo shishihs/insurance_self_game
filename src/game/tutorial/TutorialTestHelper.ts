@@ -1,5 +1,6 @@
 import type { GameScene } from '../scenes/GameScene'
 import { SAMPLE_TUTORIAL_CONFIG, QUICK_TEST_TUTORIAL, ERROR_TEST_TUTORIAL } from './SampleTutorialConfig'
+import type { TutorialOverlay, PerformanceWithMemory, WindowWithTutorialTest } from '@/types/game-events'
 
 /**
  * チュートリアルUIのテストヘルパー
@@ -144,7 +145,7 @@ export class TutorialTestHelper {
   private testHighContrastMode(): void {
     console.log('🎨 高コントラストモードテスト')
     
-    const tutorialOverlay = (this.scene as any).tutorialOverlay
+    const tutorialOverlay = (this.scene as { tutorialOverlay?: TutorialOverlay }).tutorialOverlay
     if (tutorialOverlay && typeof tutorialOverlay.enableHighContrastMode === 'function') {
       tutorialOverlay.enableHighContrastMode()
       console.log('✅ 高コントラストモードを有効化')
@@ -165,7 +166,7 @@ export class TutorialTestHelper {
   private testReducedMotion(): void {
     console.log('🎞️ アニメーション削減モードテスト')
     
-    const tutorialOverlay = (this.scene as any).tutorialOverlay
+    const tutorialOverlay = (this.scene as { tutorialOverlay?: TutorialOverlay }).tutorialOverlay
     if (tutorialOverlay && typeof tutorialOverlay.enableReducedMotion === 'function') {
       tutorialOverlay.enableReducedMotion()
       console.log('✅ アニメーション削減モードを有効化')
@@ -218,8 +219,8 @@ export class TutorialTestHelper {
    * メモリ使用量の監視
    */
   public monitorMemoryUsage(): void {
-    if ('performance' in window && 'memory' in (window.performance as any)) {
-      const memory = (window.performance as any).memory
+    if ('performance' in window && 'memory' in (window.performance as PerformanceWithMemory)) {
+      const memory = (window.performance as PerformanceWithMemory).memory!
       console.log('🧠 メモリ使用量:')
       console.log(`  使用中: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`)
       console.log(`  合計: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`)
@@ -294,7 +295,7 @@ export function setupGlobalTutorialTests(scene: GameScene): void {
   const helper = new TutorialTestHelper(scene)
   
   // グローバル関数として公開
-  ;(window as any).tutorialTest = {
+  ;(window as WindowWithTutorialTest).tutorialTest = {
     basic: () => helper.runBasicUITest(),
     quick: () => helper.runQuickTest(),
     error: () => helper.runErrorHandlingTest(),

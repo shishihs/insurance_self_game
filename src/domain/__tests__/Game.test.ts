@@ -147,7 +147,7 @@ describe('Game Entity', () => {
     it('ドローフェーズ以外では開始できない', () => {
       // phaseは直接変更できないので、プライベートプロパティアクセスをテストで回避
       // ここではゲームの状態を操作するためのメソッドを使用
-      const testGame = game as any
+      const testGame = game as unknown as { phase: string }
       testGame.phase = 'resolution'
       
       expect(() => game.startChallenge(challengeCard)).toThrow('Can only start challenge during draw phase')
@@ -319,7 +319,7 @@ describe('Game Entity', () => {
 
     it('ゲームが進行中でないとターンを進められない', () => {
       // statusを直接変更するためのテスト用アクセス
-      const testGame = game as any
+      const testGame = game as unknown as { status: string }
       testGame.status = 'game_over'
       
       expect(() => game.nextTurn()).toThrow('Game is not in progress')

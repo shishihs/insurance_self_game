@@ -3814,7 +3814,7 @@ export class GameScene extends BaseScene {
    * 保険更新選択ダイアログを表示
    * DISABLED: 保険更新システムが削除されたため無効化
    */
-  private showInsuranceRenewalDialog(renewalOption: any): void {
+  private showInsuranceRenewalDialog(renewalOption: unknown): void {
     // 保険更新システムが削除されたため、この機能は無効化
     console.warn('showInsuranceRenewalDialog: 保険更新システムが削除されました')
     return
@@ -4219,7 +4219,7 @@ export class GameScene extends BaseScene {
   /**
    * チュートリアルステップ開始時の処理
    */
-  private handleTutorialStepEnter(data: any): void {
+  private handleTutorialStepEnter(_data: unknown): void {
     if (!this.tutorialOverlay || !this.tutorialManager) return
 
     const currentStep = this.tutorialManager.getCurrentStep()
@@ -4230,7 +4230,7 @@ export class GameScene extends BaseScene {
 
     // 進捗バーの更新
     const totalSteps = this.tutorialManager.getCurrentStep() ? 
-      (this.tutorialManager as any).currentConfig?.steps.length || 0 : 0
+      (this.tutorialManager as unknown as { currentConfig?: { steps: { length: number } } }).currentConfig?.steps.length || 0 : 0
     this.tutorialOverlay.createProgressBar(progress, totalSteps)
 
     // ターゲット要素の処理

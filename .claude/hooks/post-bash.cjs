@@ -10,7 +10,7 @@ const path = require('path');
 
 const HOOK_LOG_FILE = path.join(__dirname, '..', 'logs', 'bash-commands.log');
 
-function logCommandResult(command, exitCode, output) {
+function logCommandResult(command, exitCode, _output) {
     const timestamp = new Date().toISOString();
     const result = exitCode === 0 ? 'SUCCESS' : 'FAILED';
     const logEntry = `${timestamp} - ${result} (${exitCode}): ${command}\n`;
