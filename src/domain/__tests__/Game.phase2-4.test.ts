@@ -60,9 +60,9 @@ describe('Game - Phase 2-4: 保険カード期限管理', () => {
   describe('保険カードの追加と管理', () => {
     it('selectCard()で保険カードを選択すると、insuranceCardsリストに追加される', () => {
       // カード選択フェーズを設定
-      game.phase = 'card_selection'
+      game.setPhase('card_selection')
       const termInsurance = createTermInsuranceCard(3)
-      game.cardChoices = [termInsurance]
+      game.setCardChoices([termInsurance])
 
       // 保険カードを選択
       game.selectCard(termInsurance.id)
@@ -74,7 +74,7 @@ describe('Game - Phase 2-4: 保険カード期限管理', () => {
 
     it('保険以外のカードを選択してもinsuranceCardsリストには追加されない', () => {
       // カード選択フェーズを設定
-      game.phase = 'card_selection'
+      game.setPhase('card_selection')
       const lifeCard = new Card({
         id: 'life_card',
         name: '人生カード',
@@ -84,7 +84,7 @@ describe('Game - Phase 2-4: 保険カード期限管理', () => {
         cost: 1,
         effects: []
       })
-      game.cardChoices = [lifeCard]
+      game.setCardChoices([lifeCard])
 
       // 人生カードを選択
       game.selectCard(lifeCard.id)

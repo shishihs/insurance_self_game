@@ -235,10 +235,10 @@ describe('Game - Phase 3: Insurance Burden System', () => {
       expect(game.insuranceBurden).toBe(0)
       
       // Mock successful challenge and card selection
-      game.phase = 'card_selection'
+      game.setPhase('card_selection')
       const newInsurance = createWholeLifeInsurance()
-      game.cardChoices = [newInsurance]
-      game.playerDeck.addCard = vi.fn()
+      game.setCardChoices([newInsurance])
+      // Note: playerDeck.addCardはモックできないので、実際の動作をテストする
       
       // Select the insurance card
       game.selectCard(newInsurance.id)

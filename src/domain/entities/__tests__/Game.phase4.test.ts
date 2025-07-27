@@ -175,7 +175,7 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
         cost: 1,
         effects: []
       })
-      game.hand = [powerfulCard]
+      game.setHand([powerfulCard])
     })
 
     it('夢カードのチャレンジで年齢調整が適用される', () => {
