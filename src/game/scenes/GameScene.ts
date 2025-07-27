@@ -380,7 +380,7 @@ export class GameScene extends BaseScene {
   /**
    * ドロップゾーンのハイライトを作成
    */
-  private createDropZoneHighlight(zoneName: string, x: number, y: number, width: number, height: number): void {
+  private createDropZoneHighlight(zoneName: string, x: number, y: number, _width: number, _height: number): void {
     const highlight = this.add.graphics()
     highlight.setPosition(x, y)
     highlight.setAlpha(0) // 初期状態では非表示
@@ -460,8 +460,6 @@ export class GameScene extends BaseScene {
    */
   private isValidDropZone(zoneName: string, draggedCard?: Phaser.GameObjects.Container): boolean {
     if (!draggedCard) return true
-    
-    const card = draggedCard.getData('card') as Card
     
     switch (zoneName) {
       case 'challenge':
@@ -1494,6 +1492,213 @@ export class GameScene extends BaseScene {
     // TODO: 他のドロップゾーン（捨て札など）の判定
     
     return null
+  }
+
+  /**
+   * 改良版ドロップゾーン判定 - 新しいドロップゾーンシステムに対応
+   */
+  private getDropZoneV2(x: number, y: number): string | null {
+    let closestZone: string | null = null
+    let minDistance = GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE
+    
+    this.dropZones.forEach((zone, zoneName) => {
+      const distance = Phaser.Math.Distance.Between(x, y, zone.x, zone.y)
+      if (distance < minDistance) {
+        minDistance = distance
+        closestZone = zoneName
+      }
+    })
+    
+    return closestZone
+  }
+
+  /**
+   * 有効なドロップ処理
+   */
+  private handleValidDrop(zoneName: string, cardContainer: Phaser.GameObjects.Container): void {
+    const zone = this.dropZones.get(zoneName)
+    if (!zone) return
+    
+    // バウンス効果付きでドロップゾーンに移動
+    this.tweens.add({
+      targets: cardContainer,
+      x: zone.x,
+      y: zone.y,
+      scaleX: GAME_CONSTANTS.DRAG_DROP.DROP_ZONE_SCALE,
+      scaleY: GAME_CONSTANTS.DRAG_DROP.DROP_ZONE_SCALE,
+      duration: GAME_CONSTANTS.DRAG_DROP.BOUNCE_DURATION / 2,
+      ease: 'Back.out',
+      onComplete: () => {
+        // スケールを元に戻す
+        this.tweens.add({
+          targets: cardContainer,
+          scaleX: 1,
+          scaleY: 1,
+          duration: GAME_CONSTANTS.DRAG_DROP.BOUNCE_DURATION / 2,
+          ease: 'Elastic.out'
+        })
+      }
+    })
+    
+    // 成功エフェクト
+    this.showDropSuccessEffect(zone.x, zone.y)
+    
+    // ゾーン別の処理
+    switch (zoneName) {
+      case 'challenge':
+        this.handleCardDropToChallenge(cardContainer)
+        break
+      case 'discard':
+        this.handleCardDropToDiscard(cardContainer)
+        break
+      default:
+        console.warn(`Unknown drop zone: ${zoneName}`)
+    }
+  }
+
+  /**
+   * 無効なドロップ処理
+   */
+  private handleInvalidDrop(cardContainer: Phaser.GameObjects.Container): void {
+    // 振動効果
+    const originalX = cardContainer.getData('originalX')
+    const originalY = cardContainer.getData('originalY')
+    
+    // まず振動
+    this.tweens.add({
+      targets: cardContainer,
+      x: cardContainer.x + 10,
+      duration: GAME_CONSTANTS.DRAG_DROP.VIBRATION_DURATION / 6,
+      ease: 'Power2',
+      yoyo: true,
+      repeat: 5,
+      onComplete: () => {
+        // 振動後、元の位置に戻る
+        this.tweens.add({
+          targets: cardContainer,
+          x: originalX,
+          y: originalY,
+          duration: GAME_CONSTANTS.CARD_MOVE_DURATION,
+          ease: 'Back.out'
+        })
+      }
+    })
+    
+    // 失敗エフェクト
+    this.showDropFailureEffect(cardContainer.x, cardContainer.y)
+  }
+
+  /**
+   * ドロップ成功エフェクト
+   */
+  private showDropSuccessEffect(x: number, y: number): void {
+    // 成功時のパーティクル効果（緑色の輝き）
+    const effect = this.add.graphics()
+    effect.setPosition(x, y)
+    effect.setDepth(1100)
+    
+    // 円形の輝きを描画
+    effect.fillStyle(GAME_CONSTANTS.COLORS.DROP_ZONE_VALID, 0.8)
+    effect.fillCircle(0, 0, 20)
+    
+    // 拡大しながらフェードアウト
+    this.tweens.add({
+      targets: effect,
+      scaleX: 3,
+      scaleY: 3,
+      alpha: 0,
+      duration: 500,
+      ease: 'Power2.out',
+      onComplete: () => {
+        effect.destroy()
+      }
+    })
+    
+    // 複数の小さな輝きを散らす
+    for (let i = 0; i < 6; i++) {
+      const spark = this.add.graphics()
+      spark.setPosition(x, y)
+      spark.setDepth(1100)
+      spark.fillStyle(GAME_CONSTANTS.COLORS.DROP_ZONE_VALID, 0.6)
+      spark.fillCircle(0, 0, 5)
+      
+      const angle = (i / 6) * Math.PI * 2
+      const distance = 50
+      
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        alpha: 0,
+        duration: 600,
+        ease: 'Power2.out',
+        onComplete: () => {
+          spark.destroy()
+        }
+      })
+    }
+  }
+
+  /**
+   * ドロップ失敗エフェクト
+   */
+  private showDropFailureEffect(x: number, y: number): void {
+    // 失敗時のX印エフェクト
+    const effect = this.add.graphics()
+    effect.setPosition(x, y)
+    effect.setDepth(1100)
+    
+    // X印を描画
+    effect.lineStyle(4, GAME_CONSTANTS.COLORS.DROP_ZONE_INVALID, 0.8)
+    effect.beginPath()
+    effect.moveTo(-15, -15)
+    effect.lineTo(15, 15)
+    effect.moveTo(15, -15)
+    effect.lineTo(-15, 15)
+    effect.strokePath()
+    
+    // 振動しながらフェードアウト
+    this.tweens.add({
+      targets: effect,
+      x: x + 5,
+      duration: 100,
+      ease: 'Power2',
+      yoyo: true,
+      repeat: 3,
+    })
+    
+    this.tweens.add({
+      targets: effect,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power2.out',
+      onComplete: () => {
+        effect.destroy()
+      }
+    })
+  }
+
+  /**
+   * 捨て札エリアへのドロップ処理
+   */
+  private handleCardDropToDiscard(cardContainer: Phaser.GameObjects.Container): void {
+    const card = cardContainer.getData('card') as Card
+    
+    // カードを捨て札に移動
+    this.gameInstance.discardCard(card.id)
+    
+    // 手札からカードを削除
+    const cardIndex = this.handCards.indexOf(cardContainer)
+    if (cardIndex > -1) {
+      this.handCards.splice(cardIndex, 1)
+      cardContainer.destroy()
+    }
+    
+    // 手札を再配置
+    this.arrangeHand()
+    
+    // UI更新
+    this.updateUI()
   }
 
   /**

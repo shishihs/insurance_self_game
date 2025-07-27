@@ -27,24 +27,37 @@ export class GameManager {
    * ゲームを初期化
    */
   initialize(parent: string | HTMLElement): void {
+    console.log('GameManager: initialize開始', { parent })
+    
     if (this.game) {
-      console.warn('Game is already initialized')
+      console.warn('GameManager: ゲームは既に初期化されています')
       return
     }
 
-    // 設定をコピー（元の設定を変更しないため）
-    const config = { ...gameConfig }
-    config.parent = parent
-    
-    // シーンを追加
-    config.scene = [
-      PreloadScene,
-      MainMenuScene,
-      GameScene
-    ]
+    try {
+      console.log('GameManager: 設定の準備中...')
+      
+      // 設定をコピー（元の設定を変更しないため）
+      const config = { ...gameConfig }
+      config.parent = parent
+      
+      // シーンを追加
+      config.scene = [
+        PreloadScene,
+        MainMenuScene,
+        GameScene
+      ]
 
-    // ゲームインスタンスを作成
-    this.game = new Phaser.Game(config)
+      console.log('GameManager: Phaserゲームインスタンス作成中...', { config })
+      
+      // ゲームインスタンスを作成
+      this.game = new Phaser.Game(config)
+      
+      console.log('GameManager: Phaserゲームインスタンス作成成功')
+    } catch (error) {
+      console.error('❌ GameManager: ゲーム初期化エラー:', error)
+      throw error
+    }
   }
 
   /**

@@ -5,22 +5,45 @@ import type { GameManager } from '@/game/GameManager'
 const gameContainer = ref<HTMLDivElement>()
 const gameManager = ref<GameManager | null>(null)
 const isLoading = ref(true)
+const errorMessage = ref<string>('')
 const isDev = import.meta.env.DEV
 
 onMounted(async () => {
+  console.log('GameCanvas: onMounted開始')
+  
   if (gameContainer.value) {
+    console.log('GameCanvas: gameContainer が見つかりました')
     try {
+      console.log('GameCanvas: GameManagerを動的インポート中...')
+      
       // Phaserとゲームマネージャーを動的にインポート
       const { GameManager } = await import('@/game/GameManager')
+      console.log('GameCanvas: GameManagerインポート成功')
+      
       gameManager.value = GameManager.getInstance()
+      console.log('GameCanvas: GameManagerインスタンス取得成功')
       
       // ゲームを初期化
+      console.log('GameCanvas: ゲーム初期化中...')
       gameManager.value.initialize(gameContainer.value)
+      console.log('GameCanvas: ゲーム初期化成功')
+      
       isLoading.value = false
+      console.log('GameCanvas: 読み込み完了')
     } catch (error) {
-      console.error('ゲームの初期化に失敗しました:', error)
+      console.error('❌ ゲームの初期化に失敗しました:', error)
+      console.error('❌ エラー詳細:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
+      errorMessage.value = error instanceof Error ? error.message : String(error)
       isLoading.value = false
     }
+  } else {
+    console.error('❌ gameContainer が見つかりません')
+    errorMessage.value = 'ゲームコンテナが見つかりません'
+    isLoading.value = false
   }
 })
 
@@ -62,6 +85,15 @@ defineExpose({
     <div v-if="isLoading" class="loading-container">
       <div class="loading-spinner"></div>
       <p class="loading-text">ゲームを読み込み中...</p>
+    </div>
+    
+    <!-- エラー表示 -->
+    <div v-else-if="errorMessage" class="error-container">
+      <h3 class="error-title">ゲームの読み込みに失敗しました</h3>
+      <p class="error-message">{{ errorMessage }}</p>
+      <p class="error-help">
+        ブラウザのコンソール（F12）でより詳細なエラー情報を確認できます。
+      </p>
     </div>
     
     <!-- Phaserゲームがここにマウントされる -->
@@ -108,6 +140,36 @@ defineExpose({
 
 .loading-text {
   color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 500px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-title {
+  color: #FF6B6B;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.error-message {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin: 0;
+  word-break: break-word;
+}
+
+.error-help {
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
   margin: 0;
 }

@@ -7,9 +7,9 @@ import type {
   TutorialState,
   TutorialManagerOptions,
   StepExecutionResult,
-  HighlightOptions,
-  TUTORIAL_STORAGE_KEYS
+  HighlightOptions
 } from '@/domain/types/tutorial.types'
+import { TUTORIAL_STORAGE_KEYS } from '@/domain/types/tutorial.types'
 
 /**
  * チュートリアルシステムの中核管理クラス
