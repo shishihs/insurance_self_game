@@ -153,7 +153,7 @@ describe('基本統合テスト', () => {
 
       // 保険を有効化（簡易版）
       game.addInsurance(insuranceCard)
-      expect(game.activeInsurances).toHaveLength(1)
+      expect(game.insuranceCards).toHaveLength(1)
     })
 
     it('定期保険の期限管理が正しく動作する', () => {

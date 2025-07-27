@@ -167,6 +167,16 @@ export class Game implements IGameState {
   }
 
   /**
+   * 保険を追加（簡易版テスト用）
+   */
+  addInsurance(card: Card): void {
+    if (!card.isInsurance()) {
+      throw new Error('Only insurance cards can be added')
+    }
+    this.insuranceCards.push(card)
+  }
+
+  /**
    * ゲームIDを生成
    */
   private generateId(): string {
