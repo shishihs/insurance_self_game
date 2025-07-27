@@ -1,5 +1,5 @@
 import { DropZoneManager, type DropZone, type DropResult } from './DropZoneManager'
-import { DropZoneValidators, DropZoneActions, DropZonePresets } from './DropZoneValidators'
+import { DropZonePresets } from './DropZoneValidators'
 import { Game } from '@/domain/entities/Game'
 import { Card } from '@/domain/entities/Card'
 import { GAME_CONSTANTS } from '../config/gameConfig'
@@ -161,6 +161,12 @@ export class DropZoneIntegration {
     pointer: Phaser.Input.Pointer, 
     card: Card
   ): void {
+    // null pointer チェック
+    if (!pointer || !cardContainer || !card) {
+      console.warn('[DropZoneIntegration] startDrag: invalid parameters')
+      return
+    }
+    
     this.draggedCard = cardContainer
     this.dragStartPosition = { x: cardContainer.x, y: cardContainer.y }
 
@@ -196,6 +202,12 @@ export class DropZoneIntegration {
     dragX: number,
     dragY: number
   ): void {
+    // null チェック
+    if (!cardContainer || dragX === undefined || dragY === undefined) {
+      console.warn('[DropZoneIntegration] updateDrag: invalid parameters')
+      return
+    }
+    
     // デバイス情報を考慮した位置調整
     const adjustedPosition = {
       x: dragX + this.dragConfig.touchOffset.x,
@@ -228,6 +240,12 @@ export class DropZoneIntegration {
     _pointer: Phaser.Input.Pointer,
     _card: Card
   ): void {
+    // null チェック
+    if (!cardContainer) {
+      console.warn('[DropZoneIntegration] endDrag: invalid cardContainer')
+      return
+    }
+    
     const finalPosition = {
       x: cardContainer.x,
       y: cardContainer.y

@@ -315,7 +315,7 @@ describe('DropZoneManager', () => {
       dropZoneManager.addZone(zone)
       dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      let initialTime = Date.now()
+      const initialTime = Date.now()
       vi.setSystemTime(initialTime)
       
       // 大量の更新を送信
@@ -349,7 +349,7 @@ describe('DropZoneManager', () => {
 
       dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      let initialTime = Date.now()
+      const initialTime = Date.now()
       vi.setSystemTime(initialTime)
       
       // 各ゾーンをテスト
@@ -685,7 +685,7 @@ describe('DropZoneManager', () => {
 
       dropZoneManager.addZone(zone)
       
-      let initialTime = Date.now()
+      const initialTime = Date.now()
       vi.setSystemTime(initialTime)
       
       dropZoneManager.startDrag(mockCard, mockGame, { x: 50, y: 50 })
@@ -731,7 +731,7 @@ describe('DropZoneManager', () => {
         dropZoneManager.addZone(zone)
       }
 
-      let initialTime = Date.now()
+      const initialTime = Date.now()
       vi.setSystemTime(initialTime)
       
       dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })

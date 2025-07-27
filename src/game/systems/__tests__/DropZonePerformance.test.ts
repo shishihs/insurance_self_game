@@ -116,7 +116,6 @@ describe('DropZone Performance Tests', () => {
   describe('Frame Rate Performance (60fps Target)', () => {
     it('should maintain 60fps with single zone updates', () => {
       const dropZoneManager = new DropZoneManager(mockScene)
-      const TARGET_FRAME_TIME = 16.67 // 60fps = 16.67ms per frame
       
       const zone: DropZone = {
         id: 'performance-zone',
@@ -147,7 +146,6 @@ describe('DropZone Performance Tests', () => {
 
     it('should maintain 60fps with multiple zones (10 zones)', () => {
       const dropZoneManager = new DropZoneManager(mockScene)
-      const TARGET_FRAME_TIME = 16.67
       
       // 10個のゾーンを追加
       for (let i = 0; i < 10; i++) {
@@ -181,7 +179,6 @@ describe('DropZone Performance Tests', () => {
 
     it('should maintain performance with heavy zone load (50 zones)', () => {
       const dropZoneManager = new DropZoneManager(mockScene)
-      const TARGET_FRAME_TIME = 16.67
       
       // 50個のゾーンを追加（重い負荷）
       for (let i = 0; i < 50; i++) {
@@ -248,7 +245,6 @@ describe('DropZone Performance Tests', () => {
         .mockReturnValueOnce(initialTime + 10) // 10ms後
         .mockReturnValueOnce(initialTime + 20) // 20ms後（フレーム間隔超過）
       
-      const initialGraphicsCallCount = mockScene.add.graphics.mock.calls.length
       
       dropZoneManager.updateDrag({ x: 110, y: 110 }, mockGame)
       dropZoneManager.updateDrag({ x: 120, y: 120 }, mockGame)
@@ -585,7 +581,6 @@ describe('DropZone Performance Tests', () => {
         on: vi.fn()
       }
       
-      const TARGET_FRAME_TIME = 16.67
       
       integration.setupCardDragAndDrop(mockCardContainer)
       

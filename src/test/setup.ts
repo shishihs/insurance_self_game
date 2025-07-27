@@ -143,7 +143,7 @@ if (typeof globalThis !== 'undefined') {
       if (vi.isFakeTimers()) {
         return Date.now()
       }
-    } catch (e) {
+    } catch {
       // フェイクタイマーチェックでエラーが出る場合は無視
     }
     // フェイクタイマーが無効な場合は元の関数を使用
