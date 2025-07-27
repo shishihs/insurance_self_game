@@ -52,13 +52,13 @@ jobs:
         pnpm install --no-frozen-lockfile
       
     - name: Type check
-      run: pnpm run type-check || echo "Type check failed, continuing with build"
+      run: pnpm run type-check
       
     - name: Lint
-      run: pnpm run lint || echo "Lint failed, continuing with build"
+      run: pnpm run lint
       
     - name: Test
-      run: pnpm run test:run --reporter=verbose || true
+      run: pnpm run test:run --reporter=verbose
       
     - name: Build
       run: pnpm run build
@@ -87,3 +87,17 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+      
+    - name: Wait for deployment
+      run: sleep 30
+      
+    - name: Verify deployment
+      run: |
+        echo "Verifying deployment at ${{ steps.deployment.outputs.page_url }}"
+        response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deployment.outputs.page_url }}")
+        if [ $response -eq 200 ]; then
+          echo "✅ Deployment successful - HTTP $response"
+        else
+          echo "❌ Deployment failed - HTTP $response"
+          exit 1
+        fi

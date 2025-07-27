@@ -30,6 +30,25 @@ export class GameScene extends BaseScene {
   private burdenIndicatorContainer?: Phaser.GameObjects.Container
   private insuranceRenewalDialogUI?: Phaser.GameObjects.Container
   
+  // ダーティフラグによるUI最適化
+  private dirtyFlags = {
+    vitality: false,
+    insurance: false,
+    burden: false,
+    hand: false,
+    actionButtons: false,
+    challenge: false,
+    stage: false,
+    deck: false
+  }
+  
+  // パフォーマンス最適化用のスロットリング
+  private updateThrottleTimers = {
+    vitality: 0,
+    insurance: 0,
+    burden: 0
+  }
+  
   // ドラッグ&ドロップ関連（新システム）
   private dropZoneIntegration?: DropZoneIntegration
   
@@ -1273,9 +1292,11 @@ export class GameScene extends BaseScene {
       
       // 簡素化版：保険は永続効果のため、期限切れ処理は不要
       
-      // UI更新
+      // UI更新（ダーティフラグを設定）
+      this.dirtyFlags.vitality = true
+      this.dirtyFlags.stage = true  
+      this.dirtyFlags.actionButtons = true
       this.updateUI()
-      this.updateActionButtons()
       
       // チュートリアル用にゲーム状態を更新
       this.updateGameStateForTutorial()
@@ -1529,40 +1550,95 @@ export class GameScene extends BaseScene {
   }
 
   /**
-   * UI更新
+   * UI更新（最適化版）
    */
   private updateUI(): void {
-    // 活力表示を更新（年齢段階を含む）
+    // ダーティフラグをチェックして必要な部分のみ更新
+    if (this.dirtyFlags.vitality) {
+      this.updateVitalityDisplay()
+      this.dirtyFlags.vitality = false
+    }
+
+    if (this.dirtyFlags.stage) {
+      this.updateStageDisplay() 
+      this.dirtyFlags.stage = false
+    }
+
+    if (this.dirtyFlags.deck) {
+      this.updateDeckDisplay()
+      this.dirtyFlags.deck = false
+    }
+
+    if (this.dirtyFlags.insurance) {
+      this.updateInsuranceList()
+      this.dirtyFlags.insurance = false
+    }
+
+    if (this.dirtyFlags.burden) {
+      this.updateBurdenIndicator()
+      this.dirtyFlags.burden = false
+    }
+
+    if (this.dirtyFlags.hand) {
+      this.arrangeHand()
+      this.dirtyFlags.hand = false
+    }
+
+    if (this.dirtyFlags.actionButtons) {
+      this.updateActionButtons()
+      this.dirtyFlags.actionButtons = false
+    }
+
+    if (this.dirtyFlags.challenge) {
+      this.updateChallengeUI()
+      this.dirtyFlags.challenge = false
+    }
+  }
+
+  /**
+   * 活力表示を更新
+   */
+  private updateVitalityDisplay(): void {
+    const currentTime = this.time.now
+    
+    // スロットリング: 100ms以内の更新は無視
+    if (currentTime - this.updateThrottleTimers.vitality < 100) {
+      return
+    }
+    this.updateThrottleTimers.vitality = currentTime
+
     const vitalityText = this.children.getByName('vitality-text') as Phaser.GameObjects.Text
     if (vitalityText) {
       const stageLabel = this.getStageDisplayText()
       vitalityText.setText(`活力: ${this.gameInstance.vitality} / ${this.gameInstance.maxVitality} (${stageLabel})`)
     }
 
-    // 活力バーを更新
     this.updateVitalityBar()
+  }
 
-    // ターン数表示を更新
+  /**
+   * ステージ表示を更新  
+   */
+  private updateStageDisplay(): void {
     const turnText = this.children.getByName('turn-text') as Phaser.GameObjects.Text
     if (turnText) {
       turnText.setText(`ターン: ${this.gameInstance.turn}`)
     }
-
-    // デッキ枚数を更新
-    const deckCount = this.children.getByName('deck-count') as Phaser.GameObjects.Text
-    if (deckCount) {
-      deckCount.setText(`${this.gameInstance.playerDeck.size()}`)
-    }
     
-    // ステージ表示を更新
     const stageText = this.children.getByName('stage-text') as Phaser.GameObjects.Text
     if (stageText) {
       stageText.setText(this.getStageDisplayText())
     }
+  }
 
-    // Phase 3-3: 保険関連UIを更新
-    this.updateInsuranceList()
-    this.updateBurdenIndicator()
+  /**
+   * デッキ表示を更新
+   */
+  private updateDeckDisplay(): void {
+    const deckCount = this.children.getByName('deck-count') as Phaser.GameObjects.Text
+    if (deckCount) {
+      deckCount.setText(`${this.gameInstance.playerDeck.size()}`)
+    }
   }
 
   /**
@@ -1946,7 +2022,10 @@ export class GameScene extends BaseScene {
     // 手札を再配置
     this.arrangeHand()
     
-    // UI更新
+    // UI更新（ダーティフラグを設定）
+    this.dirtyFlags.vitality = true
+    this.dirtyFlags.insurance = true
+    this.dirtyFlags.burden = true
     this.updateUI()
   }
 
@@ -2238,9 +2317,13 @@ export class GameScene extends BaseScene {
     // 手札の選択状態をクリア
     this.clearHandSelection()
 
-    // UI更新
+    // UI更新（ダーティフラグを設定）
+    this.dirtyFlags.vitality = true
+    this.dirtyFlags.insurance = true
+    this.dirtyFlags.burden = true
+    this.dirtyFlags.hand = true
+    this.dirtyFlags.actionButtons = true
     this.updateUI()
-    this.arrangeHand()
   }
 
   /**
@@ -2792,7 +2875,10 @@ export class GameScene extends BaseScene {
       ease: 'Power2'
     })
 
-    // UI を更新
+    // UI を更新（ダーティフラグを設定）
+    this.dirtyFlags.vitality = true
+    this.dirtyFlags.insurance = true
+    this.dirtyFlags.burden = true
     this.updateUI()
   }
 
@@ -3786,9 +3872,10 @@ export class GameScene extends BaseScene {
         // チャレンジUIをクリーンアップ
         this.cleanupChallengeUI()
         
-        // 通常のゲームフローに戻る
+        // 通常のゲームフローに戻る（ダーティフラグを設定）
+        this.dirtyFlags.vitality = true
+        this.dirtyFlags.actionButtons = true
         this.updateUI()
-        this.updateActionButtons()
       }
     })
   }
