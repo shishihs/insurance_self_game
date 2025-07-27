@@ -60,7 +60,7 @@ TODO.md
 *_backup
 
 # Development index.html in root (prevent accidental creation)
-/index.html
+# /index.html
 
 # Screenshots
 screenshots/
