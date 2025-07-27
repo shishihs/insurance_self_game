@@ -698,6 +698,38 @@ export class Game implements IGameState {
   }
 
   /**
+   * テスト用: 手札をクリア
+   */
+  clearHand(): void {
+    const state = this.cardManager.getState()
+    state.hand = []
+    this.cardManager.setState(state)
+  }
+
+  /**
+   * テスト用: 手札を設定
+   */
+  setHand(cards: Card[]): void {
+    const state = this.cardManager.getState()
+    state.hand = [...cards]
+    this.cardManager.setState(state)
+  }
+
+  /**
+   * テスト用: カード選択肢を設定
+   */
+  setCardChoices(choices: Card[]): void {
+    this.cardManager.setCardChoices(choices)
+  }
+
+  /**
+   * テスト用: フェーズを設定
+   */
+  setPhase(phase: GamePhase): void {
+    this.phase = phase
+  }
+
+  /**
    * ゲーム状態のスナップショットを取得
    */
   getSnapshot(): IGameState {

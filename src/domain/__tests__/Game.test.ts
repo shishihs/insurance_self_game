@@ -93,7 +93,8 @@ describe('Game Entity', () => {
       const totalCards = game.playerDeck.size()
       const drawnCards = game.drawCards(totalCards)
       
-      // 手札から捨て札に移動（テスト用メソッドを使用）
+      // 手札をクリアして捨て札に移動
+      game.clearHand()
       drawnCards.forEach(card => game.addCardToDiscardPile(card))
       
       // デッキが空であることを確認
@@ -105,7 +106,7 @@ describe('Game Entity', () => {
       
       // 3枚引けることを確認
       expect(drawn).toHaveLength(3)
-      expect(game.hand).toHaveLength(3)
+      expect(game.hand).toHaveLength(3) // 新しく引いた3枚
       
       // 捨て札はシャッフルされてデッキに戻るので空になる
       expect(game.discardPile).toHaveLength(0)
@@ -300,7 +301,7 @@ describe('Game Entity', () => {
   describe('ターン進行', () => {
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      game.playerDeck.addCards(cards)
+      cards.forEach(card => game.addCardToPlayerDeck(card))
       game.start()
     })
 
@@ -317,7 +318,9 @@ describe('Game Entity', () => {
     })
 
     it('ゲームが進行中でないとターンを進められない', () => {
-      game.status = 'game_over'
+      // statusを直接変更するためのテスト用アクセス
+      const testGame = game as any
+      testGame.status = 'game_over'
       
       expect(() => game.nextTurn()).toThrow('Game is not in progress')
     })
