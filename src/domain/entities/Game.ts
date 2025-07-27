@@ -677,6 +677,27 @@ export class Game implements IGameState {
   }
 
   /**
+   * テスト用: カードを手札に直接追加
+   */
+  addCardToHand(card: Card): void {
+    this.cardManager.addToHand(card)
+  }
+
+  /**
+   * テスト用: カードを捨て札に直接追加
+   */
+  addCardToDiscardPile(card: Card): void {
+    this.cardManager.addToDiscardPile(card)
+  }
+
+  /**
+   * テスト用: プレイヤーデッキにカードを追加
+   */
+  addCardToPlayerDeck(card: Card): void {
+    this.cardManager.addToPlayerDeck(card)
+  }
+
+  /**
    * ゲーム状態のスナップショットを取得
    */
   getSnapshot(): IGameState {

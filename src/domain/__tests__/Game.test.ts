@@ -61,7 +61,7 @@ describe('Game Entity', () => {
     beforeEach(() => {
       // テスト用カードを追加
       const cards = CardFactory.createStarterLifeCards()
-      game.playerDeck.addCards(cards)
+      cards.forEach(card => game.addCardToPlayerDeck(card))
       game.start()
     })
 
@@ -75,7 +75,7 @@ describe('Game Entity', () => {
     it('手札上限を超えた場合、古いカードが捨て札になる', () => {
       // デッキに追加のカードを加える
       const extraCards = CardFactory.createStarterLifeCards()
-      game.playerDeck.addCards(extraCards)
+      extraCards.forEach(card => game.addCardToPlayerDeck(card))
       
       // 手札を上限まで引く
       game.drawCards(7)
@@ -91,11 +91,10 @@ describe('Game Entity', () => {
     it('デッキが空の時、捨て札をシャッフルして再利用する', () => {
       // 全カードを引く
       const totalCards = game.playerDeck.size()
-      game.drawCards(totalCards)
+      const drawnCards = game.drawCards(totalCards)
       
-      // 手札から捨て札に移動
-      game.discardPile = [...game.hand]
-      game.hand = []
+      // 手札から捨て札に移動（テスト用メソッドを使用）
+      drawnCards.forEach(card => game.addCardToDiscardPile(card))
       
       // デッキが空であることを確認
       expect(game.playerDeck.isEmpty()).toBe(true)
@@ -121,7 +120,7 @@ describe('Game Entity', () => {
 
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      game.playerDeck.addCards(cards)
+      cards.forEach(card => game.addCardToPlayerDeck(card))
       game.start()
       game.drawCards(5)
       
@@ -145,7 +144,10 @@ describe('Game Entity', () => {
     })
 
     it('ドローフェーズ以外では開始できない', () => {
-      game.phase = 'resolution'
+      // phaseは直接変更できないので、プライベートプロパティアクセスをテストで回避
+      // ここではゲームの状態を操作するためのメソッドを使用
+      const testGame = game as any
+      testGame.phase = 'resolution'
       
       expect(() => game.startChallenge(challengeCard)).toThrow('Can only start challenge during draw phase')
     })
@@ -169,11 +171,13 @@ describe('Game Entity', () => {
       game.startChallenge(challengeCard)
       
       // パワー合計が5以上になるようカードを選択
-      game.hand.forEach(card => {
-        if (card.power >= 3) {
-          game.selectedCards.push(card)
+      let totalPower = 0
+      for (const card of game.hand) {
+        if (totalPower < 5) {
+          game.toggleCardSelection(card)
+          totalPower += card.power
         }
-      })
+      }
       
       const handSizeBefore = game.hand.length
       const cardsAcquiredBefore = game.stats.cardsAcquired
