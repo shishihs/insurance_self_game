@@ -161,14 +161,26 @@ export class DropZoneManager {
    */
   private getValidZones(card: Card, game: Game): DropZone[] {
     return Array.from(this.zones.values())
-      .filter(zone => zone.isValid(card, game))
+      .filter(zone => {
+        try {
+          return zone.isValid(card, game)
+        } catch (error) {
+          console.warn(`Validation error for zone ${zone.id}:`, error)
+          return false
+        }
+      })
   }
 
   /**
    * ドロップが有効かチェック
    */
   private isValidDrop(card: Card, zone: DropZone, game: Game): boolean {
-    return this.dragState.validZones.includes(zone) && zone.isValid(card, game)
+    try {
+      return this.dragState.validZones.includes(zone) && zone.isValid(card, game)
+    } catch (error) {
+      console.warn(`Validation error for zone ${zone.id}:`, error)
+      return false
+    }
   }
 
   /**

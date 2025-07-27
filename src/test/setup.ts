@@ -1,6 +1,16 @@
 import '@testing-library/jest-dom'
 import { expect, vi } from 'vitest'
 
+// phaser3spectorjs モジュールをモック
+vi.mock('phaser3spectorjs', () => ({
+  default: {
+    enable: vi.fn(),
+    disable: vi.fn(),
+    createTexture: vi.fn(),
+    WebGLDebugRenderer: vi.fn()
+  }
+}))
+
 // グローバルなテスト設定
 expect.extend({
   // カスタムマッチャーをここに追加可能
@@ -126,13 +136,19 @@ if (typeof globalThis !== 'undefined') {
   }
 
   // performance.now をモック
-  if (!(globalThis as typeof globalThis & { performance: { now?: () => number } }).performance.now) {
-    let mockTime = 0
-    ;(globalThis as typeof globalThis & { performance: { now: () => number } }).performance.now = vi.fn(() => {
-      mockTime += 16.67 // Simulate 60fps
-      return mockTime
-    })
-  }
+  const originalPerformanceNow = performance.now
+  ;(globalThis as typeof globalThis & { performance: { now: () => number } }).performance.now = vi.fn(() => {
+    // フェイクタイマーが有効な場合は Date.now() と同期
+    try {
+      if (vi.isFakeTimers()) {
+        return Date.now()
+      }
+    } catch (e) {
+      // フェイクタイマーチェックでエラーが出る場合は無視
+    }
+    // フェイクタイマーが無効な場合は元の関数を使用
+    return originalPerformanceNow.call(performance)
+  })
 
   // window オブジェクトをモック
   if (!(globalThis as typeof globalThis & { window?: Window }).window) {

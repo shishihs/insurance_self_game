@@ -80,7 +80,11 @@ export class DropZoneValidators {
    */
   static handSpaceAvailable(): DropZoneValidator {
     return (card: Card, game: Game) => {
-      const currentHandSize = game.playerHand?.size() || 0
+      // 手札が存在しない場合はfalseを返す
+      if (!game.playerHand) {
+        return false
+      }
+      const currentHandSize = game.playerHand.size()
       const maxHandSize = game.maxHandSize || 7
       return currentHandSize < maxHandSize
     }
@@ -197,6 +201,10 @@ export class DropZoneActions {
    */
   static discardCard(): DropZoneAction {
     return (card: Card, game: Game) => {
+      if (!card || !game) {
+        console.warn('[DropZoneActions] discardCard: card or game is null')
+        return
+      }
       game.playerHand?.removeCard(card.id)
       game.discardPile?.addCard(card)
     }
@@ -207,6 +215,10 @@ export class DropZoneActions {
    */
   static returnToDeck(shuffle = false): DropZoneAction {
     return (card: Card, game: Game) => {
+      if (!card || !game) {
+        console.warn('[DropZoneActions] returnToDeck: card or game is null')
+        return
+      }
       game.playerHand?.removeCard(card.id)
       game.playerDeck?.addCard(card)
       if (shuffle) {
@@ -239,6 +251,11 @@ export class DropZoneActions {
    */
   static playCard(): DropZoneAction {
     return (card: Card, game: Game) => {
+      if (!card || !game) {
+        console.warn('[DropZoneActions] playCard: card or game is null')
+        return
+      }
+      
       // カードの効果を適用
       if (card.type === 'life' && card.power > 0) {
         game.vitality = Math.min(game.maxVitality || 20, game.vitality + card.power)
