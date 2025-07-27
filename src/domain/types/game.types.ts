@@ -109,27 +109,7 @@ export const DREAM_AGE_ADJUSTMENTS = {
   mixed: 0         // 複合系：変化なし
 }
 
-/**
- * 保険更新オプション
- */
-export interface InsuranceRenewalOption {
-  cardId: string
-  cardName: string
-  currentCost: number
-  renewalCost: number
-  costIncrease: number
-  remainingTurns: number
-}
 
-/**
- * 保険更新結果
- */
-export interface InsuranceRenewalResult {
-  action: 'renewed' | 'expired'
-  cardId: string
-  costPaid?: number
-  message: string
-}
 
 export interface IGameState {
   id: string
@@ -158,8 +138,6 @@ export interface IGameState {
   // Phase 3: 保険料負担
   insuranceBurden?: number  // 保険料による負担（負の値）
   
-  // 保険更新システム
-  pendingRenewals?: InsuranceRenewalOption[]  // 更新対象の保険カード
   
   // 統計
   stats: PlayerStats

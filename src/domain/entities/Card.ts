@@ -5,8 +5,6 @@ import type {
   CardEffectType, 
   LifeCardCategory, 
   InsuranceType,
-  InsuranceDurationType,
-  InsuranceCardData,
   DreamCategory
 } from '../types/card.types'
 
@@ -26,14 +24,12 @@ export class Card implements ICard {
   readonly insuranceType?: InsuranceType
   readonly coverage?: number
   readonly penalty?: number
-  // Phase 2 拡張保険カード用プロパティ
-  readonly durationType?: InsuranceDurationType
-  readonly remainingTurns?: number
+  // 保険カード用プロパティ
   readonly ageBonus?: number
   // Phase 4 夢カード用プロパティ
   readonly dreamCategory?: DreamCategory
 
-  constructor(params: ICard | InsuranceCardData) {
+  constructor(params: ICard) {
     this.id = params.id
     this.name = params.name
     this.description = params.description
@@ -47,10 +43,8 @@ export class Card implements ICard {
     this.coverage = params.coverage
     this.penalty = params.penalty
     
-    // InsuranceCardData固有のプロパティ
-    if ('durationType' in params) {
-      this.durationType = params.durationType
-      this.remainingTurns = params.remainingTurns
+    // 年齢ボーナスのプロパティ
+    if ('ageBonus' in params) {
       this.ageBonus = params.ageBonus
     }
     
@@ -108,7 +102,7 @@ export class Card implements ICard {
    * カードのコピーを作成
    */
   clone(): Card {
-    const baseParams: ICard | InsuranceCardData = {
+    const baseParams: ICard = {
       id: this.id,
       name: this.name,
       description: this.description,
@@ -121,11 +115,7 @@ export class Card implements ICard {
       insuranceType: this.insuranceType,
       coverage: this.coverage,
       penalty: this.penalty,
-      ...(this.durationType && {
-        durationType: this.durationType,
-        remainingTurns: this.remainingTurns,
-        ageBonus: this.ageBonus || 0
-      }),
+      ageBonus: this.ageBonus || 0,
       dreamCategory: this.dreamCategory
     }
     
@@ -160,14 +150,6 @@ export class Card implements ICard {
       display += `, Coverage: ${this.coverage}`
     }
     
-    // Phase 2: 保険期間の表示
-    if (this.durationType) {
-      display += `, Type: ${this.durationType === 'whole_life' ? '終身' : '定期'}`
-      if (this.durationType === 'term' && this.remainingTurns !== undefined) {
-        display += ` (残り${this.remainingTurns}ターン)`
-      }
-    }
-    
     // 年齢ボーナスの表示
     if (this.ageBonus) {
       display += `, Age Bonus: +${this.ageBonus}`
@@ -183,39 +165,4 @@ export class Card implements ICard {
     return display
   }
   
-  /**
-   * 定期保険のターン数を減らす
-   */
-  decrementRemainingTurns(): Card | null {
-    if (this.durationType !== 'term' || this.remainingTurns === undefined) {
-      return this
-    }
-    
-    const newRemainingTurns = this.remainingTurns - 1
-    if (newRemainingTurns <= 0) {
-      // 期限切れ
-      return null
-    }
-    
-    // 新しいカードインスタンスを返す
-    const params: InsuranceCardData = {
-      id: this.id,
-      name: this.name,
-      description: this.description,
-      type: this.type,
-      power: this.power,
-      cost: this.cost,
-      effects: [...this.effects],
-      imageUrl: this.imageUrl,
-      category: this.category,
-      insuranceType: this.insuranceType,
-      coverage: this.coverage,
-      penalty: this.penalty,
-      durationType: this.durationType,
-      remainingTurns: newRemainingTurns,
-      ageBonus: this.ageBonus || 0
-    }
-    
-    return new Card(params)
-  }
 }

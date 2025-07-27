@@ -4,11 +4,14 @@ import { Card } from '@/domain/entities/Card'
 import { CardFactory } from '@/domain/services/CardFactory'
 import { GAME_CONSTANTS } from '../config/gameConfig'
 import type { CardType } from '@/domain/types/card.types'
-import type { ChallengeResult, InsuranceRenewalOption } from '@/domain/types/game.types'
+import type { ChallengeResult } from '@/domain/types/game.types'
 import { AGE_PARAMETERS } from '@/domain/types/game.types'
 import { TutorialManager } from '../systems/TutorialManager'
 import { TutorialOverlay } from '../ui/TutorialOverlay'
 import type { TutorialConfig, TutorialStep } from '@/domain/types/tutorial.types'
+import { setupGlobalTutorialTests } from '../tutorial/TutorialTestHelper'
+import { SAMPLE_TUTORIAL_CONFIG } from '../tutorial/SampleTutorialConfig'
+import { DropZoneIntegration } from '../systems/DropZoneIntegration'
 
 /**
  * メインゲームシーン
@@ -27,7 +30,10 @@ export class GameScene extends BaseScene {
   private burdenIndicatorContainer?: Phaser.GameObjects.Container
   private insuranceRenewalDialogUI?: Phaser.GameObjects.Container
   
-  // ドラッグ&ドロップ関連
+  // ドラッグ&ドロップ関連（新システム）
+  private dropZoneIntegration?: DropZoneIntegration
+  
+  // 旧システム（段階的移行のため一時的に保持）
   private dropZones: Map<string, Phaser.GameObjects.Container> = new Map()
   private dropZoneHighlights: Map<string, Phaser.GameObjects.Graphics> = new Map()
   private isDragInProgress: boolean = false
@@ -39,9 +45,15 @@ export class GameScene extends BaseScene {
   private tutorialOverlay?: TutorialOverlay
   private isTutorialMode: boolean = false
   private tutorialStepElements: Map<string, Phaser.GameObjects.GameObject> = new Map()
+  private shouldStartTutorial: boolean = false
 
   constructor() {
     super({ key: 'GameScene' })
+  }
+
+  init(data: { startTutorial?: boolean }): void {
+    // メニューからのチュートリアル開始要求をフラグとして保存
+    this.shouldStartTutorial = data.startTutorial || false
   }
 
   protected initialize(): void {
@@ -606,6 +618,13 @@ export class GameScene extends BaseScene {
     this.time.delayedCall(100, () => {
       this.updateActionButtons()
     })
+
+    // チュートリアルの自動開始
+    if (this.shouldStartTutorial) {
+      this.time.delayedCall(500, () => {
+        this.autoStartTutorial()
+      })
+    }
   }
 
   /**
@@ -1017,29 +1036,7 @@ export class GameScene extends BaseScene {
       // 次のターンへ
       this.gameInstance.nextTurn()
       
-      // Phase 3-3: 期限切れ保険の更新選択処理
-      const expiredRenewals = this.gameInstance.pendingRenewals.filter(
-        renewal => renewal.remainingTurns === 0
-      )
-      
-      if (expiredRenewals.length > 0) {
-        // 最初の期限切れ保険の更新ダイアログを表示
-        this.time.delayedCall(1000, () => {
-          this.showInsuranceRenewalDialog(expiredRenewals[0])
-        })
-      } else {
-        // 従来の期限切れ保険通知（更新対象でない場合）
-        const expiredInsurances = this.gameInstance.getExpiredInsurances()
-        if (expiredInsurances.length > 0) {
-          expiredInsurances.forEach(insurance => {
-            this.showNotification(`保険が期限切れになりました: ${insurance.name}`, 'warning')
-          })
-          this.gameInstance.clearExpiredInsurances()
-        }
-      }
-      
-      // Phase 5-1: 期限切れ間近の保険の警告
-      this.checkExpiringInsurances()
+      // 簡素化版：保険は永続効果のため、期限切れ処理は不要
       
       // UI更新
       this.updateUI()
@@ -4101,6 +4098,13 @@ export class GameScene extends BaseScene {
       // イベントリスナー設定
       this.setupTutorialEventListeners()
 
+      // 開発環境でのテストヘルパー設定
+      if (process.env.NODE_ENV === 'development') {
+        this.time.delayedCall(1000, () => {
+          setupGlobalTutorialTests(this)
+        })
+      }
+
     } catch (error) {
       console.error('Tutorial initialization failed:', error)
     }
@@ -4252,6 +4256,22 @@ export class GameScene extends BaseScene {
     this.enableAllGameUI()
     
     console.log('Tutorial mode ended')
+  }
+
+  /**
+   * チュートリアル自動開始（メニューから呼び出された場合）
+   */
+  private autoStartTutorial(): void {
+    console.log('Auto-starting tutorial from menu')
+    
+    // サンプルチュートリアルを開始
+    this.startTutorial(SAMPLE_TUTORIAL_CONFIG)
+      .then(() => {
+        console.log('Tutorial started successfully')
+      })
+      .catch((error) => {
+        console.error('Failed to start tutorial:', error)
+      })
   }
 
   /**

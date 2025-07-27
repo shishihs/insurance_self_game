@@ -23,10 +23,6 @@ export type InsuranceType =
   | 'income'    // 収入保障保険
   | 'asset'     // 資産形成保険
 
-/**
- * 保険期間タイプ
- */
-export type InsuranceDurationType = 'term' | 'whole_life'
 
 /**
  * 夢カードカテゴリー
@@ -86,18 +82,13 @@ export interface ICard {
   // 落とし穴カード固有
   penalty?: number // ペナルティ値
   
+  // 保険カード用年齢ボーナス
+  ageBonus?: number
+  
   // Phase 4: 夢カード固有
   dreamCategory?: DreamCategory
 }
 
-/**
- * 拡張保険カードインターフェース
- */
-export interface InsuranceCardData extends ICard {
-  durationType: InsuranceDurationType
-  remainingTurns?: number // 定期保険用
-  ageBonus: number // 年齢による効果ボーナス
-}
 
 /**
  * 夢カードインターフェース

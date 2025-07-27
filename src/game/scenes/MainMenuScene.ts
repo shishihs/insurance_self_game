@@ -126,8 +126,10 @@ export class MainMenuScene extends BaseScene {
    * チュートリアル開始
    */
   private startTutorial(): void {
-    // TODO: チュートリアルシーンへ遷移
-    // TODO: チュートリアル機能の実装
+    this.fadeOut(500, () => {
+      // GameSceneを開始してすぐにチュートリアルを実行
+      this.scene.start('GameScene', { startTutorial: true })
+    })
   }
 
   /**
