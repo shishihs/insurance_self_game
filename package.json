@@ -107,8 +107,5 @@
     "vite": "^5.4.19",
     "vitest": "^3.2.4",
     "vue-tsc": "^2.2.12"
-  },
-  "overrides": {
-    "@rollup/rollup-linux-x64-gnu": "npm:@rollup/rollup-linux-x64-gnu@latest"
   }
 }
