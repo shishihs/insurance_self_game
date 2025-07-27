@@ -372,6 +372,9 @@ export class GameScene extends BaseScene {
     
     // ドロップゾーンの初期化
     this.initializeDropZones()
+    
+    // 新しいドロップゾーンシステムの初期化
+    this.initializeNewDropZoneSystem()
   }
 
   /**
@@ -399,6 +402,36 @@ export class GameScene extends BaseScene {
     // マグネティック効果用のグラフィックスを作成
     this.magneticEffect = this.add.graphics()
     this.magneticEffect.setDepth(950) // ドラッグトレイルより上
+  }
+
+  /**
+   * 新しいドロップゾーンシステムを初期化
+   */
+  private initializeNewDropZoneSystem(): void {
+    // ゲーム定数をDropZoneIntegrationに渡すためのマッピング
+    const constants = {
+      CARD_WIDTH: GAME_CONSTANTS.CARD_WIDTH,
+      CARD_HEIGHT: GAME_CONSTANTS.CARD_HEIGHT,
+      CHALLENGE_X_POSITION: this.centerX,
+      CHALLENGE_Y_POSITION: GAME_CONSTANTS.CHALLENGE_Y_POSITION,
+      DISCARD_X_POSITION: GAME_CONSTANTS.DISCARD_X_POSITION,
+      DISCARD_Y_POSITION: GAME_CONSTANTS.DISCARD_Y_POSITION,
+      DRAG_DROP: {
+        SNAP_DISTANCE: GAME_CONSTANTS.DRAG_DROP?.SNAP_DISTANCE || 80,
+        MAGNETIC_DISTANCE: GAME_CONSTANTS.DRAG_DROP?.MAGNETIC_DISTANCE || 80
+      }
+    }
+
+    // DropZoneIntegrationを初期化
+    this.dropZoneIntegration = new DropZoneIntegration(this, this.gameInstance, constants)
+    
+    // 標準的なドロップゾーンを設定
+    this.dropZoneIntegration.initializeStandardZones()
+    
+    // カード選択イベントのハンドリングを設定
+    this.data.events.on('cardSelected', (cardContainer: Phaser.GameObjects.Container) => {
+      this.toggleCardSelection(cardContainer)
+    })
   }
 
   /**
@@ -726,6 +759,11 @@ export class GameScene extends BaseScene {
     
     // インタラクション設定
     this.setupCardInteraction(cardContainer)
+    
+    // 新しいドラッグ&ドロップシステムの設定
+    if (this.dropZoneIntegration) {
+      this.dropZoneIntegration.setupCardDragAndDrop(cardContainer)
+    }
     
     this.handCards.push(cardContainer)
   }
@@ -4349,5 +4387,22 @@ export class GameScene extends BaseScene {
     if (this.tutorialManager) {
       this.tutorialManager.skipTutorial()
     }
+  }
+
+  /**
+   * シーンのクリーンアップ処理
+   */
+  public destroy(): void {
+    // 新しいドロップゾーンシステムのクリーンアップ
+    if (this.dropZoneIntegration) {
+      this.dropZoneIntegration.destroy()
+      this.dropZoneIntegration = undefined
+    }
+
+    // イベントリスナーの削除
+    this.data.events.off('cardSelected')
+
+    // 親クラスのクリーンアップを呼び出し
+    super.destroy()
   }
 }
