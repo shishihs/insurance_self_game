@@ -16,9 +16,16 @@ import type {
 } from '../types/game.types'
 import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
+import { Vitality } from '../valueObjects/Vitality'
+import { CardPower } from '../valueObjects/CardPower'
+import { InsurancePremium } from '../valueObjects/InsurancePremium'
 
 /**
  * ゲームエンティティ
+ * 
+ * このクラスは値オブジェクトを使用してゲーム状態を管理します。
+ * - vitality: Vitality値オブジェクトで管理
+ * - insuranceBurden: InsurancePremium値オブジェクトで管理
  */
 export class Game implements IGameState {
   id: string
@@ -26,8 +33,7 @@ export class Game implements IGameState {
   phase: GamePhase
   stage: GameStage
   turn: number
-  vitality: number
-  maxVitality: number
+  private _vitality: Vitality
   
   // カード管理を移譲
   private cardManager: ICardManager
@@ -42,7 +48,7 @@ export class Game implements IGameState {
   expiredInsurances: Card[]
   
   // Phase 3: 保険料負担
-  insuranceBurden: number
+  private _insuranceBurden: InsurancePremium
   
   // 保険種類選択
   insuranceTypeChoices?: InsuranceTypeChoice[]
@@ -57,8 +63,10 @@ export class Game implements IGameState {
     this.phase = 'setup'
     this.stage = 'youth'
     this.turn = 0
-    this.vitality = config.startingVitality
-    this.maxVitality = AGE_PARAMETERS[this.stage].maxVitality
+    
+    // 値オブジェクトで初期化
+    const maxVitality = AGE_PARAMETERS[this.stage].maxVitality
+    this._vitality = Vitality.create(config.startingVitality, maxVitality)
     
     // CardManagerを初期化
     this.cardManager = new CardManager()
@@ -91,8 +99,37 @@ export class Game implements IGameState {
     this.expiredInsurances = []
     
     // Phase 3: 保険料負担の初期化
-    this.insuranceBurden = 0
+    this._insuranceBurden = InsurancePremium.create(0)
     
+  }
+
+  /**
+   * 後方互換性のためのgetter
+   */
+  get vitality(): number {
+    return this._vitality.getValue()
+  }
+
+  get maxVitality(): number {
+    return this._vitality.getMax()
+  }
+
+  get insuranceBurden(): number {
+    return this._insuranceBurden.getValue()
+  }
+
+  /**
+   * 値オブジェクトとしての活力取得
+   */
+  getVitality(): Vitality {
+    return this._vitality
+  }
+
+  /**
+   * 値オブジェクトとしての保険料負担取得
+   */
+  getInsuranceBurden(): InsurancePremium {
+    return this._insuranceBurden
   }
 
   /**
@@ -325,12 +362,10 @@ export class Game implements IGameState {
    */
   private updateMaxVitalityForAge(): void {
     const newMaxVitality = AGE_PARAMETERS[this.stage].maxVitality
-    this.maxVitality = newMaxVitality
     
-    // 現在の活力が新しい上限を超えていたら調整
-    if (this.vitality > newMaxVitality) {
-      this.vitality = newMaxVitality
-    }
+    // 新しい最大値でVitalityオブジェクトを再作成
+    const currentValue = Math.min(this.vitality, newMaxVitality)
+    this._vitality = Vitality.create(currentValue, newMaxVitality)
   }
 
   /**
@@ -519,7 +554,9 @@ export class Game implements IGameState {
    * Phase 3: 保険料負担を更新
    */
   private updateInsuranceBurden(): void {
-    this.insuranceBurden = this.calculateInsuranceBurden()
+    const burden = this.calculateInsuranceBurden()
+    // 負の値でもInsurancePremiumは正の値として扱う
+    this._insuranceBurden = InsurancePremium.create(Math.abs(burden))
   }
 
   /**

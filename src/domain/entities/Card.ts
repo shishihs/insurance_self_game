@@ -8,17 +8,23 @@ import type {
   InsuranceDurationType,
   DreamCategory
 } from '../types/card.types'
+import { CardPower } from '../valueObjects/CardPower'
+import { InsurancePremium } from '../valueObjects/InsurancePremium'
 
 /**
  * カードエンティティ
+ * 
+ * このクラスは値オブジェクトを使用してビジネスルールを表現します。
+ * - power: CardPower値オブジェクト
+ * - cost: InsurancePremium値オブジェクト（保険カードの場合）
  */
 export class Card implements ICard {
   readonly id: string
   readonly name: string
   readonly description: string
   readonly type: CardType
-  readonly power: number
-  readonly cost: number
+  private readonly _power: CardPower
+  private readonly _cost: InsurancePremium
   readonly effects: CardEffect[]
   readonly imageUrl?: string
   readonly category?: LifeCardCategory
@@ -37,8 +43,11 @@ export class Card implements ICard {
     this.name = params.name
     this.description = params.description
     this.type = params.type
-    this.power = params.power
-    this.cost = params.cost
+    
+    // 値オブジェクトでラップ
+    this._power = CardPower.create(params.power)
+    this._cost = InsurancePremium.create(params.cost)
+    
     this.effects = params.effects
     this.imageUrl = params.imageUrl
     this.category = params.category
@@ -51,7 +60,7 @@ export class Card implements ICard {
       this.ageBonus = params.ageBonus
     }
     
-    // 保険期間種別と残りターン数
+    // 保険期間のプロパティ
     if ('durationType' in params) {
       this.durationType = params.durationType
     }
@@ -59,174 +68,127 @@ export class Card implements ICard {
       this.remainingTurns = params.remainingTurns
     }
     
-    // Phase 4: 夢カードのカテゴリー
+    // Phase 4 夢カードのプロパティ
     if ('dreamCategory' in params) {
       this.dreamCategory = params.dreamCategory
     }
   }
 
   /**
-   * カードの実効パワーを計算
+   * 後方互換性のためのgetter
+   * 既存のコードが動作するように、number型を返す
    */
-  calculateEffectivePower(bonuses: number = 0): number {
-    // 年齢ボーナスを含めて計算
-    const totalBonus = bonuses + (this.ageBonus || 0)
-    return Math.max(0, this.power + totalBonus)
+  get power(): number {
+    return this._power.getValue()
+  }
+
+  get cost(): number {
+    return this._cost.getValue()
   }
 
   /**
-   * カードが特定の効果を持っているか確認
+   * 値オブジェクトとしてのpower取得
+   */
+  getPower(): CardPower {
+    return this._power
+  }
+
+  /**
+   * 値オブジェクトとしてのcost取得
+   */
+  getCost(): InsurancePremium {
+    return this._cost
+  }
+
+  /**
+   * カードが効果を持っているか判定
    */
   hasEffect(effectType: CardEffectType): boolean {
     return this.effects.some(effect => effect.type === effectType)
   }
 
   /**
-   * 人生カードかどうか
+   * 特定の効果を取得
    */
-  isLifeCard(): boolean {
-    return this.type === 'life'
+  getEffect(effectType: CardEffectType): CardEffect | undefined {
+    return this.effects.find(effect => effect.type === effectType)
   }
 
   /**
-   * 保険カードかどうか
+   * 保険カードかどうか判定
    */
-  isInsuranceCard(): boolean {
+  isInsurance(): boolean {
     return this.type === 'insurance'
   }
 
   /**
-   * 落とし穴カードかどうか
-   */
-  isPitfallCard(): boolean {
-    return this.type === 'pitfall'
-  }
-
-  /**
-   * Phase 4: 夢カードかどうか
-   */
-  isDreamCard(): boolean {
-    return this.dreamCategory !== undefined
-  }
-
-  /**
-   * 定期保険かどうか
+   * 定期保険かどうか判定
    */
   isTermInsurance(): boolean {
-    return this.isInsuranceCard() && this.durationType === 'term'
+    return this.isInsurance() && this.durationType === 'term'
   }
 
   /**
-   * 終身保険かどうか
+   * 終身保険かどうか判定
    */
   isWholeLifeInsurance(): boolean {
-    return this.isInsuranceCard() && this.durationType === 'whole_life'
+    return this.isInsurance() && this.durationType === 'whole_life'
   }
 
   /**
-   * 期限切れかどうか（定期保険のみ）
+   * Phase 4: 夢カードかどうか判定
+   */
+  isDreamCard(): boolean {
+    return this.type === 'dream'
+  }
+
+  /**
+   * カードのコピーを作成（一部のプロパティを更新可能）
+   */
+  copy(updates?: Partial<ICard>): Card {
+    return new Card({
+      ...this,
+      power: this.power, // getter経由で取得
+      cost: this.cost,   // getter経由で取得
+      ...updates
+    })
+  }
+
+  /**
+   * 残りターン数を減少させる（定期保険用）
+   */
+  decrementRemainingTurns(): Card {
+    if (!this.isTermInsurance() || !this.remainingTurns) {
+      return this
+    }
+    
+    return this.copy({
+      remainingTurns: Math.max(0, this.remainingTurns - 1)
+    })
+  }
+
+  /**
+   * 保険が有効期限切れかどうか判定
    */
   isExpired(): boolean {
     if (!this.isTermInsurance()) {
       return false
     }
-    return this.remainingTurns !== undefined && this.remainingTurns <= 0
+    return this.remainingTurns === 0
   }
 
   /**
-   * ターン経過処理（定期保険の期限を1減らす）
+   * パワーが指定値以上か判定（値オブジェクトを使用）
    */
-  decrementTurn(): void {
-    if (this.isTermInsurance() && this.remainingTurns !== undefined && this.remainingTurns > 0) {
-      this.remainingTurns--
-    }
+  hasPowerAtLeast(requiredPower: number): boolean {
+    const required = CardPower.create(requiredPower)
+    return this._power.isGreaterThanOrEqual(required)
   }
 
   /**
-   * 期限までの残りターン数を取得（表示用）
+   * コストが支払い可能か判定（値オブジェクトを使用）
    */
-  getRemainingTurnsDisplay(): string {
-    if (!this.isTermInsurance() || this.remainingTurns === undefined) {
-      return '終身'
-    }
-    if (this.remainingTurns <= 0) {
-      return '期限切れ'
-    }
-    return `残り${this.remainingTurns}ターン`
+  isAffordableWith(availableVitality: number): boolean {
+    return this._cost.isAffordableWith(availableVitality)
   }
-
-  /**
-   * カードのコピーを作成
-   */
-  clone(): Card {
-    const baseParams: ICard = {
-      id: this.id,
-      name: this.name,
-      description: this.description,
-      type: this.type,
-      power: this.power,
-      cost: this.cost,
-      effects: [...this.effects],
-      imageUrl: this.imageUrl,
-      category: this.category,
-      insuranceType: this.insuranceType,
-      coverage: this.coverage,
-      penalty: this.penalty,
-      ageBonus: this.ageBonus || 0,
-      durationType: this.durationType,
-      remainingTurns: this.remainingTurns,
-      dreamCategory: this.dreamCategory
-    }
-    
-    return new Card(baseParams)
-  }
-
-  /**
-   * 保険効果を適用（ダメージ軽減など）
-   */
-  applyInsuranceEffect(damage: number): number {
-    if (!this.isInsuranceCard() || !this.coverage) {
-      return damage
-    }
-
-    // シールド効果: ダメージを軽減
-    const shieldEffect = this.effects.find(effect => effect.type === 'shield')
-    if (shieldEffect && shieldEffect.value) {
-      const reduction = Math.min(damage, shieldEffect.value)
-      return Math.max(0, damage - reduction)
-    }
-
-    return damage
-  }
-
-  /**
-   * カードの表示用テキストを生成
-   */
-  toDisplayString(): string {
-    let display = `${this.name} (Power: ${this.power}, Cost: ${this.cost})`
-    
-    if (this.coverage) {
-      display += `, Coverage: ${this.coverage}`
-    }
-    
-    // 年齢ボーナスの表示
-    if (this.ageBonus) {
-      display += `, Age Bonus: +${this.ageBonus}`
-    }
-    
-    // 保険期間の表示
-    if (this.isInsuranceCard()) {
-      display += `, 期間: ${this.getRemainingTurnsDisplay()}`
-    }
-    
-    if (this.effects.length > 0) {
-      display += '\nEffects:'
-      this.effects.forEach(effect => {
-        display += `\n  - ${effect.description}`
-      })
-    }
-    
-    return display
-  }
-  
 }
