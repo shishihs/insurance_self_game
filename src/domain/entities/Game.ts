@@ -2,6 +2,7 @@ import { Card } from './Card'
 import { Deck } from './Deck'
 import { CardFactory } from '../services/CardFactory'
 import { CardManager, type ICardManager } from '../services/CardManager'
+import { InsurancePremiumCalculationService } from '../services/InsurancePremiumCalculationService'
 import type {
   IGameState,
   GameStatus,
@@ -38,6 +39,9 @@ export class Game implements IGameState {
   // カード管理を移譲
   private cardManager: ICardManager
   
+  // 保険料計算サービス
+  private premiumCalculationService: InsurancePremiumCalculationService
+  
   currentChallenge?: Card
   
   stats: PlayerStats
@@ -70,6 +74,9 @@ export class Game implements IGameState {
     
     // CardManagerを初期化
     this.cardManager = new CardManager()
+    
+    // 保険料計算サービスを初期化
+    this.premiumCalculationService = new InsurancePremiumCalculationService()
     const playerDeck = new Deck('Player Deck')
     const challengeDeck = new Deck('Challenge Deck')
     
@@ -588,14 +595,60 @@ export class Game implements IGameState {
   }
 
   /**
+   * プレイヤーに最適な保険予算を提案
+   * 
+   * @param riskProfile リスクプロファイル
+   * @returns 推奨保険予算
+   */
+  getRecommendedInsuranceBudget(riskProfile: 'conservative' | 'balanced' | 'aggressive' = 'balanced'): InsurancePremium {
+    return this.premiumCalculationService.calculateOptimalInsuranceBudget(
+      this.vitality,
+      this.stage,
+      riskProfile
+    )
+  }
+
+  /**
+   * 特定の保険カードの総合保険料を取得
+   * 
+   * @param card 保険カード
+   * @returns 年齢・種別調整済み保険料
+   */
+  calculateCardPremium(card: Card): InsurancePremium {
+    if (card.type !== 'insurance') {
+      throw new Error('Card must be an insurance card')
+    }
+    
+    return this.premiumCalculationService.calculateComprehensivePremium(card, this.stage)
+  }
+
+  /**
    * Phase 3: 保険料負担を計算
-   * 有効な保険カード3枚ごとに-1の負担
+   * 
+   * ドメインサービスを使用した高度な保険料計算
    */
   calculateInsuranceBurden(): number {
-    const activeInsuranceCount = this.insuranceCards.length
-    // 3枚ごとに-1の負担（切り捨て）
-    const burden = Math.floor(activeInsuranceCount / 3)
-    return burden === 0 ? 0 : -burden // Ensure we return 0 not -0
+    if (this.insuranceCards.length === 0) {
+      return 0
+    }
+
+    try {
+      // ドメインサービスを使用して総保険料負担を計算
+      const totalBurden = this.premiumCalculationService.calculateTotalInsuranceBurden(
+        this.insuranceCards, 
+        this.stage
+      )
+      
+      // 負の値として返す（活力から差し引かれるため）
+      return -totalBurden.getValue()
+    } catch (error) {
+      console.warn('保険料計算でエラーが発生しました。従来の計算方法を使用します:', error)
+      
+      // フォールバック: 従来の簡易計算
+      const activeInsuranceCount = this.insuranceCards.length
+      const burden = Math.floor(activeInsuranceCount / 3)
+      return burden === 0 ? 0 : -burden
+    }
   }
 
   /**

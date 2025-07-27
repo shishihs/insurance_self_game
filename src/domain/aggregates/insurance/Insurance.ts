@@ -161,8 +161,11 @@ export class Insurance {
 
   /**
    * 年齢による保険料調整を計算
+   * 
+   * @deprecated ドメインサービス InsurancePremiumCalculationService.calculateAgeAdjustedPremium() を使用してください
    */
   calculateAdjustedPremium(stage: GameStage): InsurancePremium {
+    // 後方互換性のため残しているが、新しい実装ではドメインサービスを使用
     let multiplier = 1.0
 
     switch (stage) {
