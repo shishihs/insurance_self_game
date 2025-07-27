@@ -408,25 +408,8 @@ export class GameScene extends BaseScene {
    * 新しいドロップゾーンシステムを初期化
    */
   private initializeNewDropZoneSystem(): void {
-    // ゲーム定数をDropZoneIntegrationに渡すためのマッピング
-    const constants = {
-      CARD_WIDTH: GAME_CONSTANTS.CARD_WIDTH,
-      CARD_HEIGHT: GAME_CONSTANTS.CARD_HEIGHT,
-      CHALLENGE_X_POSITION: this.centerX,
-      CHALLENGE_Y_POSITION: GAME_CONSTANTS.CHALLENGE_Y_POSITION,
-      DISCARD_X_POSITION: GAME_CONSTANTS.DISCARD_X_POSITION,
-      DISCARD_Y_POSITION: GAME_CONSTANTS.DISCARD_Y_POSITION,
-      DRAG_DROP: {
-        SNAP_DISTANCE: GAME_CONSTANTS.DRAG_DROP?.SNAP_DISTANCE || 80,
-        MAGNETIC_DISTANCE: GAME_CONSTANTS.DRAG_DROP?.MAGNETIC_DISTANCE || 80
-      }
-    }
-
-    // DropZoneIntegrationを初期化
-    this.dropZoneIntegration = new DropZoneIntegration(this, this.gameInstance, constants)
-    
-    // 標準的なドロップゾーンを設定
-    this.dropZoneIntegration.initializeStandardZones()
+    // DropZoneIntegrationを初期化（デフォルトゾーンは自動的に設定される）
+    this.dropZoneIntegration = new DropZoneIntegration(this, this.gameInstance)
     
     // カード選択イベントのハンドリングを設定
     this.data.events.on('cardSelected', (cardContainer: Phaser.GameObjects.Container) => {

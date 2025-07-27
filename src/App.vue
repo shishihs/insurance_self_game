@@ -8,6 +8,16 @@ const startGame = () => {
   showGame.value = true
 }
 
+const startTutorial = () => {
+  showGame.value = true
+  // GameCanvasコンポーネントにチュートリアル開始を通知
+  // 次のtickeで実行することで、GameCanvasがマウントされてから実行される
+  setTimeout(() => {
+    const event = new CustomEvent('startTutorial')
+    window.dispatchEvent(event)
+  }, 100)
+}
+
 const backToHome = () => {
   showGame.value = false
 }
@@ -37,12 +47,18 @@ const backToHome = () => {
         </p>
       </div>
 
-      <div class="flex justify-center mb-8">
+      <div class="flex justify-center gap-4 mb-8">
         <button
           @click="startGame"
           class="btn btn-success text-xl px-8 py-4 shadow-lg hover:shadow-xl transition-shadow"
         >
           ゲームをプレイ
+        </button>
+        <button
+          @click="startTutorial"
+          class="btn btn-primary text-xl px-8 py-4 shadow-lg hover:shadow-xl transition-shadow"
+        >
+          チュートリアル
         </button>
       </div>
 

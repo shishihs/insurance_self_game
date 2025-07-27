@@ -250,6 +250,63 @@ Pull Request の作成・レビュー・マージ操作
 
 ---
 
+## 🔒 並行開発安全システム
+
+### Claude Code Hooks による包括的システム保護
+
+**破壊的システムコマンドと並行開発事故**から開発者を保護するため、以下のコマンドは**自動的に禁止**されます：
+
+#### 🚨 CRITICAL - システム破壊コマンド（即座にブロック）
+- `rm -rf /` `rm -rf ~` `rm -rf $HOME` - **ディレクトリ全削除**
+- `dd if=/dev/zero of=/dev/sda` - **ディスク破壊**
+- `:(){ :|:& };:` - **フォークボム（システムクラッシュ）**
+- `chmod -R 000 /` - **権限破壊**
+- `cat /etc/shadow` - **機密情報漏洩**
+- `curl ... | bash` - **未検証スクリプト実行**
+
+#### ⚠️ HIGH RISK - 並行開発リスク
+- `git add .` - 一括追加は危険（個別ファイル指定必須）
+- `git add -A` - 全体追加は危険
+- `git add --all` - 全体追加は危険  
+- `git add *` - ワイルドカード追加は危険
+- `npm` コマンド全般 - pnpm使用が必須
+
+#### ✅ 推奨される安全な方法
+```bash
+# ❌ 危険：一括追加
+git add .
+
+# ✅ 安全：個別ファイル指定
+git add src/components/GameCanvas.vue
+git add src/domain/entities/Game.ts
+
+# ❌ 危険：npm使用
+npm install lodash
+
+# ✅ 安全：pnpm使用
+pnpm install lodash
+```
+
+#### 📋 フックシステムの機能
+1. **Pre-Bash Hook**: 危険なコマンドの実行防止
+2. **Post-Bash Hook**: コマンド実行結果の追跡
+3. **Pre-Commit Hook**: コミット前の安全性チェック
+4. **Task Complete Hook**: タスク完了時の次ステップ提案
+
+#### 🔧 フックテスト
+```bash
+# フックシステムの動作確認
+node .claude/test-hooks.cjs
+```
+
+#### 📊 ログ確認
+全ての活動は `.claude/logs/` に記録されます：
+- `bash-commands.log` - 実行コマンドの履歴
+- `commit-checks.log` - コミット前チェック結果
+- `task-completion.log` - タスク完了履歴
+
+詳細は [`.claude/README.md`](.claude/README.md) を参照してください。
+
 ## 📁 ドキュメント管理ガイドライン
 
 ### ディレクトリ構造
