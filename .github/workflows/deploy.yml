@@ -32,10 +32,23 @@ jobs:
       with:
         version: 8
         
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - name: Setup pnpm cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
     - name: Install dependencies
       run: |
         # Skip canvas installation which causes issues in CI
-        pnpm install --no-optional || pnpm install --ignore-scripts
+        pnpm install --frozen-lockfile --prefer-offline
       
     - name: Type check
       run: pnpm run type-check || echo "Type check failed, continuing with build"
@@ -47,7 +60,7 @@ jobs:
       run: pnpm run test:run --reporter=verbose || true
       
     - name: Build
-      run: pnpm exec vite build
+      run: pnpm run build
       
     - name: Create .nojekyll file
       run: touch dist/.nojekyll
