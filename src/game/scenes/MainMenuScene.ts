@@ -136,8 +136,11 @@ export class MainMenuScene extends BaseScene {
    * 設定画面を開く
    */
   private openSettings(): void {
-    // TODO: 設定シーンへ遷移
-    // TODO: 設定機能の実装
+    // 設定機能は将来のリリースで実装予定
+    // - 音量設定
+    // - グラフィック品質設定
+    // - キーボードショートカット設定
+    this.showNotification('設定機能は開発中です', 'info')
   }
 
   /**

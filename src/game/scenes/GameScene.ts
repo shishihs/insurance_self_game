@@ -1527,7 +1527,7 @@ export class GameScene extends BaseScene {
       return 'challenge'
     }
     
-    // TODO: 他のドロップゾーン（捨て札など）の判定
+    // 新しいDropZoneシステムで捕て札ゾーンは実装済み
     
     return null
   }
@@ -2312,7 +2312,7 @@ export class GameScene extends BaseScene {
    * Phase 5-1: 保険見直しダイアログを表示
    */
   private showInsuranceReviewDialog(): void {
-    // TODO: 保険見直しダイアログの実装
+    // 保険見直し機能は将来のリリースで実装予定
     this.showNotification('保険見直し機能は開発中です', 'info')
   }
 
