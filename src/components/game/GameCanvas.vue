@@ -10,41 +10,32 @@ const errorMessage = ref<string>('')
 const isDev = import.meta.env.DEV
 
 onMounted(async () => {
-  console.log('GameCanvas: onMounted開始')
   
   // gameContainerが利用可能になるまで待機
   let attempts = 0
   const maxAttempts = 10
   
   while (!gameContainer.value && attempts < maxAttempts) {
-    console.log(`GameCanvas: gameContainer待機中... (${attempts + 1}/${maxAttempts})`)
     await new Promise(resolve => setTimeout(resolve, 100))
     attempts++
   }
   
   if (gameContainer.value) {
-    console.log('GameCanvas: gameContainer が見つかりました')
     try {
-      console.log('GameCanvas: GameManagerを動的インポート中...')
       
       // Phaserとゲームマネージャーを動的にインポート
       const { GameManager } = await import('@/game/GameManager')
-      console.log('GameCanvas: GameManagerインポート成功')
       
       gameManager.value = GameManager.getInstance()
-      console.log('GameCanvas: GameManagerインスタンス取得成功')
       
       // ゲームを初期化
-      console.log('GameCanvas: ゲーム初期化中...')
       gameManager.value.initialize(gameContainer.value)
-      console.log('GameCanvas: ゲーム初期化成功')
       
       isLoading.value = false
-      console.log('GameCanvas: 読み込み完了')
       
       // チュートリアル開始イベントリスナーを設定
       const handleTutorialEvent = () => {
-        console.log('GameCanvas: チュートリアル開始イベントを受信')
+        if (isDev) console.log('GameCanvas: チュートリアル開始イベントを受信')
         if (gameManager.value) {
           // GameSceneに直接移動してチュートリアルを開始
           gameManager.value.switchScene('GameScene', { startTutorial: true })
@@ -67,7 +58,7 @@ onMounted(async () => {
       isLoading.value = false
     }
   } else {
-    console.error('❌ gameContainer が見つかりません')
+    if (isDev) console.error('❌ gameContainer が見つかりません')
     errorMessage.value = 'ゲームコンテナが見つかりません'
     isLoading.value = false
   }

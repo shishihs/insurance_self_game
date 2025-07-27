@@ -123,6 +123,15 @@ describe('DropZoneIntegration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
+    // Reset device properties to default desktop values
+    mockScene.sys.game.device.os.android = false
+    mockScene.sys.game.device.os.iOS = false
+    mockScene.sys.game.device.input.touch = false
+    
+    // Reset window dimensions to desktop values
+    Object.defineProperty(window, 'innerWidth', { value: 800, writable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 600, writable: true })
+    
     mockGame = {
       currentChallenge: null,
       vitality: 20,
@@ -473,7 +482,7 @@ describe('DropZoneIntegration', () => {
           const mockPointer = { x: 200, y: 200 }
           dragHandler(mockPointer, 200, 200)
           
-          // 位置が更新される（デスクトップでtouchOffsetが{x:0, y:0}なので200のまま）
+          // 位置が更新される（デスクトップではtouchOffsetが{x:0, y:0}なので200のまま）
           expect(mockCardContainer.x).toBe(200)
           expect(mockCardContainer.y).toBe(200)
         }
@@ -744,7 +753,7 @@ describe('DropZoneIntegration', () => {
         
         // ドラッグ更新が正常に処理される
         expect(mockCardContainer.x).toBe(700)
-        expect(mockCardContainer.y).toBe(440)
+        expect(mockCardContainer.y).toBe(500)
       }
     })
   })
