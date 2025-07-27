@@ -1,35 +1,52 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { GameManager } from '@/game/GameManager'
+import type { GameManager } from '@/game/GameManager'
 
 const gameContainer = ref<HTMLDivElement>()
-const gameManager = GameManager.getInstance()
+const gameManager = ref<GameManager | null>(null)
+const isLoading = ref(true)
 const isDev = import.meta.env.DEV
 
-onMounted(() => {
+onMounted(async () => {
   if (gameContainer.value) {
-    // ゲームを初期化
-    gameManager.initialize(gameContainer.value)
+    try {
+      // Phaserとゲームマネージャーを動的にインポート
+      const { GameManager } = await import('@/game/GameManager')
+      gameManager.value = GameManager.getInstance()
+      
+      // ゲームを初期化
+      gameManager.value.initialize(gameContainer.value)
+      isLoading.value = false
+    } catch (error) {
+      console.error('ゲームの初期化に失敗しました:', error)
+      isLoading.value = false
+    }
   }
 })
 
 onUnmounted(() => {
   // ゲームを破棄
-  gameManager.destroy()
+  if (gameManager.value) {
+    gameManager.value.destroy()
+  }
 })
 
 /**
  * ゲームをリセット
  */
 const resetGame = () => {
-  gameManager.reset()
+  if (gameManager.value) {
+    gameManager.value.reset()
+  }
 }
 
 /**
  * メインメニューに戻る
  */
 const returnToMenu = () => {
-  gameManager.switchScene('MainMenuScene')
+  if (gameManager.value) {
+    gameManager.value.switchScene('MainMenuScene')
+  }
 }
 
 // 親コンポーネントに関数を公開
@@ -41,11 +58,17 @@ defineExpose({
 
 <template>
   <div class="game-canvas-container">
+    <!-- ローディング表示 -->
+    <div v-if="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">ゲームを読み込み中...</p>
+    </div>
+    
     <!-- Phaserゲームがここにマウントされる -->
-    <div ref="gameContainer" id="game-container" class="game-container"></div>
+    <div v-else ref="gameContainer" id="game-container" class="game-container"></div>
     
     <!-- デバッグ用コントロール（開発中のみ表示） -->
-    <div v-if="isDev" class="debug-controls">
+    <div v-if="isDev && !isLoading" class="debug-controls">
       <button @click="resetGame" class="btn btn-warning text-sm">
         ゲームリセット
       </button>
@@ -65,6 +88,33 @@ defineExpose({
   justify-content: center;
   align-items: center;
   background-color: #1a1a1a;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #4C6EF5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .game-container {

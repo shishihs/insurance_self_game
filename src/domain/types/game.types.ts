@@ -109,6 +109,28 @@ export const DREAM_AGE_ADJUSTMENTS = {
   mixed: 0         // 複合系：変化なし
 }
 
+/**
+ * 保険更新オプション
+ */
+export interface InsuranceRenewalOption {
+  cardId: string
+  cardName: string
+  currentCost: number
+  renewalCost: number
+  costIncrease: number
+  remainingTurns: number
+}
+
+/**
+ * 保険更新結果
+ */
+export interface InsuranceRenewalResult {
+  action: 'renewed' | 'expired'
+  cardId: string
+  costPaid?: number
+  message: string
+}
+
 export interface IGameState {
   id: string
   status: GameStatus

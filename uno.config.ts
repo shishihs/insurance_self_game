@@ -9,14 +9,32 @@ import {
 } from 'unocss'
 
 export default defineConfig({
+  // コンテンツファイルを指定して未使用スタイルを除去
+  content: {
+    filesystem: [
+      'src/**/*.{vue,js,ts,jsx,tsx}',
+      'index.html'
+    ]
+  },
   presets: [
     presetUno(),
     presetAttributify(),
-    presetTypography(),
+    presetTypography({
+      // Typography プリセットを軽量化
+      cssExtend: {
+        'code': {
+          color: '#e11d48',
+        },
+      }
+    }),
     presetWebFonts({
       fonts: {
-        sans: 'Noto Sans JP:400,700',
-        serif: 'Noto Serif JP:400,700',
+        // フォントの読み込みを最適化
+        sans: {
+          name: 'Noto Sans JP',
+          weights: ['400', '700'],
+          provider: 'google'
+        },
       },
     }),
   ],
@@ -55,4 +73,10 @@ export default defineConfig({
     ['btn-danger', 'btn bg-danger hover:bg-danger-dark'],
     ['card', 'p-4 rounded-lg shadow-md bg-white dark:bg-gray-800'],
   ],
+  // サイズ制限の設定
+  rules: [
+    // カスタムルールは使用されている分のみ生成される
+  ],
+  // 開発時のパフォーマンス向上
+  envMode: 'build',
 })

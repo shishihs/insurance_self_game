@@ -3,15 +3,6 @@ import { ref } from 'vue'
 import GameCanvas from './components/game/GameCanvas.vue'
 
 const showGame = ref(false)
-const count = ref(0)
-
-const handleClick = () => {
-  count.value++
-}
-
-const resetCount = () => {
-  count.value = 0
-}
 
 const startGame = () => {
   showGame.value = true
