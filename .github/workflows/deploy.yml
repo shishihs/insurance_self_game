@@ -35,6 +35,8 @@ jobs:
     - name: Install dependencies
       run: |
         # Skip canvas installation which causes issues in CI
+        # Force reinstall to ensure rollup native dependencies are properly installed
+        rm -rf node_modules pnpm-lock.yaml
         pnpm install --no-optional || pnpm install --ignore-scripts
       
     - name: Type check
