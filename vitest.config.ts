@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   test: {
     environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
