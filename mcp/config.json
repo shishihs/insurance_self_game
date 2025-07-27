@@ -29,6 +29,14 @@
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
       "description": "GitHub API連携（リポジトリ操作、Issues、PRs、Actions確認）"
+    },
+    "gemini-cli": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@choplin/mcp-gemini-cli"
+      ],
+      "description": "Gemini AI への直接アクセス（コード生成、分析、質問応答）"
     }
   },
   "settings": {

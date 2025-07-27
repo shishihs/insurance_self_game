@@ -7,6 +7,7 @@ Model Context Protocol (MCP) により、Claude Codeが外部ツールやデー�
 - **filesystem**: ファイルシステムアクセス
 - **playwright**: Web自動テスト・動作確認
 - **github**: GitHub API連携
+- **gemini-cli**: Gemini AI への直接アクセス
 
 ## セットアップ手順
 
@@ -69,6 +70,11 @@ source ~/.bashrc  # または ~/.zshrc
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
       "description": "GitHub API連携（リポジトリ操作、Issues、PRs、Actions確認）"
+    },
+    "gemini-cli": {
+      "command": "npx",
+      "args": ["-y", "@choplin/mcp-gemini-cli"],
+      "description": "Gemini AI への直接アクセス（コード生成、分析、質問応答）"
     }
   }
 }
@@ -79,6 +85,23 @@ source ~/.bashrc  # または ~/.zshrc
 Claude Codeを再起動すると、設定したMCPサーバーが利用可能になります。
 
 ## 利用可能な機能
+
+### Gemini CLI の主要機能
+
+1. **AI アシスタント機能**
+   - コード生成・リファクタリング支援
+   - バグ分析と修正提案
+   - アルゴリズム最適化の提案
+
+2. **技術相談**
+   - ベストプラクティスの提案
+   - アーキテクチャ設計のアドバイス
+   - パフォーマンス改善のヒント
+
+3. **ドキュメント生成**
+   - コメント自動生成
+   - README の作成支援
+   - API ドキュメント作成
 
 ### GitHub MCP の主要機能
 
