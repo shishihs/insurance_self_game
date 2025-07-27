@@ -51,31 +51,31 @@ const backToHome = () => {
         <div class="card">
           <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
             <span>🎮</span>
-            最新アップデート v0.2.0
+            最新アップデート v0.2.2
           </h2>
           <div class="text-left space-y-3">
             <div>
-              <h3 class="font-semibold text-lg mb-2">GAME_RULES_REALISTIC_FINAL実装完了</h3>
+              <h3 class="font-semibold text-lg mb-2">保険更新システム完全実装</h3>
               <ul class="space-y-1 text-sm">
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>年齢別活力システム</strong>: 青年期35→中年期30→充実期27</span>
+                  <span><strong>期限切れ警告</strong>: 残り2ターンで警告、1ターンで危険表示</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>保険種別選択</strong>: 終身保険と定期保険を選択可能</span>
+                  <span><strong>保険更新選択</strong>: 期限切れ時に更新or失効を選択可能</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>保険料負担システム</strong>: 3枚ごとに-1パワー</span>
+                  <span><strong>年齢別コスト</strong>: 青年期+1、中年期+2、充実期+3</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>年齢別夢難易度</strong>: 体力系+3、知識系-2</span>
+                  <span><strong>活力不足対応</strong>: 更新不可時の視覚的フィードバック</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>教育的UI</strong>: 年齢別推奨、視覚的フィードバック</span>
+                  <span><strong>自動処理</strong>: ターン進行時の期限切れ保険検出</span>
                 </li>
               </ul>
             </div>
@@ -93,7 +93,7 @@ const backToHome = () => {
               <h3 class="font-semibold mb-2">短期（1-2週間）</h3>
               <ul class="space-y-1 text-sm">
                 <li class="flex items-center gap-2">
-                  <span class="text-gray-400">⭕</span>
+                  <span class="text-success">✅</span>
                   保険更新システム
                 </li>
                 <li class="flex items-center gap-2">
