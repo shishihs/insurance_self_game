@@ -40,31 +40,31 @@ export class TutorialIntegration {
   private setupEventListeners(): void {
     // チュートリアル開始
     this.tutorialManager.on('tutorial:started', (data: TutorialEventData) => {
-      console.log('Tutorial started:', data.tutorialId)
+      if (import.meta.env.DEV) console.log('Tutorial started:', data.tutorialId)
       this.onTutorialStarted(data)
     })
 
     // ステップ進入
     this.tutorialManager.on('tutorial:step:enter', (data: TutorialEventData) => {
-      console.log('Step entered:', data.stepId)
+      if (import.meta.env.DEV) console.log('Step entered:', data.stepId)
       this.onStepEnter(data)
     })
 
     // ステップ完了
     this.tutorialManager.on('tutorial:step:completed', (data: TutorialEventData) => {
-      console.log('Step completed:', data.stepId)
+      if (import.meta.env.DEV) console.log('Step completed:', data.stepId)
       this.onStepCompleted(data)
     })
 
     // チュートリアル完了
     this.tutorialManager.on('tutorial:completed', (data: TutorialEventData) => {
-      console.log('Tutorial completed:', data.tutorialId)
+      if (import.meta.env.DEV) console.log('Tutorial completed:', data.tutorialId)
       this.onTutorialCompleted(data)
     })
 
     // チュートリアルスキップ
     this.tutorialManager.on('tutorial:skipped', (data: TutorialEventData) => {
-      console.log('Tutorial skipped:', data.tutorialId)
+      if (import.meta.env.DEV) console.log('Tutorial skipped:', data.tutorialId)
       this.onTutorialSkipped(data)
     })
 
@@ -184,7 +184,7 @@ export class TutorialIntegration {
   private showTutorialConfirmDialog(): void {
     // 実際の実装では、UIコンポーネントを表示
     // ここではコンソール出力で代替
-    console.log('Showing tutorial confirmation dialog')
+    if (import.meta.env.DEV) console.log('Showing tutorial confirmation dialog')
     
     // 例：モーダルダイアログの表示
     // this.scene.add.existing(new TutorialConfirmDialog(this.scene, {
@@ -198,7 +198,7 @@ export class TutorialIntegration {
    * クイックチュートリアルオプションを表示
    */
   private showQuickTutorialOption(): void {
-    console.log('Showing quick tutorial option')
+    if (import.meta.env.DEV) console.log('Showing quick tutorial option')
     
     // 例：通知バナーの表示
     // this.scene.add.existing(new TutorialBanner(this.scene, {
@@ -303,7 +303,7 @@ export class TutorialIntegration {
    */
   private enableTutorialMode(): void {
     // ゲームの一部機能を制限・簡略化
-    console.log('Tutorial mode enabled')
+    if (import.meta.env.DEV) console.log('Tutorial mode enabled')
   }
 
   /**
@@ -311,7 +311,7 @@ export class TutorialIntegration {
    */
   private disableTutorialMode(): void {
     // 制限を解除
-    console.log('Tutorial mode disabled')
+    if (import.meta.env.DEV) console.log('Tutorial mode disabled')
   }
 
   /**
@@ -339,14 +339,14 @@ export class TutorialIntegration {
    */
   private updateProgressDisplay(data: TutorialEventData): void {
     const progressText = `${data.stepIndex! + 1} / ${data.totalSteps}`
-    console.log('Tutorial progress:', progressText)
+    if (import.meta.env.DEV) console.log('Tutorial progress:', progressText)
   }
 
   /**
    * 通常ゲームに移行
    */
   private transitionToNormalGame(): void {
-    console.log('Transitioning to normal game')
+    if (import.meta.env.DEV) console.log('Transitioning to normal game')
     // 実際の実装では、ゲーム状態をリセットまたは継続
   }
 
@@ -354,7 +354,7 @@ export class TutorialIntegration {
    * チュートリアル報酬を付与
    */
   private grantTutorialRewards(): void {
-    console.log('Granting tutorial completion rewards')
+    if (import.meta.env.DEV) console.log('Granting tutorial completion rewards')
     // 例：追加カード、活力回復など
   }
 

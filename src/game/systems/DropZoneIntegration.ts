@@ -481,7 +481,9 @@ export class DropZoneIntegration {
    */
   private handleChallengeDrop(card: Card): void {
     // 既存のGameSceneロジックとの統合
-    console.log(`Challenge started with card: ${card.name}`)
+    if (import.meta.env.DEV) {
+      console.log(`Challenge started with card: ${card.name}`)
+    }
   }
 
   /**
@@ -489,7 +491,9 @@ export class DropZoneIntegration {
    */
   private handleDiscardDrop(card: Card): void {
     // 既存のGameSceneロジックとの統合
-    console.log(`Card discarded: ${card.name}`)
+    if (import.meta.env.DEV) {
+      console.log(`Card discarded: ${card.name}`)
+    }
   }
 
   /**

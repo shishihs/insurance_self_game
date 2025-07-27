@@ -27,15 +27,12 @@ export class GameManager {
    * ゲームを初期化
    */
   initialize(parent: string | HTMLElement): void {
-    console.log('GameManager: initialize開始', { parent })
     
     if (this.game) {
-      console.warn('GameManager: ゲームは既に初期化されています')
       return
     }
 
     try {
-      console.log('GameManager: 設定の準備中...')
       
       // 設定をコピー（元の設定を変更しないため）
       const config = { ...gameConfig }
@@ -48,12 +45,10 @@ export class GameManager {
         GameScene
       ]
 
-      console.log('GameManager: Phaserゲームインスタンス作成中...', { config })
       
       // ゲームインスタンスを作成
       this.game = new Phaser.Game(config)
       
-      console.log('GameManager: Phaserゲームインスタンス作成成功')
     } catch (error) {
       console.error('❌ GameManager: ゲーム初期化エラー:', error)
       throw error
@@ -92,7 +87,7 @@ export class GameManager {
    */
   switchScene(sceneKey: string, data?: object): void {
     if (!this.game) {
-      console.error('Game is not initialized')
+      if (import.meta.env.DEV) console.error('Game is not initialized')
       return
     }
 

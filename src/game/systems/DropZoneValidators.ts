@@ -275,7 +275,7 @@ export class DropZoneActions {
   static triggerSpecialEffect(effectName: string): DropZoneAction {
     return (card: Card, _game: Game) => {
       // 特殊効果の実装（ゲーム固有）
-      console.log(`Triggering special effect: ${effectName} for card ${card.name}`)
+      if (import.meta.env.DEV) console.log(`Triggering special effect: ${effectName} for card ${card.name}`)
       
       // 例：保険カードの効果
       if (card.type === 'insurance') {
@@ -289,7 +289,7 @@ export class DropZoneActions {
    */
   static log(message: string): DropZoneAction {
     return (card: Card, game: Game) => {
-      console.log(`[DropZone] ${message}`, { card: card.name, gameState: game.stage })
+      if (import.meta.env.DEV) console.log(`[DropZone] ${message}`, { card: card.name, gameState: game.stage })
     }
   }
 

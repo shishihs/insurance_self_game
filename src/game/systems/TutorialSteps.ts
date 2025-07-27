@@ -345,7 +345,7 @@ export const MAIN_TUTORIAL_CONFIG: TutorialConfig = {
       waitTime: 3000,
       onEnter: () => {
         // 完了時の特別な処理（花火エフェクトなど）
-        console.log('Tutorial completed successfully!')
+        if (import.meta.env.DEV) console.log('Tutorial completed successfully!')
       }
     }
   ]

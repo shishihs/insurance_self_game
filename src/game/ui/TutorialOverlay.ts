@@ -657,7 +657,7 @@ export class TutorialOverlay {
    */
   private jumpToStep(stepIndex: number): void {
     // 開発時のみ有効にする機能
-    console.log(`Attempt to jump to step ${stepIndex} (debug mode only)`)
+    if (import.meta.env.DEV) console.log(`Attempt to jump to step ${stepIndex} (debug mode only)`)
   }
 
   /**

@@ -4186,7 +4186,7 @@ export class GameScene extends BaseScene {
     this.tutorialManager.on('tutorial:started', (data) => {
       this.isTutorialMode = true
       this.tutorialOverlay?.setVisible(true)
-      console.log('Tutorial started:', data.tutorialId)
+      if (import.meta.env.DEV) console.log('Tutorial started:', data.tutorialId)
     })
 
     this.tutorialManager.on('tutorial:step:enter', (data) => {
@@ -4297,19 +4297,19 @@ export class GameScene extends BaseScene {
     // 通常のUI制限を解除
     this.enableAllGameUI()
     
-    console.log('Tutorial mode ended')
+    if (import.meta.env.DEV) console.log('Tutorial mode ended')
   }
 
   /**
    * チュートリアル自動開始（メニューから呼び出された場合）
    */
   private autoStartTutorial(): void {
-    console.log('Auto-starting tutorial from menu')
+    if (import.meta.env.DEV) console.log('Auto-starting tutorial from menu')
     
     // インタラクティブチュートリアルを開始
     this.startTutorial(INTERACTIVE_GAME_TUTORIAL)
       .then(() => {
-        console.log('Tutorial started successfully')
+        if (import.meta.env.DEV) console.log('Tutorial started successfully')
       })
       .catch((error) => {
         console.error('Failed to start tutorial:', error)
@@ -4326,7 +4326,7 @@ export class GameScene extends BaseScene {
 
     // 既存のチュートリアルが完了済みかチェック
     if (this.tutorialManager.isCompleted(config.id)) {
-      console.log('Tutorial already completed:', config.id)
+      if (import.meta.env.DEV) console.log('Tutorial already completed:', config.id)
       return Promise.resolve()
     }
 

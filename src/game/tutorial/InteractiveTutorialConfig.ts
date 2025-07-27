@@ -268,7 +268,7 @@ export const INTERACTIVE_GAME_TUTORIAL: TutorialConfig = {
         localStorage.setItem('tutorial_completed', 'true')
         
         // 完了メッセージ
-        console.log('🎉 チュートリアル完了！本格的なゲームをお楽しみください！')
+        if (import.meta.env.DEV) console.log('🎉 チュートリアル完了！本格的なゲームをお楽しみください！')
       }
     }
   ]

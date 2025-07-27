@@ -745,7 +745,7 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
   private emitEvent(event: TutorialEvent, data: TutorialEventData): void {
     this.emit(event, data)
     
-    if (this.options.debugMode) {
+    if (this.options.debugMode && import.meta.env.DEV) {
       console.log(`[TutorialManager] ${event}:`, data)
     }
   }
@@ -767,7 +767,7 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
    * ログ出力
    */
   private log(message: string): void {
-    if (this.options.debugMode) {
+    if (this.options.debugMode && import.meta.env.DEV) {
       console.log(`[TutorialManager] ${message}`)
     }
   }

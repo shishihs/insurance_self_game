@@ -3,7 +3,35 @@ import { SAMPLE_TUTORIAL_CONFIG, QUICK_TEST_TUTORIAL, ERROR_TEST_TUTORIAL } from
 import type { TutorialOverlay, PerformanceWithMemory, WindowWithTutorialTest } from '@/types/game-events'
 
 /**
+ * 開発環境でのみログを出力するヘルパー関数
+ */
+function devLog(...args: any[]): void {
+  if (import.meta.env.DEV) {
+    devLog(...args)
+  }
+}
+
+/**
+ * 開発環境でのみエラーログを出力するヘルパー関数
+ */
+function devError(...args: any[]): void {
+  if (import.meta.env.DEV) {
+    devError(...args)
+  }
+}
+
+/**
+ * 開発環境でのみ警告ログを出力するヘルパー関数
+ */
+function devWarn(...args: any[]): void {
+  if (import.meta.env.DEV) {
+    devWarn(...args)
+  }
+}
+
+/**
  * チュートリアルUIのテストヘルパー
+ * 開発環境でのみ利用可能
  */
 export class TutorialTestHelper {
   private scene: GameScene
@@ -16,13 +44,13 @@ export class TutorialTestHelper {
    * 基本UIテストの実行
    */
   public async runBasicUITest(): Promise<void> {
-    console.log('=== チュートリアル基本UIテスト開始 ===')
+    devLog('=== チュートリアル基本UIテスト開始 ===')
     
     try {
       await this.scene.startTutorial(SAMPLE_TUTORIAL_CONFIG)
-      console.log('✅ 基本UIテストが正常に開始されました')
+      devLog('✅ 基本UIテストが正常に開始されました')
     } catch (error) {
-      console.error('❌ 基本UIテストでエラーが発生:', error)
+      devError('❌ 基本UIテストでエラーが発生:', error)
       throw error
     }
   }
@@ -31,13 +59,13 @@ export class TutorialTestHelper {
    * クイックテストの実行
    */
   public async runQuickTest(): Promise<void> {
-    console.log('=== チュートリアルクイックテスト開始 ===')
+    devLog('=== チュートリアルクイックテスト開始 ===')
     
     try {
       await this.scene.startTutorial(QUICK_TEST_TUTORIAL)
-      console.log('✅ クイックテストが正常に開始されました')
+      devLog('✅ クイックテストが正常に開始されました')
     } catch (error) {
-      console.error('❌ クイックテストでエラーが発生:', error)
+      devError('❌ クイックテストでエラーが発生:', error)
       throw error
     }
   }
@@ -46,13 +74,13 @@ export class TutorialTestHelper {
    * エラーハンドリングテストの実行
    */
   public async runErrorHandlingTest(): Promise<void> {
-    console.log('=== チュートリアルエラーハンドリングテスト開始 ===')
+    devLog('=== チュートリアルエラーハンドリングテスト開始 ===')
     
     try {
       await this.scene.startTutorial(ERROR_TEST_TUTORIAL)
-      console.log('✅ エラーハンドリングテストが開始されました')
+      devLog('✅ エラーハンドリングテストが開始されました')
     } catch (error) {
-      console.error('❌ エラーハンドリングテストで予期しないエラー:', error)
+      devError('❌ エラーハンドリングテストで予期しないエラー:', error)
       // このテストでは一部エラーが期待されるため、処理を続行
     }
   }
@@ -61,16 +89,16 @@ export class TutorialTestHelper {
    * レスポンシブ機能のテスト
    */
   public testResponsiveFeatures(): void {
-    console.log('=== レスポンシブ機能テスト開始 ===')
+    devLog('=== レスポンシブ機能テスト開始 ===')
     
     if (!this.scene.isTutorialActive()) {
-      console.warn('⚠️ チュートリアルが実行中ではありません。先にチュートリアルを開始してください。')
+      devWarn('⚠️ チュートリアルが実行中ではありません。先にチュートリアルを開始してください。')
       return
     }
 
     const currentStep = this.scene.getCurrentTutorialStep()
     if (!currentStep) {
-      console.warn('⚠️ 現在のチュートリアルステップが取得できません。')
+      devWarn('⚠️ 現在のチュートリアルステップが取得できません。')
       return
     }
 
@@ -86,22 +114,22 @@ export class TutorialTestHelper {
     const originalWidth = camera.width
     const originalHeight = camera.height
 
-    console.log(`📱 元のサイズ: ${originalWidth}x${originalHeight}`)
+    devLog(`📱 元のサイズ: ${originalWidth}x${originalHeight}`)
 
     // モバイルサイズのシミュレーション
     this.scene.scale.emit('resize', { width: 480, height: 800 })
-    console.log('📱 モバイルサイズに変更をシミュレート')
+    devLog('📱 モバイルサイズに変更をシミュレート')
 
     // タブレットサイズのシミュレーション
     setTimeout(() => {
       this.scene.scale.emit('resize', { width: 768, height: 1024 })
-      console.log('📱 タブレットサイズに変更をシミュレート')
+      devLog('📱 タブレットサイズに変更をシミュレート')
     }, 2000)
 
     // デスクトップサイズに戻す
     setTimeout(() => {
       this.scene.scale.emit('resize', { width: originalWidth, height: originalHeight })
-      console.log('📱 元のサイズに復元')
+      devLog('📱 元のサイズに復元')
     }, 4000)
   }
 
@@ -109,10 +137,10 @@ export class TutorialTestHelper {
    * アクセシビリティ機能のテスト
    */
   public testAccessibilityFeatures(): void {
-    console.log('=== アクセシビリティ機能テスト開始 ===')
+    devLog('=== アクセシビリティ機能テスト開始 ===')
     
     if (!this.scene.isTutorialActive()) {
-      console.warn('⚠️ チュートリアルが実行中ではありません。')
+      devWarn('⚠️ チュートリアルが実行中ではありません。')
       return
     }
 
@@ -130,33 +158,33 @@ export class TutorialTestHelper {
    * キーボードナビゲーションのテスト
    */
   private testKeyboardNavigation(): void {
-    console.log('⌨️ キーボードナビゲーションテスト')
+    devLog('⌨️ キーボードナビゲーションテスト')
     
     // TABキーのシミュレーション
     const tabEvent = new KeyboardEvent('keydown', { code: 'Tab', key: 'Tab' })
     this.scene.input.keyboard?.emit('keydown-TAB', tabEvent)
     
-    console.log('✅ TABキー操作をシミュレート')
+    devLog('✅ TABキー操作をシミュレート')
   }
 
   /**
    * 高コントラストモードのテスト
    */
   private testHighContrastMode(): void {
-    console.log('🎨 高コントラストモードテスト')
+    devLog('🎨 高コントラストモードテスト')
     
     const tutorialOverlay = (this.scene as { tutorialOverlay?: TutorialOverlay }).tutorialOverlay
     if (tutorialOverlay && typeof tutorialOverlay.enableHighContrastMode === 'function') {
       tutorialOverlay.enableHighContrastMode()
-      console.log('✅ 高コントラストモードを有効化')
+      devLog('✅ 高コントラストモードを有効化')
       
       // 3秒後に元に戻す
       setTimeout(() => {
-        console.log('🔄 高コントラストモードを無効化')
+        devLog('🔄 高コントラストモードを無効化')
         // 元に戻すロジックは実装していないため、ログのみ
       }, 3000)
     } else {
-      console.warn('⚠️ 高コントラストモード機能が利用できません')
+      devWarn('⚠️ 高コントラストモード機能が利用できません')
     }
   }
 
@@ -164,19 +192,19 @@ export class TutorialTestHelper {
    * アニメーション削減モードのテスト
    */
   private testReducedMotion(): void {
-    console.log('🎞️ アニメーション削減モードテスト')
+    devLog('🎞️ アニメーション削減モードテスト')
     
     const tutorialOverlay = (this.scene as { tutorialOverlay?: TutorialOverlay }).tutorialOverlay
     if (tutorialOverlay && typeof tutorialOverlay.enableReducedMotion === 'function') {
       tutorialOverlay.enableReducedMotion()
-      console.log('✅ アニメーション削減モードを有効化')
+      devLog('✅ アニメーション削減モードを有効化')
       
       // 3秒後に元に戻す（実際にはページリロードが必要な場合もある）
       setTimeout(() => {
-        console.log('🔄 アニメーション削減モードテスト完了')
+        devLog('🔄 アニメーション削減モードテスト完了')
       }, 3000)
     } else {
-      console.warn('⚠️ アニメーション削減モード機能が利用できません')
+      devWarn('⚠️ アニメーション削減モード機能が利用できません')
     }
   }
 
@@ -184,7 +212,7 @@ export class TutorialTestHelper {
    * パフォーマンステスト
    */
   public runPerformanceTest(): void {
-    console.log('=== パフォーマンステスト開始 ===')
+    devLog('=== パフォーマンステスト開始 ===')
     
     const startTime = performance.now()
     let frameCount = 0
@@ -197,14 +225,14 @@ export class TutorialTestHelper {
 
       if (totalTime >= 5000) { // 5秒間測定
         const avgFPS = (frameCount / totalTime) * 1000
-        console.log(`📊 平均FPS: ${avgFPS.toFixed(2)}`)
+        devLog(`📊 平均FPS: ${avgFPS.toFixed(2)}`)
         
         if (avgFPS >= 30) {
-          console.log('✅ パフォーマンス良好（30fps以上）')
+          devLog('✅ パフォーマンス良好（30fps以上）')
         } else if (avgFPS >= 20) {
-          console.log('⚠️ パフォーマンス注意（20-30fps）')
+          devLog('⚠️ パフォーマンス注意（20-30fps）')
         } else {
-          console.log('❌ パフォーマンス不良（20fps未満）')
+          devLog('❌ パフォーマンス不良（20fps未満）')
         }
         return
       }
@@ -221,12 +249,12 @@ export class TutorialTestHelper {
   public monitorMemoryUsage(): void {
     if ('performance' in window && 'memory' in (window.performance as PerformanceWithMemory)) {
       const memory = (window.performance as PerformanceWithMemory).memory!
-      console.log('🧠 メモリ使用量:')
-      console.log(`  使用中: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`)
-      console.log(`  合計: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`)
-      console.log(`  上限: ${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`)
+      devLog('🧠 メモリ使用量:')
+      devLog(`  使用中: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`)
+      devLog(`  合計: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`)
+      devLog(`  上限: ${(memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`)
     } else {
-      console.log('⚠️ メモリ使用量の監視は利用できません（Chrome必須）')
+      devLog('⚠️ メモリ使用量の監視は利用できません（Chrome必須）')
     }
   }
 
@@ -234,7 +262,7 @@ export class TutorialTestHelper {
    * 全テストの実行
    */
   public async runAllTests(): Promise<void> {
-    console.log('🚀 チュートリアルUI全機能テスト開始')
+    devLog('🚀 チュートリアルUI全機能テスト開始')
     
     try {
       // 基本テスト
@@ -255,10 +283,10 @@ export class TutorialTestHelper {
       // メモリ監視
       setTimeout(() => this.monitorMemoryUsage(), 12000)
       
-      console.log('✅ 全テストスケジュールが完了しました')
+      devLog('✅ 全テストスケジュールが完了しました')
       
     } catch (error) {
-      console.error('❌ テスト実行中にエラーが発生:', error)
+      devError('❌ テスト実行中にエラーが発生:', error)
     }
   }
 
@@ -266,32 +294,38 @@ export class TutorialTestHelper {
    * テスト結果のサマリー出力
    */
   public printTestSummary(): void {
-    console.log('\n=== チュートリアルUIテスト結果サマリー ===')
-    console.log('実装された機能:')
-    console.log('✅ TutorialOverlayコンポーネント')
-    console.log('✅ スポットライト効果')
-    console.log('✅ 吹き出し表示')
-    console.log('✅ 進捗バー')
-    console.log('✅ 制御ボタン（次へ、戻る、スキップ）')
-    console.log('✅ ハイライト機能（パルス、グロー、ボーダー）')
-    console.log('✅ 誘導矢印')
-    console.log('✅ レスポンシブ対応（モバイル、タブレット、デスクトップ）')
-    console.log('✅ キーボード操作対応')
-    console.log('✅ アクセシビリティ機能')
-    console.log('✅ GameSceneとの統合')
-    console.log('\n次のステップ:')
-    console.log('- 実際のゲームチュートリアル設定の作成')
-    console.log('- より詳細なアクセシビリティテスト')
-    console.log('- 多言語対応の検討')
-    console.log('- 音声ガイダンスの追加検討')
+    devLog('\n=== チュートリアルUIテスト結果サマリー ===')
+    devLog('実装された機能:')
+    devLog('✅ TutorialOverlayコンポーネント')
+    devLog('✅ スポットライト効果')
+    devLog('✅ 吹き出し表示')
+    devLog('✅ 進捗バー')
+    devLog('✅ 制御ボタン（次へ、戻る、スキップ）')
+    devLog('✅ ハイライト機能（パルス、グロー、ボーダー）')
+    devLog('✅ 誘導矢印')
+    devLog('✅ レスポンシブ対応（モバイル、タブレット、デスクトップ）')
+    devLog('✅ キーボード操作対応')
+    devLog('✅ アクセシビリティ機能')
+    devLog('✅ GameSceneとの統合')
+    devLog('\n次のステップ:')
+    devLog('- 実際のゲームチュートリアル設定の作成')
+    devLog('- より詳細なアクセシビリティテスト')
+    devLog('- 多言語対応の検討')
+    devLog('- 音声ガイダンスの追加検討')
   }
 }
 
 /**
  * グローバルテストヘルパーの設定
  * ブラウザのコンソールから実行可能
+ * 開発環境でのみ実行される
  */
 export function setupGlobalTutorialTests(scene: GameScene): void {
+  // プロダクション環境では何もしない
+  if (!import.meta.env.DEV) {
+    return
+  }
+
   const helper = new TutorialTestHelper(scene)
   
   // グローバル関数として公開
@@ -308,15 +342,15 @@ export function setupGlobalTutorialTests(scene: GameScene): void {
     stop: () => scene.stopTutorial()
   }
   
-  console.log('🔧 チュートリアルテスト関数が利用可能になりました:')
-  console.log('  tutorialTest.basic() - 基本UIテスト')
-  console.log('  tutorialTest.quick() - クイックテスト')
-  console.log('  tutorialTest.error() - エラーハンドリングテスト')
-  console.log('  tutorialTest.responsive() - レスポンシブテスト')
-  console.log('  tutorialTest.accessibility() - アクセシビリティテスト')
-  console.log('  tutorialTest.performance() - パフォーマンステスト')
-  console.log('  tutorialTest.memory() - メモリ監視')
-  console.log('  tutorialTest.all() - 全テスト実行')
-  console.log('  tutorialTest.summary() - テスト結果サマリー')
-  console.log('  tutorialTest.stop() - チュートリアル強制終了')
+  devLog('🔧 チュートリアルテスト関数が利用可能になりました:')
+  devLog('  tutorialTest.basic() - 基本UIテスト')
+  devLog('  tutorialTest.quick() - クイックテスト')
+  devLog('  tutorialTest.error() - エラーハンドリングテスト')
+  devLog('  tutorialTest.responsive() - レスポンシブテスト')
+  devLog('  tutorialTest.accessibility() - アクセシビリティテスト')
+  devLog('  tutorialTest.performance() - パフォーマンステスト')
+  devLog('  tutorialTest.memory() - メモリ監視')
+  devLog('  tutorialTest.all() - 全テスト実行')
+  devLog('  tutorialTest.summary() - テスト結果サマリー')
+  devLog('  tutorialTest.stop() - チュートリアル強制終了')
 }
