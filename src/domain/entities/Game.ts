@@ -1,6 +1,7 @@
 import { Card } from './Card'
 import { Deck } from './Deck'
 import { CardFactory } from '../services/CardFactory'
+import { CardManager, type ICardManager } from '../services/CardManager'
 import type {
   IGameState,
   GameStatus,
@@ -26,14 +27,10 @@ export class Game implements IGameState {
   vitality: number
   maxVitality: number
   
-  playerDeck: Deck
-  hand: Card[]
-  discardPile: Card[]
-  challengeDeck: Deck
+  // カード管理を移譲
+  private cardManager: ICardManager
   
   currentChallenge?: Card
-  selectedCards: Card[]
-  cardChoices?: Card[]
   
   stats: PlayerStats
   config: GameConfig
@@ -60,13 +57,11 @@ export class Game implements IGameState {
     this.vitality = config.startingVitality
     this.maxVitality = AGE_PARAMETERS[this.stage].maxVitality
     
-    this.playerDeck = new Deck('Player Deck')
-    this.hand = []
-    this.discardPile = []
-    this.challengeDeck = new Deck('Challenge Deck')
-    
-    this.selectedCards = []
-    this.cardChoices = undefined
+    // CardManagerを初期化
+    this.cardManager = new CardManager()
+    const playerDeck = new Deck('Player Deck')
+    const challengeDeck = new Deck('Challenge Deck')
+    this.cardManager.initialize(playerDeck, challengeDeck, config)
     
     this.stats = {
       totalChallenges: 0,
@@ -116,40 +111,10 @@ export class Game implements IGameState {
    * カードをドロー
    */
   drawCards(count: number): Card[] {
-    const drawn: Card[] = []
-    
-    for (let i = 0; i < count; i++) {
-      // デッキが空の場合、捨て札をシャッフルして山札に戻す
-      if (this.playerDeck.isEmpty() && this.discardPile.length > 0) {
-        this.reshuffleDeck()
-      }
-      
-      const card = this.playerDeck.drawCard()
-      if (card) {
-        drawn.push(card)
-        this.hand.push(card)
-      }
-    }
-    
-    // 手札上限チェック - 古いカードを捨て札に
-    while (this.hand.length > this.config.maxHandSize) {
-      const discarded = this.hand.shift()
-      if (discarded) {
-        this.discardPile.push(discarded)
-      }
-    }
-    
-    return drawn
+    const result = this.cardManager.drawCards(count)
+    return result.drawnCards
   }
 
-  /**
-   * 捨て札をシャッフルして山札に戻す
-   */
-  private reshuffleDeck(): void {
-    this.playerDeck.addCards(this.discardPile)
-    this.playerDeck.shuffle()
-    this.discardPile = []
-  }
 
   /**
    * チャレンジを開始
@@ -160,7 +125,7 @@ export class Game implements IGameState {
     }
     
     this.currentChallenge = challengeCard
-    this.selectedCards = []
+    this.cardManager.clearSelection()
     this.phase = 'challenge'
   }
 
@@ -168,15 +133,7 @@ export class Game implements IGameState {
    * カードを選択/選択解除
    */
   toggleCardSelection(card: Card): boolean {
-    const index = this.selectedCards.findIndex(c => c.id === card.id)
-    
-    if (index !== -1) {
-      this.selectedCards.splice(index, 1)
-      return false // 選択解除
-    } else {
-      this.selectedCards.push(card)
-      return true // 選択
-    }
+    return this.cardManager.toggleCardSelection(card)
   }
 
   /**
@@ -188,7 +145,8 @@ export class Game implements IGameState {
     }
     
     // Phase 3: 詳細なパワー計算
-    const powerBreakdown = this.calculateTotalPower(this.selectedCards)
+    const selectedCards = this.cardManager.getState().selectedCards
+    const powerBreakdown = this.calculateTotalPower(selectedCards)
     const playerPower = powerBreakdown.total
     
     // Phase 4: 夢カードの場合は年齢調整を適用
@@ -216,13 +174,7 @@ export class Game implements IGameState {
     this.updateVitality(vitalityChange)
     
     // 使用したカードを捨て札に
-    this.selectedCards.forEach(card => {
-      const index = this.hand.findIndex(c => c.id === card.id)
-      if (index !== -1) {
-        this.hand.splice(index, 1)
-        this.discardPile.push(card)
-      }
-    })
+    this.cardManager.discardSelectedCards()
     
     // 結果作成
     const result: ChallengeResult = {
@@ -250,7 +202,7 @@ export class Game implements IGameState {
         cardChoices.push(availableCards.splice(randomIndex, 1)[0])
       }
       
-      this.cardChoices = cardChoices
+      this.cardManager.setCardChoices(cardChoices)
       result.cardChoices = cardChoices
       this.phase = 'card_selection'
     } else {
@@ -259,7 +211,7 @@ export class Game implements IGameState {
     }
     
     this.currentChallenge = undefined
-    this.selectedCards = []
+    this.cardManager.clearSelection()
     
     return result
   }
@@ -268,17 +220,17 @@ export class Game implements IGameState {
    * カードを選択してデッキに追加
    */
   selectCard(cardId: string): boolean {
-    if (this.phase !== 'card_selection' || !this.cardChoices) {
+    if (this.phase !== 'card_selection') {
       throw new Error('Not in card selection phase')
     }
     
-    const selectedCard = this.cardChoices.find(card => card.id === cardId)
+    const selectedCard = this.cardManager.getCardChoiceById(cardId)
     if (!selectedCard) {
       throw new Error('Invalid card selection')
     }
     
     // カードをデッキに追加
-    this.playerDeck.addCard(selectedCard)
+    this.cardManager.addToPlayerDeck(selectedCard)
     this.stats.cardsAcquired++
     
     // Phase 2-4: 保険カードの場合は管理リストに追加
@@ -289,7 +241,7 @@ export class Game implements IGameState {
     }
     
     // 選択肢をクリア
-    this.cardChoices = undefined
+    this.cardManager.clearCardChoices()
     
     // 解決フェーズに移行（ターン終了可能状態）
     this.phase = 'resolution'
@@ -406,6 +358,48 @@ export class Game implements IGameState {
       this.status = 'victory'
       this.completedAt = new Date()
     }
+  }
+
+  /**
+   * 手札を取得
+   */
+  get hand(): Card[] {
+    return this.cardManager.getState().hand
+  }
+
+  /**
+   * 捨て札を取得
+   */
+  get discardPile(): Card[] {
+    return this.cardManager.getState().discardPile
+  }
+
+  /**
+   * プレイヤーデッキを取得
+   */
+  get playerDeck(): Deck {
+    return this.cardManager.getState().playerDeck
+  }
+
+  /**
+   * チャレンジデッキを取得
+   */
+  get challengeDeck(): Deck {
+    return this.cardManager.getState().challengeDeck
+  }
+
+  /**
+   * 選択中のカードを取得
+   */
+  get selectedCards(): Card[] {
+    return this.cardManager.getState().selectedCards
+  }
+
+  /**
+   * カード選択肢を取得
+   */
+  get cardChoices(): Card[] | undefined {
+    return this.cardManager.getState().cardChoices
   }
 
   /**
@@ -686,6 +680,7 @@ export class Game implements IGameState {
    * ゲーム状態のスナップショットを取得
    */
   getSnapshot(): IGameState {
+    const cardState = this.cardManager.getState()
     return {
       id: this.id,
       status: this.status,
@@ -694,13 +689,13 @@ export class Game implements IGameState {
       turn: this.turn,
       vitality: this.vitality,
       maxVitality: this.maxVitality,
-      playerDeck: this.playerDeck.clone(),
-      hand: [...this.hand],
-      discardPile: [...this.discardPile],
-      challengeDeck: this.challengeDeck.clone(),
+      playerDeck: cardState.playerDeck,
+      hand: cardState.hand,
+      discardPile: cardState.discardPile,
+      challengeDeck: cardState.challengeDeck,
       currentChallenge: this.currentChallenge,
-      selectedCards: [...this.selectedCards],
-      cardChoices: this.cardChoices ? [...this.cardChoices] : undefined,
+      selectedCards: cardState.selectedCards,
+      cardChoices: cardState.cardChoices,
       insuranceCards: [...this.insuranceCards],
       expiredInsurances: [...this.expiredInsurances],
       insuranceBurden: this.insuranceBurden,
