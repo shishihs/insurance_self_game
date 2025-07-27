@@ -77,7 +77,7 @@ const mockScene = {
   sound: {
     play: vi.fn()
   }
-} as any
+} as unknown as Phaser.Scene
 
 // Windowモック
 const mockWindow = {
@@ -108,7 +108,7 @@ describe('DropZoneIntegration', () => {
   let mockGame: Game
   let mockCard: Card
   let mockInsuranceCard: Card
-  let mockCardContainer: any
+  let mockCardContainer: typeof mockContainer
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -139,7 +139,7 @@ describe('DropZoneIntegration', () => {
       startChallenge: vi.fn(),
       placeChallengeCard: vi.fn(),
       discardCard: vi.fn()
-    } as any
+    } as unknown as Game
 
     mockCard = {
       id: 'test-card',
@@ -737,8 +737,8 @@ describe('DropZoneIntegration', () => {
         id: 'custom-zone',
         type: 'special' as const,
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 15,
         magneticDistance: 100
       }
@@ -785,7 +785,7 @@ describe('DropZoneIntegration', () => {
       const incompleteScene = {
         ...mockScene,
         add: undefined
-      } as any
+      } as unknown as Phaser.Scene
       
       expect(() => {
         const integration = new DropZoneIntegration(incompleteScene, mockGame)

@@ -45,7 +45,7 @@ const mockScene = {
       }
     }
   }
-} as any
+} as unknown as Phaser.Scene
 
 // GAME_CONSTANTSモック
 vi.mock('../config/gameConfig', () => ({
@@ -87,7 +87,7 @@ describe('DropZone Performance Tests', () => {
       startChallenge: vi.fn(),
       placeChallengeCard: vi.fn(),
       discardCard: vi.fn()
-    } as any
+    } as unknown as Game
 
     mockCard = {
       id: 'test-card',
@@ -111,8 +111,8 @@ describe('DropZone Performance Tests', () => {
         id: 'performance-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
@@ -183,8 +183,8 @@ describe('DropZone Performance Tests', () => {
             75, 
             55
           ),
-          isValid: () => Math.random() > 0.1, // 複雑な判定
-          onDrop: vi.fn(),
+          isValid: (_card: Card, _game: Game) => Math.random() > 0.1, // 複雑な判定
+          onDrop: vi.fn((_card: Card, _game: Game) => {}),
           priority: i,
           magneticDistance: 60
         }
@@ -220,8 +220,8 @@ describe('DropZone Performance Tests', () => {
         id: 'throttle-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
@@ -229,7 +229,7 @@ describe('DropZone Performance Tests', () => {
       dropZoneManager.addZone(zone)
       dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
-      const updateSpy = vi.spyOn(dropZoneManager as any, 'updateHoverState')
+      const updateSpy = vi.spyOn(dropZoneManager as unknown as { updateHoverState: () => void }, 'updateHoverState')
       
       // 連続した更新（フレーム間隔未満）
       Date.now = vi.fn()
@@ -258,15 +258,15 @@ describe('DropZone Performance Tests', () => {
         id: 'memory-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
       
       dropZoneManager.addZone(zone)
       
-      const initialMemory = (performance as any).memory?.usedJSHeapSize || 0
+      const initialMemory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0
       
       // 大量のドラッグ操作をシミュレート
       for (let i = 0; i < 1000; i++) {
@@ -280,7 +280,7 @@ describe('DropZone Performance Tests', () => {
         }
       }
       
-      const finalMemory = (performance as any).memory?.usedJSHeapSize || 0
+      const finalMemory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0
       const memoryIncrease = finalMemory - initialMemory
       
       // メモリ増加量が5MB未満であることを確認
@@ -298,8 +298,8 @@ describe('DropZone Performance Tests', () => {
         id: 'visual-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
@@ -374,8 +374,8 @@ describe('DropZone Performance Tests', () => {
         id: 'response-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
@@ -399,8 +399,8 @@ describe('DropZone Performance Tests', () => {
         id: 'hover-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
@@ -439,7 +439,7 @@ describe('DropZone Performance Tests', () => {
       dropZoneManager.startDrag(mockCard, mockGame, { x: 100, y: 100 })
       
       const startTime = performance.now()
-      const snapTarget = dropZoneManager.getMagneticSnapTarget({ x: 200, y: 200 })
+      dropZoneManager.getMagneticSnapTarget({ x: 200, y: 200 })
       const endTime = performance.now()
       
       const responseTime = endTime - startTime
@@ -509,8 +509,8 @@ describe('DropZone Performance Tests', () => {
         id: 'concurrent-zone',
         type: 'discard',
         bounds: new Phaser.Geom.Rectangle(100, 100, 100, 100),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 80
       }
@@ -685,8 +685,8 @@ describe('DropZone Performance Tests', () => {
         id: 'visual-effects-zone',
         type: 'challenge',
         bounds: new Phaser.Geom.Rectangle(100, 100, 120, 120),
-        isValid: () => true,
-        onDrop: vi.fn(),
+        isValid: (_card: Card, _game: Game) => true,
+        onDrop: vi.fn((_card: Card, _game: Game) => {}),
         priority: 10,
         magneticDistance: 100,
         visualStyle: {

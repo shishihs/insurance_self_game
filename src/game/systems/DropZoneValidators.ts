@@ -256,7 +256,7 @@ export class DropZoneActions {
    * 特殊効果を発動するアクション
    */
   static triggerSpecialEffect(effectName: string): DropZoneAction {
-    return (card: Card, game: Game) => {
+    return (card: Card, _game: Game) => {
       // 特殊効果の実装（ゲーム固有）
       console.log(`Triggering special effect: ${effectName} for card ${card.name}`)
       

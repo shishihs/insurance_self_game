@@ -68,7 +68,7 @@ describe('DropZoneValidators', () => {
       startChallenge: vi.fn(),
       placeChallengeCard: vi.fn(),
       discardCard: vi.fn()
-    } as any
+    } as unknown as Game
   })
 
   describe('Basic Validators', () => {
@@ -272,7 +272,7 @@ describe('DropZoneValidators', () => {
   describe('Utility Validators', () => {
     describe('custom validator', () => {
       it('should execute custom validation logic', () => {
-        const customLogic = vi.fn((card: Card, game: Game) => card.power > 3)
+        const customLogic = vi.fn((card: Card, _game: Game) => card.power > 3)
         const validator = DropZoneValidators.custom(customLogic)
         
         expect(validator(mockCard, mockGame)).toBe(true) // power = 5
@@ -596,7 +596,7 @@ describe('DropZoneActions', () => {
       startChallenge: vi.fn(),
       placeChallengeCard: vi.fn(),
       discardCard: vi.fn()
-    } as any
+    } as unknown as Game
   })
 
   describe('Basic Actions', () => {
@@ -909,12 +909,12 @@ describe('DropZoneActions', () => {
     it('should handle actions with null/undefined parameters', () => {
       const action = DropZoneActions.discardCard()
       
-      expect(() => action(null as any, mockGame)).not.toThrow()
-      expect(() => action(mockCard, null as any)).not.toThrow()
+      expect(() => action(null as unknown as Card, mockGame)).not.toThrow()
+      expect(() => action(mockCard, null as unknown as Game)).not.toThrow()
     })
 
     it('should handle actions with malformed game objects', () => {
-      const malformedGame = {} as any
+      const malformedGame = {} as unknown as Game
       
       const action = DropZoneActions.playCard()
       
@@ -988,7 +988,7 @@ describe('DropZonePresets', () => {
       startChallenge: vi.fn(),
       placeChallengeCard: vi.fn(),
       discardCard: vi.fn()
-    } as any
+    } as unknown as Game
   })
 
   describe('challengeZone preset', () => {
