@@ -47,6 +47,13 @@ jobs:
     - name: Build
       run: pnpm exec vue-tsc --noEmit && pnpm exec vite build
       
+    - name: Copy JS for cache compatibility
+      run: |
+        # Create fallback for cached HTML references
+        if [ -f dist/js/index-*.js ]; then
+          cp dist/js/index-*.js dist/js/index-XTF7au9U.js 2>/dev/null || true
+        fi
+      
     - name: Setup Pages
       if: github.ref == 'refs/heads/master'
       uses: actions/configure-pages@v4
