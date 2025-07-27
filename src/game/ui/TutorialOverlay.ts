@@ -573,19 +573,23 @@ export class TutorialOverlay {
     // ベースオーバーレイの再描画
     this.createBaseOverlay()
     
-    // 進捗バーの位置調整
-    if (this.progressBar) {
-      this.progressBar.setPosition(camera.centerX, 50)
-    }
+    // レスポンシブレイアウトの適用
+    this.updateResponsiveLayout()
     
-    // 制御ボタンの位置調整
-    if (this.controlButtons) {
-      this.controlButtons.setPosition(camera.centerX, camera.height - 80)
+    // スポットライトの再計算（ターゲット要素がある場合）
+    if (this.spotlightMask && this.highlightElements.size > 0) {
+      // 最初のハイライト要素でスポットライトを再作成
+      const firstElement = this.highlightElements.values().next().value
+      if (firstElement && firstElement.getBounds) {
+        const bounds = firstElement.getBounds()
+        const mockElement = { getBounds: () => bounds }
+        this.createSpotlight(mockElement as Phaser.GameObjects.GameObject)
+      }
     }
   }
 
   /**
-   * キーボード操作対応
+   * キーボード操作対応（アクセシビリティ対応）
    */
   public enableKeyboardControls(
     onNext: () => void,
@@ -595,6 +599,7 @@ export class TutorialOverlay {
     const cursors = this.scene.input.keyboard?.createCursorKeys()
     if (!cursors) return
 
+    // 基本操作
     this.scene.input.keyboard?.on('keydown-SPACE', onNext)
     this.scene.input.keyboard?.on('keydown-ENTER', onNext)
     
@@ -608,6 +613,260 @@ export class TutorialOverlay {
     }
     
     cursors.right.on('down', onNext)
+
+    // アクセシビリティ拡張キー
+    this.scene.input.keyboard?.on('keydown-TAB', (event: KeyboardEvent) => {
+      event.preventDefault()
+      // TABでボタン間のフォーカス移動をシミュレート
+      this.cycleButtonFocus()
+    })
+
+    // 数字キーでステップ直接移動（開発・テスト用）
+    for (let i = 1; i <= 9; i++) {
+      this.scene.input.keyboard?.on(`keydown-${i}`, () => {
+        this.jumpToStep(i - 1)
+      })
+    }
+  }
+
+  /**
+   * ボタン間のフォーカスサイクル
+   */
+  private cycleButtonFocus(): void {
+    // 実装：TABキーでボタン間を移動する視覚的フィードバック
+    if (this.controlButtons) {
+      // 既存のボタンにフォーカス効果を追加
+      const buttons = this.controlButtons.list as Phaser.GameObjects.Container[]
+      if (buttons.length > 0) {
+        // シンプルなフォーカス効果として、最初のボタンを強調
+        const firstButton = buttons[0]
+        this.scene.tweens.add({
+          targets: firstButton,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 200,
+          yoyo: true,
+          ease: 'Power2'
+        })
+      }
+    }
+  }
+
+  /**
+   * 指定ステップへのジャンプ（デバッグ用）
+   */
+  private jumpToStep(stepIndex: number): void {
+    // 開発時のみ有効にする機能
+    console.log(`Attempt to jump to step ${stepIndex} (debug mode only)`)
+  }
+
+  /**
+   * レスポンシブ対応の拡張
+   */
+  public updateResponsiveLayout(): void {
+    const camera = this.scene.cameras.main
+    const isSmallScreen = camera.width < 768
+    const isMobile = camera.width < 480
+
+    if (isMobile) {
+      this.applyMobileLayout()
+    } else if (isSmallScreen) {
+      this.applyTabletLayout()
+    } else {
+      this.applyDesktopLayout()
+    }
+  }
+
+  /**
+   * モバイル向けレイアウト
+   */
+  private applyMobileLayout(): void {
+    const camera = this.scene.cameras.main
+    
+    // ボタンサイズを大きく
+    const mobileButtonHeight = 56
+    const mobileButtonWidth = Math.min(150, camera.width / 3 - 10)
+    
+    // 進捗バーを上部に配置
+    if (this.progressBar) {
+      this.progressBar.setPosition(camera.centerX, 30)
+    }
+    
+    // 吹き出しのサイズ調整
+    if (this.speechBubble) {
+      const maxWidth = camera.width - 20
+      this.repositionSpeechBubbleForMobile(maxWidth)
+    }
+    
+    // ボタンを画面下部に大きく配置
+    if (this.controlButtons) {
+      this.controlButtons.setPosition(camera.centerX, camera.height - 40)
+      this.adjustButtonSizesForMobile(mobileButtonWidth, mobileButtonHeight)
+    }
+  }
+
+  /**
+   * タブレット向けレイアウト
+   */
+  private applyTabletLayout(): void {
+    const camera = this.scene.cameras.main
+    
+    // 中間的なサイズ設定
+    const tabletButtonHeight = 52
+    const tabletButtonWidth = 140
+    
+    if (this.progressBar) {
+      this.progressBar.setPosition(camera.centerX, 40)
+    }
+    
+    if (this.controlButtons) {
+      this.controlButtons.setPosition(camera.centerX, camera.height - 60)
+      this.adjustButtonSizes(tabletButtonWidth, tabletButtonHeight)
+    }
+  }
+
+  /**
+   * デスクトップ向けレイアウト
+   */
+  private applyDesktopLayout(): void {
+    const camera = this.scene.cameras.main
+    
+    // 標準サイズを維持
+    if (this.progressBar) {
+      this.progressBar.setPosition(camera.centerX, 50)
+    }
+    
+    if (this.controlButtons) {
+      this.controlButtons.setPosition(camera.centerX, camera.height - 80)
+    }
+  }
+
+  /**
+   * モバイル用吹き出し再配置
+   */
+  private repositionSpeechBubbleForMobile(maxWidth: number): void {
+    if (!this.speechBubble) return
+    
+    const camera = this.scene.cameras.main
+    
+    // モバイルでは画面中央上部に固定配置
+    this.speechBubble.setPosition(camera.centerX, camera.height * 0.3)
+    
+    // テキストの再配置（幅制限）
+    const textElements = this.speechBubble.list.filter(child => 
+      child instanceof Phaser.GameObjects.Text
+    ) as Phaser.GameObjects.Text[]
+    
+    textElements.forEach(text => {
+      text.setWordWrapWidth(maxWidth - this.SPEECH_BUBBLE_PADDING * 2)
+    })
+  }
+
+  /**
+   * ボタンサイズ調整（モバイル用）
+   */
+  private adjustButtonSizesForMobile(width: number, height: number): void {
+    if (!this.controlButtons) return
+    
+    const buttons = this.controlButtons.list as Phaser.GameObjects.Container[]
+    buttons.forEach((button, index) => {
+      // ボタンの再描画
+      const graphics = button.list[0] as Phaser.GameObjects.Graphics
+      if (graphics) {
+        graphics.clear()
+        graphics.fillStyle(0x007bff, 1)
+        graphics.fillRoundedRect(-width / 2, -height / 2, width, height, 8)
+      }
+      
+      // テキストサイズ調整
+      const text = button.list.find(child => 
+        child instanceof Phaser.GameObjects.Text
+      ) as Phaser.GameObjects.Text
+      if (text) {
+        text.setFontSize('18px')
+      }
+      
+      // ボタン間の間隔調整
+      button.setPosition(
+        (index - 1) * (width + 15),
+        0
+      )
+    })
+  }
+
+  /**
+   * ボタンサイズ調整（一般用）
+   */
+  private adjustButtonSizes(width: number, height: number): void {
+    if (!this.controlButtons) return
+    
+    const buttons = this.controlButtons.list as Phaser.GameObjects.Container[]
+    buttons.forEach((button) => {
+      const graphics = button.list[0] as Phaser.GameObjects.Graphics
+      if (graphics) {
+        graphics.clear()
+        graphics.fillStyle(0x007bff, 1)
+        graphics.fillRoundedRect(-width / 2, -height / 2, width, height, 8)
+      }
+    })
+  }
+
+  /**
+   * アクセシビリティアナウンス（スクリーンリーダー対応）
+   */
+  public announceForScreenReader(message: string): void {
+    // ARIA live region を利用したアナウンス
+    const announcement = this.scene.add.text(-1000, -1000, message, {
+      fontSize: '1px',
+      color: '#000000'
+    })
+    
+    // 要素にARIA属性を設定（可能な範囲で）
+    const canvas = this.scene.game.canvas
+    if (canvas) {
+      canvas.setAttribute('aria-label', message)
+      
+      // 短時間で削除
+      this.scene.time.delayedCall(1000, () => {
+        announcement.destroy()
+        canvas.removeAttribute('aria-label')
+      })
+    }
+  }
+
+  /**
+   * 高コントラストモード対応
+   */
+  public enableHighContrastMode(): void {
+    // 色の調整
+    this.overlayGraphics.clear()
+    this.overlayGraphics.fillStyle(0x000000, 0.9) // より濃い背景
+    const camera = this.scene.cameras.main
+    this.overlayGraphics.fillRect(0, 0, camera.width, camera.height)
+    
+    // ハイライト色の調整
+    this.highlightElements.forEach(highlight => {
+      // より強いコントラストの色に変更
+      highlight.clear()
+      highlight.fillStyle(0xFFFF00, 0.7) // 明るい黄色
+      highlight.lineStyle(4, 0xFF0000, 1) // 赤いボーダー
+    })
+  }
+
+  /**
+   * アニメーション削減モード（motion-reduction対応）
+   */
+  public enableReducedMotion(): void {
+    // 既存のアニメーションを停止
+    this.pulseAnimations.forEach(animation => {
+      animation.stop()
+    })
+    this.pulseAnimations = []
+    
+    // 静的なハイライトに変更
+    this.highlightElements.forEach(highlight => {
+      highlight.setAlpha(0.6) // 固定の透明度
+    })
   }
 
   /**

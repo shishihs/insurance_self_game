@@ -6,6 +6,9 @@ import { GAME_CONSTANTS } from '../config/gameConfig'
 import type { CardType } from '@/domain/types/card.types'
 import type { ChallengeResult, InsuranceRenewalOption } from '@/domain/types/game.types'
 import { AGE_PARAMETERS } from '@/domain/types/game.types'
+import { TutorialManager } from '../systems/TutorialManager'
+import { TutorialOverlay } from '../ui/TutorialOverlay'
+import type { TutorialConfig, TutorialStep } from '@/domain/types/tutorial.types'
 
 /**
  * メインゲームシーン
@@ -31,6 +34,12 @@ export class GameScene extends BaseScene {
   private dragTrail?: Phaser.GameObjects.Graphics
   private magneticEffect?: Phaser.GameObjects.Graphics
 
+  // チュートリアル関連
+  private tutorialManager?: TutorialManager
+  private tutorialOverlay?: TutorialOverlay
+  private isTutorialMode: boolean = false
+  private tutorialStepElements: Map<string, Phaser.GameObjects.GameObject> = new Map()
+
   constructor() {
     super({ key: 'GameScene' })
   }
@@ -44,6 +53,9 @@ export class GameScene extends BaseScene {
 
     // カードエリアの作成
     this.createCardAreas()
+
+    // チュートリアルUIの初期化
+    this.initializeTutorial()
 
     // ゲーム開始
     this.startGame()
@@ -4051,6 +4063,271 @@ export class GameScene extends BaseScene {
       this.time.delayedCall(1000, () => {
         this.showInsuranceRenewalDialog(expiredRenewals[0])
       })
+    }
+  }
+
+  // ===================
+  // チュートリアル関連
+  // ===================
+
+  /**
+   * チュートリアルの初期化
+   */
+  private initializeTutorial(): void {
+    try {
+      // TutorialManagerの初期化
+      this.tutorialManager = new TutorialManager(this, {
+        debugMode: false,
+        autoSaveProgress: true,
+        stepChangeDelay: 500,
+        defaultHighlightOptions: {
+          color: '#FFD700',
+          opacity: 0.4,
+          borderWidth: 3,
+          borderColor: '#FFA500',
+          glowEffect: true,
+          animationType: 'pulse',
+          duration: 1200
+        }
+      })
+
+      // TutorialOverlayの初期化
+      this.tutorialOverlay = new TutorialOverlay(this)
+      this.tutorialOverlay.setVisible(false)
+
+      // チュートリアルステップで参照される要素を登録
+      this.registerTutorialElements()
+
+      // イベントリスナー設定
+      this.setupTutorialEventListeners()
+
+    } catch (error) {
+      console.error('Tutorial initialization failed:', error)
+    }
+  }
+
+  /**
+   * チュートリアル要素の登録
+   */
+  private registerTutorialElements(): void {
+    // 手札エリア
+    if (this.handCards.length > 0) {
+      this.tutorialStepElements.set('hand-area', this.handCards[0].parentContainer || this.handCards[0])
+    }
+
+    // バイタリティバー
+    if (this.vitalityBarContainer) {
+      this.tutorialStepElements.set('vitality-bar', this.vitalityBarContainer)
+    }
+
+    // 保険リスト
+    if (this.insuranceListContainer) {
+      this.tutorialStepElements.set('insurance-list', this.insuranceListContainer)
+    }
+
+    // 負担指標
+    if (this.burdenIndicatorContainer) {
+      this.tutorialStepElements.set('burden-indicator', this.burdenIndicatorContainer)
+    }
+  }
+
+  /**
+   * チュートリアルイベントリスナーの設定
+   */
+  private setupTutorialEventListeners(): void {
+    if (!this.tutorialManager) return
+
+    this.tutorialManager.on('tutorial:started', (data) => {
+      this.isTutorialMode = true
+      this.tutorialOverlay?.setVisible(true)
+      console.log('Tutorial started:', data.tutorialId)
+    })
+
+    this.tutorialManager.on('tutorial:step:enter', (data) => {
+      this.handleTutorialStepEnter(data)
+    })
+
+    this.tutorialManager.on('tutorial:step:exit', () => {
+      this.tutorialOverlay?.clearHighlights()
+    })
+
+    this.tutorialManager.on('tutorial:completed', () => {
+      this.endTutorialMode()
+    })
+
+    this.tutorialManager.on('tutorial:skipped', () => {
+      this.endTutorialMode()
+    })
+
+    this.tutorialManager.on('tutorial:error', (data) => {
+      console.error('Tutorial error:', data.error)
+      this.endTutorialMode()
+    })
+
+    // 画面リサイズ対応
+    this.scale.on('resize', () => {
+      this.tutorialOverlay?.onResize()
+    })
+  }
+
+  /**
+   * チュートリアルステップ開始時の処理
+   */
+  private handleTutorialStepEnter(data: any): void {
+    if (!this.tutorialOverlay || !this.tutorialManager) return
+
+    const currentStep = this.tutorialManager.getCurrentStep()
+    if (!currentStep) return
+
+    const progress = this.tutorialManager.getProgress()
+    if (!progress) return
+
+    // 進捗バーの更新
+    const totalSteps = this.tutorialManager.getCurrentStep() ? 
+      (this.tutorialManager as any).currentConfig?.steps.length || 0 : 0
+    this.tutorialOverlay.createProgressBar(progress, totalSteps)
+
+    // ターゲット要素の処理
+    let targetBounds: Phaser.Geom.Rectangle | undefined
+    if (currentStep.targetElement) {
+      const targetElement = this.tutorialStepElements.get(currentStep.targetElement) ||
+                          this.children.getByName(currentStep.targetElement)
+      
+      if (targetElement && targetElement.getBounds) {
+        targetBounds = targetElement.getBounds()
+        
+        // スポットライト効果
+        this.tutorialOverlay.createSpotlight(targetElement)
+        
+        // ハイライト効果
+        this.tutorialOverlay.highlightElement(
+          currentStep.targetElement, 
+          currentStep.highlightOptions
+        )
+      }
+    }
+
+    // 吹き出し表示
+    this.tutorialOverlay.createSpeechBubble(currentStep, targetBounds)
+
+    // 制御ボタン
+    const canGoBack = progress.currentStepIndex > 0
+    const canSkip = true // 基本的にはスキップ可能
+
+    this.tutorialOverlay.createControlButtons(
+      canGoBack,
+      canSkip,
+      () => this.tutorialManager?.nextStep(),
+      canGoBack ? () => this.tutorialManager?.previousStep() : undefined,
+      () => this.tutorialManager?.skipTutorial()
+    )
+
+    // キーボード操作の有効化
+    this.tutorialOverlay.enableKeyboardControls(
+      () => this.tutorialManager?.nextStep(),
+      canGoBack ? () => this.tutorialManager?.previousStep() : undefined,
+      () => this.tutorialManager?.skipTutorial()
+    )
+
+    // アクション待機の場合の自動進行設定
+    if (currentStep.action === 'wait' && currentStep.waitTime) {
+      this.time.delayedCall(currentStep.waitTime, () => {
+        this.tutorialManager?.nextStep()
+      })
+    }
+  }
+
+  /**
+   * チュートリアルモード終了
+   */
+  private endTutorialMode(): void {
+    this.isTutorialMode = false
+    
+    if (this.tutorialOverlay) {
+      this.tutorialOverlay.setVisible(false)
+      this.tutorialOverlay.clearHighlights()
+    }
+
+    // 通常のUI制限を解除
+    this.enableAllGameUI()
+    
+    console.log('Tutorial mode ended')
+  }
+
+  /**
+   * チュートリアル開始（外部から呼び出し用）
+   */
+  public startTutorial(config: TutorialConfig): Promise<void> {
+    if (!this.tutorialManager) {
+      return Promise.reject(new Error('Tutorial manager not initialized'))
+    }
+
+    // 既存のチュートリアルが完了済みかチェック
+    if (this.tutorialManager.isCompleted(config.id)) {
+      console.log('Tutorial already completed:', config.id)
+      return Promise.resolve()
+    }
+
+    // チュートリアルモード制限を適用
+    this.applyTutorialModeRestrictions()
+
+    return this.tutorialManager.startTutorial(config)
+  }
+
+  /**
+   * チュートリアル中のUI制限適用
+   */
+  private applyTutorialModeRestrictions(): void {
+    // ドラッグ&ドロップを一時無効化
+    this.isDragInProgress = false
+    
+    // 通常のボタンを無効化（チュートリアルで指示されたもの以外）
+    this.disableNonTutorialUI()
+  }
+
+  /**
+   * 非チュートリアルUIの無効化
+   */
+  private disableNonTutorialUI(): void {
+    // 実装：チュートリアル中は特定のUI要素のみアクティブに
+    // 詳細な実装は既存のUI要素の構造に依存
+  }
+
+  /**
+   * 全ゲームUIの有効化
+   */
+  private enableAllGameUI(): void {
+    // 実装：すべてのUI要素を再度有効化
+    // ドラッグ&ドロップやボタンの制限を解除
+  }
+
+  /**
+   * チュートリアル要素の動的登録
+   */
+  public registerTutorialElement(name: string, element: Phaser.GameObjects.GameObject): void {
+    this.tutorialStepElements.set(name, element)
+  }
+
+  /**
+   * チュートリアル状態の確認
+   */
+  public isTutorialActive(): boolean {
+    return this.isTutorialMode
+  }
+
+  /**
+   * 現在のチュートリアルステップ取得
+   */
+  public getCurrentTutorialStep(): TutorialStep | null {
+    return this.tutorialManager?.getCurrentStep() || null
+  }
+
+  /**
+   * チュートリアル強制終了
+   */
+  public stopTutorial(): void {
+    if (this.tutorialManager) {
+      this.tutorialManager.skipTutorial()
     }
   }
 }

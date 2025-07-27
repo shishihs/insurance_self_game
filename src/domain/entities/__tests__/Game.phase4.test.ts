@@ -46,7 +46,7 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
         dreamCategory: 'physical'
       })
 
-      game.stage = 'youth'
+      game.setStage('youth')
       expect(game.getDreamRequiredPower(dreamChallenge)).toBe(5)
     })
 
@@ -63,11 +63,11 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
       })
 
       // 中年期: +3
-      game.stage = 'middle'
+      game.setStage('middle')
       expect(game.getDreamRequiredPower(physicalDream)).toBe(11) // 8 + 3
 
       // 充実期: +3
-      game.stage = 'fulfillment'
+      game.setStage('fulfillment')
       expect(game.getDreamRequiredPower(physicalDream)).toBe(11) // 8 + 3
     })
 
@@ -84,11 +84,11 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
       })
 
       // 中年期: -2
-      game.stage = 'middle'
+      game.setStage('middle')
       expect(game.getDreamRequiredPower(intellectualDream)).toBe(4) // 6 - 2
 
       // 充実期: -2
-      game.stage = 'fulfillment'
+      game.setStage('fulfillment')
       expect(game.getDreamRequiredPower(intellectualDream)).toBe(4) // 6 - 2
     })
 
@@ -105,10 +105,10 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
       })
 
       // どの年齢でも調整なし
-      game.stage = 'middle'
+      game.setStage('middle')
       expect(game.getDreamRequiredPower(mixedDream)).toBe(9)
 
-      game.stage = 'fulfillment'
+      game.setStage('fulfillment')
       expect(game.getDreamRequiredPower(mixedDream)).toBe(9)
     })
 
@@ -125,7 +125,7 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
       })
 
       // 中年期: 2 - 2 = 0 → 1に調整
-      game.stage = 'middle'
+      game.setStage('middle')
       expect(game.getDreamRequiredPower(weakIntellectualDream)).toBe(1)
     })
   })
@@ -180,7 +180,7 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
 
     it('夢カードのチャレンジで年齢調整が適用される', () => {
       // 中年期に移行
-      game.stage = 'middle'
+      game.setStage('middle')
       
       // 体力系夢カード（基本パワー8）
       const physicalDream = new Card({
@@ -206,7 +206,7 @@ describe('Game - Phase 4: 夢カードの年齢調整', () => {
 
     it('知識系夢カードは年齢で易しくなる', () => {
       // 充実期に移行
-      game.stage = 'fulfillment'
+      game.setStage('fulfillment')
       
       // 知識系夢カード（基本パワー12）
       const intellectualDream = new Card({

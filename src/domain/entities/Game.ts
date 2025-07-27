@@ -730,6 +730,14 @@ export class Game implements IGameState {
   }
 
   /**
+   * テスト用: ステージを設定
+   */
+  setStage(stage: GameStage): void {
+    this.stage = stage
+    this.updateMaxVitalityForAge()
+  }
+
+  /**
    * ゲーム状態のスナップショットを取得
    */
   getSnapshot(): IGameState {
