@@ -14,7 +14,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  base: '/insurance_self_game/', // GitHub Pages用のベースパス
+  base: '/insurance_self_game/', // GitHub Pages用のベースパス（正しい形式）
   build: {
     outDir: 'dist',
     sourcemap: true,
@@ -53,7 +53,7 @@ export default defineConfig({
           }
         },
         // ファイル名の最適化
-        chunkFileNames: (chunkInfo) => {
+        chunkFileNames: (_chunkInfo) => {
           return `js/[name]-[hash].js`
         },
         entryFileNames: `js/[name]-[hash].js`,

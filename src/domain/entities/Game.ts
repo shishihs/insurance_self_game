@@ -7,7 +7,9 @@ import type {
   GamePhase,
   GameConfig,
   PlayerStats,
-  ChallengeResult
+  ChallengeResult,
+  InsuranceRenewalOption,
+  InsuranceRenewalResult
 } from '../types/game.types'
 import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
@@ -42,6 +44,9 @@ export class Game implements IGameState {
   
   // Phase 3: 保険料負担
   insuranceBurden: number
+  
+  // 保険更新システム
+  pendingRenewals: InsuranceRenewalOption[]
   
   startedAt?: Date
   completedAt?: Date
@@ -80,6 +85,9 @@ export class Game implements IGameState {
     
     // Phase 3: 保険料負担の初期化
     this.insuranceBurden = 0
+    
+    // 保険更新システムの初期化
+    this.pendingRenewals = []
   }
 
   /**
@@ -344,6 +352,9 @@ export class Game implements IGameState {
       this.expiredInsurances.push(...newlyExpiredInsurances)
     }
     
+    // 保険更新警告システムと統合
+    this.updatePendingRenewals()
+    
     // Phase 3: 保険料負担を更新
     this.updateInsuranceBurden()
   }
@@ -512,6 +523,166 @@ export class Game implements IGameState {
   }
 
   /**
+   * 期限切れ警告システム: 残り2ターン以下の定期保険を取得
+   */
+  getPendingRenewalInsurances(): InsuranceRenewalOption[] {
+    return this.pendingRenewals.filter(renewal => renewal.remainingTurns <= 2)
+  }
+
+  /**
+   * 更新コスト計算: 年齢に応じた更新コストを計算
+   */
+  calculateRenewalCost(card: Card, stage: GameStage): number {
+    let additionalCost = 0
+    
+    switch (stage) {
+      case 'youth':
+        additionalCost = 1
+        break
+      case 'middle':
+        additionalCost = 2
+        break
+      case 'fulfillment':
+        additionalCost = 3
+        break
+    }
+    
+    return card.cost + additionalCost
+  }
+
+  /**
+   * 保険更新処理: 保険を更新し期限を10ターン延長
+   */
+  renewInsurance(cardId: string): InsuranceRenewalResult {
+    const renewalOption = this.pendingRenewals.find(option => option.cardId === cardId)
+    if (!renewalOption) {
+      throw new Error('Invalid renewal option')
+    }
+    
+    const card = this.insuranceCards.find(c => c.id === cardId)
+    if (!card) {
+      throw new Error('Card not found in insurance list')
+    }
+    
+    const renewalCost = renewalOption.renewalCost
+    
+    // 活力不足チェック
+    if (this.vitality < renewalCost) {
+      return {
+        action: 'expired',
+        cardId: cardId,
+        message: `活力不足のため更新できませんでした（必要: ${renewalCost}, 現在: ${this.vitality}）`
+      }
+    }
+    
+    // 活力を差し引く
+    this.vitality -= renewalCost
+    
+    // カードの期限を10ターン延長
+    const renewedCard = this.createRenewedCard(card, 10)
+    const cardIndex = this.insuranceCards.findIndex(c => c.id === cardId)
+    if (cardIndex !== -1) {
+      this.insuranceCards[cardIndex] = renewedCard
+    }
+    
+    // 更新リストから削除
+    this.pendingRenewals = this.pendingRenewals.filter(option => option.cardId !== cardId)
+    
+    return {
+      action: 'renewed',
+      cardId: cardId,
+      costPaid: renewalCost,
+      message: `保険を更新しました（コスト: ${renewalCost}活力）`
+    }
+  }
+
+  /**
+   * 保険失効処理: 保険を失効させ、保険リストから削除
+   */
+  expireInsurance(cardId: string): InsuranceRenewalResult {
+    const card = this.insuranceCards.find(c => c.id === cardId)
+    if (!card) {
+      throw new Error('Card not found in insurance list')
+    }
+    
+    // 保険リストから削除
+    this.insuranceCards = this.insuranceCards.filter(c => c.id !== cardId)
+    
+    // 期限切れリストに追加
+    this.expiredInsurances.push(card)
+    
+    // 更新リストからも削除
+    this.pendingRenewals = this.pendingRenewals.filter(option => option.cardId !== cardId)
+    
+    // 保険料負担を更新
+    this.updateInsuranceBurden()
+    
+    return {
+      action: 'expired',
+      cardId: cardId,
+      message: `保険が失効しました: ${card.name}`
+    }
+  }
+
+  /**
+   * 更新警告リストを更新
+   */
+  private updatePendingRenewals(): void {
+    this.pendingRenewals = []
+    
+    this.insuranceCards.forEach(card => {
+      // 定期保険のみ更新対象
+      if (card.durationType === 'term' && card.remainingTurns !== undefined) {
+        const currentCost = card.cost
+        const renewalCost = this.calculateRenewalCost(card, this.stage)
+        const costIncrease = renewalCost - currentCost
+        
+        const renewalOption: InsuranceRenewalOption = {
+          cardId: card.id,
+          cardName: card.name,
+          currentCost: currentCost,
+          renewalCost: renewalCost,
+          costIncrease: costIncrease,
+          remainingTurns: card.remainingTurns
+        }
+        
+        this.pendingRenewals.push(renewalOption)
+      }
+    })
+  }
+
+  /**
+   * カードの期限を延長した新しいカードインスタンスを作成
+   */
+  private createRenewedCard(card: Card, additionalTurns: number): Card {
+    if (card.durationType !== 'term' || card.remainingTurns === undefined) {
+      return card
+    }
+    
+    const newRemainingTurns = card.remainingTurns + additionalTurns
+    
+    const renewedCardData = {
+      id: card.id,
+      name: card.name,
+      description: card.description,
+      type: card.type,
+      power: card.power,
+      cost: card.cost,
+      effects: [...card.effects],
+      imageUrl: card.imageUrl,
+      category: card.category,
+      insuranceType: card.insuranceType,
+      coverage: card.coverage,
+      penalty: card.penalty,
+      durationType: card.durationType,
+      remainingTurns: newRemainingTurns,
+      ageBonus: card.ageBonus || 0
+    }
+    
+    return new Card(renewedCardData)
+  }
+
+  /**
    * ゲーム状態のスナップショットを取得
    */
   getSnapshot(): IGameState {
@@ -533,6 +704,7 @@ export class Game implements IGameState {
       insuranceCards: [...this.insuranceCards],
       expiredInsurances: [...this.expiredInsurances],
       insuranceBurden: this.insuranceBurden,
+      pendingRenewals: [...this.pendingRenewals],
       stats: { ...this.stats },
       config: { ...this.config },
       startedAt: this.startedAt,

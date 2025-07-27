@@ -158,6 +158,9 @@ export interface IGameState {
   // Phase 3: 保険料負担
   insuranceBurden?: number  // 保険料による負担（負の値）
   
+  // 保険更新システム
+  pendingRenewals?: InsuranceRenewalOption[]  // 更新対象の保険カード
+  
   // 統計
   stats: PlayerStats
   
