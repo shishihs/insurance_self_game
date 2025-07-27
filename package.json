@@ -20,7 +20,19 @@
     "task:complete": "cat docs/PRINCIPLES.md && echo '✅ タスク完了！'",
     "tc": "pnpm task:complete",
     "test:mcp": "node scripts/test-mcp.js",
-    "mcp:start": "scripts\\start-mcp.bat"
+    "mcp:start": "scripts\\start-mcp.bat",
+    "cui": "tsx src/cui/cli.ts",
+    "cui:play": "tsx src/cui/cli.ts play",
+    "cui:demo": "tsx src/cui/cli.ts demo",
+    "cui:demo:fast": "tsx src/cui/cli.ts demo --speed fast",
+    "cui:demo:aggressive": "tsx src/cui/cli.ts demo --strategy aggressive",
+    "cui:tutorial": "tsx src/cui/cli.ts tutorial",
+    "cui:benchmark": "tsx src/cui/cli.ts benchmark",
+    "cui:benchmark:quick": "tsx src/cui/cli.ts benchmark --quick",
+    "cui:debug": "tsx src/cui/cli.ts debug",
+    "cui:help": "tsx src/cui/cli.ts help-advanced",
+    "cui:demo:auto": "tsx src/cui/auto-demo.ts",
+    "cui:demo:standalone": "tsx src/cui/demo-standalone.ts"
   },
   "dependencies": {
     "phaser": "^3.90.0",
@@ -61,6 +73,7 @@
     "phaser3spectorjs": "^0.0.8",
     "playwright": "^1.54.1",
     "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "unocss": "^66.3.3",
     "vite": "^5.4.19",
