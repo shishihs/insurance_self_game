@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom'
 import { expect, vi } from 'vitest'
 
-// phaser3spectorjs モジュールをモック
-vi.mock('phaser3spectorjs', () => ({
+// phaser3spectorjs モジュールをモック（すべてのテストファイルで利用可能）
+vi.doMock('phaser3spectorjs', () => ({
   default: {
     enable: vi.fn(),
     disable: vi.fn(),

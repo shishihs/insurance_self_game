@@ -3,6 +3,16 @@ import { DropZoneIntegration } from '../DropZoneIntegration'
 import { Game } from '@/domain/entities/Game'
 import { Card } from '@/domain/entities/Card'
 
+// phaser3spectorjs モジュールをモック
+vi.mock('phaser3spectorjs', () => ({
+  default: {
+    enable: vi.fn(),
+    disable: vi.fn(),
+    createTexture: vi.fn(),
+    WebGLDebugRenderer: vi.fn()
+  }
+}))
+
 // Phaserモックの設定
 const mockGraphics = {
   setPosition: vi.fn().mockReturnThis(),

@@ -4,6 +4,16 @@ import { DropZoneIntegration } from '../DropZoneIntegration'
 import { Game } from '@/domain/entities/Game'
 import { Card } from '@/domain/entities/Card'
 
+// phaser3spectorjs モジュールをモック
+vi.mock('phaser3spectorjs', () => ({
+  default: {
+    enable: vi.fn(),
+    disable: vi.fn(),
+    createTexture: vi.fn(),
+    WebGLDebugRenderer: vi.fn()
+  }
+}))
+
 // Phaserモックの設定
 const mockGraphics = {
   setPosition: vi.fn().mockReturnThis(),
@@ -497,7 +507,16 @@ describe('DropZone Performance Tests', () => {
       // 処理時間が線形に増加することを確認（指数関数的でない）
       for (let i = 1; i < results.length; i++) {
         const scaleFactor = zoneCounts[i] / zoneCounts[i - 1]
-        const timeRatio = results[i] / results[i - 1]
+        const prevTime = results[i - 1]
+        const currentTime = results[i]
+        
+        // 前回の時間が0の場合はスキップ（ゼロ除算を避ける）
+        if (prevTime === 0) {
+          expect(currentTime).toBeLessThan(50) // 50ms未満であることを確認
+          continue
+        }
+        
+        const timeRatio = currentTime / prevTime
         
         // 時間の増加率がゾーン数の増加率の3倍以下であることを確認
         expect(timeRatio).toBeLessThan(scaleFactor * 3)

@@ -48,6 +48,7 @@
     "eslint": "^9.32.0",
     "eslint-plugin-vue": "^9.33.0",
     "jsdom": "^26.1.0",
+    "phaser3spectorjs": "^0.0.8",
     "playwright": "^1.54.1",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
