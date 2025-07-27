@@ -59,6 +59,15 @@ export class Game implements IGameState {
     this.cardManager = new CardManager()
     const playerDeck = new Deck('Player Deck')
     const challengeDeck = new Deck('Challenge Deck')
+    
+    // 初期デッキを作成
+    const initialCards = CardFactory.createStarterLifeCards()
+    initialCards.forEach(card => playerDeck.addCard(card))
+    
+    // チャレンジデッキを作成
+    const challengeCards = CardFactory.createChallengeCards(this.stage)
+    challengeCards.forEach(card => challengeDeck.addCard(card))
+    
     this.cardManager.initialize(playerDeck, challengeDeck, config)
     
     this.stats = {
