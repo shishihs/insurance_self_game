@@ -124,14 +124,18 @@ export class GameScene extends BaseScene {
     stageText.setOrigin(0, 0.5)
     stageText.setName('stage-text')
 
+    // 人生段階進行インジケーター
+    this.createLifeStageIndicator()
+
     // 活力バーコンテナ
     this.createVitalityBar()
 
-    // 活力表示
+    // 活力表示（年齢段階を含む）
+    const stageLabel = this.getStageDisplayText()
     const vitalityText = this.add.text(
       this.centerX,
       40,
-      `活力: ${this.gameInstance.vitality} / ${this.gameInstance.maxVitality}`,
+      `活力: ${this.gameInstance.vitality} / ${this.gameInstance.maxVitality} (${stageLabel})`,
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',
@@ -231,6 +235,92 @@ export class GameScene extends BaseScene {
 
     // 保険カードリストを更新
     this.updateInsuranceList()
+  }
+
+  /**
+   * 人生段階インジケーターを作成
+   */
+  private createLifeStageIndicator(): void {
+    const indicatorContainer = this.add.container(20, 70)
+    indicatorContainer.setName('life-stage-indicator')
+
+    const stages = ['youth', 'middle', 'fulfillment'] as const
+    const stageLabels = ['青年期', '中年期', '充実期']
+    const stageColors = [0x10B981, 0xF59E0B, 0xA78BFA]
+    const currentStageIndex = stages.indexOf(this.gameInstance.stage as 'youth' | 'middle' | 'fulfillment')
+
+    stages.forEach((stage, index) => {
+      const isActive = index <= currentStageIndex
+      const isCurrent = index === currentStageIndex
+      
+      // ステージドット
+      const dot = this.add.circle(
+        index * 50, 0,
+        isCurrent ? 8 : 6,
+        isActive ? stageColors[index] : 0x4B5563,
+        isActive ? 1 : 0.5
+      )
+      
+      // ステージラベル
+      const label = this.add.text(
+        index * 50, 15,
+        stageLabels[index],
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '10px',
+          color: isActive ? '#F9FAFB' : '#6B7280',
+          fontStyle: isCurrent ? 'bold' : 'normal'
+        }
+      ).setOrigin(0.5)
+      
+      // 最大活力表示
+      const maxVitalityForStage = index === 0 ? 35 : index === 1 ? 30 : 27
+      const maxVitalityLabel = this.add.text(
+        index * 50, 25,
+        `最大${maxVitalityForStage}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '8px',
+          color: isActive ? '#9CA3AF' : '#4B5563'
+        }
+      ).setOrigin(0.5)
+      
+      indicatorContainer.add([dot, label, maxVitalityLabel])
+      
+      // 現在のステージにパルス効果
+      if (isCurrent) {
+        this.tweens.add({
+          targets: dot,
+          scale: 1.2,
+          duration: 1500,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        })
+      }
+      
+      // 接続線（最後のステージ以外）
+      if (index < stages.length - 1) {
+        const line = this.add.rectangle(
+          index * 50 + 25, 0,
+          20, 2,
+          isActive && index < currentStageIndex ? stageColors[index] : 0x4B5563,
+          isActive && index < currentStageIndex ? 1 : 0.3
+        )
+        indicatorContainer.add(line)
+      }
+    })
+  }
+
+  /**
+   * 人生段階インジケーターを更新
+   */
+  private updateLifeStageIndicator(): void {
+    const indicatorContainer = this.children.getByName('life-stage-indicator') as Phaser.GameObjects.Container
+    if (!indicatorContainer) return
+
+    indicatorContainer.destroy()
+    this.createLifeStageIndicator()
   }
 
   /**
@@ -734,7 +824,82 @@ export class GameScene extends BaseScene {
       }
     ).setOrigin(0.5)
 
-    cardContainer.add([graphics, glassBg, cardName, powerBg, powerText, costBg, costText])
+    // 年齢ボーナス表示（保険カードの場合）
+    let ageBonusIndicator: Phaser.GameObjects.Container | null = null
+    if (card.type === 'insurance' && card.ageBonus !== undefined && card.ageBonus > 0) {
+      const stage = this.gameInstance.stage
+      let currentBonus = 0
+      if (stage === 'middle') currentBonus = 0.5
+      else if (stage === 'fulfillment') currentBonus = 1.0
+      
+      if (currentBonus > 0) {
+        // 年齢ボーナス背景
+        const bonusBg = this.add.circle(0, -60, 12, 0x6366F1, 0.9)
+        
+        // 年齢ボーナステキスト
+        const bonusText = this.add.text(
+          0, -60,
+          `+${currentBonus}`,
+          {
+            fontFamily: 'Noto Sans JP',
+            fontSize: '12px',
+            color: '#FFFFFF',
+            fontStyle: 'bold'
+          }
+        ).setOrigin(0.5)
+        
+        ageBonusIndicator = this.add.container(0, 0, [bonusBg, bonusText])
+        ageBonusIndicator.setAlpha(0.8)
+        
+        // パルス効果
+        this.tweens.add({
+          targets: ageBonusIndicator,
+          alpha: 1,
+          scale: 1.1,
+          duration: 1000,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        })
+      }
+    }
+
+    // 効果的パワー表示（年齢ボーナス適用後）
+    let effectivePower = card.power
+    if (card.type === 'insurance' && card.ageBonus !== undefined) {
+      const stage = this.gameInstance.stage
+      let multiplier = 1
+      if (stage === 'middle') multiplier = 1.5
+      else if (stage === 'fulfillment') multiplier = 2.0
+      effectivePower = Math.floor(card.power * multiplier)
+    }
+
+    // パワー表示を効果的パワーに更新
+    if (effectivePower !== card.power) {
+      powerText.setText(`${effectivePower}`)
+      powerText.setColor('#A78BFA') // 紫色で年齢ボーナスを表示
+      
+      // 基本パワーを小さく表示
+      const basePowerText = this.add.text(
+        -40, 45,
+        `(${card.power})`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '12px',
+          color: '#9CA3AF',
+          fontStyle: 'normal'
+        }
+      ).setOrigin(0.5)
+      
+      const cardElements = [graphics, glassBg, cardName, powerBg, powerText, basePowerText, costBg, costText]
+      if (ageBonusIndicator) cardElements.push(ageBonusIndicator)
+      cardContainer.add(cardElements)
+    } else {
+      const cardElements = [graphics, glassBg, cardName, powerBg, powerText, costBg, costText]
+      if (ageBonusIndicator) cardElements.push(ageBonusIndicator)
+      cardContainer.add(cardElements)
+    }
+    
     cardContainer.setData('card', card)
     cardContainer.setData('selected', false)
     
@@ -1323,10 +1488,11 @@ export class GameScene extends BaseScene {
    * UI更新
    */
   private updateUI(): void {
-    // 活力表示を更新
+    // 活力表示を更新（年齢段階を含む）
     const vitalityText = this.children.getByName('vitality-text') as Phaser.GameObjects.Text
     if (vitalityText) {
-      vitalityText.setText(`活力: ${this.gameInstance.vitality} / ${this.gameInstance.maxVitality}`)
+      const stageLabel = this.getStageDisplayText()
+      vitalityText.setText(`活力: ${this.gameInstance.vitality} / ${this.gameInstance.maxVitality} (${stageLabel})`)
     }
 
     // 活力バーを更新
@@ -1377,7 +1543,8 @@ export class GameScene extends BaseScene {
       onUpdate: () => {
         const vitalityText = this.children.getByName('vitality-text') as Phaser.GameObjects.Text
         if (vitalityText) {
-          vitalityText.setText(`活力: ${Math.floor(counter.value)} / ${this.gameInstance.maxVitality}`)
+          const stageLabel = this.getStageDisplayText()
+          vitalityText.setText(`活力: ${Math.floor(counter.value)} / ${this.gameInstance.maxVitality} (${stageLabel})`)
         }
       }
     })
@@ -2279,18 +2446,62 @@ export class GameScene extends BaseScene {
     transitionContainer.add([bg, text, vitalityChangeText, reviewText, reviewButton, skipButton])
     transitionContainer.setAlpha(0)
     
-    // フェードイン
+    // フェードインと同時にテキストアニメーション
     this.tweens.add({
       targets: transitionContainer,
       alpha: 1,
       duration: 500
     })
     
+    // タイトルテキストにスケールアニメーション
+    text.setScale(0)
+    this.tweens.add({
+      targets: text,
+      scale: 1,
+      duration: 800,
+      delay: 200,
+      ease: 'Back.easeOut'
+    })
+    
+    // 活力変化テキストにフェードイン
+    vitalityChangeText.setAlpha(0)
+    this.tweens.add({
+      targets: vitalityChangeText,
+      alpha: 1,
+      duration: 600,
+      delay: 500
+    })
+    
+    // パーティクルエフェクト（星とか光の粒子）
+    for (let i = 0; i < 20; i++) {
+      const particle = this.add.circle(
+        Phaser.Math.Between(-200, 200),
+        Phaser.Math.Between(-150, 150),
+        Phaser.Math.Between(2, 6),
+        0xFFD700,
+        0.8
+      )
+      transitionContainer.add(particle)
+      
+      // パーティクルのアニメーション
+      this.tweens.add({
+        targets: particle,
+        alpha: 0,
+        scale: 1.5,
+        duration: 2000,
+        delay: Phaser.Math.Between(0, 1000),
+        ease: 'Power2'
+      })
+    }
+    
     // ステージ表示を更新
     const stageText = this.children.getByName('stage-text') as Phaser.GameObjects.Text
     if (stageText) {
       stageText.setText(this.getStageDisplayText())
     }
+    
+    // 人生段階インジケーターを更新
+    this.updateLifeStageIndicator()
     
     // 活力バーの最大値変更をアニメーション
     this.animateMaxVitalityChange()

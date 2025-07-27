@@ -3,8 +3,7 @@ import type {
   LifeCardCategory, 
   InsuranceType, 
   GameStage,
-  DreamCategory,
-  InsuranceDurationType
+  DreamCategory
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 

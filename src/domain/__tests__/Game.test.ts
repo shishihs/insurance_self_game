@@ -181,7 +181,7 @@ describe('Game Entity', () => {
       }
       
       const handSizeBefore = game.hand.length
-      const cardsAcquiredBefore = game.stats.cardsAcquired
+      // const cardsAcquiredBefore = game.stats.cardsAcquired
       const selectedCardCount = game.selectedCards.length
       const result = game.resolveChallenge()
       

@@ -1,4 +1,4 @@
-import type { GameStage, Difficulty, InsuranceType, InsuranceDurationType } from './card.types'
+import type { GameStage, Difficulty, InsuranceType } from './card.types'
 import type { Card } from '../entities/Card'
 import type { Deck } from '../entities/Deck'
 

@@ -128,7 +128,7 @@ describe('Game - Insurance Type Selection System', () => {
     it('should update insurance burden after selection', () => {
       const firstChoice = game.insuranceTypeChoices![0]
       
-      const initialBurden = game.insuranceBurden
+      // const initialBurden = game.insuranceBurden
       game.selectInsuranceType(firstChoice.insuranceType, 'term')
 
       // 保険が追加されたので負担が計算されるはず
