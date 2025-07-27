@@ -31,10 +31,10 @@ export class InsurancePremium {
    */
   private validate(): void {
     if (this.value < InsurancePremium.MIN_PREMIUM) {
-      throw new Error('Insurance premium cannot be negative')
+      throw new Error('InsurancePremium must be non-negative')
     }
     if (this.value > InsurancePremium.MAX_PREMIUM) {
-      throw new Error('Insurance premium cannot exceed maximum')
+      throw new Error('InsurancePremium cannot exceed maximum')
     }
   }
 

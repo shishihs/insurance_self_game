@@ -29,10 +29,10 @@ export class CardPower {
    */
   private validate(): void {
     if (this.value < CardPower.MIN_POWER) {
-      throw new Error('Card power cannot be negative')
+      throw new Error('CardPower must be non-negative')
     }
     if (this.value > CardPower.MAX_POWER) {
-      throw new Error('Card power cannot exceed maximum')
+      throw new Error('CardPower cannot exceed maximum')
     }
   }
 

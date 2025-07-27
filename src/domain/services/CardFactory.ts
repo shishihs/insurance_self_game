@@ -416,7 +416,24 @@ export class CardFactory {
   }
 
   /**
-   * 人生カードを作成
+   * 人生カードを作成（テスト用にpublicインスタンスメソッドも追加）
+   */
+  createLifeCard(params: {
+    category: LifeCardCategory
+    basePower: number
+    baseCost: number
+  }): Card {
+    return CardFactory.createLifeCard({
+      name: `テスト${params.category}カード`,
+      description: `${params.category}のテストカード`,
+      category: params.category,
+      power: params.basePower,
+      cost: params.baseCost
+    })
+  }
+
+  /**
+   * 人生カードを作成（静的メソッド）
    */
   private static createLifeCard(params: {
     name: string
@@ -478,7 +495,7 @@ export class CardFactory {
   }): Card {
     return new Card({
       id: this.generateId(),
-      type: 'life', // チャレンジカードも人生カードの一種
+      type: 'challenge', // チャレンジカード専用タイプ
       name: params.name,
       description: params.description,
       power: params.power,

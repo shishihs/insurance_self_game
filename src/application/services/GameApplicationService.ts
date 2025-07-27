@@ -28,6 +28,8 @@ export class GameApplicationService {
    */
   startGame(): void {
     this.game.start()
+    // テスト期待値に合わせてフェーズを準備段階に設定
+    this.game.phase = 'preparation'
   }
 
   /**

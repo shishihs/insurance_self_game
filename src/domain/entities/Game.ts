@@ -57,7 +57,7 @@ export class Game implements IGameState {
   startedAt?: Date
   completedAt?: Date
 
-  constructor(config: GameConfig) {
+  constructor(config?: GameConfig) {
     this.id = this.generateId()
     this.status = 'not_started'
     this.phase = 'setup'
@@ -65,8 +65,8 @@ export class Game implements IGameState {
     this.turn = 0
     
     // 値オブジェクトで初期化
-    const maxVitality = AGE_PARAMETERS[this.stage].maxVitality
-    this._vitality = Vitality.create(config.startingVitality, maxVitality)
+    const startingVitality = config?.startingVitality ?? 100
+    this._vitality = Vitality.create(startingVitality)
     
     // CardManagerを初期化
     this.cardManager = new CardManager()
@@ -88,11 +88,17 @@ export class Game implements IGameState {
       successfulChallenges: 0,
       failedChallenges: 0,
       cardsAcquired: 0,
-      highestVitality: config.startingVitality,
+      highestVitality: startingVitality,
       turnsPlayed: 0
     }
     
-    this.config = config
+    this.config = config || {
+      difficulty: 'normal',
+      startingVitality,
+      startingHandSize: 5,
+      maxHandSize: 10,
+      dreamCardCount: 3
+    }
     
     // Phase 2-4: 保険カード管理の初期化
     this.insuranceCards = []
@@ -130,6 +136,34 @@ export class Game implements IGameState {
    */
   getInsuranceBurden(): InsurancePremium {
     return this._insuranceBurden
+  }
+
+  /**
+   * ダメージを適用
+   */
+  applyDamage(damage: number): void {
+    this.updateVitality(-damage)
+  }
+
+  /**
+   * 体力を回復
+   */
+  heal(amount: number): void {
+    this.updateVitality(amount)
+  }
+
+  /**
+   * 利用可能体力を取得（保険料負担を考慮）
+   */
+  getAvailableVitality(): number {
+    return this.vitality - this.insuranceBurden
+  }
+
+  /**
+   * ゲームオーバーかどうか判定
+   */
+  isGameOver(): boolean {
+    return this.status === 'game_over' || this._vitality.isDepleted()
   }
 
   /**
@@ -346,11 +380,16 @@ export class Game implements IGameState {
    * 活力を更新
    */
   private updateVitality(change: number): void {
-    this.vitality = Math.max(0, Math.min(this.maxVitality * 2, this.vitality + change))
+    if (change >= 0) {
+      this._vitality = this._vitality.increase(change)
+    } else {
+      this._vitality = this._vitality.decrease(-change)
+    }
+    
     this.stats.highestVitality = Math.max(this.stats.highestVitality, this.vitality)
     
     // ゲームオーバー判定
-    if (this.vitality <= 0) {
+    if (this._vitality.isDepleted()) {
       this.status = 'game_over'
       this.completedAt = new Date()
     }
@@ -359,13 +398,12 @@ export class Game implements IGameState {
 
   /**
    * ステージに応じて活力上限を更新
+   * 注意: 現在のVitality実装では最大値は常に100なので、何もしない
    */
   private updateMaxVitalityForAge(): void {
-    const newMaxVitality = AGE_PARAMETERS[this.stage].maxVitality
-    
-    // 新しい最大値でVitalityオブジェクトを再作成
-    const currentValue = Math.min(this.vitality, newMaxVitality)
-    this._vitality = Vitality.create(currentValue, newMaxVitality)
+    // 値オブジェクトの実装では最大値は固定なので何もしない
+    // 将来的に年齢によって上限を変更したい場合は、
+    // Vitalityクラスを拡張するか、別の仕組みを検討する
   }
 
   /**

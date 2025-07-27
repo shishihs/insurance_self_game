@@ -150,8 +150,16 @@ export class Card implements ICard {
       ...this,
       power: this.power, // getter経由で取得
       cost: this.cost,   // getter経由で取得
+      effects: [...this.effects], // 配列の深いコピー
       ...updates
     })
+  }
+
+  /**
+   * カードのクローンを作成（後方互換性のため）
+   */
+  clone(): Card {
+    return this.copy()
   }
 
   /**
@@ -190,5 +198,63 @@ export class Card implements ICard {
    */
   isAffordableWith(availableVitality: number): boolean {
     return this._cost.isAffordableWith(availableVitality)
+  }
+
+  /**
+   * 効果的なパワーを計算（年齢ボーナス等を含む）
+   */
+  calculateEffectivePower(): number {
+    let effectivePower = this.power
+
+    // 保険カードの年齢ボーナスを適用
+    if (this.isInsurance() && this.ageBonus) {
+      effectivePower += this.ageBonus
+    }
+
+    return Math.max(0, effectivePower)
+  }
+
+  /**
+   * ライフカードかどうか判定
+   */
+  isLifeCard(): boolean {
+    return this.type === 'life'
+  }
+
+  /**
+   * 保険カードかどうか判定（エイリアス）
+   */
+  isInsuranceCard(): boolean {
+    return this.isInsurance()
+  }
+
+  /**
+   * 落とし穴カードかどうか判定
+   */
+  isPitfallCard(): boolean {
+    return this.type === 'pitfall'
+  }
+
+  /**
+   * カードの表示用文字列を生成
+   */
+  toDisplayString(): string {
+    let display = `${this.name} (${this.power})`
+    
+    if (this.effects.length > 0) {
+      const effectDescriptions = this.effects.map(effect => effect.description).join(', ')
+      display += ` - ${effectDescriptions}`
+    }
+    
+    return display
+  }
+
+  /**
+   * ターン数を減少させる（mutableな操作）
+   */
+  decrementTurn(): void {
+    if (this.remainingTurns !== undefined && this.remainingTurns > 0) {
+      this.remainingTurns--
+    }
   }
 }

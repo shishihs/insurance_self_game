@@ -35,6 +35,13 @@ export interface PlayerStats {
   cardsAcquired: number
   highestVitality: number
   turnsPlayed: number
+  // 分析・テスト用の追加統計
+  totalTurns?: number
+  score?: number
+  challengesCompleted?: number
+  challengesFailed?: number
+  finalVitality?: number
+  finalInsuranceBurden?: number
 }
 
 /**
@@ -46,6 +53,8 @@ export interface GameConfig {
   startingHandSize: number
   maxHandSize: number
   dreamCardCount: number // 最終試練で選ぶ夢カードの数
+  // テスト・分析用の追加設定
+  maxTurns?: number
 }
 
 /**
