@@ -68,6 +68,25 @@ export interface ChallengeResult {
 }
 
 /**
+ * 保険期限切れ通知
+ */
+export interface InsuranceExpirationNotice {
+  expiredCards: Card[]
+  message: string
+  showRenewalOption: boolean
+  turnNumber: number
+}
+
+/**
+ * ターン結果（期限切れ通知を含む）
+ */
+export interface TurnResult {
+  insuranceExpirations?: InsuranceExpirationNotice
+  newExpiredCount: number
+  remainingInsuranceCount: number
+}
+
+/**
  * ゲーム状態
  */
 /**

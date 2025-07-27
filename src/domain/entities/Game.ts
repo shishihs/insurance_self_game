@@ -8,7 +8,9 @@ import type {
   GamePhase,
   GameConfig,
   PlayerStats,
-  ChallengeResult
+  ChallengeResult,
+  TurnResult,
+  InsuranceExpirationNotice
 } from '../types/game.types'
 import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
@@ -274,7 +276,7 @@ export class Game implements IGameState {
   /**
    * 次のターンへ
    */
-  nextTurn(): void {
+  nextTurn(): TurnResult {
     if (this.status !== 'in_progress') {
       throw new Error('Game is not in progress')
     }
@@ -283,9 +285,18 @@ export class Game implements IGameState {
     this.stats.turnsPlayed++
     this.phase = 'draw'
     
+    // 定期保険の期限を1ターン減らし、期限切れ通知を取得
+    const expirationResult = this.updateInsuranceExpirations()
     
     // ターン開始時のドロー
     this.drawCards(1)
+    
+    // ターン結果を返す
+    return {
+      insuranceExpirations: expirationResult,
+      newExpiredCount: expirationResult?.expiredCards.length || 0,
+      remainingInsuranceCount: this.insuranceCards.length
+    }
   }
 
   /**
@@ -398,6 +409,28 @@ export class Game implements IGameState {
   }
 
   /**
+   * 期限が近い保険カードを取得（残り2ターン以下）
+   */
+  getExpiringsSoonInsurances(): Card[] {
+    return this.insuranceCards.filter(card => 
+      card.isTermInsurance() && 
+      card.remainingTurns !== undefined && 
+      card.remainingTurns <= 2 && 
+      card.remainingTurns > 0
+    )
+  }
+
+  /**
+   * 保険期限切れの警告メッセージを取得
+   */
+  getExpirationWarnings(): string[] {
+    const expiringSoon = this.getExpiringsSoonInsurances()
+    return expiringSoon.map(card => 
+      `⚠️ 「${card.name}」の期限まであと${card.remainingTurns}ターンです`
+    )
+  }
+
+  /**
    * Phase 2-4: 現在有効な保険カードを取得
    */
   getActiveInsurances(): Card[] {
@@ -420,6 +453,57 @@ export class Game implements IGameState {
    */
   private updateInsuranceBurden(): void {
     this.insuranceBurden = this.calculateInsuranceBurden()
+  }
+
+  /**
+   * 定期保険の期限を更新し、期限切れをチェック
+   */
+  private updateInsuranceExpirations(): InsuranceExpirationNotice | undefined {
+    // 期限切れになった保険を一時的に保存
+    const nowExpired: Card[] = []
+    
+    // 全ての保険カードの期限を更新
+    this.insuranceCards.forEach(card => {
+      if (card.isTermInsurance()) {
+        card.decrementTurn()
+        
+        // 期限切れになったものを記録
+        if (card.isExpired()) {
+          nowExpired.push(card)
+        }
+      }
+    })
+    
+    // 期限切れの保険を active から expired に移動
+    if (nowExpired.length > 0) {
+      this.insuranceCards = this.insuranceCards.filter(card => !nowExpired.includes(card))
+      this.expiredInsurances.push(...nowExpired)
+      
+      // 保険料負担を再計算
+      this.updateInsuranceBurden()
+      
+      // 期限切れ通知を作成
+      return this.createExpirationNotice(nowExpired)
+    }
+    
+    return undefined
+  }
+
+  /**
+   * 期限切れ通知を作成
+   */
+  private createExpirationNotice(expiredCards: Card[]): InsuranceExpirationNotice {
+    const expiredNames = expiredCards.map(card => card.name).join('、')
+    const message = expiredCards.length === 1 
+      ? `定期保険「${expiredNames}」の期限が切れました。`
+      : `定期保険${expiredCards.length}件（${expiredNames}）の期限が切れました。`
+    
+    return {
+      expiredCards,
+      message,
+      showRenewalOption: true, // 将来的に更新オプションを実装するため
+      turnNumber: this.turn
+    }
   }
 
   /**

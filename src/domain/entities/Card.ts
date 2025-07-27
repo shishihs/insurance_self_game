@@ -5,6 +5,7 @@ import type {
   CardEffectType, 
   LifeCardCategory, 
   InsuranceType,
+  InsuranceDurationType,
   DreamCategory
 } from '../types/card.types'
 
@@ -26,6 +27,8 @@ export class Card implements ICard {
   readonly penalty?: number
   // 保険カード用プロパティ
   readonly ageBonus?: number
+  readonly durationType?: InsuranceDurationType
+  remainingTurns?: number // 可変プロパティ（ターンごとに減少）
   // Phase 4 夢カード用プロパティ
   readonly dreamCategory?: DreamCategory
 
@@ -46,6 +49,14 @@ export class Card implements ICard {
     // 年齢ボーナスのプロパティ
     if ('ageBonus' in params) {
       this.ageBonus = params.ageBonus
+    }
+    
+    // 保険期間種別と残りターン数
+    if ('durationType' in params) {
+      this.durationType = params.durationType
+    }
+    if ('remainingTurns' in params) {
+      this.remainingTurns = params.remainingTurns
     }
     
     // Phase 4: 夢カードのカテゴリー
@@ -99,6 +110,52 @@ export class Card implements ICard {
   }
 
   /**
+   * 定期保険かどうか
+   */
+  isTermInsurance(): boolean {
+    return this.isInsuranceCard() && this.durationType === 'term'
+  }
+
+  /**
+   * 終身保険かどうか
+   */
+  isWholeLifeInsurance(): boolean {
+    return this.isInsuranceCard() && this.durationType === 'whole_life'
+  }
+
+  /**
+   * 期限切れかどうか（定期保険のみ）
+   */
+  isExpired(): boolean {
+    if (!this.isTermInsurance()) {
+      return false
+    }
+    return this.remainingTurns !== undefined && this.remainingTurns <= 0
+  }
+
+  /**
+   * ターン経過処理（定期保険の期限を1減らす）
+   */
+  decrementTurn(): void {
+    if (this.isTermInsurance() && this.remainingTurns !== undefined && this.remainingTurns > 0) {
+      this.remainingTurns--
+    }
+  }
+
+  /**
+   * 期限までの残りターン数を取得（表示用）
+   */
+  getRemainingTurnsDisplay(): string {
+    if (!this.isTermInsurance() || this.remainingTurns === undefined) {
+      return '終身'
+    }
+    if (this.remainingTurns <= 0) {
+      return '期限切れ'
+    }
+    return `残り${this.remainingTurns}ターン`
+  }
+
+  /**
    * カードのコピーを作成
    */
   clone(): Card {
@@ -116,6 +173,8 @@ export class Card implements ICard {
       coverage: this.coverage,
       penalty: this.penalty,
       ageBonus: this.ageBonus || 0,
+      durationType: this.durationType,
+      remainingTurns: this.remainingTurns,
       dreamCategory: this.dreamCategory
     }
     
@@ -153,6 +212,11 @@ export class Card implements ICard {
     // 年齢ボーナスの表示
     if (this.ageBonus) {
       display += `, Age Bonus: +${this.ageBonus}`
+    }
+    
+    // 保険期間の表示
+    if (this.isInsuranceCard()) {
+      display += `, 期間: ${this.getRemainingTurnsDisplay()}`
     }
     
     if (this.effects.length > 0) {

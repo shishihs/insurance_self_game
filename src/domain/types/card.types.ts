@@ -23,6 +23,13 @@ export type InsuranceType =
   | 'income'    // 収入保障保険
   | 'asset'     // 資産形成保険
 
+/**
+ * 保険期間種別
+ */
+export type InsuranceDurationType = 
+  | 'term'       // 定期保険（期限あり）
+  | 'whole_life' // 終身保険（期限なし）
+
 
 /**
  * 夢カードカテゴリー
@@ -78,6 +85,8 @@ export interface ICard {
   // 保険カード固有
   insuranceType?: InsuranceType
   coverage?: number // 保障額
+  durationType?: InsuranceDurationType // 保険期間種別
+  remainingTurns?: number // 定期保険の残りターン数（定期保険のみ）
   
   // 落とし穴カード固有
   penalty?: number // ペナルティ値
