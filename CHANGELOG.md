@@ -22,13 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🎮 Improved
 - CUIテストのゲームバランスを改善（成功率0%→約55%）
 - GitHub Actionsワークフローの改善（デプロイ後の自動検証追加）
+- **アクセシビリティ対応**: キーボード操作を完全実装（KeyboardController追加）
+- **開発環境改善**: pre-commitフック導入（huskyによる自動品質チェック）
 
 ### 📚 Documentation
 - TDD/DDD実装完了レポートを追加
 - GUI/CUI使い分けガイドライン作成
 - WORK_STATUS.md更新（最新の開発状況を反映）
-- TECHNICAL_DEBT_REPORT.md更新（CUIシステム完成を記録）
-- README.md更新（最新バージョンと機能を反映）
+- TECHNICAL_DEBT_REPORT.md更新（改善項目の完了を記録）
+- README.md更新（キーボード操作説明とpre-commitフック説明を追加）
 - package.jsonのバージョン番号を0.2.4に更新
 
 ### 🚀 今後のロードマップ

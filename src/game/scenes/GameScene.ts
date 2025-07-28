@@ -13,6 +13,7 @@ import { setupGlobalTutorialTests } from '../tutorial/TutorialTestHelper'
 import { INTERACTIVE_GAME_TUTORIAL } from '../tutorial/InteractiveTutorialConfig'
 import { DropZoneIntegration } from '../systems/DropZoneIntegration'
 import { KeyboardController } from '../systems/KeyboardController'
+import { SoundManager } from '../systems/SoundManager'
 
 /**
  * メインゲームシーン
@@ -56,12 +57,8 @@ export class GameScene extends BaseScene {
   // キーボード操作関連
   private keyboardController?: KeyboardController
   
-  // 旧システム（段階的移行のため一時的に保持）
-  private dropZones: Map<string, Phaser.GameObjects.Container> = new Map()
-  private dropZoneHighlights: Map<string, Phaser.GameObjects.Graphics> = new Map()
-  private isDragInProgress: boolean = false
-  private dragTrail?: Phaser.GameObjects.Graphics
-  private magneticEffect?: Phaser.GameObjects.Graphics
+  // サウンド関連
+  private soundManager?: SoundManager
 
   // チュートリアル関連
   private tutorialManager?: TutorialManager
@@ -97,6 +94,9 @@ export class GameScene extends BaseScene {
     
     // キーボード操作の初期化
     this.initializeKeyboardControls()
+    
+    // サウンドマネージャーの初期化
+    this.initializeSoundManager()
 
     // メニューからチュートリアルが要求された場合は自動開始
     if (this.shouldStartTutorial) {
@@ -507,24 +507,18 @@ export class GameScene extends BaseScene {
     // チャレンジエリアのドロップゾーンを登録
     const challengeArea = this.children.getByName('challenge-area') as Phaser.GameObjects.Container
     if (challengeArea) {
-      this.dropZones.set('challenge', challengeArea)
-      this.createDropZoneHighlight('challenge', challengeArea.x, challengeArea.y, GAME_CONSTANTS.CARD_WIDTH + 20, GAME_CONSTANTS.CARD_HEIGHT + 20)
+      // challengeAreaは新システムで管理
+      // ハイライトは新システムで管理
     }
     
     // 捨て札エリアのドロップゾーンを登録
     const discardArea = this.children.getByName('discard-area') as Phaser.GameObjects.Container
     if (discardArea) {
-      this.dropZones.set('discard', discardArea)
-      this.createDropZoneHighlight('discard', discardArea.x, discardArea.y, GAME_CONSTANTS.CARD_WIDTH + 20, GAME_CONSTANTS.CARD_HEIGHT + 20)
+      // discardAreaは新システムで管理
+      // ハイライトは新システムで管理
     }
     
-    // ドラッグトレイル用のグラフィックスを作成
-    this.dragTrail = this.add.graphics()
-    this.dragTrail.setDepth(900) // カードより下、通常要素より上
-    
-    // マグネティック効果用のグラフィックスを作成
-    this.magneticEffect = this.add.graphics()
-    this.magneticEffect.setDepth(950) // ドラッグトレイルより上
+    // ドラッグエフェクトは新システムで管理
   }
 
   /**
@@ -540,17 +534,6 @@ export class GameScene extends BaseScene {
     })
   }
 
-  /**
-   * ドロップゾーンのハイライトを作成
-   */
-  private createDropZoneHighlight(zoneName: string, x: number, y: number, _width: number, _height: number): void {
-    const highlight = this.add.graphics()
-    highlight.setPosition(x, y)
-    highlight.setAlpha(0) // 初期状態では非表示
-    highlight.setDepth(100) // カードより下に表示
-    
-    this.dropZoneHighlights.set(zoneName, highlight)
-  }
 
   /**
    * ドロップゾーンハイライトを表示
@@ -635,19 +618,6 @@ export class GameScene extends BaseScene {
         return false
     }
   }
-
-  /**
-   * ドラッグ中のマグネティック効果を更新
-   */
-  private updateMagneticEffect(cardX: number, cardY: number): string | null {
-    let closestZone: string | null = null
-    let minDistance = GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE
-    
-    // マグネティック効果をクリア
-    if (this.magneticEffect) {
-      this.magneticEffect.clear()
-    }
-    
     this.dropZones.forEach((zone, zoneName) => {
       const distance = Phaser.Math.Distance.Between(cardX, cardY, zone.x, zone.y)
       
@@ -677,18 +647,6 @@ export class GameScene extends BaseScene {
     
     return closestZone
   }
-
-  /**
-   * ドラッグトレイルを更新
-   */
-  private updateDragTrail(cardX: number, cardY: number): void {
-    if (!this.dragTrail) return
-    
-    // トレイル効果を描画
-    this.dragTrail.fillStyle(GAME_CONSTANTS.COLORS.DRAG_SHADOW, 0.2)
-    this.dragTrail.fillCircle(cardX - 5, cardY + 5, 30) // 少しオフセットしたシャドウ
-  }
-
   /**
    * アクションボタンを作成
    */
@@ -890,6 +848,8 @@ export class GameScene extends BaseScene {
     drawnCards.forEach((card, index) => {
       this.time.delayedCall(index * 100, () => {
         this.createHandCard(card)
+        // カードドロー音を再生
+        this.soundManager?.play('cardDraw')
       })
     })
 
@@ -1199,13 +1159,6 @@ export class GameScene extends BaseScene {
       cardContainer.setScale(GAME_CONSTANTS.DRAG_DROP.DRAG_SCALE)
       cardContainer.setAlpha(GAME_CONSTANTS.DRAG_DROP.DRAG_ALPHA)
       
-      // ドロップゾーンハイライトを表示
-      this.showDropZoneHighlights(cardContainer)
-      
-      // ドラッグトレイルをクリア
-      if (this.dragTrail) {
-        this.dragTrail.clear()
-      }
       
       // ドラッグ中は選択を解除
       if (cardContainer.getData('selected')) {
@@ -1222,52 +1175,16 @@ export class GameScene extends BaseScene {
       cardContainer.x = dragX
       cardContainer.y = dragY + offsetY
       
-      // ドラッグトレイルを更新
-      this.updateDragTrail(cardContainer.x, cardContainer.y)
-      
-      // マグネティック効果を更新
-      const closestZone = this.updateMagneticEffect(cardContainer.x, cardContainer.y)
-      
-      // マグネティックスナップ
-      if (closestZone && this.isValidDropZone(closestZone, cardContainer)) {
-        const zone = this.dropZones.get(closestZone)
-        if (zone) {
-          const distance = Phaser.Math.Distance.Between(cardContainer.x, cardContainer.y, zone.x, zone.y)
-          if (distance < GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE) {
-            // マグネティックスナップアニメーション
-            this.tweens.add({
-              targets: cardContainer,
-              x: zone.x,
-              y: zone.y,
-              duration: GAME_CONSTANTS.DRAG_DROP.SNAP_DURATION,
-              ease: 'Power2.out'
-            })
-          }
-        }
-      }
     })
 
     // ドラッグ終了
     cardContainer.on('dragend', () => {
-      this.isDragInProgress = false
-      
       // ビジュアル効果をリセット
       cardContainer.setScale(1)
       cardContainer.setAlpha(1)
       
-      // ドロップゾーンハイライトを隠す
-      this.hideDropZoneHighlights()
-      
-      // マグネティック効果とドラッグトレイルをクリア
-      if (this.magneticEffect) {
-        this.magneticEffect.clear()
-      }
-      if (this.dragTrail) {
-        this.dragTrail.clear()
-      }
-      
-      // ドロップ先の判定（新しいgetDropZoneV2を使用）
-      const dropZone = this.getDropZoneV2(cardContainer.x, cardContainer.y)
+      // ドロップ先の判定
+      const dropZone = this.getDropZone(cardContainer.x, cardContainer.y)
       
       if (dropZone && this.isValidDropZone(dropZone, cardContainer)) {
         // 有効なドロップゾーンにドロップ
@@ -1298,6 +1215,9 @@ export class GameScene extends BaseScene {
       cardContainer.setData('selected', false)
       cardContainer.setScale(1)
       
+      // カード選択解除音を再生
+      this.soundManager?.play('cardDeselect')
+      
       // ハイライト削除
       const highlight = cardContainer.getByName('highlight')
       if (highlight) {
@@ -1314,6 +1234,9 @@ export class GameScene extends BaseScene {
     } else {
       this.selectedCards.add(card.id)
       cardContainer.setData('selected', true)
+      
+      // カード選択音を再生
+      this.soundManager?.play('cardSelect')
       
       // 選択時のアニメーション
       this.tweens.add({
@@ -1393,6 +1316,9 @@ export class GameScene extends BaseScene {
 
     // チャレンジ開始
     this.gameInstance.startChallenge(challengeCard)
+    
+    // チャレンジ開始音を再生
+    this.soundManager?.play('challengeStart')
     
     // チャレンジカードを表示
     this.displayChallengeCard(challengeCard)
@@ -1947,20 +1873,6 @@ export class GameScene extends BaseScene {
     
     return null
   }
-
-  /**
-   * 改良版ドロップゾーン判定 - 新しいドロップゾーンシステムに対応
-   */
-  private getDropZoneV2(x: number, y: number): string | null {
-    let closestZone: string | null = null
-    let minDistance = GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE
-    
-    this.dropZones.forEach((zone, zoneName) => {
-      const distance = Phaser.Math.Distance.Between(x, y, zone.x, zone.y)
-      if (distance < minDistance) {
-        minDistance = distance
-        closestZone = zoneName
-      }
     })
     
     return closestZone
@@ -2401,6 +2313,13 @@ export class GameScene extends BaseScene {
     const gameState = (window as Window & { __gameState?: Record<string, unknown> }).__gameState || {}
     gameState.lastChallengeResult = result
     this.updateGameStateForTutorial()
+    
+    // 結果に応じたサウンドを再生
+    if (result.success) {
+      this.soundManager?.play('challengeSuccess')
+    } else {
+      this.soundManager?.play('challengeFail')
+    }
     
     // 結果表示
     this.showChallengeResult(result)
@@ -3804,6 +3723,9 @@ export class GameScene extends BaseScene {
 
     // カードをゲームに追加（これにより phase が 'resolution' に変わる）
     this.gameInstance.selectCard(card.id)
+    
+    // 保険獲得音を再生
+    this.soundManager?.play('insuranceGet')
 
     // カード獲得アニメーション
     this.showCardAcquisitionAnimation(card, () => {
@@ -4086,12 +4008,18 @@ export class GameScene extends BaseScene {
     container.add([bg, textObj])
     
     // クリックイベント
-    bg.on('pointerdown', onClick)
+    bg.on('pointerdown', () => {
+      // ボタンクリック音を再生
+      this.soundManager?.play('buttonClick')
+      onClick()
+    })
     
     // ホバー効果
     bg.on('pointerover', () => {
       bg.setFillStyle(0x2980B9)
       container.setScale(1.05)
+      // ボタンホバー音を再生
+      this.soundManager?.play('buttonHover')
     })
     
     bg.on('pointerout', () => {
@@ -5173,5 +5101,78 @@ export class GameScene extends BaseScene {
       this.insuranceTypeSelectionUI.destroy()
       this.insuranceTypeSelectionUI = undefined
     }
+  }
+  
+  /**
+   * サウンドマネージャーを初期化
+   */
+  private initializeSoundManager(): void {
+    this.soundManager = new SoundManager(this)
+    
+    // サウンドの有効/無効切り替えキー（M キー）
+    this.input.keyboard?.on('keydown-M', () => {
+      if (this.soundManager) {
+        const enabled = !this.soundManager.isEnabled()
+        this.soundManager.setEnabled(enabled)
+        this.soundManager.saveSettings()
+        this.showMessage(enabled ? 'サウンド ON' : 'サウンド OFF', 'info')
+      }
+    })
+  }
+  
+  /**
+   * ボタンを作成（サウンド付き）
+   */
+  protected createButton(
+    x: number,
+    y: number,
+    text: string,
+    onClick: () => void,
+    style?: Phaser.Types.GameObjects.Text.TextStyle
+  ): Phaser.GameObjects.Text {
+    const button = super.createButton(x, y, text, onClick, style)
+    
+    // サウンド付きのイベントハンドラを追加
+    button.removeAllListeners()
+    
+    button.on('pointerover', () => {
+      button.setBackgroundColor('#364FC7')
+      button.setScale(1.05)
+      this.soundManager?.play('buttonHover')
+    })
+
+    button.on('pointerout', () => {
+      button.setBackgroundColor('#4C6EF5')
+      button.setScale(1)
+    })
+
+    button.on('pointerdown', () => {
+      button.setScale(0.95)
+      this.soundManager?.play('buttonClick')
+    })
+
+    button.on('pointerup', () => {
+      button.setScale(1.05)
+      onClick()
+    })
+    
+    return button
+  }
+  
+  /**
+   * クリーンアップ処理
+   */
+  destroy(): void {
+    // キーボードコントローラーの破棄
+    if (this.keyboardController) {
+      this.keyboardController.destroy()
+    }
+    
+    // サウンドマネージャーの破棄
+    if (this.soundManager) {
+      this.soundManager.destroy()
+    }
+    
+    super.destroy()
   }
 }

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# エラーが発生したら即座に終了
+set -e
+
+echo "🔍 Pre-commit checks starting..."
+
+# 1. Lint check
+echo "📝 Running ESLint..."
+pnpm run lint
+
+# 2. Type check
+echo "🔬 Running TypeScript type check..."
+pnpm run type-check
+
+# 3. Test（高速テストのみ）
+echo "🧪 Running tests..."
+pnpm run test:run -- --reporter=dot
+
+# 4. Format check
+echo "🎨 Checking code formatting..."
+pnpm run format
+
+echo "✅ All pre-commit checks passed!"
