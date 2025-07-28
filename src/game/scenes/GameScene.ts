@@ -14,6 +14,7 @@ import { INTERACTIVE_GAME_TUTORIAL } from '../tutorial/InteractiveTutorialConfig
 import { DropZoneIntegration } from '../systems/DropZoneIntegration'
 import { KeyboardController } from '../systems/KeyboardController'
 import { SoundManager } from '../systems/SoundManager'
+import { validateNumber } from '@/utils/security'
 
 /**
  * メインゲームシーン
@@ -707,7 +708,7 @@ export class GameScene extends BaseScene {
           const card = this.handCards[i - 1]
           const cardData = card.getData('card') as Card
           if (cardData) {
-            this.toggleCardSelection(cardData.id, card)
+            this.toggleCardSelection(card)
           }
         }
       })
@@ -786,7 +787,7 @@ export class GameScene extends BaseScene {
       this.keyboardController!.registerFocusableElement(cardContainer, () => {
         const cardData = cardContainer.getData('card') as Card
         if (cardData) {
-          this.toggleCardSelection(cardData.id, cardContainer)
+          this.toggleCardSelection(cardContainer)
         }
       })
     })
@@ -1182,6 +1183,8 @@ export class GameScene extends BaseScene {
     const isSelected = cardContainer.getData('selected')
     
     if (isSelected) {
+      // ゲームインスタンスのカード選択を更新
+      this.gameInstance.toggleCardSelection(card)
       this.selectedCards.delete(card.id)
       cardContainer.setData('selected', false)
       cardContainer.setScale(1)
@@ -1203,6 +1206,8 @@ export class GameScene extends BaseScene {
         ease: 'Back.easeOut'
       })
     } else {
+      // ゲームインスタンスのカード選択を更新
+      this.gameInstance.toggleCardSelection(card)
       this.selectedCards.add(card.id)
       cardContainer.setData('selected', true)
       
@@ -2264,14 +2269,8 @@ export class GameScene extends BaseScene {
       return
     }
 
-    // 選択したカードをゲームインスタンスに設定
-    this.gameInstance.selectedCards = []
-    this.handCards.forEach(cardContainer => {
-      const card = cardContainer.getData('card') as Card
-      if (this.selectedCards.has(card.id)) {
-        this.gameInstance.selectedCards.push(card)
-      }
-    })
+    // 注: カードの選択状態は既にtoggleCardSelectionで管理されているので、
+    // ここでは何もする必要がない
 
     // チャレンジ解決
     const result = this.gameInstance.resolveChallenge()
