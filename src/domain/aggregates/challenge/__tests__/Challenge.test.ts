@@ -2,31 +2,16 @@ import { describe, it, expect } from 'vitest'
 import { Challenge } from '../Challenge'
 import { ChallengeId } from '../ChallengeId'
 import { Card } from '../../../entities/Card'
+import { CardPower } from '../../../valueObjects/CardPower'
 import { CardSelectedForChallengeEvent, ChallengeResolvedEvent } from '../events'
 
 describe('Challenge集約', () => {
   const createChallengeCard = (power: number): Card => {
-    return new Card({
-      id: `challenge_${power}`,
-      name: 'テストチャレンジ',
-      description: 'テスト用チャレンジカード',
-      type: 'challenge',
-      power,
-      cost: 0,
-      effects: []
-    })
+    return Card.createChallengeCard(`challenge_${power}`, 'テストチャレンジ', CardPower.create(power))
   }
 
   const createLifeCard = (power: number): Card => {
-    return new Card({
-      id: `life_${power}`,
-      name: 'テストライフカード',
-      description: 'テスト用ライフカード',
-      type: 'life',
-      power,
-      cost: 0,
-      effects: []
-    })
+    return Card.createLifeCard(`life_${power}`, 'テストライフカード', CardPower.create(power))
   }
 
   describe('チャレンジの生成', () => {

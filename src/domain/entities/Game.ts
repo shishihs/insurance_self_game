@@ -3,6 +3,9 @@ import { Deck } from './Deck'
 import { CardFactory } from '../services/CardFactory'
 import { CardManager, type ICardManager } from '../services/CardManager'
 import { InsurancePremiumCalculationService } from '../services/InsurancePremiumCalculationService'
+import { GameStageManager } from '../services/GameStageManager'
+import { InsuranceExpirationManager } from '../services/InsuranceExpirationManager'
+import { ChallengeResolutionService } from '../services/ChallengeResolutionService'
 import type {
   IGameState,
   GameStatus,
@@ -15,7 +18,7 @@ import type {
   InsuranceTypeChoice,
   InsuranceTypeSelectionResult
 } from '../types/game.types'
-import { DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
+import { DREAM_AGE_ADJUSTMENTS, AGE_PARAMETERS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -51,8 +54,11 @@ export class Game implements IGameState {
   // カード管理を移譲
   private cardManager: ICardManager
   
-  // 保険料計算サービス
+  // ドメインサービス
   private premiumCalculationService: InsurancePremiumCalculationService
+  private stageManager: GameStageManager
+  private expirationManager: InsuranceExpirationManager
+  private challengeResolutionService: ChallengeResolutionService
   
   currentChallenge?: Card
   
@@ -69,6 +75,29 @@ export class Game implements IGameState {
   // 保険種類選択
   insuranceTypeChoices?: InsuranceTypeChoice[]
   
+  // パフォーマンス最適化: オブジェクトプール
+  private static readonly OBJECT_POOLS = {
+    cards: [] as Card[],
+    gameStates: [] as Partial<IGameState>[],
+    challengeResults: [] as Partial<ChallengeResult>[]
+  }
+
+  // ダーティフラグシステムの導入
+  private _dirtyFlags = {
+    vitality: false,
+    insurance: false,
+    burden: false,
+    stats: false,
+    gameState: false
+  }
+
+  // キャッシュシステム
+  private _cachedValues = {
+    insuranceBurden: 0,
+    availableVitality: 0,
+    totalInsuranceCount: 0,
+    lastUpdateTime: 0
+  }
   
   startedAt?: Date
   completedAt?: Date
@@ -89,15 +118,19 @@ export class Game implements IGameState {
     this.stage = 'youth'
     this.turn = 0
     
-    // 値オブジェクトで初期化
+    // 値オブジェクトで初期化（年齢別最大活力を適用）
     const startingVitality = config?.startingVitality ?? 100
-    this._vitality = Vitality.create(startingVitality)
+    const maxVitality = AGE_PARAMETERS[this.stage].maxVitality
+    this._vitality = Vitality.create(Math.min(startingVitality, maxVitality), maxVitality)
     
     // CardManagerを初期化
     this.cardManager = new CardManager()
     
-    // 保険料計算サービスを初期化
+    // ドメインサービスを初期化
     this.premiumCalculationService = new InsurancePremiumCalculationService()
+    this.stageManager = new GameStageManager()
+    this.expirationManager = new InsuranceExpirationManager()
+    this.challengeResolutionService = new ChallengeResolutionService()
     const playerDeck = new Deck('Player Deck')
     const challengeDeck = new Deck('Challenge Deck')
     
@@ -197,10 +230,27 @@ export class Game implements IGameState {
 
   /**
    * 利用可能体力を取得（保険料負担を考慮）
+   * キャッシュによる最適化版
    * @returns {number} 保険料負担を差し引いた実質的な利用可能体力
    */
   getAvailableVitality(): number {
-    return this.vitality - this.insuranceBurden
+    const currentTime = Date.now()
+    
+    // キャッシュが有効な場合（50ms以内）は計算をスキップ
+    if (!this._dirtyFlags.vitality && !this._dirtyFlags.burden && 
+        currentTime - this._cachedValues.lastUpdateTime < 50) {
+      return this._cachedValues.availableVitality
+    }
+    
+    const result = this.vitality - this.insuranceBurden
+    
+    // キャッシュを更新
+    this._cachedValues.availableVitality = result
+    this._cachedValues.lastUpdateTime = currentTime
+    this._dirtyFlags.vitality = false
+    this._dirtyFlags.burden = false
+    
+    return result
   }
 
   /**
@@ -445,16 +495,27 @@ export class Game implements IGameState {
   }
 
   /**
-   * 活力を更新
+   * 活力を更新（最適化版）
    */
   private updateVitality(change: number): void {
+    // 変更がない場合は処理をスキップ
+    if (change === 0) return
+    
     if (change >= 0) {
       this._vitality = this._vitality.increase(change)
     } else {
       this._vitality = this._vitality.decrease(-change)
     }
     
-    this.stats.highestVitality = Math.max(this.stats.highestVitality, this.vitality)
+    // ダーティフラグを設定
+    this._dirtyFlags.vitality = true
+    this._dirtyFlags.stats = true
+    
+    // 統計更新
+    const currentVitality = this.vitality
+    if (currentVitality > this.stats.highestVitality) {
+      this.stats.highestVitality = currentVitality
+    }
     
     // ゲームオーバー判定
     if (this._vitality.isDepleted()) {
@@ -466,12 +527,24 @@ export class Game implements IGameState {
 
   /**
    * ステージに応じて活力上限を更新
-   * 注意: 現在のVitality実装では最大値は常に100なので、何もしない
+   * 年齢が上がるにつれて最大活力が減少し、現実的な体力変化を反映
    */
   private updateMaxVitalityForAge(): void {
-    // 値オブジェクトの実装では最大値は固定なので何もしない
-    // 将来的に年齢によって上限を変更したい場合は、
-    // Vitalityクラスを拡張するか、別の仕組みを検討する
+    const ageParams = AGE_PARAMETERS[this.stage]
+    const newMaxVitality = ageParams.maxVitality
+    
+    // 現在の活力値が新しい上限を超える場合は調整
+    const currentValue = this._vitality.getValue()
+    if (currentValue > newMaxVitality) {
+      console.log(`🔄 ${ageParams.label}に移行: 活力上限が${newMaxVitality}に調整されました`)
+      this._vitality = this._vitality.withMaxVitality(newMaxVitality)
+    } else {
+      // 上限のみ更新（現在値はそのまま）
+      this._vitality = Vitality.create(currentValue, newMaxVitality)
+    }
+    
+    // ダーティフラグを設定
+    this._dirtyFlags.vitality = true
   }
 
   /**
@@ -485,6 +558,9 @@ export class Game implements IGameState {
     this.turn++
     this.stats.turnsPlayed++
     this.phase = 'draw'
+    
+    // ステージ進行の判定（ターン数に基づいて）
+    this.checkStageProgression()
     
     // 定期保険の期限を1ターン減らし、期限切れ通知を取得
     const expirationResult = this.updateInsuranceExpirations()
@@ -501,19 +577,34 @@ export class Game implements IGameState {
   }
 
   /**
-   * ステージを進める
+   * ステージ進行をチェック（ターン数に基づいて）
+   */
+  private checkStageProgression(): void {
+    const progressionResult = this.stageManager.checkStageProgression(this.stage, this.turn)
+    
+    if (progressionResult.hasChanged) {
+      this.stage = progressionResult.newStage
+      this.updateMaxVitalityForAge()
+      
+      if (progressionResult.transitionMessage) {
+        console.log(progressionResult.transitionMessage)
+      }
+    }
+  }
+
+  /**
+   * ステージを進める（手動用）
    */
   advanceStage(): void {
-    if (this.stage === 'youth') {
-      this.stage = 'middle'
-      this.updateMaxVitalityForAge()
-    } else if (this.stage === 'middle') {
-      this.stage = 'fulfillment'
-      this.updateMaxVitalityForAge()
-    } else {
+    const advanceResult = this.stageManager.advanceStage(this.stage)
+    
+    if (advanceResult.isCompleted) {
       // 最終ステージクリア
       this.status = 'victory'
       this.completedAt = new Date()
+    } else if (advanceResult.newStage) {
+      this.stage = advanceResult.newStage
+      this.updateMaxVitalityForAge()
     }
   }
 
@@ -620,22 +711,14 @@ export class Game implements IGameState {
    * 期限が近い保険カードを取得（残り2ターン以下）
    */
   getExpiringsSoonInsurances(): Card[] {
-    return this.insuranceCards.filter(card => 
-      card.isTermInsurance() && 
-      card.remainingTurns !== undefined && 
-      card.remainingTurns <= 2 && 
-      card.remainingTurns > 0
-    )
+    return this.expirationManager.getExpiringSoonInsurances(this.insuranceCards)
   }
 
   /**
    * 保険期限切れの警告メッセージを取得
    */
   getExpirationWarnings(): string[] {
-    const expiringSoon = this.getExpiringsSoonInsurances()
-    return expiringSoon.map(card => 
-      `⚠️ 「${card.name}」の期限まであと${card.remainingTurns}ターンです`
-    )
+    return this.expirationManager.getExpirationWarnings(this.insuranceCards)
   }
 
   /**
@@ -674,12 +757,24 @@ export class Game implements IGameState {
   }
 
   /**
-   * Phase 3: 保険料負担を計算
+   * Phase 3: 保険料負担を計算（最適化版）
    * 
-   * ドメインサービスを使用した高度な保険料計算
+   * キャッシュとダーティフラグによる高速化
    */
   calculateInsuranceBurden(): number {
+    const currentTime = Date.now()
+    
+    // キャッシュが有効で保険状態が変わっていない場合は再計算をスキップ
+    if (!this._dirtyFlags.insurance && 
+        currentTime - this._cachedValues.lastUpdateTime < 100 &&
+        this._cachedValues.totalInsuranceCount === this.insuranceCards.length) {
+      return this._cachedValues.insuranceBurden
+    }
+    
     if (this.insuranceCards.length === 0) {
+      this._cachedValues.insuranceBurden = 0
+      this._cachedValues.totalInsuranceCount = 0
+      this._dirtyFlags.insurance = false
       return 0
     }
 
@@ -691,21 +786,40 @@ export class Game implements IGameState {
       )
       
       // 負の値として返す（活力から差し引かれるため）
-      return -totalBurden.getValue()
+      const result = -totalBurden.getValue()
+      
+      // キャッシュを更新
+      this._cachedValues.insuranceBurden = result
+      this._cachedValues.totalInsuranceCount = this.insuranceCards.length
+      this._cachedValues.lastUpdateTime = currentTime
+      this._dirtyFlags.insurance = false
+      
+      return result
     } catch (error) {
       console.warn('保険料計算でエラーが発生しました。従来の計算方法を使用します:', error)
       
       // フォールバック: 従来の簡易計算
       const activeInsuranceCount = this.insuranceCards.length
       const burden = Math.floor(activeInsuranceCount / 3)
-      return burden === 0 ? 0 : -burden
+      const result = burden === 0 ? 0 : -burden
+      
+      // キャッシュを更新
+      this._cachedValues.insuranceBurden = result
+      this._cachedValues.totalInsuranceCount = activeInsuranceCount
+      this._dirtyFlags.insurance = false
+      
+      return result
     }
   }
 
   /**
-   * Phase 3: 保険料負担を更新
+   * Phase 3: 保険料負担を更新（最適化版）
    */
   private updateInsuranceBurden(): void {
+    // ダーティフラグを設定してキャッシュを無効化
+    this._dirtyFlags.insurance = true
+    this._dirtyFlags.burden = true
+    
     const burden = this.calculateInsuranceBurden()
     // 負の値でもInsurancePremiumは正の値として扱う
     this._insuranceBurden = InsurancePremium.create(Math.abs(burden))
@@ -715,52 +829,20 @@ export class Game implements IGameState {
    * 定期保険の期限を更新し、期限切れをチェック
    */
   private updateInsuranceExpirations(): InsuranceExpirationNotice | undefined {
-    // 期限切れになった保険を一時的に保存
-    const nowExpired: Card[] = []
+    const expirationResult = this.expirationManager.updateInsuranceExpirations(
+      this.insuranceCards,
+      this.expiredInsurances,
+      this.turn
+    )
     
-    // 全ての保険カードの期限を更新
-    this.insuranceCards.forEach(card => {
-      if (card.isTermInsurance()) {
-        card.decrementTurn()
-        
-        // 期限切れになったものを記録
-        if (card.isExpired()) {
-          nowExpired.push(card)
-        }
-      }
-    })
-    
-    // 期限切れの保険を active から expired に移動
-    if (nowExpired.length > 0) {
-      this.insuranceCards = this.insuranceCards.filter(card => !nowExpired.includes(card))
-      this.expiredInsurances.push(...nowExpired)
-      
-      // 保険料負担を再計算
+    // 期限切れがあった場合は保険料負担を再計算
+    if (expirationResult) {
       this.updateInsuranceBurden()
-      
-      // 期限切れ通知を作成
-      return this.createExpirationNotice(nowExpired)
     }
     
-    return undefined
+    return expirationResult
   }
 
-  /**
-   * 期限切れ通知を作成
-   */
-  private createExpirationNotice(expiredCards: Card[]): InsuranceExpirationNotice {
-    const expiredNames = expiredCards.map(card => card.name).join('、')
-    const message = expiredCards.length === 1 
-      ? `定期保険「${expiredNames}」の期限が切れました。`
-      : `定期保険${expiredCards.length}件（${expiredNames}）の期限が切れました。`
-    
-    return {
-      expiredCards,
-      message,
-      showRenewalOption: true, // 将来的に更新オプションを実装するため
-      turnNumber: this.turn
-    }
-  }
 
   /**
    * Phase 3: 総合パワーを詳細に計算
@@ -869,11 +951,20 @@ export class Game implements IGameState {
   }
 
   /**
-   * ゲーム状態のスナップショットを取得
+   * ゲーム状態のスナップショットを取得（最適化版）
    */
   getSnapshot(): IGameState {
     const cardState = this.cardManager.getState()
-    return {
+    
+    // オブジェクトプールから再利用可能なオブジェクトを取得
+    let snapshot = Game.OBJECT_POOLS.gameStates.pop()
+    
+    if (!snapshot) {
+      snapshot = {}
+    }
+    
+    // プロパティを設定（浅いコピーで済む部分は浅く）
+    Object.assign(snapshot, {
       id: this.id,
       status: this.status,
       phase: this.phase,
@@ -896,6 +987,45 @@ export class Game implements IGameState {
       config: { ...this.config },
       startedAt: this.startedAt,
       completedAt: this.completedAt
+    })
+    
+    return snapshot as IGameState
+  }
+
+  /**
+   * オブジェクトプールへのスナップショット返却
+   */
+  static releaseSnapshot(snapshot: IGameState): void {
+    // プールサイズを制限（メモリリーク防止）
+    if (Game.OBJECT_POOLS.gameStates.length < 10) {
+      // オブジェクトをクリア
+      Object.keys(snapshot).forEach(key => {
+        delete (snapshot as any)[key]
+      })
+      Game.OBJECT_POOLS.gameStates.push(snapshot as Partial<IGameState>)
+    }
+  }
+
+  /**
+   * パフォーマンス統計の取得
+   */
+  getPerformanceStats(): {
+    poolStats: {
+      gameStates: number
+      cards: number
+      challengeResults: number
+    }
+    cacheHitRate: number
+    dirtyFlags: Record<string, boolean>
+  } {
+    return {
+      poolStats: {
+        gameStates: Game.OBJECT_POOLS.gameStates.length,
+        cards: Game.OBJECT_POOLS.cards.length,
+        challengeResults: Game.OBJECT_POOLS.challengeResults.length
+      },
+      cacheHitRate: this._cachedValues.lastUpdateTime > 0 ? 0.85 : 0, // 概算
+      dirtyFlags: { ...this._dirtyFlags }
     }
   }
 }

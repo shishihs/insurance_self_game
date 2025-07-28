@@ -6,21 +6,23 @@
  * - 活力は0以上100以下でなければならない
  */
 export class Vitality {
-  private static readonly MAX_VITALITY = 100
+  private static readonly DEFAULT_MAX_VITALITY = 100
 
   private constructor(
-    private readonly value: number
+    private readonly value: number,
+    private readonly maxVitality: number = Vitality.DEFAULT_MAX_VITALITY
   ) {
     this.validate()
   }
 
   /**
    * Vitality インスタンスを生成する
-   * @param value 活力値（0-100）
+   * @param value 活力値
+   * @param maxVitality 最大活力値（デフォルト: 100）
    * @throws {Error} 不正な値の場合
    */
-  static create(value: number): Vitality {
-    return new Vitality(value)
+  static create(value: number, maxVitality: number = Vitality.DEFAULT_MAX_VITALITY): Vitality {
+    return new Vitality(value, maxVitality)
   }
 
   /**
@@ -28,8 +30,14 @@ export class Vitality {
    * @private
    */
   private validate(): void {
-    if (this.value < 0 || this.value > Vitality.MAX_VITALITY) {
-      throw new Error(`Vitality must be between 0 and ${Vitality.MAX_VITALITY}`)
+    if (this.maxVitality <= 0) {
+      throw new Error('Maximum vitality must be positive')
+    }
+    if (this.value < 0) {
+      throw new Error('Vitality value cannot be negative')
+    }
+    if (this.value > this.maxVitality) {
+      throw new Error(`Vitality value cannot exceed maximum (${this.maxVitality})`)
     }
   }
 
@@ -44,7 +52,7 @@ export class Vitality {
    * 最大活力値を取得
    */
   getMax(): number {
-    return Vitality.MAX_VITALITY
+    return this.maxVitality
   }
 
   /**
@@ -57,7 +65,7 @@ export class Vitality {
     if (amount < 0) {
       throw new Error('Decrease amount must be non-negative')
     }
-    return new Vitality(Math.max(0, this.value - amount))
+    return new Vitality(Math.max(0, this.value - amount), this.maxVitality)
   }
 
   /**
@@ -70,14 +78,14 @@ export class Vitality {
     if (amount < 0) {
       throw new Error('Increase amount must be non-negative')
     }
-    return new Vitality(Math.min(Vitality.MAX_VITALITY, this.value + amount))
+    return new Vitality(Math.min(this.maxVitality, this.value + amount), this.maxVitality)
   }
 
   /**
    * パーセンテージを取得（0-100）
    */
   getPercentage(): number {
-    return Math.floor((this.value / Vitality.MAX_VITALITY) * 100)
+    return Math.floor((this.value / this.maxVitality) * 100)
   }
 
   /**
@@ -91,20 +99,31 @@ export class Vitality {
    * 活力が満タンか判定
    */
   isFull(): boolean {
-    return this.value === Vitality.MAX_VITALITY
+    return this.value === this.maxVitality
+  }
+
+  /**
+   * 最大活力値を変更したVitalityインスタンスを作成
+   * 現在の活力値が新しい最大値を超える場合は最大値に調整
+   * @param newMaxVitality 新しい最大活力値
+   * @returns 新しいVitalityインスタンス
+   */
+  withMaxVitality(newMaxVitality: number): Vitality {
+    const adjustedValue = Math.min(this.value, newMaxVitality)
+    return new Vitality(adjustedValue, newMaxVitality)
   }
 
   /**
    * 他のVitalityインスタンスと等価か判定
    */
   equals(other: Vitality): boolean {
-    return this.value === other.value
+    return this.value === other.value && this.maxVitality === other.maxVitality
   }
 
   /**
    * 文字列表現を取得
    */
   toString(): string {
-    return `${this.value}/${Vitality.MAX_VITALITY} (${this.getPercentage()}%)`
+    return `${this.value}/${this.maxVitality} (${this.getPercentage()}%)`
   }
 }

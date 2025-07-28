@@ -12,13 +12,8 @@ describe('Card Factory Methods', () => {
       expect(card.description).toContain('パワー: +1')
     })
 
-    it('負のパワーを持つライフカードを作成できる', () => {
-      const card = Card.createLifeCard('浪費癖', -1)
-      
-      expect(card.name).toBe('浪費癖')
-      expect(card.type).toBe('life')
-      expect(card.power).toBe(-1)
-      expect(card.description).toContain('パワー: -1')
+    it('負のパワーでライフカードを作成しようとするとエラーになる', () => {
+      expect(() => Card.createLifeCard('浪費癖', -1)).toThrow('CardPower must be non-negative')
     })
 
     it('ゼロパワーのライフカードを作成できる', () => {

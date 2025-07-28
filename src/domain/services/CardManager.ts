@@ -98,7 +98,7 @@ export interface ICardManager {
 }
 
 /**
- * カード管理サービス
+ * カード管理サービス（最適化版）
  */
 export class CardManager implements ICardManager {
   private hand: Card[] = []
@@ -108,6 +108,16 @@ export class CardManager implements ICardManager {
   private selectedCards: Card[] = []
   private cardChoices?: Card[]
   private config?: GameConfig
+
+  // パフォーマンス最適化: オブジェクトプール
+  private static readonly CARD_POOLS = {
+    drawResults: [] as DrawResult[],
+    selectedIds: new Set<string>() // IDベースの選択状態管理
+  }
+
+  // キャッシュ
+  private _cachedState?: CardManagerState
+  private _stateVersion = 0
 
   /**
    * カード管理状態を初期化
@@ -123,10 +133,16 @@ export class CardManager implements ICardManager {
   }
 
   /**
-   * 現在の状態を取得
+   * 現在の状態を取得（キャッシュ最適化版）
    */
   getState(): CardManagerState {
-    return {
+    // キャッシュが有効な場合はそれを返す
+    if (this._cachedState && this._stateVersion > 0) {
+      return this._cachedState
+    }
+
+    // 新しい状態を作成
+    const state: CardManagerState = {
       hand: [...this.hand],
       discardPile: [...this.discardPile],
       playerDeck: this.playerDeck.clone(),
@@ -134,6 +150,12 @@ export class CardManager implements ICardManager {
       selectedCards: [...this.selectedCards],
       cardChoices: this.cardChoices ? [...this.cardChoices] : undefined
     }
+
+    // キャッシュに保存
+    this._cachedState = state
+    this._stateVersion++
+
+    return state
   }
 
   /**
@@ -146,18 +168,37 @@ export class CardManager implements ICardManager {
     this.challengeDeck = state.challengeDeck.clone()
     this.selectedCards = [...state.selectedCards]
     this.cardChoices = state.cardChoices ? [...state.cardChoices] : undefined
+    
+    // キャッシュを無効化
+    this.invalidateCache()
   }
 
   /**
-   * 指定した枚数のカードをドロー
+   * キャッシュを無効化
+   */
+  private invalidateCache(): void {
+    this._cachedState = undefined
+    this._stateVersion = 0
+  }
+
+  /**
+   * 指定した枚数のカードをドロー（最適化版）
    */
   drawCards(count: number): DrawResult {
     if (!this.config) {
       throw new Error('CardManager not initialized')
     }
 
-    const drawnCards: Card[] = []
-    
+    // オブジェクトプールからDrawResultを取得
+    let result = CardManager.CARD_POOLS.drawResults.pop()
+    if (!result) {
+      result = { drawnCards: [], discardedCards: [] }
+    } else {
+      // 配列をクリア
+      result.drawnCards.length = 0
+      result.discardedCards.length = 0
+    }
+
     for (let i = 0; i < count; i++) {
       // デッキが空の場合、捨て札をシャッフルして山札に戻す
       if (this.playerDeck.isEmpty() && this.discardPile.length > 0) {
@@ -166,40 +207,53 @@ export class CardManager implements ICardManager {
       
       const card = this.playerDeck.drawCard()
       if (card) {
-        drawnCards.push(card)
+        result.drawnCards.push(card)
         this.hand.push(card)
       }
     }
     
     // 手札上限チェック
     const discardedCards = this.enforceHandLimit()
+    result.discardedCards.push(...discardedCards)
     
-    return {
-      drawnCards,
-      discardedCards
-    }
+    // キャッシュを無効化
+    this.invalidateCache()
+    
+    return result
   }
 
   /**
-   * カードを選択/選択解除
+   * カードを選択/選択解除（最適化版）
    */
   toggleCardSelection(card: Card): boolean {
-    const index = this.selectedCards.findIndex(c => c.id === card.id)
+    const cardId = card.id
     
-    if (index !== -1) {
-      this.selectedCards.splice(index, 1)
+    // SetベースのIDチェックで高速化
+    if (CardManager.CARD_POOLS.selectedIds.has(cardId)) {
+      // 選択解除
+      CardManager.CARD_POOLS.selectedIds.delete(cardId)
+      const index = this.selectedCards.findIndex(c => c.id === cardId)
+      if (index !== -1) {
+        this.selectedCards.splice(index, 1)
+      }
+      this.invalidateCache()
       return false // 選択解除
     } else {
+      // 選択
+      CardManager.CARD_POOLS.selectedIds.add(cardId)
       this.selectedCards.push(card)
+      this.invalidateCache()
       return true // 選択
     }
   }
 
   /**
-   * 選択中のカードをクリア
+   * 選択中のカードをクリア（最適化版）
    */
   clearSelection(): void {
-    this.selectedCards = []
+    this.selectedCards.length = 0
+    CardManager.CARD_POOLS.selectedIds.clear()
+    this.invalidateCache()
   }
 
   /**
@@ -226,6 +280,7 @@ export class CardManager implements ICardManager {
    */
   addToHand(card: Card): void {
     this.hand.push(card)
+    this.invalidateCache()
   }
 
   /**
@@ -233,6 +288,7 @@ export class CardManager implements ICardManager {
    */
   addToDiscardPile(card: Card): void {
     this.discardPile.push(card)
+    this.invalidateCache()
   }
 
   /**
@@ -240,6 +296,7 @@ export class CardManager implements ICardManager {
    */
   addToPlayerDeck(card: Card): void {
     this.playerDeck.addCard(card)
+    this.invalidateCache()
   }
 
   /**

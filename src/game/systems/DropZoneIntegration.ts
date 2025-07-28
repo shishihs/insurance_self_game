@@ -38,6 +38,12 @@ export class DropZoneIntegration {
   private draggedCard?: Phaser.GameObjects.Container
   private dragStartPosition = { x: 0, y: 0 }
   private isSnapping = false
+  
+  // パフォーマンス最適化
+  private lastUpdateTime = 0
+  private readonly UPDATE_THROTTLE = 16 // 60fps相当
+  private particlePool: Phaser.GameObjects.Graphics[] = []
+  private trailPool: Phaser.GameObjects.Graphics[] = []
 
   constructor(scene: Phaser.Scene, game: Game) {
     this.scene = scene
@@ -194,7 +200,7 @@ export class DropZoneIntegration {
   }
 
   /**
-   * ドラッグ更新処理
+   * ドラッグ更新処理（最適化版）
    */
   private updateDrag(
     cardContainer: Phaser.GameObjects.Container,
@@ -208,6 +214,16 @@ export class DropZoneIntegration {
       return
     }
     
+    // スロットリング: 60fps相当でフレームレート制限
+    const currentTime = Date.now()
+    if (currentTime - this.lastUpdateTime < this.UPDATE_THROTTLE) {
+      // 位置だけ更新（軽量処理）
+      cardContainer.x = dragX + this.dragConfig.touchOffset.x
+      cardContainer.y = dragY + this.dragConfig.touchOffset.y
+      return
+    }
+    this.lastUpdateTime = currentTime
+    
     // デバイス情報を考慮した位置調整
     const adjustedPosition = {
       x: dragX + this.dragConfig.touchOffset.x,
@@ -220,7 +236,7 @@ export class DropZoneIntegration {
     // ドロップゾーンシステムに位置更新を通知
     this.dropZoneManager.updateDrag(adjustedPosition, this.game)
 
-    // マグネティックスナップのチェック
+    // マグネティックスナップのチェック（スロットリング対象外の処理のみ）
     if (!this.isSnapping) {
       const snapTarget = this.dropZoneManager.getMagneticSnapTarget(adjustedPosition)
       if (snapTarget) {
@@ -228,8 +244,8 @@ export class DropZoneIntegration {
       }
     }
 
-    // ドラッグトレイルの更新
-    this.updateDragTrail(cardContainer)
+    // ドラッグトレイルの更新（軽量化）
+    this.updateDragTrailOptimized(cardContainer)
   }
 
   /**
@@ -369,7 +385,24 @@ export class DropZoneIntegration {
   }
 
   /**
-   * ドラッグトレイルの更新
+   * ドラッグトレイルの更新（最適化版）
+   */
+  private updateDragTrailOptimized(cardContainer: Phaser.GameObjects.Container): void {
+    const trail = cardContainer.getByName('drag-trail') as Phaser.GameObjects.Graphics
+    if (trail) {
+      // より高速なフェードアウト（計算量削減）
+      const newAlpha = trail.alpha - 0.05
+      if (newAlpha < 0.1) {
+        this.returnTrailToPool(trail)
+        cardContainer.remove(trail)
+      } else {
+        trail.setAlpha(newAlpha)
+      }
+    }
+  }
+
+  /**
+   * ドラッグトレイルの更新（従来版）
    */
   private updateDragTrail(cardContainer: Phaser.GameObjects.Container): void {
     const trail = cardContainer.getByName('drag-trail') as Phaser.GameObjects.Graphics
@@ -434,16 +467,24 @@ export class DropZoneIntegration {
   }
 
   /**
-   * 成功パーティクルの作成
+   * 成功パーティクルの作成（最適化版）
    */
   private createSuccessParticles(x: number, y: number): void {
-    // シンプルなパーティクル効果
+    // オブジェクトプールを使用してパーティクル効果を最適化
     for (let i = 0; i < 8; i++) {
-      const particle = this.scene.add.graphics()
+      let particle = this.particlePool.pop()
+      
+      if (!particle) {
+        particle = this.scene.add.graphics()
+      }
+      
+      particle.clear()
       particle.fillStyle(0x10B981, 0.8)
       particle.fillCircle(0, 0, 4)
       particle.setPosition(x, y)
       particle.setDepth(1002)
+      particle.setAlpha(0.8)
+      particle.setScale(1)
 
       const angle = (i / 8) * Math.PI * 2
       const distance = 100
@@ -456,8 +497,36 @@ export class DropZoneIntegration {
         scale: 2,
         duration: 800,
         ease: 'Power2',
-        onComplete: () => particle.destroy()
+        onComplete: () => {
+          // パーティクルをプールに戻す
+          this.returnParticleToPool(particle!)
+        }
       })
+    }
+  }
+
+  /**
+   * パーティクルをプールに戻す
+   */
+  private returnParticleToPool(particle: Phaser.GameObjects.Graphics): void {
+    if (this.particlePool.length < 20) { // プールサイズ制限
+      particle.setVisible(false)
+      this.particlePool.push(particle)
+    } else {
+      particle.destroy()
+    }
+  }
+
+  /**
+   * トレイルをプールに戻す
+   */
+  private returnTrailToPool(trail: Phaser.GameObjects.Graphics): void {
+    if (this.trailPool.length < 10) { // プールサイズ制限
+      trail.setVisible(false)
+      trail.setAlpha(1)
+      this.trailPool.push(trail)
+    } else {
+      trail.destroy()
     }
   }
 
@@ -511,9 +580,37 @@ export class DropZoneIntegration {
   }
 
   /**
+   * パフォーマンス統計の取得
+   */
+  getPerformanceStats(): {
+    poolStats: {
+      particles: number
+      trails: number
+    }
+    updateFrequency: number
+    throttleRate: number
+  } {
+    return {
+      poolStats: {
+        particles: this.particlePool.length,
+        trails: this.trailPool.length
+      },
+      updateFrequency: this.UPDATE_THROTTLE,
+      throttleRate: this.lastUpdateTime > 0 ? 1000 / this.UPDATE_THROTTLE : 0
+    }
+  }
+
+  /**
    * クリーンアップ
    */
   destroy(): void {
+    // プールの中身を全て破棄
+    this.particlePool.forEach(particle => particle.destroy())
+    this.trailPool.forEach(trail => trail.destroy())
+    
+    this.particlePool.length = 0
+    this.trailPool.length = 0
+    
     this.dropZoneManager.destroy()
   }
 }

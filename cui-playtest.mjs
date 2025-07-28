@@ -100,7 +100,15 @@ class Game {
   }
 
   applyDamage(damage) {
-    this.vitality = Math.max(0, this.vitality - damage)
+    // 保険によるダメージ軽減効果
+    const insuranceReduction = Math.min(damage, this.insuranceCards.length)
+    const actualDamage = Math.max(0, damage - insuranceReduction)
+    
+    if (insuranceReduction > 0) {
+      console.log(chalk.green(`🛡️ 保険効果: ${damage}ダメージを${insuranceReduction}軽減 → 実際のダメージ:${actualDamage}`))
+    }
+    
+    this.vitality = Math.max(0, this.vitality - actualDamage)
     if (this.vitality <= 0) {
       this.status = 'game_over'
     }
@@ -119,6 +127,16 @@ class Game {
 
   nextTurn() {
     this.turn++
+    
+    // ステージ進行の実装
+    if (this.turn === 8 && this.stage === 'youth') {
+      this.stage = 'middle'
+      console.log(chalk.yellow(`🔄 ステージ進行: ${this.stage} フェーズに移行（ターン${this.turn}）`))
+    } else if (this.turn === 15 && this.stage === 'middle') {
+      this.stage = 'fulfillment'
+      console.log(chalk.yellow(`🔄 ステージ進行: ${this.stage} フェーズに移行（ターン${this.turn}）`))
+    }
+    
     return {
       insuranceExpirations: undefined,
       newExpiredCount: 0,
@@ -177,8 +195,19 @@ class PlaytestGameController {
       return false
     }
 
-    // AIによるチャレンジ選択（ランダム）
+    // インタラクティブモード: チャレンジの表示
+    console.log(chalk.cyan('\n📋 今回のチャレンジ選択肢:'))
+    this.currentChallenges.forEach((challenge, index) => {
+      const requiredPower = this.getRequiredPower(challenge)
+      const label = String.fromCharCode(65 + index) // A, B, C...
+      console.log(chalk.white(`  ${label}: ${challenge.name} (必要パワー: ${requiredPower})`))
+    })
+
+    // AIによるチャレンジ選択（成功率重視）
     const selectedChallenge = this.selectChallengeByAI(this.currentChallenges)
+    const selectedIndex = this.currentChallenges.findIndex(c => c.id === selectedChallenge.id)
+    const selectedLabel = String.fromCharCode(65 + selectedIndex)
+    console.log(chalk.magenta(`🤖 AI選択: ${selectedLabel} - ${selectedChallenge.name}`))
 
     // 選択されたチャレンジを使用済みにマーク
     const originalChallenge = this.challengeCards.find(c => c.id === selectedChallenge.id)
@@ -274,21 +303,29 @@ class PlaytestGameController {
     }
   }
 
-  // 初期デッキを作成
+  // 初期デッキを作成（修正版：ポジティブ60%、ニュートラル20%、ネガティブ20%）
   createInitialDeck() {
     const cards = []
+    const totalCards = 20
 
-    // ポジティブカード（8枚）
+    // ポジティブカード（12枚 = 60%）
     for (let i = 0; i < 4; i++) cards.push(Card.createLifeCard('アルバイト収入', 1))
-    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('親の仕送り', 2))
+    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('親の仕送り', 2))
     for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('友人の励まし', 1))
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('勉強の成果', 2))
+    cards.push(Card.createLifeCard('健康維持', 1))
 
-    // ネガティブカード（10枚）
-    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('浪費癖', -1))
-    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('衝動買い', 0))
-    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('ギャンブル', -1))
-    cards.push(Card.createLifeCard('友人の結婚式', 0))
-    cards.push(Card.createLifeCard('風邪をひく', 0))
+    // ニュートラルカード（4枚 = 20%）
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('友人の結婚式', 0))
+    cards.push(Card.createLifeCard('季節のイベント', 0))
+    cards.push(Card.createLifeCard('日常の出来事', 0))
+
+    // ネガティブカード（4枚 = 20%）
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('浪費癖', -1))
+    cards.push(Card.createLifeCard('風邪をひく', -1))
+    cards.push(Card.createLifeCard('予期しない出費', -2))
+
+    console.log(`📊 カードバランス - ポジティブ:${cards.filter(c => c.power > 0).length}枚(${(cards.filter(c => c.power > 0).length/cards.length*100).toFixed(0)}%), ニュートラル:${cards.filter(c => c.power === 0).length}枚(${(cards.filter(c => c.power === 0).length/cards.length*100).toFixed(0)}%), ネガティブ:${cards.filter(c => c.power < 0).length}枚(${(cards.filter(c => c.power < 0).length/cards.length*100).toFixed(0)}%)`)
 
     return cards
   }

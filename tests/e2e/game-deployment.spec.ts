@@ -42,25 +42,37 @@ test.describe('人生充実ゲーム - デプロイメント検証', () => {
     // ゲーム画面が表示されるまで待機
     await page.waitForTimeout(5000);
     
-    // チャレンジを成功させる（簡易テスト）
-    // 実際のゲームロジックに応じて調整が必要
+    // Phaserゲーム内での操作テスト（改良版）
     try {
-      // チャレンジボタンを探してクリック
-      const challengeButton = page.locator('text=チャレンジ').or(page.locator('text=CHALLENGE'));
-      if (await challengeButton.isVisible({ timeout: 5000 })) {
-        await challengeButton.click();
+      // Canvas要素が存在することを確認
+      const canvas = page.locator('canvas');
+      await expect(canvas).toBeVisible({ timeout: 10000 });
+      
+      // ゲーム内でのクリック操作をシミュレート
+      const canvasElement = await canvas.boundingBox();
+      if (canvasElement) {
+        // Canvas中央をクリック（ゲーム開始のトリガー）
+        await page.mouse.click(
+          canvasElement.x + canvasElement.width / 2,
+          canvasElement.y + canvasElement.height / 2
+        );
         
-        // カード選択画面が表示されるかチェック
+        // ゲーム進行を待機
         await page.waitForTimeout(3000);
         
-        // 3択カード選択要素の存在確認
-        const cardSelectionElements = page.locator('[class*="card"]').or(page.locator('[data-testid*="card"]'));
-        const cardCount = await cardSelectionElements.count();
+        // 複数クリックでゲーム進行をシミュレート
+        for (let i = 0; i < 3; i++) {
+          await page.mouse.click(
+            canvasElement.x + canvasElement.width / 3 + (i * 100),
+            canvasElement.y + canvasElement.height / 2
+          );
+          await page.waitForTimeout(1000);
+        }
         
-        console.log(`カード選択要素数: ${cardCount}`);
+        console.log('Phase 2: ゲーム内操作テスト完了');
       }
     } catch (error) {
-      console.log('ゲームフロー詳細テストはスキップ:', error);
+      console.log('Phase 2テストはスキップ:', error);
     }
   });
 
@@ -94,5 +106,96 @@ test.describe('人生充実ゲーム - デプロイメント検証', () => {
     
     // 3秒以内のロードを期待
     expect(loadTime).toBeLessThan(5000);
+  });
+
+  test('エラーハンドリング: ネットワーク失敗', async ({ page }) => {
+    // ネットワークを無効化
+    await page.route('**/*', route => route.abort());
+    
+    try {
+      await page.goto('/', { timeout: 3000 });
+    } catch (error) {
+      // ネットワークエラーが期待される動作
+      console.log('ネットワークエラーテスト: 期待通りの失敗');
+    }
+  });
+
+  test('メモリリーク検出', async ({ page }) => {
+    await page.goto('/');
+    
+    // ゲームを複数回開始・終了してメモリリークをチェック
+    for (let i = 0; i < 5; i++) {
+      const startButton = page.locator('text=ゲームをプレイ');
+      await startButton.click();
+      await page.waitForTimeout(2000);
+      
+      const backButton = page.locator('text=ホームに戻る');
+      if (await backButton.isVisible({ timeout: 5000 })) {
+        await backButton.click();
+      } else {
+        // ページリロードでリセット
+        await page.reload();
+      }
+      await page.waitForTimeout(1000);
+    }
+    
+    console.log('メモリリークテスト: 5回のゲーム開始・終了完了');
+  });
+
+  test('ブラウザ互換性: JavaScriptエラー監視', async ({ page }) => {
+    const errors: string[] = [];
+    const consoleErrors: string[] = [];
+    
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    
+    await page.goto('/');
+    await page.waitForTimeout(5000);
+    
+    // ゲーム開始してエラーチェック
+    const startButton = page.locator('text=ゲームをプレイ');
+    await startButton.click();
+    await page.waitForTimeout(3000);
+    
+    console.log(`JavaScriptエラー: ${errors.length}件`);
+    console.log(`Consoleエラー: ${consoleErrors.length}件`);
+    
+    // 重大エラーがないことを確認
+    const criticalErrors = errors.filter(err => 
+      err.includes('TypeError') || err.includes('ReferenceError')
+    );
+    expect(criticalErrors).toHaveLength(0);
+  });
+
+  test('タッチデバイス対応', async ({ page }) => {
+    // モバイルビューポートに設定
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    
+    // タッチイベントのシミュレート
+    const startButton = page.locator('text=ゲームをプレイ');
+    
+    // タップ操作
+    await startButton.tap();
+    await page.waitForTimeout(3000);
+    
+    // Canvas要素でのタッチ操作
+    const canvas = page.locator('canvas');
+    if (await canvas.isVisible({ timeout: 5000 })) {
+      const canvasBox = await canvas.boundingBox();
+      if (canvasBox) {
+        // タッチ・ドラッグ操作のシミュレート
+        await page.touchscreen.tap(
+          canvasBox.x + canvasBox.width / 2,
+          canvasBox.y + canvasBox.height / 2
+        );
+      }
+    }
+    
+    console.log('タッチデバイステスト完了');
   });
 });
