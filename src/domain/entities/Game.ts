@@ -22,11 +22,24 @@ import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
 
 /**
- * ゲームエンティティ
+ * ゲームエンティティ - ゲーム全体の状態と進行を管理する中核クラス
  * 
- * このクラスは値オブジェクトを使用してゲーム状態を管理します。
- * - vitality: Vitality値オブジェクトで管理
- * - insuranceBurden: InsurancePremium値オブジェクトで管理
+ * このクラスは値オブジェクトを使用してゲーム状態を管理します：
+ * - vitality: Vitality値オブジェクトで管理（プレイヤーの活力）
+ * - insuranceBurden: InsurancePremium値オブジェクトで管理（保険料負担）
+ * 
+ * @implements {IGameState} ゲーム状態のインターフェース
+ * 
+ * @example
+ * // ゲームの初期化
+ * const config = { startingVitality: 20, maxHandSize: 7 };
+ * const game = new Game(config);
+ * game.start();
+ * 
+ * // ターンの進行
+ * game.drawCards(5);
+ * const challenge = game.challengeDeck.drawCard();
+ * game.startChallenge(challenge);
  */
 export class Game implements IGameState {
   id: string
@@ -61,6 +74,15 @@ export class Game implements IGameState {
   startedAt?: Date
   completedAt?: Date
 
+  /**
+   * Gameインスタンスを作成
+   * @param {GameConfig} [config] - ゲーム設定（オプション）
+   * @param {string} [config.difficulty='normal'] - 難易度
+   * @param {number} [config.startingVitality=100] - 初期活力
+   * @param {number} [config.startingHandSize=5] - 初期手札枚数
+   * @param {number} [config.maxHandSize=10] - 最大手札枚数
+   * @param {number} [config.dreamCardCount=3] - 夢カード枚数
+   */
   constructor(config?: GameConfig) {
     this.id = this.generateId()
     this.status = 'not_started'
@@ -117,22 +139,32 @@ export class Game implements IGameState {
   }
 
   /**
-   * 後方互換性のためのgetter
+   * 後方互換性のためのgetter - 現在の活力値を取得
+   * @returns {number} 現在の活力値
    */
   get vitality(): number {
     return this._vitality.getValue()
   }
 
+  /**
+   * 最大活力値を取得
+   * @returns {number} 最大活力値
+   */
   get maxVitality(): number {
     return this._vitality.getMax()
   }
 
+  /**
+   * 現在の保険料負担を取得
+   * @returns {number} 保険料負担額
+   */
   get insuranceBurden(): number {
     return this._insuranceBurden.getValue()
   }
 
   /**
    * 値オブジェクトとしての活力取得
+   * @returns {Vitality} 活力値オブジェクト
    */
   getVitality(): Vitality {
     return this._vitality
@@ -140,20 +172,25 @@ export class Game implements IGameState {
 
   /**
    * 値オブジェクトとしての保険料負担取得
+   * @returns {InsurancePremium} 保険料負担値オブジェクト
    */
   getInsuranceBurden(): InsurancePremium {
     return this._insuranceBurden
   }
 
   /**
-   * ダメージを適用
+   * ダメージを適用して活力を減少させる
+   * @param {number} damage - 適用するダメージ量
+   * @throws {Error} ダメージが負の値の場合
    */
   applyDamage(damage: number): void {
     this.updateVitality(-damage)
   }
 
   /**
-   * 体力を回復
+   * 体力を回復させる
+   * @param {number} amount - 回復量
+   * @throws {Error} 回復量が負の値の場合
    */
   heal(amount: number): void {
     this.updateVitality(amount)
@@ -161,6 +198,7 @@ export class Game implements IGameState {
 
   /**
    * 利用可能体力を取得（保険料負担を考慮）
+   * @returns {number} 保険料負担を差し引いた実質的な利用可能体力
    */
   getAvailableVitality(): number {
     return this.vitality - this.insuranceBurden
@@ -168,6 +206,7 @@ export class Game implements IGameState {
 
   /**
    * ゲームオーバーかどうか判定
+   * @returns {boolean} ゲームオーバーの場合true
    */
   isGameOver(): boolean {
     return this.status === 'game_over' || this._vitality.isDepleted()
@@ -175,6 +214,8 @@ export class Game implements IGameState {
 
   /**
    * 保険を追加（簡易版テスト用）
+   * @param {Card} card - 追加する保険カード
+   * @throws {Error} 保険カード以外が渡された場合
    */
   addInsurance(card: Card): void {
     if (!card.isInsurance()) {
@@ -185,13 +226,16 @@ export class Game implements IGameState {
 
   /**
    * ゲームIDを生成
+   * @returns {string} ユニークなゲームID
+   * @private
    */
   private generateId(): string {
     return `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
   /**
-   * ゲーム開始
+   * ゲームを開始する
+   * @throws {Error} 既にゲームが開始されている場合
    */
   start(): void {
     if (this.status !== 'not_started') {
@@ -206,7 +250,9 @@ export class Game implements IGameState {
   }
 
   /**
-   * カードをドロー
+   * カードをドローする
+   * @param {number} count - ドローする枚数
+   * @returns {Card[]} ドローしたカードの配列
    */
   drawCards(count: number): Card[] {
     const result = this.cardManager.drawCards(count)
@@ -215,7 +261,9 @@ export class Game implements IGameState {
 
 
   /**
-   * チャレンジを開始
+   * チャレンジを開始する
+   * @param {Card} challengeCard - 挑戦するチャレンジカード
+   * @throws {Error} ドローフェーズ以外で実行された場合
    */
   startChallenge(challengeCard: Card): void {
     if (this.phase !== 'draw') {
@@ -228,14 +276,18 @@ export class Game implements IGameState {
   }
 
   /**
-   * カードを選択/選択解除
+   * カードを選択/選択解除する
+   * @param {Card} card - 選択/解除するカード
+   * @returns {boolean} 選択状態（true:選択、false:解除）
    */
   toggleCardSelection(card: Card): boolean {
     return this.cardManager.toggleCardSelection(card)
   }
 
   /**
-   * チャレンジを解決
+   * チャレンジを解決し、結果を返す
+   * @returns {ChallengeResult} チャレンジの結果
+   * @throws {Error} アクティブなチャレンジがない場合
    */
   resolveChallenge(): ChallengeResult {
     if (!this.currentChallenge || this.phase !== 'challenge') {

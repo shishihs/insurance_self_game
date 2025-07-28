@@ -12,11 +12,23 @@ import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
 
 /**
- * カードエンティティ
+ * カードエンティティ - ゲーム内のすべてのカードの基底クラス
  * 
- * このクラスは値オブジェクトを使用してビジネスルールを表現します。
- * - power: CardPower値オブジェクト
+ * このクラスは値オブジェクトを使用してビジネスルールを表現します：
+ * - power: CardPower値オブジェクト（カードの効果値）
  * - cost: InsurancePremium値オブジェクト（保険カードの場合）
+ * 
+ * @implements {ICard} カードインターフェース
+ * 
+ * @example
+ * // 人生カードの作成
+ * const lifeCard = Card.createLifeCard('アルバイト収入', 1);
+ * 
+ * // 保険カードの作成
+ * const insuranceCard = Card.createInsuranceCard('健康保険', 2);
+ * 
+ * // チャレンジカードの作成
+ * const challengeCard = Card.createChallengeCard('結婚', 4);
  */
 export class Card implements ICard {
   readonly id: string
@@ -38,6 +50,17 @@ export class Card implements ICard {
   // Phase 4 夢カード用プロパティ
   readonly dreamCategory?: DreamCategory
 
+  /**
+   * Cardインスタンスを作成
+   * @param {ICard} params - カードのパラメータ
+   * @param {string} params.id - カードID
+   * @param {string} params.name - カード名
+   * @param {string} params.description - カードの説明
+   * @param {CardType} params.type - カードタイプ
+   * @param {number} params.power - カードのパワー
+   * @param {number} params.cost - カードのコスト
+   * @param {CardEffect[]} params.effects - カードの効果
+   */
   constructor(params: ICard) {
     this.id = params.id
     this.name = params.name
@@ -75,19 +98,24 @@ export class Card implements ICard {
   }
 
   /**
-   * 後方互換性のためのgetter
-   * 既存のコードが動作するように、number型を返す
+   * 後方互換性のためのgetter - カードのパワー値を取得
+   * @returns {number} カードのパワー値
    */
   get power(): number {
     return this._power.getValue()
   }
 
+  /**
+   * カードのコストを取得
+   * @returns {number} カードのコスト
+   */
   get cost(): number {
     return this._cost.getValue()
   }
 
   /**
    * 値オブジェクトとしてのpower取得
+   * @returns {CardPower} カードパワー値オブジェクト
    */
   getPower(): CardPower {
     return this._power
@@ -95,13 +123,16 @@ export class Card implements ICard {
 
   /**
    * 値オブジェクトとしてのcost取得
+   * @returns {InsurancePremium} 保険料値オブジェクト
    */
   getCost(): InsurancePremium {
     return this._cost
   }
 
   /**
-   * カードが効果を持っているか判定
+   * カードが特定の効果を持っているか判定
+   * @param {CardEffectType} effectType - 確認する効果タイプ
+   * @returns {boolean} 効果を持っている場合true
    */
   hasEffect(effectType: CardEffectType): boolean {
     return this.effects.some(effect => effect.type === effectType)
@@ -109,6 +140,8 @@ export class Card implements ICard {
 
   /**
    * 特定の効果を取得
+   * @param {CardEffectType} effectType - 取得する効果タイプ
+   * @returns {CardEffect | undefined} 効果オブジェクトまたはundefined
    */
   getEffect(effectType: CardEffectType): CardEffect | undefined {
     return this.effects.find(effect => effect.type === effectType)
@@ -116,6 +149,7 @@ export class Card implements ICard {
 
   /**
    * 保険カードかどうか判定
+   * @returns {boolean} 保険カードの場合true
    */
   isInsurance(): boolean {
     return this.type === 'insurance'
@@ -123,6 +157,7 @@ export class Card implements ICard {
 
   /**
    * 定期保険かどうか判定
+   * @returns {boolean} 定期保険の場合true
    */
   isTermInsurance(): boolean {
     return this.isInsurance() && this.durationType === 'term'
@@ -130,6 +165,7 @@ export class Card implements ICard {
 
   /**
    * 終身保険かどうか判定
+   * @returns {boolean} 終身保険の場合true
    */
   isWholeLifeInsurance(): boolean {
     return this.isInsurance() && this.durationType === 'whole_life'
@@ -137,6 +173,7 @@ export class Card implements ICard {
 
   /**
    * Phase 4: 夢カードかどうか判定
+   * @returns {boolean} 夢カードの場合true
    */
   isDreamCard(): boolean {
     return this.type === 'dream'
@@ -144,6 +181,8 @@ export class Card implements ICard {
 
   /**
    * カードのコピーを作成（一部のプロパティを更新可能）
+   * @param {Partial<ICard>} [updates] - 更新するプロパティ
+   * @returns {Card} 新しいCardインスタンス
    */
   copy(updates?: Partial<ICard>): Card {
     return new Card({
@@ -157,6 +196,8 @@ export class Card implements ICard {
 
   /**
    * カードのクローンを作成（後方互換性のため）
+   * @returns {Card} カードの完全なコピー
+   * @deprecated copy()メソッドの使用を推奨
    */
   clone(): Card {
     return this.copy()
@@ -164,6 +205,7 @@ export class Card implements ICard {
 
   /**
    * 残りターン数を減少させる（定期保険用）
+   * @returns {Card} ターン数を減らした新しいCardインスタンス
    */
   decrementRemainingTurns(): Card {
     if (!this.isTermInsurance() || !this.remainingTurns) {
@@ -177,6 +219,7 @@ export class Card implements ICard {
 
   /**
    * 保険が有効期限切れかどうか判定
+   * @returns {boolean} 期限切れの場合true
    */
   isExpired(): boolean {
     if (!this.isTermInsurance()) {
@@ -187,6 +230,8 @@ export class Card implements ICard {
 
   /**
    * パワーが指定値以上か判定（値オブジェクトを使用）
+   * @param {number} threshold - 闾値
+   * @returns {boolean} パワーが闾値以上の場合true
    */
   hasPowerAtLeast(requiredPower: number): boolean {
     const required = CardPower.create(requiredPower)

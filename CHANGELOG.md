@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cardエンティティのcloneメソッドエラーを修正 + 統合テスト追加
 - TypeScript型エラーを根本的に修正
 - テストファイルをビルド対象から除外
+- CUIテストで必要パワーがundefinedになる問題を修正
+- デッキ構築ルールを仕様書通りに修正（初期手札5枚、毎ターン補充）
+
+### 🎮 Improved
+- CUIテストのゲームバランスを改善（成功率0%→約55%）
+- GitHub Actionsワークフローの改善（デプロイ後の自動検証追加）
 
 ### 📚 Documentation
 - TDD/DDD実装完了レポートを追加
