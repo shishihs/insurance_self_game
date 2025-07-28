@@ -618,35 +618,6 @@ export class GameScene extends BaseScene {
         return false
     }
   }
-    this.dropZones.forEach((zone, zoneName) => {
-      const distance = Phaser.Math.Distance.Between(cardX, cardY, zone.x, zone.y)
-      
-      if (distance < GAME_CONSTANTS.DRAG_DROP.SNAP_DISTANCE && distance < minDistance) {
-        minDistance = distance
-        closestZone = zoneName
-      }
-    })
-    
-    // 最も近いゾーンにマグネティック効果を表示
-    if (closestZone && this.magneticEffect) {
-      const zone = this.dropZones.get(closestZone)
-      if (zone && this.isValidDropZone(closestZone)) {
-        // マグネティック効果のグロウを描画
-        this.magneticEffect.clear()
-        this.magneticEffect.fillStyle(GAME_CONSTANTS.COLORS.MAGNETIC_GLOW, 0.4)
-        this.magneticEffect.fillCircle(zone.x, zone.y, (GAME_CONSTANTS.CARD_WIDTH + 60) / 2)
-        
-        // 引力線を描画
-        this.magneticEffect.lineStyle(3, GAME_CONSTANTS.COLORS.MAGNETIC_GLOW, 0.6)
-        this.magneticEffect.beginPath()
-        this.magneticEffect.moveTo(cardX, cardY)
-        this.magneticEffect.lineTo(zone.x, zone.y)
-        this.magneticEffect.strokePath()
-      }
-    }
-    
-    return closestZone
-  }
   /**
    * アクションボタンを作成
    */
@@ -811,7 +782,7 @@ export class GameScene extends BaseScene {
     })
     
     // 新しく登録
-    this.handCards.forEach((cardContainer, index) => {
+    this.handCards.forEach((cardContainer) => {
       this.keyboardController!.registerFocusableElement(cardContainer, () => {
         const cardData = cardContainer.getData('card') as Card
         if (cardData) {
@@ -1872,10 +1843,6 @@ export class GameScene extends BaseScene {
     // 新しいDropZoneシステムで捕て札ゾーンは実装済み
     
     return null
-  }
-    })
-    
-    return closestZone
   }
 
   /**

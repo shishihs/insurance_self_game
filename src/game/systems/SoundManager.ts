@@ -103,7 +103,7 @@ export class SoundManager {
     key: string, 
     frequency: number, 
     duration: number, 
-    type: 'normal' | 'up' | 'down' = 'normal'
+    _type: 'normal' | 'up' | 'down' = 'normal'
   ): void {
     // Web Audio Context を使用した簡単な音生成
     const audioContext = this.scene.sound.context as AudioContext
@@ -147,9 +147,9 @@ export class SoundManager {
   /**
    * ランダムなバリエーションで再生
    */
-  playWithVariation(soundKey: keyof typeof this.soundEffects, variations: number = 3): void {
+  playWithVariation(soundKey: keyof typeof this.soundEffects, _variations: number = 3): void {
     // バリエーション番号を追加（例: cardDraw1, cardDraw2, cardDraw3）
-    const variation = Phaser.Math.Between(1, variations)
+    // const variation = Phaser.Math.Between(1, variations)
     this.play(soundKey)
   }
   

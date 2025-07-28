@@ -438,7 +438,7 @@ class CUIPlaytestLogger {
       try {
         const data = await readFile(counterPath, 'utf-8')
         counter = JSON.parse(data)
-      } catch (_error) {
+      } catch {
         console.warn(chalk.yellow('⚠️ counter.json読み込みエラー、デフォルト値を使用'))
       }
     }
@@ -454,7 +454,7 @@ class CUIPlaytestLogger {
       try {
         const data = await readFile(counterPath, 'utf-8')
         counter = JSON.parse(data)
-      } catch (_error) {
+      } catch {
         // エラーの場合はデフォルト値を使用
       }
     }
@@ -520,7 +520,7 @@ class CUIPlaytestLogger {
       
       await this.updateCounter()
       console.log(chalk.blue(`🔢 次回テスト番号: ${this.testNumber + 1}`))
-    } catch (_error) {
+    } catch {
       console.error(chalk.red('❌ ログ保存エラー:'), error.message)
     }
   }

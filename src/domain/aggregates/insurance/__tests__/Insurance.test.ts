@@ -2,9 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Insurance } from '../Insurance'
 import { InsuranceId } from '../InsuranceId'
 import { Card } from '../../../entities/Card'
-import { InsurancePremium } from '../../../valueObjects/InsurancePremium'
-import { CardPower } from '../../../valueObjects/CardPower'
-import { InsuranceActivatedEvent, InsuranceExpiredEvent, InsuranceUsedEvent } from '../events'
+import { InsuranceExpiredEvent, InsuranceUsedEvent } from '../events'
 
 describe('Insurance集約', () => {
   const createInsuranceCard = (

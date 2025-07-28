@@ -15,10 +15,9 @@ import type {
   InsuranceTypeChoice,
   InsuranceTypeSelectionResult
 } from '../types/game.types'
-import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
+import { DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
-import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
 
 /**

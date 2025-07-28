@@ -9,7 +9,6 @@ import type {
   GameConfig,
   PlayerStats,
   ChallengeResult,
-  TurnResult
 } from '../types/game.types'
 import { AGE_PARAMETERS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'

@@ -11,6 +11,7 @@ export interface ConfigPreset<T> {
  * Base factory class for creating configured instances
  * Provides common functionality for all factory classes in the codebase
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export abstract class BaseFactory<TInstance, TConfig> {
   /**
    * Registry of configuration presets

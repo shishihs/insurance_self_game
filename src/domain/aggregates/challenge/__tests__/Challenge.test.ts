@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { Challenge } from '../Challenge'
 import { ChallengeId } from '../ChallengeId'
 import { Card } from '../../../entities/Card'
-import { CardPower } from '../../../valueObjects/CardPower'
-import { ChallengeStatus } from '../types'
 import { CardSelectedForChallengeEvent, ChallengeResolvedEvent } from '../events'
 
 describe('Challenge集約', () => {

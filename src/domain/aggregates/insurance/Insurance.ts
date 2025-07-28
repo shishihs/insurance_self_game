@@ -7,7 +7,6 @@ import {
   InsuranceActivatedEvent,
   InsuranceUsedEvent,
   InsuranceExpiredEvent,
-  InsurancePremiumAdjustedEvent
 } from './events'
 import type { GameStage } from '../../types/card.types'
 

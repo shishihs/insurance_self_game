@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { Card } from '../Card'
-import { CardPower } from '../../valueObjects/CardPower'
-import { InsurancePremium } from '../../valueObjects/InsurancePremium'
 
 describe('Card clone メソッド', () => {
   const createTestCard = () => {
