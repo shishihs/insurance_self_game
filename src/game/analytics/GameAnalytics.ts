@@ -60,4 +60,666 @@ export class GameAnalytics {
   private sessionStartTime: Date = new Date()
   private currentSessionActions: PlayerAction[] = []
   
-  constructor() {\n    this.stateManager = GameStateManager.getInstance()\n  }\n  \n  /**\n   * プレイヤーのアクションを記録\n   */\n  recordAction(action: Omit<PlayerAction, 'id' | 'timestamp'>): void {\n    const fullAction: PlayerAction = {\n      id: this.generateActionId(),\n      timestamp: new Date(),\n      ...action\n    }\n    \n    this.actionHistory.push(fullAction)\n    this.currentSessionActions.push(fullAction)\n    \n    // アクション履歴が多すぎる場合は古いものを削除\n    if (this.actionHistory.length > 10000) {\n      this.actionHistory = this.actionHistory.slice(-5000)\n    }\n    \n    // リアルタイム分析を実行\n    this.analyzeRecentActions()\n  }\n  \n  /**\n   * カード選択を分析\n   */\n  analyzeCardSelection(selectedCards: Card[], availableCards: Card[], game: Game): void {\n    this.recordAction({\n      type: 'card_selection',\n      gameStage: game.stage,\n      turn: game.turn,\n      vitality: game.vitality,\n      data: {\n        selectedCardIds: selectedCards.map(c => c.id),\n        selectedPower: selectedCards.reduce((sum, c) => sum + c.power, 0),\n        availableCardIds: availableCards.map(c => c.id),\n        maxPossiblePower: availableCards.reduce((sum, c) => sum + c.power, 0),\n        selectionTime: this.calculateSelectionTime(),\n        insuranceCount: game.insuranceCards.length\n      }\n    })\n  }\n  \n  /**\n   * チャレンジ結果を分析\n   */\n  analyzeChallengeResult(result: ChallengeResult, game: Game): void {\n    this.recordAction({\n      type: 'challenge_attempt',\n      gameStage: game.stage,\n      turn: game.turn,\n      vitality: game.vitality,\n      data: {\n        success: result.success,\n        playerPower: result.playerPower,\n        challengePower: result.challengePower,\n        vitalityChange: result.vitalityChange,\n        powerBreakdown: result.powerBreakdown,\n        difficulty: this.calculateChallengeDifficulty(result)\n      }\n    })\n    \n    // チャレンジ成功率の更新\n    this.updateChallengeSuccessRates(game.stage, result.success)\n  }\n  \n  /**\n   * 保険購入を分析\n   */\n  analyzeInsurancePurchase(insuranceCard: Card, game: Game): void {\n    this.recordAction({\n      type: 'insurance_purchase',\n      gameStage: game.stage,\n      turn: game.turn,\n      vitality: game.vitality,\n      data: {\n        insuranceType: insuranceCard.insuranceType,\n        cost: insuranceCard.cost,\n        power: insuranceCard.power,\n        durationType: insuranceCard.durationType,\n        totalInsuranceCount: game.insuranceCards.length + 1,\n        vitalityRatio: game.vitality / game.maxVitality\n      }\n    })\n    \n    // 保険使用パターンの更新\n    this.updateInsuranceUsagePattern(insuranceCard)\n  }\n  \n  /**\n   * ゲーム完了を分析\n   */\n  analyzeGameCompletion(game: Game): void {\n    const sessionDuration = Date.now() - this.sessionStartTime.getTime()\n    \n    this.recordAction({\n      type: 'game_complete',\n      gameStage: game.stage,\n      turn: game.turn,\n      vitality: game.vitality,\n      data: {\n        finalStats: game.stats,\n        sessionDuration,\n        totalActions: this.currentSessionActions.length,\n        efficiency: this.calculateSessionEfficiency(),\n        outcome: game.status\n      }\n    })\n    \n    // セッション統計を更新\n    this.updateSessionStatistics(game, sessionDuration)\n    \n    // 学習進度を更新\n    this.updateLearningProgress(game)\n    \n    // セッションをリセット\n    this.resetSession()\n  }\n  \n  /**\n   * 戦略パターンを分析\n   */\n  getStrategyPatterns(): StrategyPattern[] {\n    const patterns: StrategyPattern[] = []\n    \n    // 保険重視戦略\n    const insuranceActions = this.actionHistory.filter(a => a.type === 'insurance_purchase')\n    if (insuranceActions.length > 0) {\n      patterns.push({\n        name: '保険重視戦略',\n        description: '早期から積極的に保険を購入する戦略',\n        frequency: insuranceActions.length / this.actionHistory.length,\n        successRate: this.calculateInsuranceStrategySuccessRate(),\n        averageVitality: this.calculateAverageVitalityForStrategy('insurance_heavy'),\n        stages: ['youth', 'middle', 'fulfillment']\n      })\n    }\n    \n    // 攻撃的戦略\n    const aggressiveActions = this.actionHistory.filter(a => \n      a.type === 'challenge_attempt' && \n      a.data.playerPower > a.data.challengePower * 1.5\n    )\n    if (aggressiveActions.length > 0) {\n      patterns.push({\n        name: '攻撃的戦略',\n        description: '高いパワーでチャレンジに挑む戦略',\n        frequency: aggressiveActions.length / this.actionHistory.length,\n        successRate: aggressiveActions.filter(a => a.data.success).length / aggressiveActions.length,\n        averageVitality: aggressiveActions.reduce((sum, a) => sum + a.vitality, 0) / aggressiveActions.length,\n        stages: ['youth', 'middle']\n      })\n    }\n    \n    // 保守的戦略\n    const conservativeActions = this.actionHistory.filter(a => \n      a.type === 'challenge_attempt' && \n      a.data.playerPower < a.data.challengePower * 1.2\n    )\n    if (conservativeActions.length > 0) {\n      patterns.push({\n        name: '保守的戦略',\n        description: 'リスクを避けて慎重にプレイする戦略',\n        frequency: conservativeActions.length / this.actionHistory.length,\n        successRate: conservativeActions.filter(a => a.data.success).length / conservativeActions.length,\n        averageVitality: conservativeActions.reduce((sum, a) => sum + a.vitality, 0) / conservativeActions.length,\n        stages: ['middle', 'fulfillment']\n      })\n    }\n    \n    return patterns.sort((a, b) => b.frequency - a.frequency).slice(0, 5)\n  }\n  \n  /**\n   * プレイ効率を計算\n   */\n  getEfficiencyMetrics(): EfficiencyMetrics {\n    const challengeActions = this.actionHistory.filter(a => a.type === 'challenge_attempt')\n    const cardSelectionActions = this.actionHistory.filter(a => a.type === 'card_selection')\n    \n    // 決定速度の計算\n    const averageDecisionTime = cardSelectionActions.reduce(\n      (sum, action) => sum + (action.data.selectionTime || 5), 0\n    ) / Math.max(cardSelectionActions.length, 1)\n    \n    // 最適プレイ率の計算\n    const optimalPlays = challengeActions.filter(a => \n      a.data.success && a.data.playerPower >= a.data.challengePower * 1.1\n    ).length\n    const optimalPlayRate = (optimalPlays / Math.max(challengeActions.length, 1)) * 100\n    \n    // リソース効率性の計算\n    const resourceEfficiency = this.calculateResourceEfficiency()\n    \n    // 適応性スコアの計算\n    const adaptabilityScore = this.calculateAdaptabilityScore()\n    \n    return {\n      decisionSpeed: averageDecisionTime,\n      optimalPlayRate,\n      resourceEfficiency,\n      adaptabilityScore\n    }\n  }\n  \n  /**\n   * 学習進度を取得\n   */\n  getLearningProgress(): LearningProgress {\n    const stats = this.stateManager.getEnhancedStats()\n    \n    // 習得した概念の判定\n    const masteredConcepts: string[] = []\n    if (stats.successfulChallenges > 10) masteredConcepts.push('基本的なチャレンジ')\n    if (stats.insuranceUsagePatterns.length > 3) masteredConcepts.push('保険活用')\n    if (stats.gamesCompleted > 5) masteredConcepts.push('ゲーム進行')\n    \n    // 苦手分野の特定\n    const strugglingAreas: string[] = []\n    const challengeSuccessRate = stats.successfulChallenges / Math.max(stats.totalChallenges, 1)\n    if (challengeSuccessRate < 0.6) strugglingAreas.push('チャレンジ成功率')\n    if (stats.averageTurnsPerGame > 20) strugglingAreas.push('効率的なプレイ')\n    \n    // 改善率の計算\n    const improvementRate = this.calculateImprovementRate()\n    \n    // スキルレベルの判定\n    let skillLevel: LearningProgress['skillLevel'] = 'beginner'\n    if (stats.gamesCompleted > 10 && challengeSuccessRate > 0.7) skillLevel = 'intermediate'\n    if (stats.gamesCompleted > 25 && challengeSuccessRate > 0.8) skillLevel = 'advanced'\n    if (stats.gamesCompleted > 50 && challengeSuccessRate > 0.9) skillLevel = 'expert'\n    \n    // 次のマイルストーン\n    let nextMilestone = '初回ゲームクリア'\n    if (stats.gamesCompleted >= 1) nextMilestone = '10回クリア達成'\n    if (stats.gamesCompleted >= 10) nextMilestone = '成功率80%達成'\n    if (challengeSuccessRate >= 0.8) nextMilestone = 'エキスパートレベル到達'\n    \n    return {\n      masteredConcepts,\n      strugglingAreas,\n      improvementRate,\n      skillLevel,\n      nextMilestone\n    }\n  }\n  \n  /**\n   * 実績の進行状況をチェック\n   */\n  checkAchievementProgress(): { unlocked: Achievement[]; progress: Record<string, number> } {\n    const unlocked: Achievement[] = []\n    const progress: Record<string, number> = {}\n    \n    const stats = this.stateManager.getEnhancedStats()\n    \n    // チャレンジ系実績\n    progress['challenge_master'] = Math.min(stats.successfulChallenges / 100, 1) * 100\n    if (stats.successfulChallenges >= 100 && !stats.achievements.some(a => a.id === 'challenge_master')) {\n      unlocked.push({\n        id: 'challenge_master',\n        name: 'チャレンジマスター',\n        description: '100回のチャレンジに成功しました',\n        unlockedAt: new Date(),\n        category: 'gameplay'\n      })\n    }\n    \n    // 保険系実績\n    const insuranceTypes = new Set(stats.insuranceUsagePatterns.map(p => p.insuranceType))\n    progress['insurance_expert'] = Math.min(insuranceTypes.size / 5, 1) * 100\n    if (insuranceTypes.size >= 5 && !stats.achievements.some(a => a.id === 'insurance_expert')) {\n      unlocked.push({\n        id: 'insurance_expert',\n        name: '保険エキスパート',\n        description: '5種類以上の保険を活用しました',\n        unlockedAt: new Date(),\n        category: 'strategy'\n      })\n    }\n    \n    // 効率系実績\n    const efficiency = this.getEfficiencyMetrics()\n    progress['speed_runner'] = Math.min(efficiency.decisionSpeed <= 3 ? 1 : 0, 1) * 100\n    if (efficiency.decisionSpeed <= 3 && !stats.achievements.some(a => a.id === 'speed_runner')) {\n      unlocked.push({\n        id: 'speed_runner',\n        name: 'スピードランナー',\n        description: '平均決定時間3秒以下を達成しました',\n        unlockedAt: new Date(),\n        category: 'gameplay'\n      })\n    }\n    \n    return { unlocked, progress }\n  }\n  \n  /**\n   * 個人化されたアドバイスを生成\n   */\n  generatePersonalizedAdvice(): string[] {\n    const advice: string[] = []\n    const stats = this.stateManager.getEnhancedStats()\n    const efficiency = this.getEfficiencyMetrics()\n    const patterns = this.getStrategyPatterns()\n    \n    // 成功率が低い場合\n    const successRate = stats.successfulChallenges / Math.max(stats.totalChallenges, 1)\n    if (successRate < 0.6) {\n      advice.push('💡 チャレンジの成功率を上げるため、より強力なカードの組み合わせを試してみましょう')\n    }\n    \n    // 保険の活用度が低い場合\n    if (stats.insuranceUsagePatterns.length < 3) {\n      advice.push('🛡️ 保険カードを積極的に活用することで、より安定したプレイが可能になります')\n    }\n    \n    // 決定が遅い場合\n    if (efficiency.decisionSpeed > 10) {\n      advice.push('⚡ 決定時間を短縮することで、より集中してプレイできるようになります')\n    }\n    \n    // 戦略パターンに基づくアドバイス\n    const dominantPattern = patterns[0]\n    if (dominantPattern) {\n      if (dominantPattern.successRate < 0.7) {\n        advice.push(`📊 ${dominantPattern.name}の成功率が低めです。他の戦略も試してみてください`)\n      }\n    }\n    \n    // プレイ回数に応じたアドバイス\n    if (stats.gamesCompleted < 5) {\n      advice.push('🌟 まずは様々な戦略を試して、自分に合ったプレイスタイルを見つけましょう')\n    } else if (stats.gamesCompleted > 20) {\n      advice.push('🏆 経験豊富なプレイヤーですね！より高難度のチャレンジに挑戦してみてください')\n    }\n    \n    return advice.slice(0, 3) // 最大3つのアドバイス\n  }\n  \n  /**\n   * 統計データをリセット\n   */\n  resetAnalytics(): void {\n    this.actionHistory = []\n    this.resetSession()\n  }\n  \n  // === プライベートメソッド ===\n  \n  private generateActionId(): string {\n    return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`\n  }\n  \n  private resetSession(): void {\n    this.sessionStartTime = new Date()\n    this.currentSessionActions = []\n  }\n  \n  private calculateSelectionTime(): number {\n    // 実際の実装では、カード選択開始から決定までの時間を測定\n    // ここでは仮の値を返す\n    return Math.random() * 10 + 2\n  }\n  \n  private calculateChallengeDifficulty(result: ChallengeResult): number {\n    // 難易度 = チャレンジパワー / プレイヤーパワー\n    return result.challengePower / Math.max(result.playerPower, 1)\n  }\n  \n  private analyzeRecentActions(): void {\n    // 最近のアクションを分析してリアルタイムフィードバックを生成\n    const recentActions = this.actionHistory.slice(-10)\n    \n    // 連続失敗の検出\n    const recentChallenges = recentActions.filter(a => a.type === 'challenge_attempt')\n    const recentFailures = recentChallenges.filter(a => !a.data.success)\n    \n    if (recentFailures.length >= 3) {\n      // 失敗が連続している場合の分析とアドバイス\n      console.log('連続失敗を検出。戦略の見直しを提案')\n    }\n  }\n  \n  private updateChallengeSuccessRates(stage: GameStage, success: boolean): void {\n    const stats = this.stateManager.getEnhancedStats()\n    const current = stats.challengeSuccessRates[stage] || 0\n    const total = this.actionHistory.filter(a => \n      a.type === 'challenge_attempt' && a.gameStage === stage\n    ).length\n    \n    // 成功率を更新\n    const successCount = this.actionHistory.filter(a => \n      a.type === 'challenge_attempt' && a.gameStage === stage && a.data.success\n    ).length\n    \n    stats.challengeSuccessRates[stage] = successCount / total\n    this.stateManager.updateStatistics({ challengeSuccessRates: stats.challengeSuccessRates })\n  }\n  \n  private updateInsuranceUsagePattern(insuranceCard: Card): void {\n    const stats = this.stateManager.getEnhancedStats()\n    const insuranceType = insuranceCard.insuranceType || 'unknown'\n    \n    let pattern = stats.insuranceUsagePatterns.find(p => p.insuranceType === insuranceType)\n    if (!pattern) {\n      pattern = {\n        insuranceType,\n        usageCount: 0,\n        successRate: 0,\n        averageBenefit: 0\n      }\n      stats.insuranceUsagePatterns.push(pattern)\n    }\n    \n    pattern.usageCount++\n    // 成功率と平均利益は後続のチャレンジ結果で更新\n    \n    this.stateManager.updateStatistics({ insuranceUsagePatterns: stats.insuranceUsagePatterns })\n  }\n  \n  private calculateSessionEfficiency(): number {\n    const sessionActions = this.currentSessionActions\n    const challengeActions = sessionActions.filter(a => a.type === 'challenge_attempt')\n    \n    if (challengeActions.length === 0) return 0\n    \n    const successfulActions = challengeActions.filter(a => a.data.success)\n    return successfulActions.length / challengeActions.length\n  }\n  \n  private updateSessionStatistics(game: Game, sessionDuration: number): void {\n    const stats = this.stateManager.getEnhancedStats()\n    \n    // セッション統計を更新\n    stats.sessionsPlayed++\n    stats.totalPlaytime += sessionDuration\n    \n    // ベストスコアを更新\n    const currentScore = game.stats.score || 0\n    if (currentScore > stats.bestScore) {\n      stats.bestScore = currentScore\n    }\n    \n    this.stateManager.updateStatistics(stats)\n  }\n  \n  private updateLearningProgress(game: Game): void {\n    // 学習進度の更新ロジック\n    // 実装は今後拡張予定\n  }\n  \n  private calculateInsuranceStrategySuccessRate(): number {\n    const insuranceGames = this.actionHistory.filter(a => \n      a.type === 'game_complete' && \n      this.actionHistory.some(ia => \n        ia.type === 'insurance_purchase' && \n        ia.timestamp < a.timestamp\n      )\n    )\n    \n    const successfulInsuranceGames = insuranceGames.filter(a => \n      a.data.outcome === 'victory' || a.data.finalStats.successfulChallenges > 0\n    )\n    \n    return successfulInsuranceGames.length / Math.max(insuranceGames.length, 1)\n  }\n  \n  private calculateAverageVitalityForStrategy(strategy: string): number {\n    // 戦略別の平均活力計算\n    // 実装は戦略によって異なる\n    return 0\n  }\n  \n  private calculateResourceEfficiency(): number {\n    const cardSelections = this.actionHistory.filter(a => a.type === 'card_selection')\n    if (cardSelections.length === 0) return 0\n    \n    const totalEfficiency = cardSelections.reduce((sum, action) => {\n      const selectedPower = action.data.selectedPower || 0\n      const maxPossiblePower = action.data.maxPossiblePower || 1\n      return sum + (selectedPower / maxPossiblePower)\n    }, 0)\n    \n    return (totalEfficiency / cardSelections.length) * 100\n  }\n  \n  private calculateAdaptabilityScore(): number {\n    // 異なるステージでの戦略変更を測定\n    const stageTransitions = this.actionHistory.filter(a => a.type === 'stage_progression')\n    \n    // 簡易的な適応性スコア\n    return Math.min(stageTransitions.length * 25, 100)\n  }\n  \n  private calculateImprovementRate(): number {\n    const completedGames = this.actionHistory.filter(a => a.type === 'game_complete')\n    if (completedGames.length < 2) return 0\n    \n    // 最初の5ゲームと最新の5ゲームを比較\n    const earlyGames = completedGames.slice(0, 5)\n    const recentGames = completedGames.slice(-5)\n    \n    const earlyAvgScore = earlyGames.reduce((sum, g) => sum + (g.data.finalStats.score || 0), 0) / earlyGames.length\n    const recentAvgScore = recentGames.reduce((sum, g) => sum + (g.data.finalStats.score || 0), 0) / recentGames.length\n    \n    return ((recentAvgScore - earlyAvgScore) / Math.max(earlyAvgScore, 1)) * 100\n  }\n}
+  constructor() {
+    this.stateManager = GameStateManager.getInstance()
+  }
+  
+  /**
+   * プレイヤーのアクションを記録
+   */
+  recordAction(action: Omit<PlayerAction, 'id' | 'timestamp'>): void {
+    const fullAction: PlayerAction = {
+      id: this.generateActionId(),
+      timestamp: new Date(),
+      ...action
+    }
+    
+    this.actionHistory.push(fullAction)
+    this.currentSessionActions.push(fullAction)
+    
+    // アクション履歴が多すぎる場合は古いものを削除
+    if (this.actionHistory.length > 10000) {
+      this.actionHistory = this.actionHistory.slice(-5000)
+    }
+    
+    // リアルタイム分析を実行
+    this.analyzeRecentActions()
+  }
+  
+  /**
+   * カード選択を分析
+   */
+  analyzeCardSelection(selectedCards: Card[], availableCards: Card[], game: Game): void {
+    this.recordAction({
+      type: 'card_selection',
+      gameStage: game.stage,
+      turn: game.turn,
+      vitality: game.vitality,
+      data: {
+        selectedCardIds: selectedCards.map(c => c.id),
+        selectedPower: selectedCards.reduce((sum, c) => sum + c.power, 0),
+        availableCardIds: availableCards.map(c => c.id),
+        maxPossiblePower: availableCards.reduce((sum, c) => sum + c.power, 0),
+        selectionTime: this.calculateSelectionTime(),
+        insuranceCount: game.insuranceCards.length
+      }
+    })
+  }
+  
+  /**
+   * チャレンジ結果を分析
+   */
+  analyzeChallengeResult(result: ChallengeResult, game: Game): void {
+    this.recordAction({
+      type: 'challenge_attempt',
+      gameStage: game.stage,
+      turn: game.turn,
+      vitality: game.vitality,
+      data: {
+        success: result.success,
+        playerPower: result.playerPower,
+        challengePower: result.challengePower,
+        vitalityChange: result.vitalityChange,
+        powerBreakdown: result.powerBreakdown,
+        difficulty: this.calculateChallengeDifficulty(result)
+      }
+    })
+    
+    // チャレンジ成功率の更新
+    this.updateChallengeSuccessRates(game.stage, result.success)
+  }
+  
+  /**
+   * 保険購入を分析
+   */
+  analyzeInsurancePurchase(insuranceCard: Card, game: Game): void {
+    this.recordAction({
+      type: 'insurance_purchase',
+      gameStage: game.stage,
+      turn: game.turn,
+      vitality: game.vitality,
+      data: {
+        insuranceType: insuranceCard.insuranceType,
+        cost: insuranceCard.cost,
+        power: insuranceCard.power,
+        durationType: insuranceCard.durationType,
+        totalInsuranceCount: game.insuranceCards.length + 1,
+        vitalityRatio: game.vitality / game.maxVitality
+      }
+    })
+    
+    // 保険使用パターンの更新
+    this.updateInsuranceUsagePattern(insuranceCard)
+  }
+  
+  /**
+   * ゲーム完了を分析
+   */
+  analyzeGameCompletion(game: Game): void {
+    const sessionDuration = Date.now() - this.sessionStartTime.getTime()
+    
+    this.recordAction({
+      type: 'game_complete',
+      gameStage: game.stage,
+      turn: game.turn,
+      vitality: game.vitality,
+      data: {
+        finalStats: game.stats,
+        sessionDuration,
+        totalActions: this.currentSessionActions.length,
+        efficiency: this.calculateSessionEfficiency(),
+        outcome: game.status
+      }
+    })
+    
+    // セッション統計を更新
+    this.updateSessionStatistics(game, sessionDuration)
+    
+    // 学習進度を更新
+    this.updateLearningProgress(game)
+    
+    // セッションをリセット
+    this.resetSession()
+  }
+  
+  /**
+   * 戦略パターンを分析
+   */
+  getStrategyPatterns(): StrategyPattern[] {
+    const patterns: StrategyPattern[] = []
+    
+    // 保険重視戦略
+    const insuranceActions = this.actionHistory.filter(a => a.type === 'insurance_purchase')
+    if (insuranceActions.length > 0) {
+      patterns.push({
+        name: '保険重視戦略',
+        description: '早期から積極的に保険を購入する戦略',
+        frequency: insuranceActions.length / this.actionHistory.length,
+        successRate: this.calculateInsuranceStrategySuccessRate(),
+        averageVitality: this.calculateAverageVitalityForStrategy('insurance_heavy'),
+        stages: ['youth', 'middle', 'fulfillment']
+      })
+    }
+    
+    // 攻撃的戦略
+    const aggressiveActions = this.actionHistory.filter(a => 
+      a.type === 'challenge_attempt' && 
+      a.data.playerPower > a.data.challengePower * 1.5
+    )
+    if (aggressiveActions.length > 0) {
+      patterns.push({
+        name: '攻撃的戦略',
+        description: '高いパワーでチャレンジに挑む戦略',
+        frequency: aggressiveActions.length / this.actionHistory.length,
+        successRate: aggressiveActions.filter(a => a.data.success).length / aggressiveActions.length,
+        averageVitality: aggressiveActions.reduce((sum, a) => sum + a.vitality, 0) / aggressiveActions.length,
+        stages: ['youth', 'middle']
+      })
+    }
+    
+    // 保守的戦略
+    const conservativeActions = this.actionHistory.filter(a => 
+      a.type === 'challenge_attempt' && 
+      a.data.playerPower < a.data.challengePower * 1.2
+    )
+    if (conservativeActions.length > 0) {
+      patterns.push({
+        name: '保守的戦略',
+        description: 'リスクを避けて慎重にプレイする戦略',
+        frequency: conservativeActions.length / this.actionHistory.length,
+        successRate: conservativeActions.filter(a => a.data.success).length / conservativeActions.length,
+        averageVitality: conservativeActions.reduce((sum, a) => sum + a.vitality, 0) / conservativeActions.length,
+        stages: ['middle', 'fulfillment']
+      })
+    }
+    
+    return patterns.sort((a, b) => b.frequency - a.frequency).slice(0, 5)
+  }
+  
+  /**
+   * プレイ効率を計算
+   */
+  getEfficiencyMetrics(): EfficiencyMetrics {
+    const challengeActions = this.actionHistory.filter(a => a.type === 'challenge_attempt')
+    const cardSelectionActions = this.actionHistory.filter(a => a.type === 'card_selection')
+    
+    // 決定速度の計算
+    const averageDecisionTime = cardSelectionActions.reduce(
+      (sum, action) => sum + (action.data.selectionTime || 5), 0
+    ) / Math.max(cardSelectionActions.length, 1)
+    
+    // 最適プレイ率の計算
+    const optimalPlays = challengeActions.filter(a => 
+      a.data.success && a.data.playerPower >= a.data.challengePower * 1.1
+    ).length
+    const optimalPlayRate = (optimalPlays / Math.max(challengeActions.length, 1)) * 100
+    
+    // リソース効率性の計算
+    const resourceEfficiency = this.calculateResourceEfficiency()
+    
+    // 適応性スコアの計算
+    const adaptabilityScore = this.calculateAdaptabilityScore()
+    
+    return {
+      decisionSpeed: averageDecisionTime,
+      optimalPlayRate,
+      resourceEfficiency,
+      adaptabilityScore
+    }
+  }
+  
+  /**
+   * 学習進度を取得
+   */
+  getLearningProgress(): LearningProgress {
+    const stats = this.stateManager.getEnhancedStats()
+    
+    // 習得した概念の判定
+    const masteredConcepts: string[] = []
+    if (stats.successfulChallenges > 10) masteredConcepts.push('基本的なチャレンジ')
+    if (stats.insuranceUsagePatterns.length > 3) masteredConcepts.push('保険活用')
+    if (stats.gamesCompleted > 5) masteredConcepts.push('ゲーム進行')
+    
+    // 苦手分野の特定
+    const strugglingAreas: string[] = []
+    const challengeSuccessRate = stats.successfulChallenges / Math.max(stats.totalChallenges, 1)
+    if (challengeSuccessRate < 0.6) strugglingAreas.push('チャレンジ成功率')
+    if (stats.averageTurnsPerGame > 20) strugglingAreas.push('効率的なプレイ')
+    
+    // 改善率の計算
+    const improvementRate = this.calculateImprovementRate()
+    
+    // スキルレベルの判定
+    let skillLevel: LearningProgress['skillLevel'] = 'beginner'
+    if (stats.gamesCompleted > 10 && challengeSuccessRate > 0.7) skillLevel = 'intermediate'
+    if (stats.gamesCompleted > 25 && challengeSuccessRate > 0.8) skillLevel = 'advanced'
+    if (stats.gamesCompleted > 50 && challengeSuccessRate > 0.9) skillLevel = 'expert'
+    
+    // 次のマイルストーン
+    let nextMilestone = '初回ゲームクリア'
+    if (stats.gamesCompleted >= 1) nextMilestone = '10回クリア達成'
+    if (stats.gamesCompleted >= 10) nextMilestone = '成功率80%達成'
+    if (challengeSuccessRate >= 0.8) nextMilestone = 'エキスパートレベル到達'
+    
+    return {
+      masteredConcepts,
+      strugglingAreas,
+      improvementRate,
+      skillLevel,
+      nextMilestone
+    }
+  }
+  
+  /**
+   * 実績の進行状況をチェック
+   */
+  checkAchievementProgress(): { unlocked: Achievement[]; progress: Record<string, number> } {
+    const unlocked: Achievement[] = []
+    const progress: Record<string, number> = {}
+    
+    const stats = this.stateManager.getEnhancedStats()
+    
+    // チャレンジ系実績
+    progress['challenge_master'] = Math.min(stats.successfulChallenges / 100, 1) * 100
+    if (stats.successfulChallenges >= 100 && !stats.achievements.some(a => a.id === 'challenge_master')) {
+      unlocked.push({
+        id: 'challenge_master',
+        name: 'チャレンジマスター',
+        description: '100回のチャレンジに成功しました',
+        unlockedAt: new Date(),
+        category: 'gameplay'
+      })
+    }
+    
+    // 保険系実績
+    const insuranceTypes = new Set(stats.insuranceUsagePatterns.map(p => p.insuranceType))
+    progress['insurance_expert'] = Math.min(insuranceTypes.size / 5, 1) * 100
+    if (insuranceTypes.size >= 5 && !stats.achievements.some(a => a.id === 'insurance_expert')) {
+      unlocked.push({
+        id: 'insurance_expert',
+        name: '保険エキスパート',
+        description: '5種類以上の保険を活用しました',
+        unlockedAt: new Date(),
+        category: 'strategy'
+      })
+    }
+    
+    // 効率系実績
+    const efficiency = this.getEfficiencyMetrics()
+    progress['speed_runner'] = Math.min(efficiency.decisionSpeed <= 3 ? 1 : 0, 1) * 100
+    if (efficiency.decisionSpeed <= 3 && !stats.achievements.some(a => a.id === 'speed_runner')) {
+      unlocked.push({
+        id: 'speed_runner',
+        name: 'スピードランナー',
+        description: '平均決定時間3秒以下を達成しました',
+        unlockedAt: new Date(),
+        category: 'gameplay'
+      })
+    }
+    
+    return { unlocked, progress }
+  }
+  
+  /**
+   * 個人化されたアドバイスを生成
+   */
+  generatePersonalizedAdvice(): string[] {
+    const advice: string[] = []
+    const stats = this.stateManager.getEnhancedStats()
+    const efficiency = this.getEfficiencyMetrics()
+    const patterns = this.getStrategyPatterns()
+    
+    // 成功率が低い場合
+    const successRate = stats.successfulChallenges / Math.max(stats.totalChallenges, 1)
+    if (successRate < 0.6) {
+      advice.push('💡 チャレンジの成功率を上げるため、より強力なカードの組み合わせを試してみましょう')
+    }
+    
+    // 保険の活用度が低い場合
+    if (stats.insuranceUsagePatterns.length < 3) {
+      advice.push('🛡️ 保険カードを積極的に活用することで、より安定したプレイが可能になります')
+    }
+    
+    // 決定が遅い場合
+    if (efficiency.decisionSpeed > 10) {
+      advice.push('⚡ 決定時間を短縮することで、より集中してプレイできるようになります')
+    }
+    
+    // 戦略パターンに基づくアドバイス
+    const dominantPattern = patterns[0]
+    if (dominantPattern) {
+      if (dominantPattern.successRate < 0.7) {
+        advice.push(`📊 ${dominantPattern.name}の成功率が低めです。他の戦略も試してみてください`)
+      }
+    }
+    
+    // プレイ回数に応じたアドバイス
+    if (stats.gamesCompleted < 5) {
+      advice.push('🌟 まずは様々な戦略を試して、自分に合ったプレイスタイルを見つけましょう')
+    } else if (stats.gamesCompleted > 20) {
+      advice.push('🏆 経験豊富なプレイヤーですね！より高難度のチャレンジに挑戦してみてください')
+    }
+    
+    return advice.slice(0, 3) // 最大3つのアドバイス
+  }
+  
+  /**
+   * 統計データをリセット
+   */
+  resetAnalytics(): void {
+    this.actionHistory = []
+    this.resetSession()
+  }
+  
+  /**
+   * アナリティクスデータをエクスポート
+   */
+  exportAnalyticsData(): {
+    version: string
+    exportedAt: Date
+    actionHistory: PlayerAction[]
+    sessionData: {
+      startTime: Date
+      currentActions: PlayerAction[]
+    }
+  } {
+    return {
+      version: '1.0.0',
+      exportedAt: new Date(),
+      actionHistory: this.actionHistory,
+      sessionData: {
+        startTime: this.sessionStartTime,
+        currentActions: this.currentSessionActions
+      }
+    }
+  }
+  
+  /**
+   * アナリティクスデータをインポート
+   */
+  importAnalyticsData(data: {
+    version: string
+    actionHistory: PlayerAction[]
+    sessionData?: {
+      startTime: Date
+      currentActions: PlayerAction[]
+    }
+  }): void {
+    // バージョンチェック
+    if (data.version !== '1.0.0') {
+      console.warn('⚠️ アナリティクスデータのバージョンが異なります')
+    }
+    
+    // データの妥当性チェック
+    if (Array.isArray(data.actionHistory)) {
+      this.actionHistory = data.actionHistory.map(action => ({
+        ...action,
+        timestamp: new Date(action.timestamp) // Date型に変換
+      }))
+    }
+    
+    if (data.sessionData) {
+      this.sessionStartTime = new Date(data.sessionData.startTime)
+      if (Array.isArray(data.sessionData.currentActions)) {
+        this.currentSessionActions = data.sessionData.currentActions.map(action => ({
+          ...action,
+          timestamp: new Date(action.timestamp)
+        }))
+      }
+    }
+    
+    console.log('✅ アナリティクスデータをインポートしました')
+  }
+  
+  /**
+   * GameStateManagerとの統合のためのフック
+   */
+  onGameStateChange(gameState: any, changeType: 'save' | 'load' | 'reset'): void {
+    this.recordAction({
+      type: 'system' as any,
+      gameStage: gameState.stage || 'youth',
+      turn: gameState.turn || 0,
+      vitality: gameState.vitality || 100,
+      data: {
+        changeType,
+        gameId: gameState.id,
+        timestamp: Date.now()
+      }
+    })
+  }
+  
+  /**
+   * 統計データとGameStateManagerとの同期
+   */
+  syncWithStateManager(stateManager: any): void {
+    const stats = stateManager.getEnhancedStats()
+    
+    // アナリティクスデータから統計を更新
+    const analyticsStats = this.generateStatsFromAnalytics()
+    
+    // 統計データをマージ
+    const mergedStats = {
+      ...stats,
+      ...analyticsStats,
+      // 重要な数値は最大値を採用
+      totalChallenges: Math.max(stats.totalChallenges, analyticsStats.totalChallenges),
+      successfulChallenges: Math.max(stats.successfulChallenges, analyticsStats.successfulChallenges),
+      cardsAcquired: Math.max(stats.cardsAcquired, analyticsStats.cardsAcquired)
+    }
+    
+    stateManager.updateStatistics(mergedStats)
+  }
+  
+  // === プライベートメソッド ===
+  
+  private generateActionId(): string {
+    return `action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+  
+  private resetSession(): void {
+    this.sessionStartTime = new Date()
+    this.currentSessionActions = []
+  }
+  
+  private calculateSelectionTime(): number {
+    // 実際の実装では、カード選択開始から決定までの時間を測定
+    // ここでは仮の値を返す
+    return Math.random() * 10 + 2
+  }
+  
+  private calculateChallengeDifficulty(result: ChallengeResult): number {
+    // 難易度 = チャレンジパワー / プレイヤーパワー
+    return result.challengePower / Math.max(result.playerPower, 1)
+  }
+  
+  private analyzeRecentActions(): void {
+    // 最近のアクションを分析してリアルタイムフィードバックを生成
+    const recentActions = this.actionHistory.slice(-10)
+    
+    // 連続失敗の検出
+    const recentChallenges = recentActions.filter(a => a.type === 'challenge_attempt')
+    const recentFailures = recentChallenges.filter(a => !a.data.success)
+    
+    if (recentFailures.length >= 3) {
+      // 失敗が連続している場合の分析とアドバイス
+      console.log('連続失敗を検出。戦略の見直しを提案')
+    }
+  }
+  
+  private updateChallengeSuccessRates(stage: GameStage, success: boolean): void {
+    const stats = this.stateManager.getEnhancedStats()
+    const current = stats.challengeSuccessRates[stage] || 0
+    const total = this.actionHistory.filter(a => 
+      a.type === 'challenge_attempt' && a.gameStage === stage
+    ).length
+    
+    // 成功率を更新
+    const successCount = this.actionHistory.filter(a => 
+      a.type === 'challenge_attempt' && a.gameStage === stage && a.data.success
+    ).length
+    
+    stats.challengeSuccessRates[stage] = successCount / total
+    this.stateManager.updateStatistics({ challengeSuccessRates: stats.challengeSuccessRates })
+  }
+  
+  private updateInsuranceUsagePattern(insuranceCard: Card): void {
+    const stats = this.stateManager.getEnhancedStats()
+    const insuranceType = insuranceCard.insuranceType || 'unknown'
+    
+    let pattern = stats.insuranceUsagePatterns.find(p => p.insuranceType === insuranceType)
+    if (!pattern) {
+      pattern = {
+        insuranceType,
+        usageCount: 0,
+        successRate: 0,
+        averageBenefit: 0
+      }
+      stats.insuranceUsagePatterns.push(pattern)
+    }
+    
+    pattern.usageCount++
+    // 成功率と平均利益は後続のチャレンジ結果で更新
+    
+    this.stateManager.updateStatistics({ insuranceUsagePatterns: stats.insuranceUsagePatterns })
+  }
+  
+  private calculateSessionEfficiency(): number {
+    const sessionActions = this.currentSessionActions
+    const challengeActions = sessionActions.filter(a => a.type === 'challenge_attempt')
+    
+    if (challengeActions.length === 0) return 0
+    
+    const successfulActions = challengeActions.filter(a => a.data.success)
+    return successfulActions.length / challengeActions.length
+  }
+  
+  private updateSessionStatistics(game: Game, sessionDuration: number): void {
+    const stats = this.stateManager.getEnhancedStats()
+    
+    // セッション統計を更新
+    stats.sessionsPlayed++
+    stats.totalPlaytime += sessionDuration
+    
+    // ベストスコアを更新
+    const currentScore = game.stats.score || 0
+    if (currentScore > stats.bestScore) {
+      stats.bestScore = currentScore
+    }
+    
+    this.stateManager.updateStatistics(stats)
+  }
+  
+  private updateLearningProgress(game: Game): void {
+    // 学習進度の更新ロジック
+    // 実装は今後拡張予定
+  }
+  
+  private calculateInsuranceStrategySuccessRate(): number {
+    const insuranceGames = this.actionHistory.filter(a => 
+      a.type === 'game_complete' && 
+      this.actionHistory.some(ia => 
+        ia.type === 'insurance_purchase' && 
+        ia.timestamp < a.timestamp
+      )
+    )
+    
+    const successfulInsuranceGames = insuranceGames.filter(a => 
+      a.data.outcome === 'victory' || a.data.finalStats.successfulChallenges > 0
+    )
+    
+    return successfulInsuranceGames.length / Math.max(insuranceGames.length, 1)
+  }
+  
+  private calculateAverageVitalityForStrategy(strategy: string): number {
+    // 戦略別の平均活力計算
+    // 実装は戦略によって異なる
+    return 0
+  }
+  
+  private calculateResourceEfficiency(): number {
+    const cardSelections = this.actionHistory.filter(a => a.type === 'card_selection')
+    if (cardSelections.length === 0) return 0
+    
+    const totalEfficiency = cardSelections.reduce((sum, action) => {
+      const selectedPower = action.data.selectedPower || 0
+      const maxPossiblePower = action.data.maxPossiblePower || 1
+      return sum + (selectedPower / maxPossiblePower)
+    }, 0)
+    
+    return (totalEfficiency / cardSelections.length) * 100
+  }
+  
+  private calculateAdaptabilityScore(): number {
+    // 異なるステージでの戦略変更を測定
+    const stageTransitions = this.actionHistory.filter(a => a.type === 'stage_progression')
+    
+    // 簡易的な適応性スコア
+    return Math.min(stageTransitions.length * 25, 100)
+  }
+  
+  private calculateImprovementRate(): number {
+    const completedGames = this.actionHistory.filter(a => a.type === 'game_complete')
+    if (completedGames.length < 2) return 0
+    
+    // 最初の5ゲームと最新の5ゲームを比較
+    const earlyGames = completedGames.slice(0, 5)
+    const recentGames = completedGames.slice(-5)
+    
+    const earlyAvgScore = earlyGames.reduce((sum, g) => sum + (g.data.finalStats.score || 0), 0) / earlyGames.length
+    const recentAvgScore = recentGames.reduce((sum, g) => sum + (g.data.finalStats.score || 0), 0) / recentGames.length
+    
+    return ((recentAvgScore - earlyAvgScore) / Math.max(earlyAvgScore, 1)) * 100
+  }
+  
+  /**
+   * アナリティクスデータから統計情報を生成
+   */
+  private generateStatsFromAnalytics(): Partial<any> {
+    const challengeActions = this.actionHistory.filter(a => a.type === 'challenge_attempt')
+    const cardSelectionActions = this.actionHistory.filter(a => a.type === 'card_selection')
+    const insuranceActions = this.actionHistory.filter(a => a.type === 'insurance_purchase')
+    const gameCompleteActions = this.actionHistory.filter(a => a.type === 'game_complete')
+    
+    return {
+      totalChallenges: challengeActions.length,
+      successfulChallenges: challengeActions.filter(a => a.data.success).length,
+      failedChallenges: challengeActions.filter(a => !a.data.success).length,
+      cardsAcquired: cardSelectionActions.length,
+      turnsPlayed: gameCompleteActions.reduce((sum, action) => sum + (action.turn || 0), 0),
+      highestVitality: Math.max(...this.actionHistory.map(a => a.vitality), 0),
+      gamesCompleted: gameCompleteActions.length,
+      sessionsPlayed: new Set(gameCompleteActions.map(a => a.data.gameId)).size,
+      insuranceUsagePatterns: this.generateInsurancePatterns(insuranceActions)
+    }
+  }
+  
+  /**
+   * 保険使用パターンを生成
+   */
+  private generateInsurancePatterns(insuranceActions: PlayerAction[]): any[] {
+    const patterns = new Map()
+    
+    insuranceActions.forEach(action => {
+      const insuranceType = action.data.insuranceType || 'unknown'
+      
+      if (!patterns.has(insuranceType)) {
+        patterns.set(insuranceType, {
+          insuranceType,
+          usageCount: 0,
+          successRate: 0,
+          averageBenefit: 0
+        })
+      }
+      
+      const pattern = patterns.get(insuranceType)
+      pattern.usageCount++
+      
+      // 成功率と平均利益の計算（簡易版）
+      if (action.data.power) {
+        pattern.averageBenefit = (pattern.averageBenefit + action.data.power) / pattern.usageCount
+      }
+    })
+    
+    return Array.from(patterns.values())
+  }
+}

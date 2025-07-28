@@ -141,6 +141,7 @@ export class GameStateManager {
   private autoSaveTimer: number | null = null
   private sessionStartTime: Date = new Date()
   private enhancedStats: EnhancedPlayerStats
+  private analyticsCallbacks: ((state: any, changeType: 'save' | 'load' | 'reset') => void)[] = []
   
   private constructor() {
     this.enhancedStats = this.initializeEnhancedStats()
@@ -203,6 +204,9 @@ export class GameStateManager {
       // セーブスロット一覧を更新
       this.updateSaveSlotList(slotId, saveData)
       
+      // アナリティクスに通知
+      this.notifyAnalytics('save')
+      
       console.log(`✅ ゲームを保存しました: スロット ${slotId}`)
     } catch (error) {
       console.error('❌ セーブエラー:', error)
@@ -234,6 +238,9 @@ export class GameStateManager {
       
       // 統計データを復元
       this.enhancedStats = saveData.statistics
+      
+      // アナリティクスに通知
+      this.notifyAnalytics('load')
       
       console.log(`✅ ゲームを読み込みました: スロット ${slotId}`)
       return game
@@ -469,6 +476,90 @@ export class GameStateManager {
       console.error('❌ インポートエラー:', error)
       throw new Error('データのインポートに失敗しました')
     }
+  }
+  
+  /**
+   * アナリティクスコールバックを登録
+   */
+  registerAnalyticsCallback(callback: (state: any, changeType: 'save' | 'load' | 'reset') => void): void {
+    this.analyticsCallbacks.push(callback)
+  }
+  
+  /**
+   * アナリティクスコールバックを削除
+   */
+  unregisterAnalyticsCallback(callback: (state: any, changeType: 'save' | 'load' | 'reset') => void): void {
+    const index = this.analyticsCallbacks.indexOf(callback)
+    if (index > -1) {
+      this.analyticsCallbacks.splice(index, 1)
+    }
+  }
+  
+  /**
+   * アナリティクス統合：統計データをGameAnalyticsと同期
+   */
+  syncWithAnalytics(analyticsData: any): void {
+    // アナリティクスデータから統計を更新
+    if (analyticsData.totalChallenges) {
+      this.enhancedStats.totalChallenges = Math.max(
+        this.enhancedStats.totalChallenges,
+        analyticsData.totalChallenges
+      )
+    }
+    
+    if (analyticsData.successfulChallenges) {
+      this.enhancedStats.successfulChallenges = Math.max(
+        this.enhancedStats.successfulChallenges,
+        analyticsData.successfulChallenges
+      )
+    }
+    
+    if (analyticsData.cardsAcquired) {
+      this.enhancedStats.cardsAcquired = Math.max(
+        this.enhancedStats.cardsAcquired,
+        analyticsData.cardsAcquired
+      )
+    }
+    
+    if (analyticsData.highestVitality) {
+      this.enhancedStats.highestVitality = Math.max(
+        this.enhancedStats.highestVitality,
+        analyticsData.highestVitality
+      )
+    }
+    
+    if (analyticsData.insuranceUsagePatterns) {
+      this.enhancedStats.insuranceUsagePatterns = this.mergeInsuranceUsagePatterns(
+        this.enhancedStats.insuranceUsagePatterns,
+        analyticsData.insuranceUsagePatterns
+      )
+    }
+    
+    this.saveEnhancedStats()
+    console.log('✅ アナリティクスデータと同期完了')
+  }
+  
+  /**
+   * 状態変更通知（アナリティクス連携用）
+   */
+  private notifyAnalytics(changeType: 'save' | 'load' | 'reset'): void {
+    if (!this.currentGame) return
+    
+    const gameState = {
+      id: this.currentGame.id,
+      stage: this.currentGame.stage,
+      turn: this.currentGame.turn,
+      vitality: this.currentGame.vitality,
+      status: this.currentGame.status
+    }
+    
+    this.analyticsCallbacks.forEach(callback => {
+      try {
+        callback(gameState, changeType)
+      } catch (error) {
+        console.warn('アナリティクスコールバックエラー:', error)
+      }
+    })
   }
   
   /**
@@ -954,5 +1045,47 @@ export class GameStateManager {
     }
     
     return saves
+  }
+  
+  /**
+   * 保険使用パターンをマージ
+   */
+  private mergeInsuranceUsagePatterns(
+    existing: InsuranceUsagePattern[],
+    incoming: InsuranceUsagePattern[]
+  ): InsuranceUsagePattern[] {
+    const merged = new Map<string, InsuranceUsagePattern>()
+    
+    // 既存のパターンを追加
+    existing.forEach(pattern => {
+      merged.set(pattern.insuranceType, { ...pattern })
+    })
+    
+    // 新しいパターンをマージ
+    incoming.forEach(incomingPattern => {
+      const existingPattern = merged.get(incomingPattern.insuranceType)
+      
+      if (existingPattern) {
+        // 使用回数を合算
+        const totalUsage = existingPattern.usageCount + incomingPattern.usageCount
+        
+        // 加重平均で成功率と平均利益を計算
+        existingPattern.successRate = (
+          (existingPattern.successRate * existingPattern.usageCount) +
+          (incomingPattern.successRate * incomingPattern.usageCount)
+        ) / totalUsage
+        
+        existingPattern.averageBenefit = (
+          (existingPattern.averageBenefit * existingPattern.usageCount) +
+          (incomingPattern.averageBenefit * incomingPattern.usageCount)
+        ) / totalUsage
+        
+        existingPattern.usageCount = totalUsage
+      } else {
+        merged.set(incomingPattern.insuranceType, { ...incomingPattern })
+      }
+    })
+    
+    return Array.from(merged.values())
   }
 }
