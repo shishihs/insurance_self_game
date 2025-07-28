@@ -14,7 +14,6 @@ import { INTERACTIVE_GAME_TUTORIAL } from '../tutorial/InteractiveTutorialConfig
 import { DropZoneIntegration } from '../systems/DropZoneIntegration'
 import { KeyboardController } from '../systems/KeyboardController'
 import { SoundManager } from '../systems/SoundManager'
-import { validateNumber } from '@/utils/security'
 
 /**
  * メインゲームシーン
