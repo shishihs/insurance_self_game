@@ -12,6 +12,7 @@ import type { TutorialConfig, TutorialStep } from '@/domain/types/tutorial.types
 import { setupGlobalTutorialTests } from '../tutorial/TutorialTestHelper'
 import { INTERACTIVE_GAME_TUTORIAL } from '../tutorial/InteractiveTutorialConfig'
 import { DropZoneIntegration } from '../systems/DropZoneIntegration'
+import { KeyboardController } from '../systems/KeyboardController'
 
 /**
  * メインゲームシーン
@@ -52,6 +53,9 @@ export class GameScene extends BaseScene {
   // ドラッグ&ドロップ関連（新システム）
   private dropZoneIntegration?: DropZoneIntegration
   
+  // キーボード操作関連
+  private keyboardController?: KeyboardController
+  
   // 旧システム（段階的移行のため一時的に保持）
   private dropZones: Map<string, Phaser.GameObjects.Container> = new Map()
   private dropZoneHighlights: Map<string, Phaser.GameObjects.Graphics> = new Map()
@@ -90,6 +94,9 @@ export class GameScene extends BaseScene {
 
     // ゲーム開始
     this.startGame()
+    
+    // キーボード操作の初期化
+    this.initializeKeyboardControls()
 
     // メニューからチュートリアルが要求された場合は自動開始
     if (this.shouldStartTutorial) {
@@ -738,6 +745,125 @@ export class GameScene extends BaseScene {
   }
 
   /**
+   * キーボード操作の初期化
+   */
+  private initializeKeyboardControls(): void {
+    // キーボードコントローラーを作成
+    this.keyboardController = new KeyboardController(this)
+    
+    // アクションのコールバックを登録
+    this.keyboardController.registerActionCallback('draw', () => {
+      if (this.gameInstance.phase === 'draw' && this.gameInstance.isInProgress()) {
+        this.drawCards(1)
+      }
+    })
+    
+    this.keyboardController.registerActionCallback('challenge', () => {
+      if (this.gameInstance.phase === 'draw' && !this.gameInstance.currentChallenge && this.gameInstance.isInProgress()) {
+        this.startChallenge()
+      }
+    })
+    
+    this.keyboardController.registerActionCallback('endTurn', () => {
+      const phase = this.gameInstance.phase
+      if ((phase === 'draw' || phase === 'resolution') && this.gameInstance.isInProgress()) {
+        this.endTurn()
+      }
+    })
+    
+    // 数字キーでカード選択
+    for (let i = 1; i <= 7; i++) {
+      this.keyboardController.registerActionCallback(`card${i}`, () => {
+        if (i <= this.handCards.length) {
+          const card = this.handCards[i - 1]
+          const cardData = card.getData('card') as Card
+          if (cardData) {
+            this.toggleCardSelection(cardData.id, card)
+          }
+        }
+      })
+    }
+    
+    // キャンセルアクション（選択解除）
+    this.keyboardController.registerActionCallback('cancel', () => {
+      this.clearCardSelection()
+    })
+    
+    // アクションボタンを登録
+    this.time.delayedCall(100, () => {
+      this.registerFocusableElements()
+    })
+    
+    // キーボード操作を有効化
+    this.keyboardController.enable()
+  }
+  
+  /**
+   * フォーカス可能な要素を登録
+   */
+  private registerFocusableElements(): void {
+    if (!this.keyboardController) return
+    
+    // アクションボタンを登録
+    const actionButtons = this.children.getByName('action-buttons') as Phaser.GameObjects.Container
+    if (actionButtons) {
+      const drawButton = actionButtons.getByName('draw-button') as Phaser.GameObjects.Container
+      const challengeButton = actionButtons.getByName('challenge-button') as Phaser.GameObjects.Container
+      const endTurnButton = actionButtons.getByName('end-turn-button') as Phaser.GameObjects.Container
+      
+      if (drawButton) {
+        this.keyboardController.registerFocusableElement(drawButton, () => {
+          if (this.gameInstance.phase === 'draw' && this.gameInstance.isInProgress()) {
+            this.drawCards(1)
+          }
+        })
+      }
+      
+      if (challengeButton) {
+        this.keyboardController.registerFocusableElement(challengeButton, () => {
+          if (this.gameInstance.phase === 'draw' && !this.gameInstance.currentChallenge && this.gameInstance.isInProgress()) {
+            this.startChallenge()
+          }
+        })
+      }
+      
+      if (endTurnButton) {
+        this.keyboardController.registerFocusableElement(endTurnButton, () => {
+          const phase = this.gameInstance.phase
+          if ((phase === 'draw' || phase === 'resolution') && this.gameInstance.isInProgress()) {
+            this.endTurn()
+          }
+        })
+      }
+    }
+    
+    // 手札のカードを登録
+    this.registerHandCardsFocus()
+  }
+  
+  /**
+   * 手札のカードをフォーカス可能要素として登録
+   */
+  private registerHandCardsFocus(): void {
+    if (!this.keyboardController) return
+    
+    // 既存の手札登録を解除
+    this.handCards.forEach((cardContainer) => {
+      this.keyboardController!.unregisterFocusableElement(cardContainer)
+    })
+    
+    // 新しく登録
+    this.handCards.forEach((cardContainer, index) => {
+      this.keyboardController!.registerFocusableElement(cardContainer, () => {
+        const cardData = cardContainer.getData('card') as Card
+        if (cardData) {
+          this.toggleCardSelection(cardData.id, cardContainer)
+        }
+      })
+    })
+  }
+
+  /**
    * ゲーム開始
    */
   private startGame(): void {
@@ -1244,6 +1370,9 @@ export class GameScene extends BaseScene {
         ease: 'Power2'
       })
     })
+    
+    // キーボード操作用にフォーカス可能要素を再登録
+    this.registerHandCardsFocus()
   }
 
   /**
@@ -4772,6 +4901,12 @@ export class GameScene extends BaseScene {
       this.dropZoneIntegration.destroy()
       this.dropZoneIntegration = undefined
     }
+    
+    // キーボードコントローラーのクリーンアップ
+    if (this.keyboardController) {
+      this.keyboardController.destroy()
+      this.keyboardController = undefined
+    }
 
     // イベントリスナーの削除
     this.data.events.off('cardSelected')
@@ -5016,6 +5151,13 @@ export class GameScene extends BaseScene {
   }
 
   private clearHandDisplay(): void {
+    // キーボード操作から登録解除
+    if (this.keyboardController) {
+      this.handCards.forEach((cardContainer) => {
+        this.keyboardController!.unregisterFocusableElement(cardContainer)
+      })
+    }
+    
     // 手札表示をクリア
     this.handCards.forEach(card => card.destroy())
     this.handCards = []
