@@ -178,9 +178,9 @@ export class PlaytestGameController {
     for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('友人の励まし', 1))
 
     // ネガティブカード（10枚）
-    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('浪費癖', -1))
+    for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('浪費癖', 0))
     for (let i = 0; i < 3; i++) cards.push(Card.createLifeCard('衝動買い', 0))
-    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('ギャンブル', -1))
+    for (let i = 0; i < 2; i++) cards.push(Card.createLifeCard('ギャンブル', 0))
     cards.push(Card.createLifeCard('友人の結婚式', 0))
     cards.push(Card.createLifeCard('風邪をひく', 0))
 

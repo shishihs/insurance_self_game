@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Windows環境の場合はCMDファイルを実行
+if [ "$OS" = "Windows_NT" ]; then
+    cmd.exe /c ".husky\\pre-commit.cmd"
+    exit $?
+fi
+
 # エラーが発生したら即座に終了
 set -e
 
