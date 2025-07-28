@@ -10,6 +10,7 @@ import type {
 } from '../types/card.types'
 import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
+import { IdGenerator } from '../../common/IdGenerator'
 
 /**
  * カードエンティティ - ゲーム内のすべてのカードの基底クラス
@@ -311,7 +312,7 @@ export class Card implements ICard {
   static createLifeCard(name: string, power: number): Card {
     const powerSign = power > 0 ? '+' : ''
     return new Card({
-      id: `life_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: IdGenerator.generate('life'),
       name,
       description: `パワー: ${powerSign}${power}`,
       type: 'life',
@@ -326,7 +327,7 @@ export class Card implements ICard {
    */
   static createChallengeCard(name: string, power: number): Card {
     const card = new Card({
-      id: `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: IdGenerator.generate('challenge'),
       name,
       description: `必要パワー: ${power}`,
       type: 'challenge',
@@ -343,7 +344,7 @@ export class Card implements ICard {
    */
   static createInsuranceCard(name: string, power: number, ...effects: CardEffect[]): Card {
     return new Card({
-      id: `insurance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: IdGenerator.generate('insurance'),
       name,
       description: `保険カード - パワー: +${power}`,
       type: 'insurance',

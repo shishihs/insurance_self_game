@@ -6,20 +6,13 @@ import type {
   DreamCategory
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
+import { IdGenerator } from '../../common/IdGenerator'
 
 /**
  * カードファクトリー
  * ゲーム用のカードを生成する
  */
 export class CardFactory {
-  private static cardIdCounter = 0
-
-  /**
-   * ユニークなカードIDを生成
-   */
-  private static generateId(): string {
-    return `card_${Date.now()}_${this.cardIdCounter++}`
-  }
 
   /**
    * 年齢ボーナスを計算
@@ -228,7 +221,7 @@ export class CardFactory {
    */
   static createTermInsuranceCard(choice: InsuranceTypeChoice): Card {
     return new Card({
-      id: this.generateId(),
+      id: IdGenerator.generateCardId(),
       type: 'insurance',
       name: `定期${choice.name}`,
       description: `${choice.baseCard.description}（${choice.termOption.duration}ターン限定）`,
@@ -248,7 +241,7 @@ export class CardFactory {
    */
   static createWholeLifeInsuranceCard(choice: InsuranceTypeChoice): Card {
     return new Card({
-      id: this.generateId(),
+      id: IdGenerator.generateCardId(),
       type: 'insurance',
       name: `終身${choice.name}`,
       description: `${choice.baseCard.description}（永続保障）`,
@@ -328,7 +321,7 @@ export class CardFactory {
     cost: number
   }): Card {
     return new Card({
-      id: this.generateId(),
+      id: IdGenerator.generateCardId(),
       type: 'life',
       name: params.name,
       description: params.description,
@@ -352,7 +345,7 @@ export class CardFactory {
     ageBonus?: number
   }): Card {
     return new Card({
-      id: this.generateId(),
+      id: IdGenerator.generateCardId(),
       type: 'insurance',
       name: params.name,
       description: params.description,
@@ -379,7 +372,7 @@ export class CardFactory {
     dreamCategory?: DreamCategory
   }): Card {
     return new Card({
-      id: this.generateId(),
+      id: IdGenerator.generateCardId(),
       type: 'challenge', // チャレンジカード専用タイプ
       name: params.name,
       description: params.description,
@@ -400,7 +393,7 @@ export class CardFactory {
     penalty: number
   }): Card {
     return new Card({
-      id: this.generateId(),
+      id: IdGenerator.generateCardId(),
       type: 'pitfall',
       name: params.name,
       description: params.description,

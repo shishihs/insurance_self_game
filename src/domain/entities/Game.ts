@@ -6,6 +6,7 @@ import { InsurancePremiumCalculationService } from '../services/InsurancePremium
 import { GameStageManager } from '../services/GameStageManager'
 import { InsuranceExpirationManager } from '../services/InsuranceExpirationManager'
 import { ChallengeResolutionService } from '../services/ChallengeResolutionService'
+import { IdGenerator } from '../../common/IdGenerator'
 import type {
   IGameState,
   GameStatus,
@@ -279,7 +280,7 @@ export class Game implements IGameState {
    * @private
    */
   private generateId(): string {
-    return `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return IdGenerator.generateGameId()
   }
 
   /**

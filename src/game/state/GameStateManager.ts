@@ -560,18 +560,258 @@ export class GameStateManager {
   }
   
   private restoreGameFromState(gameState: IGameState): Game {
-    // TODO: ゲーム状態からGameインスタンスを完全復元する処理
-    // 現在は簡易実装
-    const game = new Game(gameState.config)
-    // 状態を復元...
-    return game
+    try {
+      // ゲーム設定を使用してGameインスタンスを作成
+      const game = new Game(gameState.config)
+      
+      // 基本状態を復元
+      game.id = gameState.id
+      game.status = gameState.status
+      game.phase = gameState.phase
+      game.stage = gameState.stage
+      game.turn = gameState.turn
+      game.vitality = gameState.vitality
+      game.maxVitality = gameState.maxVitality
+      
+      // 統計情報を復元
+      if (gameState.stats) {
+        game.stats = { ...gameState.stats }
+      }
+      
+      // デッキ情報を復元（Gameクラスのプロパティに基づく）
+      if (gameState.playerDeck) {
+        // プレイヤーデッキの復元ロジック
+        const playerDeck = game.playerDeck
+        if (playerDeck && gameState.playerDeck.cards) {
+          // デッキのカードを復元
+          playerDeck.cards = gameState.playerDeck.cards.map(cardData => {
+            // Card型に適合するようにデータを復元
+            return {
+              id: cardData.id,
+              name: cardData.name,
+              type: cardData.type,
+              power: cardData.power,
+              cost: cardData.cost || 0,
+              description: cardData.description || '',
+              rarity: cardData.rarity || 'common',
+              stage: cardData.stage || 'youth',
+              insuranceType: cardData.insuranceType,
+              durationType: cardData.durationType,
+              imageUrl: cardData.imageUrl,
+              effect: cardData.effect
+            }
+          })
+        }
+      }
+      
+      // 手札を復元
+      if (gameState.hand) {
+        game.hand = gameState.hand.map(cardData => ({
+          id: cardData.id,
+          name: cardData.name,
+          type: cardData.type,
+          power: cardData.power,
+          cost: cardData.cost || 0,
+          description: cardData.description || '',
+          rarity: cardData.rarity || 'common',
+          stage: cardData.stage || 'youth',
+          insuranceType: cardData.insuranceType,
+          durationType: cardData.durationType,
+          imageUrl: cardData.imageUrl,
+          effect: cardData.effect
+        }))
+      }
+      
+      // 選択されたカードを復元
+      if (gameState.selectedCards) {
+        game.selectedCards = gameState.selectedCards.map(cardData => ({
+          id: cardData.id,
+          name: cardData.name,
+          type: cardData.type,
+          power: cardData.power,
+          cost: cardData.cost || 0,
+          description: cardData.description || '',
+          rarity: cardData.rarity || 'common',
+          stage: cardData.stage || 'youth',
+          insuranceType: cardData.insuranceType,
+          durationType: cardData.durationType,
+          imageUrl: cardData.imageUrl,
+          effect: cardData.effect
+        }))
+      }
+      
+      // 保険カードを復元
+      if (gameState.insuranceCards) {
+        game.insuranceCards = gameState.insuranceCards.map(cardData => ({
+          id: cardData.id,
+          name: cardData.name,
+          type: cardData.type,
+          power: cardData.power,
+          cost: cardData.cost || 0,
+          description: cardData.description || '',
+          rarity: cardData.rarity || 'common',
+          stage: cardData.stage || 'youth',
+          insuranceType: cardData.insuranceType,
+          durationType: cardData.durationType,
+          imageUrl: cardData.imageUrl,
+          effect: cardData.effect
+        }))
+      }
+      
+      // 現在のチャレンジを復元
+      if (gameState.currentChallenge) {
+        game.currentChallenge = {
+          id: gameState.currentChallenge.id,
+          name: gameState.currentChallenge.name,
+          type: gameState.currentChallenge.type,
+          power: gameState.currentChallenge.power,
+          cost: gameState.currentChallenge.cost || 0,
+          description: gameState.currentChallenge.description || '',
+          rarity: gameState.currentChallenge.rarity || 'common',
+          stage: gameState.currentChallenge.stage || 'youth',
+          insuranceType: gameState.currentChallenge.insuranceType,
+          durationType: gameState.currentChallenge.durationType,
+          imageUrl: gameState.currentChallenge.imageUrl,
+          effect: gameState.currentChallenge.effect
+        }
+      }
+      
+      // 保険タイプ選択肢を復元
+      if (gameState.currentInsuranceTypeChoices) {
+        game.currentInsuranceTypeChoices = [...gameState.currentInsuranceTypeChoices]
+      }
+      
+      // 実行結果を復元
+      if (gameState.lastChallengeResult) {
+        game.lastChallengeResult = { ...gameState.lastChallengeResult }
+      }
+      
+      console.log(`✅ ゲーム状態を復元しました: ${gameState.id}`)
+      return game
+      
+    } catch (error) {
+      console.error('❌ ゲーム状態復元エラー:', error)
+      throw new Error(`ゲーム状態の復元に失敗しました: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }
   
   private restoreFromSnapshot(snapshot: GameStateSnapshot): void {
     if (!this.currentGame) return
     
-    // TODO: スナップショットからゲーム状態を復元
-    console.log(`Restoring from snapshot: ${snapshot.description}`)
+    try {
+      const gameState = snapshot.gameState
+      
+      // 基本状態を復元
+      this.currentGame.status = gameState.status
+      this.currentGame.phase = gameState.phase
+      this.currentGame.stage = gameState.stage
+      this.currentGame.turn = gameState.turn
+      this.currentGame.vitality = gameState.vitality
+      this.currentGame.maxVitality = gameState.maxVitality
+      
+      // 統計情報を復元
+      if (gameState.stats) {
+        this.currentGame.stats = { ...gameState.stats }
+      }
+      
+      // 手札を復元
+      if (gameState.hand) {
+        this.currentGame.hand = gameState.hand.map(cardData => ({
+          id: cardData.id,
+          name: cardData.name,
+          type: cardData.type,
+          power: cardData.power,
+          cost: cardData.cost || 0,
+          description: cardData.description || '',
+          rarity: cardData.rarity || 'common',
+          stage: cardData.stage || 'youth',
+          insuranceType: cardData.insuranceType,
+          durationType: cardData.durationType,
+          imageUrl: cardData.imageUrl,
+          effect: cardData.effect
+        }))
+      }
+      
+      // 選択されたカードを復元
+      if (gameState.selectedCards) {
+        this.currentGame.selectedCards = gameState.selectedCards.map(cardData => ({
+          id: cardData.id,
+          name: cardData.name,
+          type: cardData.type,
+          power: cardData.power,
+          cost: cardData.cost || 0,
+          description: cardData.description || '',
+          rarity: cardData.rarity || 'common',
+          stage: cardData.stage || 'youth',
+          insuranceType: cardData.insuranceType,
+          durationType: cardData.durationType,
+          imageUrl: cardData.imageUrl,
+          effect: cardData.effect
+        }))
+      } else {
+        this.currentGame.selectedCards = []
+      }
+      
+      // 保険カードを復元
+      if (gameState.insuranceCards) {
+        this.currentGame.insuranceCards = gameState.insuranceCards.map(cardData => ({
+          id: cardData.id,
+          name: cardData.name,
+          type: cardData.type,
+          power: cardData.power,
+          cost: cardData.cost || 0,
+          description: cardData.description || '',
+          rarity: cardData.rarity || 'common',
+          stage: cardData.stage || 'youth',
+          insuranceType: cardData.insuranceType,
+          durationType: cardData.durationType,
+          imageUrl: cardData.imageUrl,
+          effect: cardData.effect
+        }))
+      } else {
+        this.currentGame.insuranceCards = []
+      }
+      
+      // 現在のチャレンジを復元
+      if (gameState.currentChallenge) {
+        this.currentGame.currentChallenge = {
+          id: gameState.currentChallenge.id,
+          name: gameState.currentChallenge.name,
+          type: gameState.currentChallenge.type,
+          power: gameState.currentChallenge.power,
+          cost: gameState.currentChallenge.cost || 0,
+          description: gameState.currentChallenge.description || '',
+          rarity: gameState.currentChallenge.rarity || 'common',
+          stage: gameState.currentChallenge.stage || 'youth',
+          insuranceType: gameState.currentChallenge.insuranceType,
+          durationType: gameState.currentChallenge.durationType,
+          imageUrl: gameState.currentChallenge.imageUrl,
+          effect: gameState.currentChallenge.effect
+        }
+      } else {
+        this.currentGame.currentChallenge = undefined
+      }
+      
+      // 保険タイプ選択肢を復元
+      if (gameState.currentInsuranceTypeChoices) {
+        this.currentGame.currentInsuranceTypeChoices = [...gameState.currentInsuranceTypeChoices]
+      } else {
+        this.currentGame.currentInsuranceTypeChoices = undefined
+      }
+      
+      // 実行結果を復元
+      if (gameState.lastChallengeResult) {
+        this.currentGame.lastChallengeResult = { ...gameState.lastChallengeResult }
+      } else {
+        this.currentGame.lastChallengeResult = undefined
+      }
+      
+      console.log(`📼 スナップショットから復元完了: ${snapshot.description}`)
+      
+    } catch (error) {
+      console.error('❌ スナップショット復元エラー:', error)
+      throw new Error(`スナップショット復元に失敗しました: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }
   
   private updateSaveSlotList(slotId: string, saveData: SaveData): void {
