@@ -1,3 +1,5 @@
+import { WebAudioSoundGenerator } from './WebAudioSoundGenerator'
+
 /**
  * サウンドマネージャー
  * ゲーム内のすべてのサウンドエフェクトを管理
@@ -7,6 +9,7 @@ export class SoundManager {
   private enabled: boolean = true
   private volume: number = 0.5
   private sounds: Map<string, Phaser.Sound.BaseSound> = new Map()
+  private webAudioGenerator: WebAudioSoundGenerator
   
   // サウンドエフェクトの定義
   private readonly soundEffects = {
@@ -51,8 +54,14 @@ export class SoundManager {
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene
+    this.webAudioGenerator = new WebAudioSoundGenerator()
     this.loadSounds()
     this.setupVolumeControl()
+    
+    // ユーザーインタラクション後にオーディオコンテキストを開始
+    this.scene.input.once('pointerdown', () => {
+      this.webAudioGenerator.resume()
+    })
   }
   
   /**
@@ -122,15 +131,56 @@ export class SoundManager {
     const soundConfig = this.soundEffects[soundKey]
     if (!soundConfig) return
     
-    // 仮実装：コンソールに出力
-    if (this.scene.game.config.physics?.arcade?.debug) {
-      console.log(`🔊 Sound: ${soundKey} (volume: ${soundConfig.volume * this.volume})`)
+    // Web Audio APIで音を再生
+    try {
+      switch (soundKey) {
+        case 'buttonClick':
+          this.webAudioGenerator.playButtonClick()
+          break
+        case 'buttonHover':
+          this.webAudioGenerator.playButtonHover()
+          break
+        case 'cardDraw':
+          this.webAudioGenerator.playCardDraw()
+          break
+        case 'cardSelect':
+        case 'cardDeselect':
+          this.webAudioGenerator.playCardSelect()
+          break
+        case 'challengeSuccess':
+          this.webAudioGenerator.playChallengeSuccess()
+          break
+        case 'challengeFail':
+          this.webAudioGenerator.playChallengeFail()
+          break
+        case 'vitalityGain':
+          this.webAudioGenerator.playVitalityGain()
+          break
+        case 'vitalityLoss':
+          this.webAudioGenerator.playVitalityLoss()
+          break
+        case 'warning':
+        case 'vitalityWarning':
+          this.webAudioGenerator.playWarning()
+          break
+        case 'notification':
+        case 'insuranceGet':
+        case 'insuranceRenew':
+          this.webAudioGenerator.playNotification()
+          break
+        case 'gameOver':
+          this.webAudioGenerator.playGameOver()
+          break
+        case 'gameVictory':
+          this.webAudioGenerator.playVictory()
+          break
+        default:
+          // その他の音は通知音で代用
+          this.webAudioGenerator.playNotification()
+      }
+    } catch (error) {
+      console.warn('Sound playback error:', error)
     }
-    
-    // 実際のサウンド再生はサウンドファイルが用意されてから実装
-    // this.scene.sound.play(soundConfig.key, {
-    //   volume: soundConfig.volume * this.volume
-    // })
   }
   
   /**
@@ -235,5 +285,6 @@ export class SoundManager {
   destroy(): void {
     this.stopAll()
     this.sounds.clear()
+    this.webAudioGenerator.destroy()
   }
 }
