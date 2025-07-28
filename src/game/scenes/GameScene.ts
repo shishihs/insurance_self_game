@@ -1307,6 +1307,66 @@ export class GameScene extends BaseScene {
   }
 
   /**
+   * 手札のカードを選択可能にする
+   */
+  private enableHandCardSelection(): void {
+    this.handCards.forEach(cardContainer => {
+      // チャレンジ中であることを明示
+      cardContainer.setData('challengeActive', true)
+      
+      // DropZoneIntegrationのsetupCardDragAndDropを使用
+      if (this.dropZoneIntegration) {
+        // ドラッグ可能に設定
+        this.input.setDraggable(cardContainer, true)
+        
+        // 既存のドラッグイベントハンドラーをクリア
+        cardContainer.off('dragstart')
+        cardContainer.off('drag')
+        cardContainer.off('dragend')
+        
+        // DropZoneIntegrationのドラッグハンドラーを設定
+        this.dropZoneIntegration.setupCardDragAndDrop(cardContainer)
+      } else {
+        // フォールバック: 基本的なドラッグ機能
+        this.input.setDraggable(cardContainer, true)
+        
+        cardContainer.on('dragstart', (pointer: Phaser.Input.Pointer) => {
+          cardContainer.setData('isDragging', true)
+          cardContainer.setDepth(1000)
+        })
+        
+        cardContainer.on('drag', (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+          cardContainer.x = dragX
+          cardContainer.y = dragY
+        })
+        
+        cardContainer.on('dragend', (pointer: Phaser.Input.Pointer) => {
+          cardContainer.setData('isDragging', false)
+          cardContainer.setDepth(10)
+          
+          // 元の位置に戻す
+          const originalX = cardContainer.getData('originalX') || cardContainer.x
+          const originalY = cardContainer.getData('originalY') || cardContainer.y
+          
+          this.tweens.add({
+            targets: cardContainer,
+            x: originalX,
+            y: originalY,
+            duration: 300,
+            ease: 'Back.easeOut'
+          })
+        })
+      }
+      
+      // 視覚的にドラッグ可能であることを示す
+      const glowEffect = cardContainer.getData('glow')
+      if (glowEffect) {
+        glowEffect.setVisible(true)
+      }
+    })
+  }
+
+  /**
    * ターン終了
    */
   private endTurn(): void {
@@ -3903,7 +3963,7 @@ export class GameScene extends BaseScene {
     // ゲーム状態をグローバルとSceneデータの両方に設定
     const gameState = {
       hand: this.gameInstance.hand,
-      selectedCards: this.gameInstance.selectedCards,
+      selectedCards: [...this.gameInstance.selectedCards], // 配列のコピーを作成
       phase: this.gameInstance.phase,
       turn: this.gameInstance.turn,
       vitality: this.gameInstance.vitality,
