@@ -4269,7 +4269,7 @@ export class GameScene extends BaseScene {
   private showInsuranceRenewalDialog(renewalOption: unknown): void {
     // 保険更新システムが削除されたため、この機能は無効化
     console.warn('showInsuranceRenewalDialog: 保険更新システムが削除されました')
-    return
+    return;
 
     // 保険更新選択コンテナを作成
     this.insuranceRenewalDialogUI = this.add.container(this.centerX, this.centerY)
@@ -5182,22 +5182,5 @@ export class GameScene extends BaseScene {
     })
     
     return button
-  }
-  
-  /**
-   * クリーンアップ処理
-   */
-  destroy(): void {
-    // キーボードコントローラーの破棄
-    if (this.keyboardController) {
-      this.keyboardController.destroy()
-    }
-    
-    // サウンドマネージャーの破棄
-    if (this.soundManager) {
-      this.soundManager.destroy()
-    }
-    
-    super.destroy()
   }
 }

@@ -157,102 +157,205 @@ class SoundManager {
 
 ### Game エンティティ
 
-ゲーム状態を管理するメインエンティティ。
+ゲーム状態を管理するメインエンティティ。ドメイン駆動設計(DDD)に基づいて設計され、複数のドメインサービスと連携します。
 
 #### 基本API
 
 ```typescript
-class Game {
+class Game implements IGameState {
+  // 基本プロパティ
+  id: string
+  status: GameStatus
+  phase: GamePhase
+  stage: GameStage
+  turn: number
+  
+  // 値オブジェクト（不変）
+  private _vitality: Vitality
+  private _insuranceBurden: InsurancePremium
+  
+  // ドメインサービス
+  private cardManager: ICardManager
+  private premiumCalculationService: InsurancePremiumCalculationService
+  private stageManager: GameStageManager
+  private expirationManager: InsuranceExpirationManager
+  private challengeResolutionService: ChallengeResolutionService
+  
   // ゲーム状態
   getVitality(): Vitality
-  getCurrentStage(): LifeStage
+  getCurrentStage(): GameStage
   getTurn(): number
+  getGameStatus(): GameStatus
+  getGamePhase(): GamePhase
   
-  // カード操作
-  drawCard(): Card | null
+  // カード操作（CardManagerに委譲）
+  drawCards(count: number): Card[]
   selectCard(cardId: string): boolean
   deselectCard(cardId: string): boolean
   getSelectedCards(): Card[]
+  getHandCards(): Card[]
+  getDiscardPile(): Card[]
   
-  // チャレンジ
-  startChallenge(challengeId: string): void
+  // チャレンジシステム
+  startChallenge(challenge: Card): void
   resolveChallenge(): ChallengeResult
+  getCurrentChallenge(): Card | undefined
   
   // ターン管理
-  endTurn(): void
+  endTurn(): TurnResult
   canEndTurn(): boolean
+  nextTurn(): void
   
   // 保険システム
-  getInsuranceCards(): InsuranceCard[]
-  renewInsurance(cardId: string): InsuranceRenewalResult
+  getInsuranceCards(): Card[]
+  getExpiredInsurances(): Card[]
+  renewInsurance(cardId: string): boolean
+  getInsuranceBurden(): number
+  getAvailableInsuranceTypes(): InsuranceTypeChoice[]
+  selectInsuranceType(typeId: string): InsuranceTypeSelectionResult
+  
+  // 保険期限管理
+  checkInsuranceExpirations(): InsuranceExpirationNotice[]
+  handleInsuranceExpiration(cardId: string): void
   
   // ゲーム判定
   isGameOver(): boolean
   isVictory(): boolean
+  canContinue(): boolean
+  
+  // 統計・分析
+  getStats(): PlayerStats
+  exportGameState(): IGameState
+  
+  // パフォーマンス最適化
+  private updateCachedValues(): void
+  private markDirty(flag: keyof DirtyFlags): void
 }
 ```
 
+#### 新しいドメインサービス統合
+
+1. **ChallengeResolutionService**: チャレンジ解決の専門ロジック
+2. **GameStageManager**: ゲームステージの進行管理
+3. **InsuranceExpirationManager**: 保険期限の監視と通知
+4. **InsurancePremiumCalculationService**: 保険料計算の専門ロジック
+
 ### CardPower バリューオブジェクト
 
-カードの力を表現する値オブジェクト。負の値エラーが修正されました。
+カードの力を表現する値オブジェクト。不変性を保証し、負の値エラーが修正されています。
 
 #### 基本API
 
 ```typescript
 class CardPower {
+  private readonly value: number
+  
   constructor(value: number)
   
   // 値操作（不変オブジェクト）
   add(other: CardPower): CardPower
-  subtract(other: CardPower): CardPower  // 負の値は0に修正
+  subtract(other: CardPower): CardPower  // 負の値は0に自動修正
   multiply(factor: number): CardPower
+  divide(divisor: number): CardPower  // 新機能：除算操作
   
-  // 比較
+  // 比較操作
   equals(other: CardPower): boolean
   isGreaterThan(other: CardPower): boolean
   isLessThan(other: CardPower): boolean
+  isGreaterThanOrEqual(other: CardPower): boolean
+  isLessThanOrEqual(other: CardPower): boolean
   
-  // 値取得
+  // 特殊判定
+  isZero(): boolean
+  isPositive(): boolean
+  
+  // 値取得・表示
   getValue(): number
   toString(): string
+  toDisplayString(): string  // UI表示用フォーマット
+  
+  // 静的ファクトリメソッド
+  static zero(): CardPower
+  static of(value: number): CardPower
+  static max(a: CardPower, b: CardPower): CardPower
+  static min(a: CardPower, b: CardPower): CardPower
 }
 ```
 
-#### 修正されたエラー
+#### 修正されたエラーと新機能
 
-以前は `subtract()` メソッドで負の値が発生する可能性がありましたが、現在は以下のように修正されています：
-
+**負の値エラー修正**:
 ```typescript
 subtract(other: CardPower): CardPower {
   const result = this.value - other.value;
-  return new CardPower(Math.max(0, result)); // 負の値は0に修正
+  return new CardPower(Math.max(0, result)); // 負の値は0に自動修正
+}
+```
+
+**新しい除算操作**:
+```typescript
+divide(divisor: number): CardPower {
+  if (divisor === 0) {
+    throw new Error('Division by zero is not allowed');
+  }
+  return new CardPower(Math.floor(this.value / divisor));
 }
 ```
 
 ### Vitality バリューオブジェクト
 
-プレイヤーの活力（体力）を管理するバリューオブジェクト。
+プレイヤーの活力（体力）を管理する値オブジェクト。境界値の安全性と不変性を保証します。
 
 #### 基本API
 
 ```typescript
 class Vitality {
+  private readonly current: number
+  private readonly max: number
+  
   constructor(current: number, max: number)
   
-  // 値操作
+  // 値操作（不変オブジェクト）
   increase(amount: number): Vitality
   decrease(amount: number): Vitality
+  setMax(newMax: number): Vitality  // 新機能：最大値の変更
+  restore(): Vitality  // 新機能：完全回復
   
   // 状態確認
   isEmpty(): boolean
   isFull(): boolean
+  isDangerous(): boolean  // 新機能：危険状態（25%以下）
+  isHealthy(): boolean   // 新機能：健康状態（75%以上）
   getPercentage(): number
+  getRemainingPoints(): number  // 新機能：最大値までの残り
   
   // 値取得
   getCurrent(): number
   getMax(): number
+  
+  // 表示用
+  toString(): string
+  toDisplayString(): string  // "20/30 (67%)" 形式
+  toProgressBar(width: number): string  // プログレスバー形式
+  
+  // 静的ファクトリメソッド
+  static create(current: number, max: number): Vitality
+  static full(max: number): Vitality
+  static empty(max: number): Vitality
 }
 ```
+
+#### 新機能と安全性
+
+**境界値の安全性**:
+- 現在値は0以上、最大値以下に自動調整
+- 最大値は1以上に制限
+- 不正な値での例外処理
+
+**ゲーム体験の向上**:
+- `isDangerous()`: 活力が危険レベル（25%以下）の判定
+- `isHealthy()`: 活力が健康レベル（75%以上）の判定
+- プログレスバー表示でUI統合を簡素化
 
 ## UI統合システム
 
@@ -411,22 +514,162 @@ pnpm benchmark:massive
 pnpm type-check
 ```
 
+## 新しいドメインサービス API
+
+### ChallengeResolutionService
+
+チャレンジ解決の専門ロジックを担当するドメインサービス。
+
+#### 基本API
+
+```typescript
+class ChallengeResolutionService {
+  /**
+   * チャレンジを解決し、結果を計算
+   */
+  resolveChallenge(
+    challenge: Card,
+    selectedCards: Card[],
+    cardManager: ICardManager,
+    stage: GameStage,
+    insuranceBurden: number
+  ): ChallengeResult
+  
+  /**
+   * 総パワーを計算（保険料負担を考慮）
+   */
+  private calculateTotalPower(
+    cards: Card[], 
+    insuranceBurden: number
+  ): PowerBreakdown
+  
+  /**
+   * 夢カードの年齢調整パワーを取得
+   */
+  private getDreamRequiredPower(
+    challenge: Card, 
+    stage: GameStage
+  ): number
+}
+```
+
+### GameStageManager
+
+ゲームステージの進行と状態管理を担当。
+
+#### 基本API
+
+```typescript
+class GameStageManager {
+  /**
+   * 次のステージに進行可能かチェック
+   */
+  canAdvanceToNextStage(game: Game): boolean
+  
+  /**
+   * ステージを進行
+   */
+  advanceStage(game: Game): StageAdvancementResult
+  
+  /**
+   * 現在のステージ情報を取得
+   */
+  getCurrentStageInfo(stage: GameStage): StageInfo
+  
+  /**
+   * ステージ別の挑戦要求を計算
+   */
+  calculateStageRequirements(stage: GameStage): StageRequirements
+}
+```
+
+### InsuranceExpirationManager
+
+保険期限の監視と通知を担当。
+
+#### 基本API
+
+```typescript
+class InsuranceExpirationManager {
+  /**
+   * 期限切れ通知をチェック
+   */
+  checkExpirations(
+    insuranceCards: Card[], 
+    currentTurn: number
+  ): InsuranceExpirationNotice[]
+  
+  /**
+   * 期限切れ処理を実行
+   */
+  processExpiredInsurances(
+    game: Game, 
+    expiredCards: Card[]
+  ): ExpirationResult
+  
+  /**
+   * 更新可能性をチェック
+   */
+  canRenewInsurance(
+    card: Card, 
+    playerVitality: Vitality
+  ): boolean
+}
+```
+
+### InsurancePremiumCalculationService
+
+保険料計算の専門ロジック。
+
+#### 基本API
+
+```typescript
+class InsurancePremiumCalculationService {
+  /**
+   * 年齢別の保険料を計算
+   */
+  calculatePremium(
+    insuranceType: InsuranceType, 
+    age: number
+  ): InsurancePremium
+  
+  /**
+   * 総保険料負担を計算
+   */
+  calculateTotalBurden(
+    insuranceCards: Card[], 
+    age: number
+  ): InsurancePremium
+  
+  /**
+   * 保険料の年齢調整係数を取得
+   */
+  getAgeAdjustmentFactor(
+    age: number, 
+    insuranceType: InsuranceType
+  ): number
+}
+```
+
 ## 今後の拡張予定
 
 ### Phase 1（短期）
 - [ ] 音響バリエーション機能
 - [ ] サウンドプリセット機能
-- [ ] 音響解析ツール
+- [ ] セーブ/ロードシステム
+- [ ] 統計・実績システム
 
 ### Phase 2（中期）
 - [ ] 3D音響対応
 - [ ] 音楽シーケンサー統合
-- [ ] AI音響生成
+- [ ] AI対戦モード
+- [ ] オンラインランキング
 
 ### Phase 3（長期）
-- [ ] VR/AR音響対応
-- [ ] リアルタイム音響解析
-- [ ] 機械学習による音響最適化
+- [ ] VR/AR対応
+- [ ] リアルタイム解析
+- [ ] 機械学習による最適化
+- [ ] 教育機関向けカスタマイズ
 
 ---
 

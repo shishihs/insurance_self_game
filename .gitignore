@@ -68,3 +68,8 @@ screenshots/
 
 # Test results
 test-results/
+playwright-report/
+
+# IDE temporary files
+*.tmp
+*~

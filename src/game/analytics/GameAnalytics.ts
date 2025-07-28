@@ -504,10 +504,20 @@ export class GameAnalytics {
       // 重要な数値は最大値を採用
       totalChallenges: Math.max(stats.totalChallenges, analyticsStats.totalChallenges),
       successfulChallenges: Math.max(stats.successfulChallenges, analyticsStats.successfulChallenges),
-      cardsAcquired: Math.max(stats.cardsAcquired, analyticsStats.cardsAcquired)
+      cardsAcquired: Math.max(stats.cardsAcquired, analyticsStats.cardsAcquired),
+      // プレイ時間は追加
+      totalPlaytime: (stats.totalPlaytime || 0) + this.calculateTotalSessionTime(),
+      // 最高記録は最大値
+      highestVitality: Math.max(stats.highestVitality, analyticsStats.highestVitality),
+      bestScore: Math.max(stats.bestScore, this.calculateBestSessionScore())
     }
     
     stateManager.updateStatistics(mergedStats)
+    
+    // 同期完了をローカルストレージに記録
+    localStorage.setItem('analytics_last_sync', new Date().toISOString())
+    const syncCount = parseInt(localStorage.getItem('analytics_sync_count') || '0', 10)
+    localStorage.setItem('analytics_sync_count', (syncCount + 1).toString())
   }
   
   // === プライベートメソッド ===
@@ -721,5 +731,25 @@ export class GameAnalytics {
     })
     
     return Array.from(patterns.values())
+  }
+  
+  /**
+   * セッション全体の時間を計算
+   */
+  private calculateTotalSessionTime(): number {
+    return this.currentSessionActions.reduce((total, action) => {
+      return total + (action.data?.sessionDuration || 0)
+    }, 0)
+  }
+  
+  /**
+   * セッション内のベストスコアを計算
+   */
+  private calculateBestSessionScore(): number {
+    const gameCompleteActions = this.currentSessionActions.filter(a => a.type === 'game_complete')
+    return gameCompleteActions.reduce((best, action) => {
+      const score = action.data?.finalStats?.score || 0
+      return Math.max(best, score)
+    }, 0)
   }
 }

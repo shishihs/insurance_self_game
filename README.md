@@ -27,11 +27,13 @@
 
 ## 🛠️ 技術スタック
 
-- **フレームワーク**: Vue 3 + TypeScript
-- **ゲームエンジン**: Phaser 3
-- **ビルドツール**: Vite
-- **スタイリング**: UnoCSS
-- **テスト**: Vitest
+- **フレームワーク**: Vue 3.5 + TypeScript 5.8 (strict mode)
+- **ゲームエンジン**: Phaser 3.90
+- **アーキテクチャ**: DDD (Domain-Driven Design) + サービスレイヤーパターン
+- **オーディオ**: Web Audio API (ファイル不要の動的音生成)
+- **ビルドツール**: Vite 5
+- **テスト**: Vitest + Playwright (E2E) + CUIテストシステム
+- **デプロイ**: GitHub Pages + GitHub Actions
 
 ## 📦 インストール
 

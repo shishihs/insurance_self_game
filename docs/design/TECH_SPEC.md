@@ -5,14 +5,16 @@
 
 ### 確定技術構成
 ```
-Frontend: Vue 3.5 + TypeScript 5.6 + Vite 5
-Game Engine: Phaser 3 (カード操作・アニメーション)
-State: Pinia + Vue Composables
-Architecture: DDD (Domain-Driven Design)
-Styling: UnoCSS + CSS Modules
-Build: Vite + TypeScript
-Deploy: GitHub Pages (静的サイト)
-Testing: Vitest + Vue Test Utils
+Frontend: Vue 3.5 + TypeScript 5.8 + Vite 5
+Game Engine: Phaser 3.90 (カード操作・アニメーション・ドラッグ&ドロップ)
+Audio: Web Audio API (ファイル不要の高品質サウンド生成)
+State: Vue 3 Composition API + Domain Models
+Architecture: DDD (Domain-Driven Design) + サービスレイヤーパターン
+Styling: CSS Variables + レスポンシブデザイン
+Build: Vite + TypeScript (strict mode)
+Deploy: GitHub Pages + GitHub Actions
+Testing: Vitest + Playwright (E2E) + CUIテストシステム
+Development: CUIツール + パフォーマンス解析
 ```
 
 ## 📐 アーキテクチャ設計
@@ -20,59 +22,77 @@ Testing: Vitest + Vue Test Utils
 ### ドメイン駆動設計（DDD）構造
 ```
 src/
-├── domain/              # ビジネスロジック層
-│   ├── models/         # エンティティ・値オブジェクト
-│   │   ├── card/
-│   │   │   ├── Card.ts
-│   │   │   ├── CardId.ts
-│   │   │   └── CardValue.ts
-│   │   ├── deck/
-│   │   │   ├── Deck.ts
-│   │   │   └── DeckId.ts
-│   │   ├── game/
-│   │   │   ├── Game.ts
-│   │   │   ├── GameId.ts
-│   │   │   └── GameState.ts
-│   │   └── player/
-│   │       ├── Player.ts
-│   │       └── Score.ts
-│   ├── services/       # ドメインサービス
-│   │   ├── GameService.ts
-│   │   ├── DeckShuffleService.ts
-│   │   └── ScoreCalculator.ts
-│   └── repositories/   # リポジトリインターフェース
-│       ├── IGameRepository.ts
-│       └── IScoreRepository.ts
-├── application/         # アプリケーション層
-│   ├── usecases/       # ユースケース
-│   │   ├── StartNewGame.ts
-│   │   ├── PlayCard.ts
-│   │   ├── DrawCard.ts
-│   │   └── CalculateScore.ts
-│   └── dto/            # データ転送オブジェクト
-│       ├── GameDTO.ts
-│       └── CardDTO.ts
-├── infrastructure/      # インフラ層
-│   ├── repositories/   # リポジトリ実装
-│   │   ├── LocalStorageGameRepository.ts
-│   │   └── InMemoryScoreRepository.ts
-│   └── game-engine/    # Phaser統合
-│       ├── PhaserGameScene.ts
-│       └── CardSprite.ts
-├── presentation/        # プレゼンテーション層
-│   ├── components/     # Vueコンポーネント
-│   │   ├── game/
-│   │   ├── ui/
-│   │   └── shared/
-│   ├── composables/    # Vue Composables
-│   │   ├── useGame.ts
-│   │   └── useCard.ts
-│   └── stores/         # Pinia Stores
-│       ├── gameStore.ts
-│       └── uiStore.ts
-└── shared/             # 共有コード
-    ├── types/
-    └── utils/
+├── domain/                    # ビジネスロジック層
+│   ├── entities/              # エンティティ（メインビジネスオブジェクト）
+│   │   ├── Card.ts           # カードエンティティ
+│   │   ├── Deck.ts           # デッキエンティティ
+│   │   └── Game.ts           # ゲームエンティティ（中核）
+│   ├── valueObjects/          # 値オブジェクト（不変）
+│   │   ├── CardPower.ts      # カードパワー
+│   │   ├── Vitality.ts       # 活力（体力）
+│   │   └── InsurancePremium.ts # 保険料
+│   ├── services/              # ドメインサービス（ビジネスロジック）
+│   │   ├── CardFactory.ts          # カード生成
+│   │   ├── CardManager.ts          # カード管理
+│   │   ├── ChallengeResolutionService.ts # チャレンジ解決
+│   │   ├── GameStageManager.ts     # ステージ管理
+│   │   ├── InsuranceExpirationManager.ts # 保険期限管理
+│   │   └── InsurancePremiumCalculationService.ts # 保険料計算
+│   ├── aggregates/            # 集約ルート
+│   │   ├── challenge/         # チャレンジ集約
+│   │   └── insurance/         # 保険集約
+│   ├── repositories/          # リポジトリインターフェース
+│   │   ├── IGameRepository.ts
+│   │   ├── IChallengeRepository.ts
+│   │   └── IInsuranceRepository.ts
+│   └── types/                 # ドメイン型定義
+│       ├── card.types.ts
+│       ├── game.types.ts
+│       └── tutorial.types.ts
+├── game/                      # Phaserゲームエンジン統合層
+│   ├── scenes/                # Phaserシーン
+│   │   ├── BaseScene.ts       # ベースシーン
+│   │   ├── PreloadScene.ts    # アセットロード
+│   │   ├── MainMenuScene.ts   # メインメニュー
+│   │   └── GameScene.ts       # メインゲーム
+│   ├── systems/               # ゲームシステム
+│   │   ├── DropZoneManager.ts # ドラッグ&ドロップシステム
+│   │   ├── TutorialManager.ts # チュートリアルシステム
+│   │   ├── SoundManager.ts    # サウンド管理
+│   │   └── AnimationManager.ts # アニメーション管理
+│   ├── ui/                    # ゲームUIコンポーネント
+│   │   ├── TutorialOverlay.ts # チュートリアルオーバーレイ
+│   │   ├── SaveLoadMenu.ts    # セーブ/ロードUI
+│   │   └── StatisticsPanel.ts # 統計表示
+│   ├── config/                # ゲーム設定
+│   │   └── gameConfig.ts      # Phaser設定
+│   └── renderers/             # レンダリング系
+│       └── PhaserGameRenderer.ts # Phaserレンダラー
+├── components/                # Vueコンポーネント層
+│   ├── GameCanvas.vue         # メインゲームコンポーネント
+│   ├── accessibility/         # アクセシビリティ対応
+│   └── animations/            # UIアニメーション
+├── cui/                       # CUI開発ツール層
+│   ├── cli.ts                 # メインCLI
+│   ├── PlaytestGameController.ts # テストコントローラー
+│   ├── modes/                 # CUIモード
+│   │   ├── DemoMode.ts        # デモモード
+│   │   ├── BenchmarkMode.ts   # ベンチマークモード
+│   │   └── DebugMode.ts       # デバッグモード
+│   └── renderers/             # CUIレンダラー
+│       └── InteractiveCUIRenderer.ts # インタラクティブレンダラー
+├── controllers/               # コントローラー層
+│   ├── GameController.ts      # メインゲームコントローラー
+│   └── GameValidator.ts       # ゲーム状態検証
+├── analytics/                 # 解析・統計系
+│   ├── GameAnalytics.ts       # ゲーム解析
+│   └── StatisticalTests.ts    # 統計テスト
+├── performance/               # パフォーマンス系
+│   ├── GamePerformanceAnalyzer.ts # パフォーマンス解析
+│   └── MemoryProfiler.ts     # メモリプロファイラー
+└── common/                    # 共通ユーティリティ
+    ├── IdGenerator.ts         # ID生成ユーティリティ
+    └── types/                 # 共通型定義
 ```
 
 ## 🏗️ ドメインモデル設計
