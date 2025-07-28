@@ -218,14 +218,84 @@ defineExpose({
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
+  .game-canvas-container {
+    /* モバイルでのフルスクリーン表示 */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  
   .debug-controls {
-    bottom: 5px;
-    right: 5px;
+    bottom: max(5px, env(safe-area-inset-bottom, 0px));
+    right: max(5px, env(safe-area-inset-right, 0px));
+    gap: 5px;
   }
   
   .debug-controls button {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
+    min-height: var(--touch-target-min);
+    border-radius: 6px;
+  }
+  
+  .loading-container,
+  .error-container {
+    padding: var(--space-lg);
+    margin: var(--space-sm);
+  }
+  
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .error-title {
+    font-size: 1.25rem;
+  }
+}
+
+/* タブレット対応 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .debug-controls {
+    bottom: 15px;
+    right: 15px;
+  }
+}
+
+/* ランドスケープモード対応 */
+@media (max-height: 600px) and (orientation: landscape) {
+  .debug-controls {
+    bottom: max(5px, env(safe-area-inset-bottom, 0px));
+    right: max(5px, env(safe-area-inset-right, 0px));
+    flex-direction: row;
+  }
+  
+  .debug-controls button {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+/* 極小画面対応 */
+@media (max-width: 375px) {
+  .loading-container,
+  .error-container {
+    padding: var(--space-md);
+    margin: var(--space-xs);
+  }
+  
+  .error-container {
+    max-width: 300px;
+  }
+  
+  .debug-controls {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .debug-controls button {
+    width: 80px;
+    font-size: 0.65rem;
   }
 }
 </style>

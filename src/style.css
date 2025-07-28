@@ -12,6 +12,42 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  /* ========================
+     レスポンシブデザイン変数
+     ======================== */
+  
+  /* ブレークポイント（JS側でも使用） */
+  --bp-xs: 375px;  /* モバイル（小） */
+  --bp-sm: 640px;  /* モバイル（大） */
+  --bp-md: 768px;  /* タブレット */
+  --bp-lg: 1024px; /* デスクトップ（小） */
+  --bp-xl: 1280px; /* デスクトップ（大） */
+  --bp-2xl: 1536px; /* デスクトップ（特大） */
+
+  /* スペーシングシステム */
+  --space-xs: 0.25rem;  /* 4px */
+  --space-sm: 0.5rem;   /* 8px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.5rem;   /* 24px */
+  --space-xl: 2rem;     /* 32px */
+  --space-2xl: 3rem;    /* 48px */
+  --space-3xl: 4rem;    /* 64px */
+
+  /* フォントサイズシステム */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-base: 1rem;    /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem;  /* 36px */
+  --text-5xl: 3rem;     /* 48px */
+
+  /* タッチターゲットサイズ */
+  --touch-target-min: 44px; /* iOS Human Interface Guidelines */
+  --touch-target-comfortable: 48px; /* Android Material Design */
+
   /* ゲームUIのカラーパレット */
   --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --primary-dark: #4C1D95;
@@ -34,6 +70,30 @@
   /* 影とエフェクト */
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.3);
   --shadow-glow: 0 0 20px rgba(129, 140, 248, 0.4);
+  
+  /* アニメーション設定 */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-smooth: 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* ドラッグ&ドロップアニメーション */
+  --drag-scale: 1.05;
+  --drag-rotation: 3deg;
+  --drag-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --drop-zone-highlight: rgba(129, 140, 248, 0.2);
+  --drop-zone-border: 2px solid rgba(129, 140, 248, 0.6);
+  
+  /* Z-index レイヤー管理 */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
 }
 
 a {
@@ -67,5 +127,245 @@ body {
   }
   a:hover {
     color: #747bff;
+  }
+}
+
+/* ====================================
+   カードドラッグ&ドロップアニメーション
+   ==================================== */
+
+/* カード基本状態 */
+.game-card {
+  transition: all var(--transition-smooth);
+  transform-origin: center;
+  cursor: grab;
+  position: relative;
+  z-index: 1;
+}
+
+.game-card:active {
+  cursor: grabbing;
+}
+
+/* ドラッグ開始時のアニメーション */
+.game-card.dragging {
+  transform: scale(var(--drag-scale)) rotate(var(--drag-rotation));
+  box-shadow: var(--drag-shadow);
+  z-index: var(--z-modal);
+  opacity: 0.9;
+  transition: all var(--transition-fast);
+}
+
+/* ドラッグ中のスムーズな移動 */
+.game-card.dragging-smooth {
+  transition: none;
+  pointer-events: none;
+}
+
+/* ドロップゾーンのハイライト */
+.drop-zone {
+  transition: all var(--transition-normal);
+  border-radius: 8px;
+  position: relative;
+}
+
+.drop-zone.highlight {
+  background-color: var(--drop-zone-highlight);
+  border: var(--drop-zone-border);
+  animation: pulse-highlight 1s ease-in-out infinite alternate;
+}
+
+.drop-zone.invalid {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  animation: shake 300ms ease-in-out;
+}
+
+/* パルスアニメーション */
+@keyframes pulse-highlight {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+}
+
+/* シェイクアニメーション（無効なドロップ時） */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* カードドロップ時のバウンス */
+.game-card.dropped {
+  animation: drop-bounce var(--transition-bounce) ease-out;
+}
+
+@keyframes drop-bounce {
+  0% {
+    transform: scale(1.1) rotate(0deg);
+  }
+  50% {
+    transform: scale(0.95) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* ホバー効果 */
+.game-card:hover:not(.dragging) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-glow);
+  transition: all var(--transition-normal);
+}
+
+/* ====================================
+   ゲーム状態変化のトランジション
+   ==================================== */
+
+/* ゲームフェーズ遷移 */
+.game-phase-transition {
+  animation: phase-change 600ms var(--transition-smooth);
+}
+
+@keyframes phase-change {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* スコア変更アニメーション */
+.score-change {
+  animation: score-pop 400ms var(--transition-bounce);
+}
+
+@keyframes score-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* 新しいカード表示アニメーション */
+.card-appear {
+  animation: card-slide-in 500ms var(--transition-smooth);
+}
+
+@keyframes card-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* カード削除アニメーション */
+.card-remove {
+  animation: card-slide-out 300ms var(--transition-fast) forwards;
+}
+
+@keyframes card-slide-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+}
+
+/* ====================================
+   モバイル専用のタッチアニメーション
+   ==================================== */
+
+@media (max-width: 768px) {
+  .game-card {
+    /* モバイルでは触覚フィードバックを重視 */
+    transition: all var(--transition-fast);
+  }
+  
+  .game-card.dragging {
+    /* モバイルでの控えめなドラッグ効果 */
+    transform: scale(1.03) rotate(1deg);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .game-card:hover {
+    /* モバイルではホバーを無効化 */
+    transform: none;
+    box-shadow: var(--shadow-card);
+  }
+  
+  /* タッチフィードバック */
+  .game-card:active {
+    transform: scale(0.98);
+    transition: transform 100ms ease-out;
+  }
+}
+
+/* ====================================
+   アクセシビリティアニメーション設定
+   ==================================== */
+
+/* モーション削減設定 */
+@media (prefers-reduced-motion: reduce) {
+  .game-card,
+  .drop-zone,
+  .game-phase-transition,
+  .score-change,
+  .card-appear,
+  .card-remove {
+    animation: none !important;
+    transition: opacity var(--transition-fast) !important;
+  }
+  
+  .game-card.dragging {
+    transform: none !important;
+    opacity: 0.7;
+  }
+  
+  .game-card:hover {
+    transform: none !important;
+    box-shadow: var(--shadow-card);
+  }
+  
+  .drop-zone.highlight {
+    animation: none !important;
+    background-color: var(--drop-zone-highlight);
+    border: var(--drop-zone-border);
+  }
+}
+
+/* ハイコントラスト対応 */
+@media (prefers-contrast: high) {
+  .game-card {
+    border: 2px solid rgba(255, 255, 255, 0.8);
+  }
+  
+  .game-card.dragging {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.5);
+  }
+  
+  .drop-zone.highlight {
+    border: 3px solid var(--primary-light);
+    background-color: rgba(129, 140, 248, 0.3);
   }
 }
