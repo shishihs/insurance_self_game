@@ -10,7 +10,7 @@
  */
 
 export interface GestureEvent {
-  type: 'swipe' | 'pinch' | 'longpress' | 'doubletap' | 'drag' | 'dragend'
+  type: 'swipe' | 'pinch' | 'longpress' | 'doubletap' | 'drag' | 'dragend' | 'momentum' | 'bounce'
   target: HTMLElement | null
   detail: any
   timestamp: number
@@ -56,6 +56,17 @@ export interface DoubleTapDetail {
   y: number
 }
 
+export interface MomentumDetail {
+  velocityX: number
+  velocityY: number
+  duration: number
+}
+
+export interface BounceDetail {
+  direction: 'left' | 'right' | 'up' | 'down'
+  intensity: number
+}
+
 interface TouchPoint {
   identifier: number
   x: number
@@ -81,6 +92,12 @@ export class TouchGestureManager {
   private listeners = new Map<string, Set<GestureListener>>()
   private preventDefaultGestures = new Set<GestureEvent['type']>()
   
+  // モーメンタムスクロール用
+  private lastVelocity = { x: 0, y: 0 }
+  private momentumTimer: number | null = null
+  private lastMoveTime = 0
+  private moveHistory: Array<{ x: number; y: number; time: number }> = []
+  
   // 設定可能なパラメータ
   private config = {
     swipeThreshold: 50, // px
@@ -90,6 +107,9 @@ export class TouchGestureManager {
     longPressThreshold: 500, // ms
     pinchThreshold: 0.1, // scale change
     dragThreshold: 10, // px
+    momentumThreshold: 200, // モーメンタムスクロールの閾値
+    friction: 0.95, // 慣性スクロールの摩擦係数
+    bounceThreshold: 50, // バウンスバック効果の閾値
   }
 
   constructor(element: HTMLElement, config?: Partial<typeof TouchGestureManager.prototype.config>) {
@@ -382,9 +402,12 @@ export class TouchGestureManager {
   }
 
   private detectDrag(touch: Touch): void {
+    const currentTime = Date.now()
+    
     if (!this.isDragging) {
       if (!this.dragStartPoint) {
         this.dragStartPoint = { x: touch.clientX, y: touch.clientY }
+        this.moveHistory = [{ x: touch.clientX, y: touch.clientY, time: currentTime }]
       }
       
       const distance = Math.sqrt(
@@ -398,6 +421,12 @@ export class TouchGestureManager {
     }
 
     if (this.isDragging && this.dragStartPoint) {
+      // 移動履歴を更新（速度計算用）
+      this.moveHistory.push({ x: touch.clientX, y: touch.clientY, time: currentTime })
+      
+      // 古い履歴を削除（100ms以上前）
+      this.moveHistory = this.moveHistory.filter(point => currentTime - point.time < 100)
+      
       const deltaX = touch.clientX - (this.dragStartPoint.x + this.dragTotalDelta.x)
       const deltaY = touch.clientY - (this.dragStartPoint.y + this.dragTotalDelta.y)
       
@@ -416,11 +445,15 @@ export class TouchGestureManager {
       }
 
       this.emitGesture('drag', document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement, detail)
+      this.lastMoveTime = currentTime
     }
   }
 
   private endDrag(touch: Touch): void {
     if (this.isDragging && this.dragStartPoint) {
+      // 速度を計算
+      this.calculateVelocity()
+      
       const detail: DragDetail = {
         deltaX: 0,
         deltaY: 0,
@@ -433,11 +466,90 @@ export class TouchGestureManager {
       }
 
       this.emitGesture('dragend', document.elementFromPoint(touch.clientX, touch.clientY) as HTMLElement, detail)
+      
+      // モーメンタムスクロールを開始
+      this.startMomentumScroll()
     }
 
     this.isDragging = false
     this.dragStartPoint = null
     this.dragTotalDelta = { x: 0, y: 0 }
+    this.moveHistory = []
+  }
+
+  private calculateVelocity(): void {
+    if (this.moveHistory.length < 2) {
+      this.lastVelocity = { x: 0, y: 0 }
+      return
+    }
+
+    const latest = this.moveHistory[this.moveHistory.length - 1]
+    const previous = this.moveHistory[this.moveHistory.length - 2]
+    
+    const timeDelta = latest.time - previous.time
+    if (timeDelta === 0) {
+      this.lastVelocity = { x: 0, y: 0 }
+      return
+    }
+
+    this.lastVelocity = {
+      x: (latest.x - previous.x) / timeDelta,
+      y: (latest.y - previous.y) / timeDelta
+    }
+  }
+
+  private startMomentumScroll(): void {
+    const speed = Math.sqrt(
+      this.lastVelocity.x * this.lastVelocity.x + 
+      this.lastVelocity.y * this.lastVelocity.y
+    )
+
+    if (speed < this.config.momentumThreshold / 1000) {
+      return // 速度が不十分
+    }
+
+    this.stopMomentumScroll()
+    
+    let velocityX = this.lastVelocity.x
+    let velocityY = this.lastVelocity.y
+    let lastTime = Date.now()
+
+    const tick = () => {
+      const currentTime = Date.now()
+      const deltaTime = currentTime - lastTime
+      lastTime = currentTime
+
+      // 摩擦を適用
+      velocityX *= this.config.friction
+      velocityY *= this.config.friction
+
+      const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY)
+      
+      if (speed < 0.01) {
+        this.stopMomentumScroll()
+        return
+      }
+
+      // モーメンタムイベントを発火
+      const detail: MomentumDetail = {
+        velocityX,
+        velocityY,
+        duration: deltaTime
+      }
+
+      this.emitGesture('momentum', null, detail)
+      
+      this.momentumTimer = requestAnimationFrame(tick)
+    }
+
+    this.momentumTimer = requestAnimationFrame(tick)
+  }
+
+  private stopMomentumScroll(): void {
+    if (this.momentumTimer !== null) {
+      cancelAnimationFrame(this.momentumTimer)
+      this.momentumTimer = null
+    }
   }
 
   private emitGesture(type: GestureEvent['type'], target: HTMLElement | null, detail: any): void {
@@ -511,9 +623,11 @@ export class TouchGestureManager {
     this.element.removeEventListener('mouseleave', this.handleMouseLeave.bind(this))
     
     this.cancelLongPress()
+    this.stopMomentumScroll()
     this.touchPoints.clear()
     this.listeners.clear()
     this.preventDefaultGestures.clear()
+    this.moveHistory = []
   }
 }
 
@@ -535,4 +649,82 @@ export const getPointerPosition = (event: TouchEvent | MouseEvent): { x: number;
     }
   }
   return { x: 0, y: 0 }
+}
+
+// デバイス性能チェック
+export const getDeviceInfo = () => {
+  const userAgent = navigator.userAgent.toLowerCase()
+  const isIOS = /iphone|ipad|ipod/.test(userAgent)
+  const isAndroid = /android/.test(userAgent)
+  const isMobile = isIOS || isAndroid || isTouchDevice()
+  
+  // ハードウェア情報の取得（可能な場合）
+  const hardwareConcurrency = navigator.hardwareConcurrency || 4
+  const deviceMemory = (navigator as any).deviceMemory || 4
+  
+  // パフォーマンスレベルの推定
+  let performanceLevel: 'low' | 'medium' | 'high' = 'medium'
+  
+  if (deviceMemory <= 2 || hardwareConcurrency <= 2) {
+    performanceLevel = 'low'
+  } else if (deviceMemory >= 6 && hardwareConcurrency >= 6) {
+    performanceLevel = 'high'
+  }
+  
+  return {
+    isIOS,
+    isAndroid,
+    isMobile,
+    hardwareConcurrency,
+    deviceMemory,
+    performanceLevel,
+    supportsVibration: 'vibrate' in navigator,
+    supportsWakeLock: 'wakeLock' in navigator
+  }
+}
+
+// 最適化されたタッチ設定を取得
+export const getOptimizedTouchConfig = () => {
+  const deviceInfo = getDeviceInfo()
+  
+  const baseConfig = {
+    swipeThreshold: 50,
+    swipeVelocityThreshold: 0.3,
+    doubleTapThreshold: 300,
+    doubleTapDistance: 30,
+    longPressThreshold: 500,
+    pinchThreshold: 0.1,
+    dragThreshold: 10,
+    momentumThreshold: 200,
+    friction: 0.95,
+    bounceThreshold: 50,
+  }
+  
+  // デバイス性能に基づく調整
+  switch (deviceInfo.performanceLevel) {
+    case 'low':
+      return {
+        ...baseConfig,
+        friction: 0.9, // より早い減速
+        momentumThreshold: 300, // より高い閾値
+      }
+    case 'high':
+      return {
+        ...baseConfig,
+        friction: 0.98, // よりスムーズな減速
+        momentumThreshold: 150, // より低い閾値
+        dragThreshold: 5, // より敏感なドラッグ
+      }
+    default:
+      return baseConfig
+  }
+}
+
+// 振動フィードバックのユーティリティ
+export const vibrate = (pattern: number | number[], fallback?: () => void) => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(pattern)
+  } else if (fallback) {
+    fallback()
+  }
 }
