@@ -5,7 +5,11 @@ import './style.css'
 import './styles/design-system.css'
 import './styles/micro-interactions.css'
 import './styles/brand-elements.css'
+import './styles/rtl-support.css'
 import App from './App.vue'
+
+// 国際化システムの導入
+import i18n from './i18n'
 
 // セキュリティシステムの初期化
 import { initializeSecuritySystem } from '@/utils/security-init'
@@ -21,6 +25,9 @@ import { initAutoRipple } from '@/utils/ripple-effect'
 
 // Vueアプリケーションを作成
 const app = createApp(App)
+
+// 国際化システムを統合
+app.use(i18n)
 
 // エラーハンドリングシステムをプラグインとして統合
 app.use(ErrorHandlingPlugin, {

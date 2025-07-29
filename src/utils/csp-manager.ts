@@ -125,7 +125,7 @@ export class CSPManager {
         severity: 'medium',
         source: 'csp_manager',
         metadata: { 
-          providedNonce: providedNonce.slice(0, 8) + '...',
+          providedNonce: `${providedNonce.slice(0, 8)  }...`,
           expired: true,
           expiryTime: new Date(this.nonceExpiry).toISOString()
         }
@@ -142,8 +142,8 @@ export class CSPManager {
         severity: 'high',
         source: 'csp_manager',
         metadata: { 
-          providedNonce: providedNonce.slice(0, 8) + '...',
-          expectedNonce: this.currentNonce.slice(0, 8) + '...'
+          providedNonce: `${providedNonce.slice(0, 8)  }...`,
+          expectedNonce: `${this.currentNonce.slice(0, 8)  }...`
         }
       })
     }
@@ -236,8 +236,8 @@ export class CSPManager {
       severity: 'low',
       source: 'csp_manager',
       metadata: { 
-        policy: cspMeta.content.slice(0, 200) + '...',
-        nonce: this.currentNonce.slice(0, 8) + '...'
+        policy: `${cspMeta.content.slice(0, 200)  }...`,
+        nonce: `${this.currentNonce.slice(0, 8)  }...`
       }
     })
   }

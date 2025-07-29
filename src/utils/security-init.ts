@@ -87,7 +87,7 @@ async function validateSecurityConfiguration(): Promise<void> {
   }
 
   // Crypto API チェック
-  if (!window.crypto || !window.crypto.subtle) {
+  if (!window.crypto?.subtle) {
     issues.push('Web Crypto API が利用できません')
   }
 
@@ -340,7 +340,7 @@ function startPeriodicSecurityChecks(): void {
     try {
       // LocalStorage のサイズチェック
       let totalSize = 0
-      for (let key in localStorage) {
+      for (const key in localStorage) {
         if (localStorage.hasOwnProperty(key)) {
           totalSize += localStorage[key].length + key.length
         }
@@ -399,7 +399,7 @@ function setupFallbackSecurity(): void {
   // 最低限のXSS保護
   const originalInnerHTML = Element.prototype.innerHTML
   Object.defineProperty(Element.prototype, 'innerHTML', {
-    set: function(value: string) {
+    set(value: string) {
       if (typeof value === 'string') {
         // 基本的なXSS保護
         const sanitized = value
@@ -412,7 +412,7 @@ function setupFallbackSecurity(): void {
         originalInnerHTML.call(this, value)
       }
     },
-    get: function() {
+    get() {
       return originalInnerHTML.call(this)
     }
   })

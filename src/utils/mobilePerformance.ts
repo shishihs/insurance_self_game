@@ -145,7 +145,7 @@ class MobilePerformanceManager {
         const usedPercent = (memInfo.usedJSHeapSize / memInfo.jsHeapSizeLimit) * 100
 
         if (usedPercent > 80) {
-          console.warn('[Performance] High memory usage detected:', usedPercent + '%')
+          console.warn('[Performance] High memory usage detected:', `${usedPercent  }%`)
           this.requestGarbageCollection()
         }
       }

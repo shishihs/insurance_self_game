@@ -232,9 +232,56 @@ export class GlobalErrorHandler {
 
     // リカバリー試行（高度なリカバリーを使用）
     if (this.options.enableRecovery) {
-      this.errorRecovery.tryAdvancedRecover(enhancedErrorInfo).catch(error => {
-        console.error('[ErrorHandler] Recovery failed:', error)
-      })
+      this.errorRecovery.tryAdvancedRecover(enhancedErrorInfo)
+        .then(result => {
+          // リカバリー結果をイベントとして発火
+          const recoveryEvent = new CustomEvent('app:recovery-result', {
+            detail: {
+              success: result.success,
+              strategy: result.strategyUsed,
+              attempts: result.attemptsCount,
+              errorId: enhancedErrorInfo.fingerprint
+            }
+          })
+          window.dispatchEvent(recoveryEvent)
+          
+          if (result.success) {
+            console.log(`[ErrorHandler] Auto-recovery successful using ${result.strategyUsed}`)
+            
+            // 成功した復旧を通知
+            const successEvent = new CustomEvent('app:error', {
+              detail: {
+                message: `エラーから自動復旧しました (${result.strategyUsed})`,
+                severity: 'info',
+                category: 'system',
+                timestamp: Date.now(),
+                userAgent: navigator.userAgent,
+                context: {
+                  originalError: enhancedErrorInfo.fingerprint,
+                  recoveryStrategy: result.strategyUsed
+                }
+              } as ErrorInfo
+            })
+            window.dispatchEvent(successEvent)
+          }
+        })
+        .catch(error => {
+          console.error('[ErrorHandler] Recovery failed:', error)
+          
+          // 復旧失敗を記録
+          this.handleError({
+            message: `Recovery system failure: ${error.message}`,
+            stack: error.stack,
+            category: 'system',
+            severity: 'high',
+            timestamp: Date.now(),
+            userAgent: navigator.userAgent,
+            context: {
+              originalError: enhancedErrorInfo.fingerprint,
+              recoveryError: true
+            }
+          })
+        })
     }
 
     // ユーザー通知

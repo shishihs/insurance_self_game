@@ -101,7 +101,7 @@ class ServiceWorkerManager {
    * キャッシュ情報の取得
    */
   async getCacheInfo(): Promise<CacheInfo> {
-    if (!this.registration || !this.registration.active) {
+    if (!this.registration?.active) {
       return {}
     }
 
@@ -125,7 +125,7 @@ class ServiceWorkerManager {
    * キャッシュのクリア
    */
   async clearCache(type?: 'static' | 'dynamic' | 'images' | 'api'): Promise<void> {
-    if (!this.registration || !this.registration.active) return
+    if (!this.registration?.active) return
 
     const messageType = type ? 'CLEAR_CACHE_TYPE' : 'CLEAR_CACHE'
     const message: any = { type: messageType }
@@ -142,7 +142,7 @@ class ServiceWorkerManager {
    * リソースのプリロード
    */
   async preloadResources(resources: string[]): Promise<void> {
-    if (!this.registration || !this.registration.active) return
+    if (!this.registration?.active) return
 
     this.registration.active.postMessage({
       type: 'PRELOAD_RESOURCES',

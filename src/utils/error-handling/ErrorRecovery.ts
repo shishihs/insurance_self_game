@@ -113,7 +113,7 @@ export class ErrorRecovery {
         const finalMemory = this.getCurrentMemoryUsage()
         const memoryReduced = initialMemory - finalMemory
         
-        console.log(`[Recovery] Memory cleanup completed. Reduced: ${memoryReduced / 1024 / 1024:.1f}MB`)
+        console.log(`[Recovery] Memory cleanup completed. Reduced: ${(memoryReduced / 1024 / 1024).toFixed(1)}MB`)
         
         // 十分なメモリが解放されたかチェック
         return memoryReduced > 10 * 1024 * 1024 // 10MB以上で成功

@@ -56,7 +56,7 @@ export class DataMigrationService {
       }>(this.MIGRATION_KEY)
       
       // マイグレーション未実行の場合
-      if (!migrationStatus || !migrationStatus.completed) {
+      if (!migrationStatus?.completed) {
         return true
       }
       

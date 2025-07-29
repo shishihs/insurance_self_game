@@ -300,7 +300,7 @@ async function handleApiRequest(request) {
       const cachedResponse = new Response(responseToCache.body, {
         status: responseToCache.status,
         statusText: responseToCache.statusText,
-        headers: headers
+        headers
       });
       
       cache.put(request, cachedResponse);
@@ -319,7 +319,7 @@ async function handleApiRequest(request) {
       return new Response(cached.body, {
         status: cached.status,
         statusText: cached.statusText,
-        headers: headers
+        headers
       });
     }
     
@@ -366,7 +366,7 @@ async function fetchAndCache(request, cacheName) {
   const cachedResponse = new Response(responseToCache.body, {
     status: responseToCache.status,
     statusText: responseToCache.statusText,
-    headers: headers
+    headers
   });
   
   cache.put(request, cachedResponse);

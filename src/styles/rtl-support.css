@@ -1,0 +1,350 @@
+/**
+ * RTL（右から左）言語対応スタイル
+ * アラビア語、ヘブライ語などの将来的な対応に備えたスタイル定義
+ */
+
+/* =================================
+   RTL基本設定
+   ================================= */
+
+/* RTL方向の基本設定 */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] * {
+  direction: rtl;
+}
+
+/* LTR要素の明示的な設定 */
+[dir="rtl"] .ltr-only {
+  direction: ltr;
+  text-align: left;
+}
+
+/* =================================
+   レイアウト調整
+   ================================= */
+
+/* フレックスボックスの調整 */
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .justify-start {
+  justify-content: flex-end;
+}
+
+[dir="rtl"] .justify-end {
+  justify-content: flex-start;
+}
+
+/* マージンとパディングの調整 */
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* =================================
+   ナビゲーション要素
+   ================================= */
+
+/* 言語切り替えコンテナ */
+[dir="rtl"] .language-switcher-container {
+  right: auto;
+  left: var(--space-lg);
+}
+
+[dir="rtl"] .language-options {
+  right: 0;
+  left: auto;
+}
+
+/* アクセシビリティボタン */
+[dir="rtl"] .accessibility-button {
+  right: auto;
+  left: var(--space-lg);
+}
+
+/* フィードバックボタン */
+[dir="rtl"] .feedback-button {
+  right: auto;
+  left: var(--space-lg);
+}
+
+/* =================================
+   ゲーム要素
+   ================================= */
+
+/* ゲームキャンバス */
+[dir="rtl"] .game-canvas {
+  /* ゲーム内容は基本的に言語に依存しないが、UIテキストは調整 */
+}
+
+/* カード配置 */
+[dir="rtl"] .card-container {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .card-hand {
+  justify-content: flex-end;
+}
+
+/* ドロップゾーン */
+[dir="rtl"] .drop-zone-container {
+  flex-direction: row-reverse;
+}
+
+/* =================================
+   統計・ダッシュボード
+   ================================= */
+
+/* 統計グリッド */
+[dir="rtl"] .stats-grid {
+  /* グリッドの配置を右から左に */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  direction: rtl;
+}
+
+[dir="rtl"] .stats-card {
+  text-align: right;
+}
+
+/* チャート */
+[dir="rtl"] .chart-container {
+  direction: ltr; /* チャートは基本的にLTRのまま */
+}
+
+[dir="rtl"] .chart-legend {
+  text-align: right;
+}
+
+/* =================================
+   フォーム要素
+   ================================= */
+
+/* 入力フィールド */
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+/* チェックボックスとラジオボタン */
+[dir="rtl"] .checkbox-container,
+[dir="rtl"] .radio-container {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .checkbox-label,
+[dir="rtl"] .radio-label {
+  margin-right: 0;
+  margin-left: var(--space-sm);
+}
+
+/* =================================
+   モーダルとポップアップ
+   ================================= */
+
+/* モーダル */
+[dir="rtl"] .modal-header {
+  text-align: right;
+}
+
+[dir="rtl"] .modal-close-btn {
+  right: auto;
+  left: var(--space-md);
+}
+
+/* ツールチップ */
+[dir="rtl"] .tooltip {
+  text-align: right;
+}
+
+[dir="rtl"] .tooltip-arrow {
+  transform: scaleX(-1);
+}
+
+/* =================================
+   テキスト要素
+   ================================= */
+
+/* 見出し */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6 {
+  text-align: right;
+}
+
+/* 段落 */
+[dir="rtl"] p {
+  text-align: right;
+}
+
+/* リスト */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+  padding-right: var(--space-lg);
+  padding-left: 0;
+}
+
+[dir="rtl"] li {
+  text-align: right;
+}
+
+/* =================================
+   アイコンとグラフィック
+   ================================= */
+
+/* 矢印アイコンの反転 */
+[dir="rtl"] .icon-arrow-right {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .icon-arrow-left {
+  transform: scaleX(-1);
+}
+
+/* チェックマーク */
+[dir="rtl"] .icon-check {
+  /* チェックマークは反転しない */
+}
+
+/* =================================
+   アニメーション調整
+   ================================= */
+
+/* スライドアニメーション */
+[dir="rtl"] .slide-enter-from {
+  transform: translateX(100%);
+}
+
+[dir="rtl"] .slide-leave-to {
+  transform: translateX(100%);
+}
+
+/* フェードスライドアニメーション */
+[dir="rtl"] .fade-slide-enter-from,
+[dir="rtl"] .fade-slide-leave-to {
+  transform: translateX(30px);
+}
+
+/* =================================
+   ブレークポイント対応
+   ================================= */
+
+/* モバイル対応 */
+@media (max-width: 640px) {
+  [dir="rtl"] .language-switcher-container {
+    left: var(--space-md);
+  }
+  
+  [dir="rtl"] .accessibility-button {
+    left: var(--space-md);
+  }
+  
+  [dir="rtl"] .mobile-nav {
+    flex-direction: row-reverse;
+  }
+}
+
+/* タブレット対応 */
+@media (max-width: 768px) {
+  [dir="rtl"] .tablet-layout {
+    flex-direction: row-reverse;
+  }
+}
+
+/* =================================
+   特殊ケース
+   ================================= */
+
+/* 数字と記号（常にLTR） */
+[dir="rtl"] .numbers-only,
+[dir="rtl"] .email,
+[dir="rtl"] .url,
+[dir="rtl"] .code {
+  direction: ltr;
+  text-align: left;
+}
+
+/* プログレスバー */
+[dir="rtl"] .progress-bar {
+  direction: ltr; /* プログレスは左から右のまま */
+}
+
+/* タイムライン */
+[dir="rtl"] .timeline {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .timeline-item {
+  text-align: right;
+}
+
+/* =================================
+   デバッグ用（開発時のみ）
+   ================================= */
+
+/* RTL要素の可視化（開発時のみ） */
+[data-debug="rtl"] [dir="rtl"] {
+  border: 1px dashed rgba(255, 0, 0, 0.3);
+}
+
+[data-debug="rtl"] [dir="rtl"]::before {
+  content: "RTL";
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  z-index: 9999;
+}
+
+/* =================================
+   アクセシビリティ対応
+   ================================= */
+
+/* スクリーンリーダー対応 */
+[dir="rtl"] .sr-only {
+  /* RTLでもスクリーンリーダー用のクラスは同じ */
+}
+
+/* フォーカス表示 */
+[dir="rtl"] *:focus {
+  /* フォーカス表示は言語に関係なく統一 */
+}
+
+/* 高コントラストモード */
+@media (prefers-contrast: high) {
+  [dir="rtl"] .high-contrast-border {
+    border-color: white;
+  }
+}
+
+/* モーション削減 */
+@media (prefers-reduced-motion: reduce) {
+  [dir="rtl"] * {
+    transition: none;
+  }
+}

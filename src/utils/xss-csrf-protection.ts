@@ -86,7 +86,7 @@ export class XSSProtection {
       .replace(/\v/g, '\\v')
       .replace(/\0/g, '\\0')
       .replace(/[\x00-\x1f\x7f-\x9f]/g, (match) => {
-        return '\\u' + ('0000' + match.charCodeAt(0).toString(16)).slice(-4)
+        return `\\u${  (`0000${  match.charCodeAt(0).toString(16)}`).slice(-4)}`
       })
   }
 

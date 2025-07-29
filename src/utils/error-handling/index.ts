@@ -9,6 +9,7 @@ import { ErrorRecovery } from './ErrorRecovery'
 import { ErrorReporter } from './ErrorReporter'
 import { AsyncErrorHandler } from './AsyncErrorHandler'
 import { userFriendlyMessages, type UserMessage } from './UserFriendlyMessages'
+import { getDebugInfoCollector, type DebugInfo, type CollectionOptions } from './DebugInfoCollector'
 import type { App } from 'vue'
 
 export {
@@ -17,14 +18,17 @@ export {
   ErrorRecovery,
   ErrorReporter,
   AsyncErrorHandler,
-  userFriendlyMessages
+  userFriendlyMessages,
+  getDebugInfoCollector
 }
 
 export type {
   ErrorInfo,
   ErrorHandlerOptions,
   LogEntry,
-  UserMessage
+  UserMessage,
+  DebugInfo,
+  CollectionOptions
 }
 
 /**
@@ -64,6 +68,7 @@ class ErrorHandlingSystem {
   private globalHandler?: GlobalErrorHandler
   private isInitialized = false
   private config: ErrorHandlingConfig = {}
+  private debugCollector?: ReturnType<typeof getDebugInfoCollector>
   
   /**
    * システムを初期化
@@ -99,6 +104,13 @@ class ErrorHandlingSystem {
     
     // グローバルハンドラーの設定
     this.globalHandler.setupGlobalHandlers()
+    
+    // デバッグ情報コレクターの初期化
+    this.debugCollector = getDebugInfoCollector(
+      this.generateSessionId(),
+      this.config.buildVersion,
+      this.config.environment
+    )
     
     // ユーザーIDの設定
     if (this.config.userId) {
@@ -316,7 +328,16 @@ class ErrorHandlingSystem {
   /**
    * デバッグ情報を収集
    */
-  collectDebugInfo(): Record<string, any> {
+  collectDebugInfo(options?: CollectionOptions): DebugInfo | Record<string, any> {
+    if (this.debugCollector) {
+      try {
+        return this.debugCollector.collect(options)
+      } catch (error) {
+        console.error('[ErrorHandlingSystem] Failed to collect debug info:', error)
+      }
+    }
+    
+    // フォールバック: 基本的な情報のみ
     const debugInfo: Record<string, any> = {
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
@@ -345,6 +366,40 @@ class ErrorHandlingSystem {
     }
     
     return debugInfo
+  }
+  
+  /**
+   * ゲーム状態プロバイダーを設定
+   */
+  setGameStateProvider(provider: () => string): void {
+    if (this.debugCollector) {
+      this.debugCollector.setGameStateProvider(provider)
+    }
+  }
+  
+  /**
+   * コンポーネントプロバイダーを設定
+   */
+  setComponentProvider(provider: () => string): void {
+    if (this.debugCollector) {
+      this.debugCollector.setComponentProvider(provider)
+    }
+  }
+  
+  /**
+   * アクティブ機能プロバイダーを設定
+   */
+  setFeatureProvider(provider: () => string[]): void {
+    if (this.debugCollector) {
+      this.debugCollector.setFeatureProvider(provider)
+    }
+  }
+  
+  /**
+   * セッションIDを生成
+   */
+  private generateSessionId(): string {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
   
   /**
@@ -399,7 +454,10 @@ export function useErrorHandling() {
     getHealthStatus: errorHandlingSystem.getHealthStatus.bind(errorHandlingSystem),
     getStatistics: errorHandlingSystem.getStatistics.bind(errorHandlingSystem),
     addErrorListener: errorHandlingSystem.addErrorListener.bind(errorHandlingSystem),
-    collectDebugInfo: errorHandlingSystem.collectDebugInfo.bind(errorHandlingSystem)
+    collectDebugInfo: errorHandlingSystem.collectDebugInfo.bind(errorHandlingSystem),
+    setGameStateProvider: errorHandlingSystem.setGameStateProvider.bind(errorHandlingSystem),
+    setComponentProvider: errorHandlingSystem.setComponentProvider.bind(errorHandlingSystem),
+    setFeatureProvider: errorHandlingSystem.setFeatureProvider.bind(errorHandlingSystem)
   }
 }
 
