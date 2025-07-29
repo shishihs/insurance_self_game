@@ -14,6 +14,8 @@ import { INTERACTIVE_GAME_TUTORIAL } from '../tutorial/InteractiveTutorialConfig
 import { DropZoneIntegration } from '../systems/DropZoneIntegration'
 import { KeyboardController } from '../systems/KeyboardController'
 import { SoundManager } from '../systems/SoundManager'
+import { GameSceneOptimizationMixin } from './GameSceneOptimized'
+import { EventCleanupManager } from '../systems/EventCleanupManager'
 
 /**
  * メインゲームシーン
@@ -51,6 +53,15 @@ export class GameScene extends BaseScene {
     burden: 0
   }
   
+  // パフォーマンス最適化用
+  private frameSkipCounter: number = 0
+  private frameSkipThreshold: number = 2
+  private objectPools: Record<string, any[]> = {
+    effects: [],
+    texts: [],
+    graphics: []
+  }
+  
   // ドラッグ&ドロップ関連（新システム）
   private dropZoneIntegration?: DropZoneIntegration
   
@@ -59,6 +70,9 @@ export class GameScene extends BaseScene {
   
   // サウンド関連
   private soundManager?: SoundManager
+  
+  // メモリリーク防止用
+  private eventCleanupManager: EventCleanupManager = new EventCleanupManager()
 
   // チュートリアル関連
   private tutorialManager?: TutorialManager
@@ -77,6 +91,14 @@ export class GameScene extends BaseScene {
   }
 
   protected initialize(): void {
+    // パフォーマンス最適化のセットアップ
+    GameSceneOptimizationMixin.setupPerformanceOptimizations.call(this)
+    GameSceneOptimizationMixin.setupCameraCulling.call(this)
+    
+    // シーン破棄時のクリーンアップ設定
+    this.events.once('shutdown', this.cleanup, this)
+    this.events.once('destroy', this.cleanup, this)
+
     // ゲームインスタンスの初期化
     this.initializeGame()
 
@@ -5182,5 +5204,116 @@ export class GameScene extends BaseScene {
     })
     
     return button
+  }
+
+  /**
+   * 毎フレーム実行される更新処理（パフォーマンス最適化）
+   */
+  override update(time: number, delta: number): void {
+    // スロットル付きUI更新
+    GameSceneOptimizationMixin.throttledUIUpdate.call(this, delta)
+    
+    // 定期的なメモリクリーンアップ（10秒ごと）
+    if (time % 10000 < delta) {
+      GameSceneOptimizationMixin.cleanupUnusedResources.call(this)
+    }
+    
+    // バッチ処理の描画呼び出し最小化（5秒ごと）
+    if (time % 5000 < delta) {
+      GameSceneOptimizationMixin.minimizeDrawCalls.call(this)
+    }
+  }
+
+  /**
+   * 最適化されたエフェクト表示
+   */
+  private showOptimizedDropEffect(x: number, y: number, success: boolean): void {
+    GameSceneOptimizationMixin.createOptimizedEffect.call(
+      this, 
+      x, 
+      y, 
+      success ? 'success' : 'failure'
+    )
+  }
+
+  /**
+   * 最適化された手札配置
+   */
+  private arrangeHandOptimized(): void {
+    GameSceneOptimizationMixin.batchUpdateHandCards.call(this)
+  }
+
+  /**
+   * シーンのクリーンアップ処理
+   */
+  private cleanup(): void {
+    // すべてのイベントリスナーを削除
+    this.eventCleanupManager.removeAll()
+    
+    // Tweenをすべて停止
+    this.tweens.killAll()
+    
+    // タイマーをすべて削除
+    this.time.removeAllEvents()
+    
+    // サウンドを停止
+    if (this.soundManager) {
+      this.soundManager.stopAll()
+    }
+    
+    // ドロップゾーンの破棄
+    if (this.dropZoneIntegration) {
+      this.dropZoneIntegration.destroy()
+    }
+    
+    // キーボードコントローラーの破棄
+    if (this.keyboardController) {
+      this.keyboardController.destroy()
+    }
+    
+    // チュートリアルマネージャーの破棄
+    if (this.tutorialManager) {
+      this.tutorialManager.destroy()
+    }
+    
+    // UIコンテナの破棄
+    const containers = [
+      this.cardSelectionUI,
+      this.insuranceTypeSelectionUI,
+      this.vitalityBarContainer,
+      this.insuranceListContainer,
+      this.burdenIndicatorContainer,
+      this.insuranceRenewalDialogUI,
+      this.tutorialOverlay
+    ]
+    
+    containers.forEach(container => {
+      if (container) {
+        container.destroy()
+      }
+    })
+    
+    // 手札カードの破棄
+    this.handCards.forEach(card => {
+      card.destroy()
+    })
+    this.handCards = []
+    
+    // オブジェクトプールのクリア
+    if (this.objectPools) {
+      Object.values(this.objectPools).forEach(pool => {
+        pool.forEach((obj: any) => {
+          if (obj && obj.destroy) {
+            obj.destroy()
+          }
+        })
+      })
+    }
+    
+    // デバッグ出力
+    if (import.meta.env.DEV) {
+      console.log('GameScene cleanup completed')
+      this.eventCleanupManager.debugPrint()
+    }
   }
 }

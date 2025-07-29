@@ -1,30 +1,32 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import type { GameManager } from '@/game/GameManager'
 import type { WindowWithTutorialEvents } from '@/types/game-events'
 
 const gameContainer = ref<HTMLDivElement>()
-const gameManager = ref<GameManager | null>(null)
+// パフォーマンス最適化: GameManagerは深い監視不要
+const gameManager = shallowRef<GameManager | null>(null)
 const isLoading = ref(true)
 const errorMessage = ref<string>('')
 const isDev = import.meta.env.DEV
 
+// コンポーネントがマウントされているか追跡
+let isMounted = false
+
 onMounted(async () => {
+  isMounted = true
   
-  // gameContainerが利用可能になるまで待機
-  let attempts = 0
-  const maxAttempts = 10
-  
-  while (!gameContainer.value && attempts < maxAttempts) {
-    await new Promise(resolve => setTimeout(resolve, 100))
-    attempts++
-  }
+  // requestAnimationFrameでDOMが完全に準備されるまで待機
+  await new Promise(resolve => requestAnimationFrame(resolve))
   
   if (gameContainer.value) {
     try {
       
       // Phaserとゲームマネージャーを動的にインポート
       const { GameManager } = await import('@/game/GameManager')
+      
+      // マウント状態を再確認
+      if (!isMounted) return
       
       gameManager.value = GameManager.getInstance()
       
@@ -36,16 +38,26 @@ onMounted(async () => {
       // チュートリアル開始イベントリスナーを設定
       const handleTutorialEvent = () => {
         if (isDev) console.log('GameCanvas: チュートリアル開始イベントを受信')
-        if (gameManager.value) {
+        if (gameManager.value && isMounted) {
           // GameSceneに直接移動してチュートリアルを開始
           gameManager.value.switchScene('GameScene', { startTutorial: true })
         }
       }
       
+      // ゲームクリーンアップイベントリスナー
+      const handleCleanupEvent = () => {
+        if (gameManager.value) {
+          // Phaserのリソースを解放
+          gameManager.value.clearCache()
+        }
+      }
+      
       window.addEventListener('startTutorial', handleTutorialEvent)
+      window.addEventListener('cleanupGame', handleCleanupEvent)
       
       // クリーンアップ用に参照を保存
       ;(window as WindowWithTutorialEvents)._tutorialEventHandler = handleTutorialEvent
+      ;(window as any)._cleanupEventHandler = handleCleanupEvent
       
     } catch (error) {
       console.error('❌ ゲームの初期化に失敗しました:', error)
@@ -65,16 +77,26 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  isMounted = false
+  
   // イベントリスナーをクリーンアップ
-  const handler = (window as WindowWithTutorialEvents)._tutorialEventHandler
-  if (handler) {
-    window.removeEventListener('startTutorial', handler as EventListener)
+  const tutorialHandler = (window as WindowWithTutorialEvents)._tutorialEventHandler
+  const cleanupHandler = (window as any)._cleanupEventHandler
+  
+  if (tutorialHandler) {
+    window.removeEventListener('startTutorial', tutorialHandler as EventListener)
     delete (window as WindowWithTutorialEvents)._tutorialEventHandler
+  }
+  
+  if (cleanupHandler) {
+    window.removeEventListener('cleanupGame', cleanupHandler as EventListener)
+    delete (window as any)._cleanupEventHandler
   }
   
   // ゲームを破棄
   if (gameManager.value) {
     gameManager.value.destroy()
+    gameManager.value = null
   }
 })
 
@@ -121,7 +143,13 @@ defineExpose({
     </div>
     
     <!-- Phaserゲームがここにマウントされる -->
-    <div ref="gameContainer" id="game-container" class="game-container" :style="{ display: !isLoading && !errorMessage ? 'block' : 'none' }"></div>
+    <div 
+      ref="gameContainer" 
+      id="game-container" 
+      class="game-container" 
+      :style="{ display: !isLoading && !errorMessage ? 'block' : 'none' }"
+      :aria-hidden="isLoading || !!errorMessage"
+    ></div>
     
     <!-- デバッグ用コントロール（開発中のみ表示） -->
     <div v-if="isDev && !isLoading" class="debug-controls">

@@ -2,9 +2,14 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import GameCanvas from './components/game/GameCanvas.vue'
 import TransitionAnimations from './components/animations/TransitionAnimations.vue'
+import AccessibilitySettings from './components/accessibility/AccessibilitySettings.vue'
+import VisualIndicators from './components/accessibility/VisualIndicators.vue'
+import ErrorBoundary from './components/error/ErrorBoundary.vue'
+import ErrorNotification from './components/error/ErrorNotification.vue'
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
 const showGame = ref(false)
+const showAccessibilitySettings = ref(false)
 let keyboardManager: KeyboardManager | null = null
 let screenReaderManager: ScreenReaderManager | null = null
 
@@ -27,6 +32,16 @@ const startTutorial = () => {
 const backToHome = () => {
   showGame.value = false
   screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
+}
+
+const handleAccessibilitySettingsChanged = (settings: any) => {
+  // アクセシビリティ設定が変更されたときの処理
+  console.log('アクセシビリティ設定が更新されました:', settings)
+  
+  // スクリーンリーダーに通知
+  if (settings.screenReaderEnabled) {
+    screenReaderManager?.announce('スクリーンリーダー対応が有効になりました', { priority: 'assertive' })
+  }
 }
 
 onMounted(() => {
@@ -68,6 +83,16 @@ onMounted(() => {
     }
   })
   
+  keyboardManager.registerShortcut({
+    key: 'a',
+    modifiers: ['alt'],
+    description: 'アクセシビリティ設定を開く',
+    action: () => {
+      showAccessibilitySettings.value = true
+      screenReaderManager?.announce('アクセシビリティ設定を開きました', { priority: 'assertive' })
+    }
+  })
+  
   // フォーカス可能要素を登録（ホーム画面のボタン）
   setTimeout(() => {
     const gameButton = document.querySelector('.primary-action-btn') as HTMLElement
@@ -100,7 +125,7 @@ onMounted(() => {
   }, 100)
   
   // 初期アナウンス
-  screenReaderManager.announceScreenChange('ホーム画面', '人生充実ゲーム へようこそ。Alt+Gでゲーム開始、Alt+Tでチュートリアル、F1でヘルプを表示できます')
+  screenReaderManager.announceScreenChange('ホーム画面', '人生充実ゲーム へようこそ。Alt+Gでゲーム開始、Alt+Tでチュートリアル、Alt+Aでアクセシビリティ設定、F1でヘルプを表示できます')
 })
 
 onUnmounted(() => {
@@ -117,10 +142,15 @@ onUnmounted(() => {
       <a href="#navigation" class="skip-link">ナビゲーションに移動</a>
     </div>
 
+    <!-- エラー通知 -->
+    <ErrorNotification />
+
     <!-- ゲーム画面 -->
     <TransitionAnimations type="slide" direction="left" :duration="400" intensity="normal">
       <div v-if="showGame" class="game-view" id="main-content" role="main" aria-label="ゲーム画面">
-        <GameCanvas />
+        <ErrorBoundary fallback="detailed" :can-recover="true">
+          <GameCanvas />
+        </ErrorBoundary>
         <button
           ref="backToHomeButtonRef"
           @click="backToHome"
@@ -135,7 +165,8 @@ onUnmounted(() => {
 
       <!-- ホーム画面 -->
       <div v-else class="home-view" id="main-content" role="main" aria-label="ホーム画面">
-        <div class="home-container">
+        <ErrorBoundary fallback="minimal">
+          <div class="home-container">
         <header class="hero-section">
           <h1 class="hero-title">
             人生充実ゲーム
@@ -183,32 +214,32 @@ onUnmounted(() => {
         <!-- 最新の変更 -->
         <div class="card">
           <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
-            <span>🎵</span>
-            最新アップデート v0.2.5
+            <span>🎯</span>
+            最新アップデート v0.2.6
           </h2>
           <div class="text-left space-y-3">
             <div>
-              <h3 class="font-semibold text-lg mb-2">Web Audio APIサウンドシステム</h3>
+              <h3 class="font-semibold text-lg mb-2">包括的アクセシビリティ対応</h3>
               <ul class="space-y-1 text-sm">
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>15種類のサウンドエフェクト</strong>: カード操作、チャレンジ、UI音響</span>
+                  <span><strong>WCAG 2.1 AA完全準拠</strong>: 4種類の色覚異常対応</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>ファイル不要の高品質音生成</strong>: Web Audio APIによる動的合成</span>
+                  <span><strong>スクリーンリーダー対応</strong>: ARIA属性と音声通知の完全実装</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>音楽理論に基づく設計</strong>: C5-E5-G5和音、完全3度音程使用</span>
+                  <span><strong>キーボードナビゲーション</strong>: ショートカットとフォーカス管理</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>Mキーサウンド切り替え</strong>: 瞬時ON/OFF、設定自動保存</span>
+                  <span><strong>モーション設定</strong>: アニメーション削減、速度調整機能</span>
                 </li>
                 <li class="flex items-start gap-2">
-                  <span class="text-success mt-1">🐛</span>
-                  <span><strong>CardPowerエラー修正</strong>: 負の値処理を改善、安定性向上</span>
+                  <span class="text-success mt-1">✅</span>
+                  <span><strong>Alt+Aキーで設定を開く</strong>: 簡単アクセス、設定自動保存</span>
                 </li>
               </ul>
             </div>
@@ -285,6 +316,7 @@ onUnmounted(() => {
         </div>
       </section>
         </div>
+        </ErrorBoundary>
       </div>
     </TransitionAnimations>
 
@@ -292,6 +324,29 @@ onUnmounted(() => {
     <footer class="sr-only" id="footer" role="contentinfo">
       <p>人生充実ゲーム - アクセシブルなWebゲーム体験</p>
     </footer>
+    
+    <!-- アクセシビリティ設定モーダル -->
+    <AccessibilitySettings 
+      :is-open="showAccessibilitySettings"
+      @close="showAccessibilitySettings = false"
+      @settings-changed="handleAccessibilitySettingsChanged"
+    />
+    
+    <!-- ビジュアルインジケーター -->
+    <VisualIndicators :enabled="true" />
+    
+    <!-- アクセシビリティ設定ボタン -->
+    <button
+      @click="showAccessibilitySettings = true"
+      class="accessibility-button"
+      aria-label="アクセシビリティ設定を開く (Alt+A)"
+      :aria-keyshortcuts="'Alt+A'"
+      title="アクセシビリティ設定"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15L13.5 7.5C13 7 12.5 6.5 11.9 6.5H12.1C11.5 6.5 11 7 10.5 7.5L7.91 10.09C7.66 10.34 7.66 10.76 7.91 11.01L10.5 13.6C11 14.1 11.5 14.6 12.1 14.6H11.9C12.5 14.6 13 14.1 13.5 13.6L15 12.1H21C21.6 12.1 22 11.7 22 11.1V10C22 9.4 21.6 9 21 9ZM8.5 12.5L12 16L15.5 12.5L12 22L8.5 12.5Z" fill="currentColor"/>
+      </svg>
+    </button>
   </div>
 </template>
 
@@ -963,5 +1018,132 @@ onUnmounted(() => {
   .keyboard-navigation *:focus {
     transition: outline-color var(--transition-fast);
   }
+}
+
+/* =================================
+   アクセシビリティボタン
+   ================================= */
+
+.accessibility-button {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  z-index: var(--z-fixed);
+  
+  width: var(--touch-target-comfortable);
+  height: var(--touch-target-comfortable);
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: rgba(129, 140, 248, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(8px);
+  
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.accessibility-button:hover {
+  background: rgba(99, 102, 241, 0.95);
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 12px 40px rgba(129, 140, 248, 0.4);
+}
+
+.accessibility-button:active {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.accessibility-button:focus {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+
+.accessibility-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* モバイル対応 */
+@media (max-width: 640px) {
+  .accessibility-button {
+    bottom: var(--space-md);
+    right: var(--space-md);
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
+  }
+}
+
+/* ハイコントラストモード専用スタイル */
+.high-contrast {
+  /* 背景とテキストのコントラスト強化 */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-card: rgba(255, 255, 255, 0.15);
+}
+
+.high-contrast .primary-action-btn,
+.high-contrast .secondary-action-btn {
+  border: 3px solid white;
+}
+
+.high-contrast .info-card {
+  border-width: 2px;
+  border-color: white;
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.high-contrast .card-title {
+  color: #FFD43B;
+}
+
+.high-contrast .hero-title {
+  background: none;
+  -webkit-text-fill-color: white;
+  text-shadow: 2px 2px 4px black;
+}
+
+/* モーション削減モード */
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* フォントサイズ調整用CSS変数の適用 */
+.app-container {
+  font-size: var(--base-font-size, 16px);
+}
+
+/* タッチターゲットサイズの適用 */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex]:not([tabindex="-1"]) {
+  min-width: var(--touch-target-size, 44px);
+  min-height: var(--touch-target-size, 44px);
+}
+
+/* アニメーション速度の調整 */
+@property --animation-speed-multiplier {
+  syntax: '<number>';
+  initial-value: 1;
+  inherits: true;
+}
+
+.game-card,
+.drop-zone,
+.info-card,
+.primary-action-btn,
+.secondary-action-btn {
+  transition-duration: calc(var(--transition-normal) / var(--animation-speed-multiplier, 1));
 }
 </style>

@@ -26,6 +26,13 @@ export abstract class BaseScene extends Scene {
   protected abstract initialize(): void
 
   /**
+   * 毎フレーム実行される更新処理（オプション）
+   */
+  update(time: number, delta: number): void {
+    // サブクラスでオーバーライド可能
+  }
+
+  /**
    * フェードイン効果
    */
   protected fadeIn(duration: number = 500): void {

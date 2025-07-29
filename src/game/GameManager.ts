@@ -111,4 +111,41 @@ export class GameManager {
     // プリロードシーンから再開
     this.game.scene.start('PreloadScene')
   }
+
+  /**
+   * キャッシュをクリア（メモリ最適化）
+   */
+  clearCache(): void {
+    if (!this.game) return
+    
+    // テクスチャキャッシュをクリア（使用中のものは除く）
+    const textureManager = this.game.textures
+    const keysToRemove: string[] = []
+    
+    textureManager.list.forEach((texture, key) => {
+      // システムテクスチャ以外を削除対象に
+      if (key !== '__DEFAULT' && key !== '__MISSING' && key !== '__WHITE') {
+        keysToRemove.push(key)
+      }
+    })
+    
+    // 使用されていないテクスチャを削除
+    keysToRemove.forEach(key => {
+      try {
+        textureManager.remove(key)
+      } catch (e) {
+        // 使用中のテクスチャは削除できない
+      }
+    })
+    
+    // サウンドキャッシュをクリア
+    if (this.game.sound) {
+      this.game.sound.removeAll()
+    }
+    
+    // ガベージコレクションをトリガー（可能な場合）
+    if (typeof window !== 'undefined' && (window as any).gc) {
+      (window as any).gc()
+    }
+  }
 }
