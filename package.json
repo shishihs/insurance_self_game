@@ -80,6 +80,16 @@
     "test:watch:cui": "vitest src/__tests__/cui",
     "test:benchmark": "vitest src/__tests__/benchmark --run --timeout=120000",
     "test:utils": "vitest src/__tests__/utils --run",
+    "test:pipeline": "node scripts/test-pipeline-enhanced.js",
+    "test:pipeline:parallel": "node scripts/test-pipeline-enhanced.js --parallel",
+    "test:pipeline:ci": "node scripts/test-pipeline-enhanced.js --ci --fail-fast",
+    "test:visual": "playwright test tests/visual",
+    "test:visual:update": "playwright test tests/visual --update-snapshots",
+    "test:performance:playwright": "playwright test tests/performance",
+    "test:memory": "node scripts/memory-profiler.js",
+    "test:memory:load": "node scripts/memory-profiler.js --with-load",
+    "test:resource": "node scripts/resource-exhaustion.js",
+    "test:all:parallel": "node scripts/test-pipeline-enhanced.js --parallel --detailed",
     "prepare": "husky"
   },
   "dependencies": {
@@ -125,7 +135,7 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "unocss": "^66.3.3",
-    "vite": "^5.4.19",
+    "vite": "^7.0.6",
     "vitest": "^3.2.4",
     "vue-tsc": "^2.2.12"
   }

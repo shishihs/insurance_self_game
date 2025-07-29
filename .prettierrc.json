@@ -3,5 +3,14 @@
   "singleQuote": true,
   "printWidth": 100,
   "trailingComma": "es5",
-  "vueIndentScriptAndStyle": true
+  "vueIndentScriptAndStyle": true,
+  "tabWidth": 2,
+  "useTabs": false,
+  "endOfLine": "lf",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "proseWrap": "preserve",
+  "htmlWhitespaceSensitivity": "strict",
+  "embeddedLanguageFormatting": "auto"
 }

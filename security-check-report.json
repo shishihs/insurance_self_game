@@ -1,0 +1,818 @@
+{
+  "timestamp": "2025-07-29T03:23:29.047Z",
+  "score": "57.1",
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "warnings": 2
+  },
+  "results": [
+    {
+      "test": "依存関係脆弱性",
+      "status": "PASS",
+      "message": "脆弱性なし"
+    },
+    {
+      "test": "セキュリティヘッダー",
+      "status": "PASS",
+      "message": "全ヘッダー実装済み"
+    },
+    {
+      "test": "危険な関数",
+      "status": "FAIL",
+      "message": "5個の危険な使用を検出",
+      "details": [
+        {
+          "file": "\\src\\components\\accessibility\\KeyboardManager.ts",
+          "pattern": "innerHTML",
+          "count": 1,
+          "severity": "error"
+        },
+        {
+          "file": "\\src\\components\\interactions\\FeedbackNotificationSystem.ts",
+          "pattern": "innerHTML",
+          "count": 1,
+          "severity": "error"
+        },
+        {
+          "file": "\\src\\components\\interactions\\InteractionPerformanceMonitor.ts",
+          "pattern": "innerHTML",
+          "count": 1,
+          "severity": "error"
+        },
+        {
+          "file": "\\src\\game\\systems\\UnifiedAnimationManager.ts",
+          "pattern": "innerHTML",
+          "count": 4,
+          "severity": "error"
+        },
+        {
+          "file": "\\src\\__tests__\\edge-cases\\ComprehensiveEdgeCases.test.ts",
+          "pattern": "eval()",
+          "count": 1,
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "test": "潜在的リスク",
+      "status": "WARN",
+      "message": "123個の警告",
+      "details": [
+        {
+          "file": "\\src\\ai\\AdvancedStrategies.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 6,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\analytics\\GameAnalytics.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 9,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\analytics\\StatisticalTests.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 18,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\application\\__tests__\\endToEnd.scenario.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\benchmark\\MassiveBenchmark.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 30,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cli\\AdvancedCLI.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 112,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\common\\BaseFactory.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\common\\IdGenerator.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\accessibility\\A11yTestHelper.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 16,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\accessibility\\AccessibilitySettings.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\accessibility\\KeyboardManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\accessibility\\ScreenReaderManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 24,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\accessibility\\VisualIndicators.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\animations\\TransitionAnimations.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\error\\ErrorBoundary.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\error\\ErrorNotification.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\interactions\\FeedbackNotificationSystem.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 18,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\interactions\\InteractionPerformanceMonitor.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 19,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\interactions\\MicroInteractionManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 16,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\interactions\\useFeedbackNotifications.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\mobile\\MobileFAB.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\mobile\\PullToRefresh.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\components\\mobile\\SwipeableCardStack.vue",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 6,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\controllers\\examples\\ConsoleRenderer.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 39,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\controllers\\examples\\GameControllerUsage.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 13,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\controllers\\GameController.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 13,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\controllers\\GameValidator.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 7,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\auto-demo.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 9,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\cli.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\demo-standalone.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 11,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\modes\\BenchmarkMode.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 23,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\modes\\DebugMode.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 59,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\modes\\DemoMode.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\modes\\TutorialMode.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 11,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\PlaytestGameController.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 20,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\renderers\\InteractiveCUIRenderer.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 21,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\simple-cli.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\utils\\CardRenderer.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 22,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\utils\\InputValidator.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 11,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\cui\\utils\\ProgressDisplay.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 19,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\aggregates\\challenge\\ChallengeId.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\aggregates\\challenge\\__tests__\\Challenge.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\aggregates\\insurance\\InsuranceId.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\aggregates\\insurance\\__tests__\\Insurance.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\entities\\Card.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\entities\\Game.simplified.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\entities\\Game.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\events\\GameEvents.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\factories\\ServiceFactory.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\CardFactory.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 11,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\ChallengeResolutionService.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\ChallengeStrategyService.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\GameChallengeService.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\GameInsuranceService.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\GameStageManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\GameStateService.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\InsuranceExpirationManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\services\\__tests__\\InsurancePremiumCalculationService.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\types\\strict-types.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\valueObjects\\CardPower.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\valueObjects\\InsurancePremium.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\valueObjects\\Vitality.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\__tests__\\Deck.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\domain\\__tests__\\integration\\InsurancePremiumService.integration.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\analytics\\GameAnalytics.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\commands\\CommandHistory.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\commands\\GameCommand.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\commands\\UndoRedoManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\scenes\\BaseScene.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\scenes\\GameScene.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 57,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\scenes\\PreloadScene.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\state\\AnalyticsIntegration.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 4,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\state\\GameStateManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 20,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\state\\index.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 4,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\state\\SaveLoadService.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 19,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\storage\\StorageOptimizer.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\AnimationManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 4,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\DropZoneIntegration.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\DropZoneManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\DropZoneValidators.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\EventCleanupManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\KeyboardController.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\TutorialIntegration.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\TutorialManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 18,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\TutorialSteps.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\UnifiedAnimationManager.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 20,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\__tests__\\DropZoneIntegration.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\__tests__\\DropZoneManager.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 6,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\__tests__\\DropZonePerformance.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 7,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\systems\\__tests__\\DropZoneValidators.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\tutorial\\TutorialTestHelper.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\ui\\SaveLoadMenu.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\ui\\SoundSettingsUI.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\ui\\StatisticsPanel.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\game\\ui\\TutorialOverlay.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\optimization\\BatchProcessor.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\optimization\\CacheSystem.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 6,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\optimization\\ObjectPooling.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\performance\\GamePerformanceAnalyzer.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 10,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\performance\\IntegrationExamples.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 49,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\performance\\MemoryProfiler.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\performance\\RealTimeMonitor.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 25,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\research\\ExperimentFramework.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 12,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\error-handling\\AsyncErrorHandler.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\error-handling\\ErrorHandler.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 4,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\error-handling\\ErrorLogger.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 4,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\error-handling\\ErrorRecovery.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\error-handling\\ErrorReporter.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\security-extensions.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 6,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\utils\\security.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 1,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\analytics\\GameAnalytics.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 6,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\benchmark\\MassiveBenchmark.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\controllers\\GameController.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\controllers\\GameValidator.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\cui\\renderers\\InteractiveCUIRenderer.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 24,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\cui\\utils\\CardRenderer.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 18,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\edge-cases\\ComprehensiveEdgeCases.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\integration\\FullGameWorkflowIntegration.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\performance\\PerformanceSystem.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 5,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\stress\\stress-tests.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\unit\\GameStateManagementTests.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 2,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\unit\\ValueObjectsRobustnessTests.test.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 3,
+          "severity": "warning"
+        },
+        {
+          "file": "\\src\\__tests__\\utils\\TestHelpers.ts",
+          "pattern": "テンプレートリテラル（潜在的XSS）",
+          "count": 8,
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "test": "HTTPS設定",
+      "status": "WARN",
+      "message": "HTTPS設定を確認してください"
+    },
+    {
+      "test": "セキュリティ実装",
+      "status": "PASS",
+      "message": "全セキュリティモジュール実装済み"
+    },
+    {
+      "test": ".npmrc設定",
+      "status": "PASS",
+      "message": "サプライチェーン攻撃対策実装済み"
+    }
+  ]
+}

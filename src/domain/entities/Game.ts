@@ -6,6 +6,9 @@ import { InsurancePremiumCalculationService } from '../services/InsurancePremium
 import { GameStageManager } from '../services/GameStageManager'
 import { InsuranceExpirationManager } from '../services/InsuranceExpirationManager'
 import { ChallengeResolutionService } from '../services/ChallengeResolutionService'
+import { GameTurnManager } from '../services/GameTurnManager'
+import { GameChallengeService } from '../services/GameChallengeService'
+import { GameInsuranceService } from '../services/GameInsuranceService'
 import { IdGenerator } from '../../common/IdGenerator'
 import type {
   IGameState,
@@ -53,13 +56,16 @@ export class Game implements IGameState {
   private _vitality: Vitality
   
   // カード管理を移譲
-  private cardManager: ICardManager
+  public cardManager: ICardManager
   
   // ドメインサービス
   private premiumCalculationService: InsurancePremiumCalculationService
   private stageManager: GameStageManager
   private expirationManager: InsuranceExpirationManager
   private challengeResolutionService: ChallengeResolutionService
+  private turnManager: GameTurnManager
+  private challengeService: GameChallengeService
+  private insuranceService: GameInsuranceService
   
   currentChallenge?: Card
   
@@ -132,6 +138,9 @@ export class Game implements IGameState {
     this.stageManager = new GameStageManager()
     this.expirationManager = new InsuranceExpirationManager()
     this.challengeResolutionService = new ChallengeResolutionService()
+    this.turnManager = new GameTurnManager(this.stageManager, this.expirationManager)
+    this.challengeService = new GameChallengeService(this.challengeResolutionService)
+    this.insuranceService = new GameInsuranceService(this.premiumCalculationService)
     const playerDeck = new Deck('Player Deck')
     const challengeDeck = new Deck('Challenge Deck')
     
@@ -268,10 +277,7 @@ export class Game implements IGameState {
    * @throws {Error} 保険カード以外が渡された場合
    */
   addInsurance(card: Card): void {
-    if (!card.isInsurance()) {
-      throw new Error('Only insurance cards can be added')
-    }
-    this.insuranceCards.push(card)
+    this.insuranceService.addInsurance(this, card)
   }
 
   /**
@@ -316,13 +322,7 @@ export class Game implements IGameState {
    * @throws {Error} ドローフェーズ以外で実行された場合
    */
   startChallenge(challengeCard: Card): void {
-    if (this.phase !== 'draw') {
-      throw new Error('Can only start challenge during draw phase')
-    }
-    
-    this.currentChallenge = challengeCard
-    this.cardManager.clearSelection()
-    this.phase = 'challenge'
+    this.challengeService.startChallenge(this, challengeCard)
   }
 
   /**
@@ -340,14 +340,7 @@ export class Game implements IGameState {
    * @throws {Error} アクティブなチャレンジがない場合
    */
   resolveChallenge(): ChallengeResult {
-    if (!this.currentChallenge || this.phase !== 'challenge') {
-      throw new Error('No active challenge to resolve')
-    }
-    
-    // Phase 3: 詳細なパワー計算
-    const selectedCards = this.cardManager.getState().selectedCards
-    const powerBreakdown = this.calculateTotalPower(selectedCards)
-    const playerPower = powerBreakdown.total
+    return this.challengeService.resolveChallenge(this)
     
     // Phase 4: 夢カードの場合は年齢調整を適用
     const challengePower = this.getDreamRequiredPower(this.currentChallenge)
@@ -444,55 +437,7 @@ export class Game implements IGameState {
    * 保険種類を選択してカードを作成・追加
    */
   selectInsuranceType(insuranceType: string, durationType: 'term' | 'whole_life'): InsuranceTypeSelectionResult {
-    if (this.phase !== 'insurance_type_selection') {
-      throw new Error('Not in insurance type selection phase')
-    }
-    
-    if (!this.insuranceTypeChoices) {
-      throw new Error('No insurance type choices available')
-    }
-    
-    // 指定された保険種類の選択肢を探す
-    const choice = this.insuranceTypeChoices.find(choice => choice.insuranceType === insuranceType)
-    if (!choice) {
-      return {
-        success: false,
-        message: 'Invalid insurance type selection'
-      }
-    }
-    
-    // 選択された種類に応じてカードを作成
-    let selectedCard: Card
-    if (durationType === 'term') {
-      selectedCard = CardFactory.createTermInsuranceCard(choice)
-    } else {
-      selectedCard = CardFactory.createWholeLifeInsuranceCard(choice)
-    }
-    
-    // カードをデッキに追加
-    this.cardManager.addToPlayerDeck(selectedCard)
-    this.stats.cardsAcquired++
-    
-    // 保険カードの場合は管理リストに追加
-    this.insuranceCards.push(selectedCard)
-    // Phase 3: 保険料負担を更新
-    this.updateInsuranceBurden()
-    
-    // 選択肢をクリア
-    this.insuranceTypeChoices = undefined
-    
-    // 解決フェーズに移行（ターン終了可能状態）
-    this.phase = 'resolution'
-    
-    const durationText = durationType === 'term' 
-      ? `定期保険（${choice.termOption.duration}ターン）` 
-      : '終身保険'
-    
-    return {
-      success: true,
-      selectedCard,
-      message: `${choice.name}（${durationText}）を選択しました。コスト: ${selectedCard.cost}`
-    }
+    return this.insuranceService.selectInsuranceType(this, insuranceType, durationType)
   }
 
   /**
@@ -552,46 +497,9 @@ export class Game implements IGameState {
    * 次のターンへ
    */
   nextTurn(): TurnResult {
-    if (this.status !== 'in_progress') {
-      throw new Error('Game is not in progress')
-    }
-    
-    this.turn++
-    this.stats.turnsPlayed++
-    this.phase = 'draw'
-    
-    // ステージ進行の判定（ターン数に基づいて）
-    this.checkStageProgression()
-    
-    // 定期保険の期限を1ターン減らし、期限切れ通知を取得
-    const expirationResult = this.updateInsuranceExpirations()
-    
-    // ターン開始時のドロー
-    this.drawCards(1)
-    
-    // ターン結果を返す
-    return {
-      insuranceExpirations: expirationResult,
-      newExpiredCount: expirationResult?.expiredCards.length || 0,
-      remainingInsuranceCount: this.insuranceCards.length
-    }
+    return this.turnManager.nextTurn(this)
   }
 
-  /**
-   * ステージ進行をチェック（ターン数に基づいて）
-   */
-  private checkStageProgression(): void {
-    const progressionResult = this.stageManager.checkStageProgression(this.stage, this.turn)
-    
-    if (progressionResult.hasChanged) {
-      this.stage = progressionResult.newStage
-      this.updateMaxVitalityForAge()
-      
-      if (progressionResult.transitionMessage) {
-        console.log(progressionResult.transitionMessage)
-      }
-    }
-  }
 
   /**
    * ステージを進める（手動用）
@@ -723,6 +631,14 @@ export class Game implements IGameState {
   }
 
   /**
+   * ステージを設定（内部使用）
+   */
+  setStage(stage: GameStage): void {
+    this.stage = stage
+    this.updateMaxVitalityForAge()
+  }
+
+  /**
    * Phase 2-4: 現在有効な保険カードを取得
    */
   getActiveInsurances(): Card[] {
@@ -772,77 +688,24 @@ export class Game implements IGameState {
       return this._cachedValues.insuranceBurden
     }
     
-    if (this.insuranceCards.length === 0) {
-      this._cachedValues.insuranceBurden = 0
-      this._cachedValues.totalInsuranceCount = 0
-      this._dirtyFlags.insurance = false
-      return 0
-    }
-
-    try {
-      // ドメインサービスを使用して総保険料負担を計算
-      const totalBurden = this.premiumCalculationService.calculateTotalInsuranceBurden(
-        this.insuranceCards, 
-        this.stage
-      )
-      
-      // 負の値として返す（活力から差し引かれるため）
-      const result = -totalBurden.getValue()
-      
-      // キャッシュを更新
-      this._cachedValues.insuranceBurden = result
-      this._cachedValues.totalInsuranceCount = this.insuranceCards.length
-      this._cachedValues.lastUpdateTime = currentTime
-      this._dirtyFlags.insurance = false
-      
-      return result
-    } catch (error) {
-      console.warn('保険料計算でエラーが発生しました。従来の計算方法を使用します:', error)
-      
-      // フォールバック: 従来の簡易計算
-      const activeInsuranceCount = this.insuranceCards.length
-      const burden = Math.floor(activeInsuranceCount / 3)
-      const result = burden === 0 ? 0 : -burden
-      
-      // キャッシュを更新
-      this._cachedValues.insuranceBurden = result
-      this._cachedValues.totalInsuranceCount = activeInsuranceCount
-      this._dirtyFlags.insurance = false
-      
-      return result
-    }
+    const burden = this.insuranceService.calculateInsuranceBurden(this)
+    
+    // キャッシュを更新
+    this._cachedValues.insuranceBurden = burden
+    this._cachedValues.totalInsuranceCount = this.insuranceCards.length
+    this._cachedValues.lastUpdateTime = currentTime
+    this._dirtyFlags.insurance = false
+    
+    return burden
   }
 
   /**
    * Phase 3: 保険料負担を更新（最適化版）
    */
   private updateInsuranceBurden(): void {
-    // ダーティフラグを設定してキャッシュを無効化
-    this._dirtyFlags.insurance = true
-    this._dirtyFlags.burden = true
-    
-    const burden = this.calculateInsuranceBurden()
-    // 負の値でもInsurancePremiumは正の値として扱う
-    this._insuranceBurden = InsurancePremium.create(Math.abs(burden))
+    this.insuranceService.updateInsuranceBurden(this)
   }
 
-  /**
-   * 定期保険の期限を更新し、期限切れをチェック
-   */
-  private updateInsuranceExpirations(): InsuranceExpirationNotice | undefined {
-    const expirationResult = this.expirationManager.updateInsuranceExpirations(
-      this.insuranceCards,
-      this.expiredInsurances,
-      this.turn
-    )
-    
-    // 期限切れがあった場合は保険料負担を再計算
-    if (expirationResult) {
-      this.updateInsuranceBurden()
-    }
-    
-    return expirationResult
-  }
 
 
   /**
@@ -856,32 +719,7 @@ export class Game implements IGameState {
     burden: number
     total: number
   } {
-    // 基本パワー（保険以外のカード）
-    let basePower = 0
-    let insurancePower = 0
-    
-    cards.forEach(card => {
-      if (card.type === 'insurance') {
-        // 保険カードのパワー（年齢ボーナス込み）
-        insurancePower += card.calculateEffectivePower()
-      } else {
-        // その他のカードの基本パワー
-        basePower += card.calculateEffectivePower()
-      }
-    })
-    
-    // 保険料負担（常に負の値）
-    const burden = this.insuranceBurden
-    
-    // 総合パワー
-    const total = basePower + insurancePower + burden
-    
-    return {
-      base: basePower,
-      insurance: insurancePower,
-      burden: burden,
-      total: Math.max(0, total) // 総合パワーは0以下にならない
-    }
+    return this.challengeService.calculateTotalPower(this, cards)
   }
 
 
