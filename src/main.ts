@@ -11,7 +11,7 @@ import App from './App.vue'
 import { initializeSecurity } from '@/utils/security-extensions'
 
 // エラーハンドリングシステムの初期化
-import { GlobalErrorHandler } from '@/utils/error-handling/ErrorHandler'
+import { ErrorHandlingPlugin, errorHandlingSystem } from '@/utils/error-handling'
 
 // PWA Service Worker の登録
 import { registerServiceWorker } from '@/pwa/registerServiceWorker'
@@ -19,24 +19,32 @@ import { registerServiceWorker } from '@/pwa/registerServiceWorker'
 // リップルエフェクトの初期化
 import { initAutoRipple } from '@/utils/ripple-effect'
 
-// グローバルエラーハンドラーを設定
-const errorHandler = GlobalErrorHandler.getInstance({
-  enableLogging: true,
-  enableReporting: import.meta.env.PROD,
-  enableRecovery: true,
-  logToConsole: import.meta.env.DEV,
-  showUserNotification: true,
-  maxErrorsPerMinute: 20
-})
-
-// グローバルハンドラーを設定（window.onerror, unhandledrejection）
-errorHandler.setupGlobalHandlers()
-
 // Vueアプリケーションを作成
 const app = createApp(App)
 
-// Vueエラーハンドラーを設定
-errorHandler.setupVueErrorHandler(app)
+// エラーハンドリングシステムをプラグインとして統合
+app.use(ErrorHandlingPlugin, {
+  enableLogging: true,
+  enableReporting: import.meta.env.PROD,
+  enableRecovery: true,
+  enableUserNotifications: true,
+  logToConsole: import.meta.env.DEV,
+  reportToServer: import.meta.env.PROD,
+  maxErrorsPerMinute: 20,
+  environment: import.meta.env.MODE as any,
+  buildVersion: import.meta.env.VITE_BUILD_VERSION,
+  reportEndpoint: import.meta.env.VITE_ERROR_REPORT_ENDPOINT,
+  reportApiKey: import.meta.env.VITE_ERROR_REPORT_API_KEY,
+  onError: (errorInfo) => {
+    console.log('[App] Error reported:', errorInfo.message)
+  },
+  onRecovery: (success, strategy) => {
+    console.log(`[App] Recovery ${success ? 'succeeded' : 'failed'}${strategy ? ` using ${strategy}` : ''}`)
+  },
+  onAlert: (type, data) => {
+    console.warn(`[App] Alert: ${type}`, data)
+  }
+})
 
 // セキュリティシステムを起動
 try {
@@ -44,14 +52,11 @@ try {
 } catch (error) {
   console.error('セキュリティシステムの初期化に失敗しました:', error)
   // エラーハンドラーに報告
-  errorHandler.handleError({
-    message: 'セキュリティシステムの初期化に失敗',
-    stack: (error as Error).stack,
-    timestamp: Date.now(),
-    userAgent: navigator.userAgent,
-    severity: 'high',
-    category: 'system'
-  })
+  errorHandlingSystem.reportError(
+    error as Error,
+    { component: 'security-system' },
+    'system'
+  )
 }
 
 // アプリケーションをマウント
@@ -77,14 +82,11 @@ registerServiceWorker({
   },
   onError: (error) => {
     console.error('PWA: Service Worker エラー', error)
-    errorHandler.handleError({
-      message: 'Service Worker 登録エラー',
-      stack: error.stack,
-      timestamp: Date.now(),
-      userAgent: navigator.userAgent,
-      severity: 'medium',
-      category: 'pwa'
-    })
+    errorHandlingSystem.reportError(
+      error,
+      { component: 'service-worker' },
+      'system'
+    )
   }
 })
 

@@ -277,3 +277,47 @@ export function secureLocalStorage() {
     }
   }
 }
+
+/**
+ * セキュリティ監査ログの取得
+ */
+export function getSecurityIncidents(): any[] {
+  try {
+    return JSON.parse(localStorage.getItem('security_incidents') || '[]')
+  } catch {
+    return []
+  }
+}
+
+/**
+ * セキュリティインシデントのクリア
+ */
+export function clearSecurityIncidents(): void {
+  localStorage.removeItem('security_incidents')
+}
+
+/**
+ * データ整合性の一括検証
+ */
+export async function validateAllStoredData(): Promise<{ valid: number; invalid: number; details: string[] }> {
+  const storage = secureLocalStorage()
+  const results = { valid: 0, invalid: 0, details: [] as string[] }
+  
+  // localStorage内の全てのゲームデータをチェック
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (!key || key.includes('_integrity') || key.includes('_version') || key.includes('_timestamp')) {
+      continue // メタデータキーはスキップ
+    }
+    
+    try {
+      await storage.getItem(key)
+      results.valid++
+    } catch (error) {
+      results.invalid++
+      results.details.push(`${key}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+  
+  return results
+}

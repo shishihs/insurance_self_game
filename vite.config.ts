@@ -6,7 +6,15 @@ import UnoCSS from 'unocss/vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      // Vue最適化オプション
+      template: {
+        compilerOptions: {
+          // カスタム要素を無視（Phaserコンポーネント用） 
+          isCustomElement: (tag) => tag.startsWith('phaser-')
+        }
+      }
+    }),
     UnoCSS(),
   ],
   resolve: {

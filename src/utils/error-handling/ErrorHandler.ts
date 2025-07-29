@@ -21,7 +21,27 @@ export interface ErrorInfo {
   timestamp: number
   userAgent: string
   severity: 'low' | 'medium' | 'high' | 'critical'
-  category: 'vue' | 'javascript' | 'network' | 'async' | 'user' | 'system'
+  category: 'vue' | 'javascript' | 'network' | 'async' | 'user' | 'system' | 'performance' | 'security' | 'game'
+  context?: {
+    userId?: string
+    sessionId?: string
+    gameState?: string
+    route?: string
+    action?: string
+    deviceInfo?: {
+      isMobile: boolean
+      screenSize: string
+      connection?: string
+    }
+  }
+  fingerprint?: string
+  tags?: string[]
+  breadcrumbs?: Array<{
+    timestamp: number
+    category: string
+    message: string
+    data?: Record<string, any>
+  }>
 }
 
 export interface ErrorHandlerOptions {
@@ -173,6 +193,9 @@ export class GlobalErrorHandler {
    * エラーを処理する中核メソッド
    */
   handleError(errorInfo: ErrorInfo): void {
+    // エラーの前処理と拡張
+    const enhancedErrorInfo = this.enhanceErrorInfo(errorInfo)
+    
     // レート制限チェック
     if (!this.checkRateLimit()) {
       console.error('Error rate limit exceeded')
@@ -181,28 +204,46 @@ export class GlobalErrorHandler {
 
     this.errorCount++
 
+    // エラーフィンガープリントの生成
+    enhancedErrorInfo.fingerprint = this.generateFingerprint(enhancedErrorInfo)
+    
+    // 重複エラーのチェック
+    if (this.isDuplicateError(enhancedErrorInfo)) {
+      console.log('Duplicate error detected, skipping notification')
+      // ログには記録するが通知はスキップ
+      if (this.options.enableLogging) {
+        this.errorLogger.log(enhancedErrorInfo)
+      }
+      return
+    }
+
     // ログ記録
     if (this.options.enableLogging) {
-      this.errorLogger.log(errorInfo)
+      this.errorLogger.log(enhancedErrorInfo)
       if (this.options.logToConsole) {
-        console.error('Error caught:', errorInfo)
+        this.logStructuredError(enhancedErrorInfo)
       }
     }
 
     // エラー報告
     if (this.options.enableReporting && this.options.reportToServer) {
-      this.errorReporter.report(errorInfo)
+      this.errorReporter.report(enhancedErrorInfo)
     }
 
-    // リカバリー試行
+    // リカバリー試行（高度なリカバリーを使用）
     if (this.options.enableRecovery) {
-      this.errorRecovery.tryRecover(errorInfo)
+      this.errorRecovery.tryAdvancedRecover(enhancedErrorInfo).catch(error => {
+        console.error('[ErrorHandler] Recovery failed:', error)
+      })
     }
 
     // ユーザー通知
-    if (this.options.showUserNotification && errorInfo.severity !== 'low') {
-      this.notifyUser(errorInfo)
+    if (this.options.showUserNotification && enhancedErrorInfo.severity !== 'low') {
+      this.notifyUser(enhancedErrorInfo)
     }
+
+    // パフォーマンス監視
+    this.trackErrorPerformance(enhancedErrorInfo)
   }
 
   /**
@@ -212,30 +253,49 @@ export class GlobalErrorHandler {
     if (!error) return 'low'
 
     const message = error.message || error.toString()
+    const stack = error.stack || ''
     
-    // 致命的なエラーパターン
+    // 致命的なエラーパターン（システム停止レベル）
     if (
-      message.includes('Cannot read') ||
-      message.includes('Cannot access') ||
+      message.includes('Cannot read property') ||
+      message.includes('Cannot access before initialization') ||
       message.includes('is not defined') ||
-      message.includes('Maximum call stack')
+      message.includes('Maximum call stack') ||
+      message.includes('Out of memory') ||
+      message.includes('Script error') ||
+      message.includes('ChunkLoadError') ||
+      stack.includes('at Object.exports') ||
+      (error.name === 'TypeError' && message.includes('null'))
     ) {
       return 'critical'
     }
 
-    // 高優先度エラーパターン
+    // 高優先度エラーパターン（機能停止レベル）
     if (
-      message.includes('Network') ||
+      message.includes('Network error') ||
       message.includes('Failed to fetch') ||
-      message.includes('Promise rejection')
+      message.includes('Promise rejection') ||
+      message.includes('Timeout') ||
+      message.includes('CORS') ||
+      message.includes('401') ||
+      message.includes('403') ||
+      message.includes('500') ||
+      message.includes('Game state') ||
+      message.includes('Save failed') ||
+      error.name === 'SecurityError'
     ) {
       return 'high'
     }
 
-    // 中優先度エラーパターン
+    // 中優先度エラーパターン（体験劣化レベル）
     if (
       message.includes('Warning') ||
-      message.includes('Deprecated')
+      message.includes('Deprecated') ||
+      message.includes('Performance') ||
+      message.includes('Slow') ||
+      message.includes('404') ||
+      message.includes('Render') ||
+      message.includes('Animation')
     ) {
       return 'medium'
     }
@@ -322,10 +382,191 @@ export class GlobalErrorHandler {
   }
 
   /**
+   * エラー情報を拡張
+   */
+  private enhanceErrorInfo(errorInfo: ErrorInfo): ErrorInfo {
+    // コンテキスト情報の自動収集
+    const context = {
+      ...errorInfo.context,
+      route: window.location.pathname,
+      deviceInfo: {
+        isMobile: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent),
+        screenSize: `${window.screen.width}x${window.screen.height}`,
+        connection: (navigator as any).connection?.effectiveType || 'unknown'
+      }
+    }
+
+    // タグの自動生成
+    const tags = [
+      ...errorInfo.tags || [],
+      errorInfo.category,
+      errorInfo.severity,
+      context.deviceInfo.isMobile ? 'mobile' : 'desktop'
+    ]
+
+    // ブレッドクラムの追加（現在のアクション）
+    const breadcrumbs = [
+      ...errorInfo.breadcrumbs || [],
+      {
+        timestamp: Date.now(),
+        category: 'error',
+        message: 'Error captured by handler',
+        data: { component: errorInfo.component }
+      }
+    ]
+
+    return {
+      ...errorInfo,
+      context,
+      tags,
+      breadcrumbs
+    }
+  }
+
+  /**
+   * エラーフィンガープリントを生成
+   */
+  private generateFingerprint(errorInfo: ErrorInfo): string {
+    const key = [
+      errorInfo.message,
+      errorInfo.component || 'unknown',
+      errorInfo.category,
+      errorInfo.context?.route || 'unknown'
+    ].join('|')
+    
+    // 簡易ハッシュ関数
+    let hash = 0
+    for (let i = 0; i < key.length; i++) {
+      const char = key.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // 32bit整数に変換
+    }
+    return Math.abs(hash).toString(16)
+  }
+
+  /**
+   * 重複エラーのチェック
+   */
+  private duplicateErrors = new Map<string, number>()
+  private isDuplicateError(errorInfo: ErrorInfo): boolean {
+    if (!errorInfo.fingerprint) return false
+    
+    const now = Date.now()
+    const lastSeen = this.duplicateErrors.get(errorInfo.fingerprint) || 0
+    const timeDiff = now - lastSeen
+    
+    // 同じエラーが1分以内に発生した場合は重複とみなす
+    if (timeDiff < 60000) {
+      return true
+    }
+    
+    this.duplicateErrors.set(errorInfo.fingerprint, now)
+    return false
+  }
+
+  /**
+   * 構造化されたエラーログ出力
+   */
+  private logStructuredError(errorInfo: ErrorInfo): void {
+    const logData = {
+      message: errorInfo.message,
+      severity: errorInfo.severity,
+      category: errorInfo.category,
+      component: errorInfo.component,
+      fingerprint: errorInfo.fingerprint,
+      context: errorInfo.context,
+      tags: errorInfo.tags,
+      timestamp: new Date(errorInfo.timestamp).toISOString()
+    }
+
+    console.group(`🚨 [${errorInfo.severity.toUpperCase()}] ${errorInfo.category}`)
+    console.error('Message:', errorInfo.message)
+    console.log('Data:', logData)
+    if (errorInfo.stack) {
+      console.log('Stack:', errorInfo.stack)
+    }
+    console.groupEnd()
+  }
+
+  /**
+   * エラーパフォーマンスの追跡
+   */
+  private errorPerformanceHistory: Array<{ timestamp: number; severity: string }> = []
+  private trackErrorPerformance(errorInfo: ErrorInfo): void {
+    this.errorPerformanceHistory.push({
+      timestamp: Date.now(),
+      severity: errorInfo.severity
+    })
+
+    // 1時間以上前のデータを削除
+    const oneHourAgo = Date.now() - 3600000
+    this.errorPerformanceHistory = this.errorPerformanceHistory.filter(
+      entry => entry.timestamp > oneHourAgo
+    )
+
+    // アラート条件のチェック
+    const recentCriticalErrors = this.errorPerformanceHistory.filter(
+      entry => entry.severity === 'critical' && entry.timestamp > Date.now() - 300000 // 5分以内
+    ).length
+
+    if (recentCriticalErrors >= 3) {
+      this.triggerSystemAlert('Multiple critical errors detected')
+    }
+  }
+
+  /**
+   * システムアラートをトリガー
+   */
+  private triggerSystemAlert(message: string): void {
+    console.error(`🚀 SYSTEM ALERT: ${message}`)
+    
+    // カスタムイベントを発火
+    const event = new CustomEvent('app:system-alert', {
+      detail: { message, timestamp: Date.now() }
+    })
+    window.dispatchEvent(event)
+  }
+
+  /**
+   * ブレッドクラムを追加
+   */
+  addBreadcrumb(category: string, message: string, data?: Record<string, any>): void {
+    // 将来的にグローバルなブレッドクラム管理を実装予定
+    console.log(`[Breadcrumb] ${category}: ${message}`, data)
+  }
+
+  /**
+   * エラーハンドラーの健全性チェック
+   */
+  getHealthStatus() {
+    const recentErrors = this.errorTimestamps.filter(
+      ts => ts > Date.now() - 300000 // 5分以内
+    ).length
+
+    const criticalErrorsRecent = this.errorPerformanceHistory.filter(
+      entry => entry.severity === 'critical' && entry.timestamp > Date.now() - 300000
+    ).length
+
+    return {
+      isHealthy: recentErrors < this.options.maxErrorsPerMinute / 2 && criticalErrorsRecent === 0,
+      recentErrorCount: recentErrors,
+      criticalErrorCount: criticalErrorsRecent,
+      totalErrors: this.errorCount,
+      rateLimit: {
+        current: this.errorTimestamps.length,
+        max: this.options.maxErrorsPerMinute
+      }
+    }
+  }
+
+  /**
    * クリーンアップ
    */
   destroy(): void {
     window.onerror = null
+    window.removeEventListener('unhandledrejection', () => {})
+    this.duplicateErrors.clear()
+    this.errorPerformanceHistory = []
     this.reset()
     this.isInitialized = false
   }

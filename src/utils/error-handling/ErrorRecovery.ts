@@ -7,10 +7,15 @@ import type { ErrorInfo } from './ErrorHandler'
 
 export interface RecoveryStrategy {
   name: string
+  description: string
   condition: (error: ErrorInfo) => boolean
-  recover: () => Promise<boolean>
+  recover: (error: ErrorInfo) => Promise<boolean>
   maxRetries?: number
   retryDelay?: number
+  priority?: number // 高いほど優先
+  prerequisites?: string[] // 前提条件となる戦略
+  rollback?: () => Promise<void> // 失敗時のロールバック
+  healthCheck?: () => Promise<boolean> // 復旧後の健全性チェック
 }
 
 export interface RecoveryResult {
@@ -30,8 +35,25 @@ export class ErrorRecovery {
   }> = []
   private maxHistorySize = 100
 
+  private gameStateBackup: any = null
+  private performanceBaseline: { memory: number; timing: number } | null = null
+  
   constructor() {
     this.registerDefaultStrategies()
+    this.initializePerformanceBaseline()
+  }
+
+  /**
+   * パフォーマンスベースラインを初期化
+   */
+  private initializePerformanceBaseline(): void {
+    try {
+      const memory = (performance as any).memory?.usedJSHeapSize || 0
+      const timing = performance.now()
+      this.performanceBaseline = { memory, timing }
+    } catch (error) {
+      console.warn('[Recovery] Failed to initialize performance baseline:', error)
+    }
   }
 
   /**
@@ -41,74 +63,107 @@ export class ErrorRecovery {
     // ネットワークエラーのリカバリー
     this.registerStrategy({
       name: 'network-retry',
+      description: 'ネットワーク接続の再試行と復旧',
       condition: (error) => 
         error.category === 'network' || 
         error.message.includes('Failed to fetch') ||
         error.message.includes('Network'),
-      recover: async () => {
+      recover: async (error) => {
         console.log('[Recovery] Attempting network recovery...')
         
-        // オフライン状態をチェック
-        if (!navigator.onLine) {
-          // オンラインになるまで待機
-          await this.waitForOnline()
+        // ネットワーク状態の診斧
+        const networkStatus = await this.diagnoseNetworkStatus()
+        
+        if (networkStatus.isOffline) {
+          await this.waitForOnline(30000) // 30秒タイムアウト
         }
         
-        // ページのリロード（最終手段）
-        if (this.getRecoveryAttempts('network-retry') >= 3) {
-          console.log('[Recovery] Reloading page due to persistent network issues')
-          location.reload()
-          return true
+        // DNSキャッシュのクリアを試みる
+        await this.clearDNSCache()
+        
+        // 持続的な問題の場合はオフラインモードに切り替え
+        if (this.getRecoveryAttempts('network-retry') >= 2) {
+          return await this.enableOfflineMode()
         }
         
-        return true
+        return networkStatus.isOnline
       },
       maxRetries: 3,
-      retryDelay: 1000
+      retryDelay: 2000,
+      priority: 8,
+      healthCheck: () => this.checkNetworkHealth()
     })
 
     // メモリ不足エラーのリカバリー
     this.registerStrategy({
       name: 'memory-cleanup',
+      description: 'メモリの最適化とクリーンアップ',
       condition: (error) => 
         error.message.includes('out of memory') ||
-        error.message.includes('Maximum call stack'),
-      recover: async () => {
+        error.message.includes('Maximum call stack') ||
+        error.category === 'performance',
+      recover: async (error) => {
         console.log('[Recovery] Attempting memory cleanup...')
         
-        // ガベージコレクションの強制実行を試みる
-        if ('gc' in window) {
-          (window as any).gc()
-        }
+        const initialMemory = this.getCurrentMemoryUsage()
         
-        // 不要なイベントリスナーをクリーンアップ
-        this.cleanupEventListeners()
+        // 段階的なメモリクリーンアップを実行
+        await this.performMemoryCleanup()
         
-        // キャッシュをクリア
-        this.clearCaches()
+        const finalMemory = this.getCurrentMemoryUsage()
+        const memoryReduced = initialMemory - finalMemory
         
-        return true
+        console.log(`[Recovery] Memory cleanup completed. Reduced: ${memoryReduced / 1024 / 1024:.1f}MB`)
+        
+        // 十分なメモリが解放されたかチェック
+        return memoryReduced > 10 * 1024 * 1024 // 10MB以上で成功
       },
-      maxRetries: 1
+      maxRetries: 2,
+      retryDelay: 1000,
+      priority: 7,
+      healthCheck: () => this.checkMemoryHealth()
     })
 
     // Vueコンポーネントエラーのリカバリー
     this.registerStrategy({
       name: 'vue-component-remount',
+      description: 'Vueコンポーネントの再マウントと状態復旧',
       condition: (error) => error.category === 'vue',
-      recover: async () => {
+      recover: async (error) => {
         console.log('[Recovery] Attempting Vue component recovery...')
         
-        // コンポーネントの再マウントを試みる
-        const event = new CustomEvent('app:remount-component', {
-          detail: { component: error.component }
+        // コンポーネント固有のリカバリーを試みる
+        const componentName = error.component || 'unknown'
+        
+        // コンポーネントの状態をバックアップ
+        await this.backupComponentState(componentName)
+        
+        // コンポーネントの再マウント
+        const remountEvent = new CustomEvent('app:remount-component', {
+          detail: { 
+            component: componentName,
+            preserveState: true,
+            errorId: error.fingerprint
+          }
         })
-        window.dispatchEvent(event)
+        window.dispatchEvent(remountEvent)
+        
+        // 再マウントの完了を待つ
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // 状態を復元
+        await this.restoreComponentState(componentName)
         
         return true
       },
       maxRetries: 2,
-      retryDelay: 500
+      retryDelay: 1000,
+      priority: 6,
+      rollback: async () => {
+        // 復旧に失敗した場合はページをリロード
+        console.log('[Recovery] Vue recovery failed, reloading page')
+        location.reload()
+      }
     })
 
     // ローカルストレージエラーのリカバリー
@@ -128,22 +183,97 @@ export class ErrorRecovery {
       maxRetries: 1
     })
 
+    // ゲーム状態のリカバリー
+    this.registerStrategy({
+      name: 'game-state-recovery',
+      description: 'ゲーム状態のバックアップからの復旧',
+      condition: (error) => 
+        error.category === 'game' ||
+        error.message.includes('game') ||
+        error.message.includes('state'),
+      recover: async (error) => {
+        console.log('[Recovery] Attempting game state recovery...')
+        
+        // ゲーム状態のバックアップから復旧
+        const recovered = await this.restoreGameState()
+        
+        if (recovered) {
+          // ゲームの再初期化をトリガー
+          const reinitEvent = new CustomEvent('app:reinitialize-game', {
+            detail: { reason: 'error-recovery', errorId: error.fingerprint }
+          })
+          window.dispatchEvent(reinitEvent)
+          
+          return true
+        }
+        
+        return false
+      },
+      maxRetries: 1,
+      priority: 9,
+      prerequisites: ['memory-cleanup'],
+      rollback: async () => {
+        // ゲーム状態の復旧に失敗した場合は新しいゲームを始める
+        const newGameEvent = new CustomEvent('app:start-new-game', {
+          detail: { reason: 'recovery-failed' }
+        })
+        window.dispatchEvent(newGameEvent)
+      }
+    })
+
     // 非同期エラーのリカバリー
     this.registerStrategy({
       name: 'async-retry',
+      description: '非同期処理の再試行',
       condition: (error) => 
         error.category === 'async' &&
         !error.message.includes('Network'),
-      recover: async () => {
+      recover: async (error) => {
         console.log('[Recovery] Attempting async operation retry...')
         
-        // 少し待ってから再試行
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // 指数バックオフで再試行
+        const attempt = this.getRecoveryAttempts('async-retry')
+        const delay = Math.min(1000 * Math.pow(2, attempt), 10000)
+        
+        await new Promise(resolve => setTimeout(resolve, delay))
+        
+        // アプリケーションに再試行を通知
+        const retryEvent = new CustomEvent('app:retry-async-operation', {
+          detail: { 
+            originalError: error,
+            attempt: attempt + 1
+          }
+        })
+        window.dispatchEvent(retryEvent)
         
         return true
       },
-      maxRetries: 2,
-      retryDelay: 1000
+      maxRetries: 3,
+      retryDelay: 1000,
+      priority: 4
+    })
+
+    // セキュリティエラーのリカバリー
+    this.registerStrategy({
+      name: 'security-fallback',
+      description: 'セキュリティ制限を回避するフォールバック',
+      condition: (error) => 
+        error.category === 'security' ||
+        error.message.includes('CORS') ||
+        error.message.includes('blocked'),
+      recover: async (error) => {
+        console.log('[Recovery] Attempting security fallback...')
+        
+        // 安全なフォールバックモードに切り替え
+        const fallbackEvent = new CustomEvent('app:enable-security-fallback', {
+          detail: { reason: error.message }
+        })
+        window.dispatchEvent(fallbackEvent)
+        
+        return true
+      },
+      maxRetries: 1,
+      priority: 5
     })
   }
 
@@ -151,7 +281,15 @@ export class ErrorRecovery {
    * リカバリー戦略を登録
    */
   registerStrategy(strategy: RecoveryStrategy): void {
-    this.strategies.push(strategy)
+    // プライオリティによるソートで挿入
+    const priority = strategy.priority || 0
+    const insertIndex = this.strategies.findIndex(s => (s.priority || 0) < priority)
+    
+    if (insertIndex === -1) {
+      this.strategies.push(strategy)
+    } else {
+      this.strategies.splice(insertIndex, 0, strategy)
+    }
   }
 
   /**
@@ -387,10 +525,382 @@ export class ErrorRecovery {
   }
 
   /**
+   * ネットワーク状態の診断
+   */
+  private async diagnoseNetworkStatus(): Promise<{
+    isOnline: boolean
+    isOffline: boolean
+    latency?: number
+    bandwidth?: string
+  }> {
+    const isOnline = navigator.onLine
+    
+    if (!isOnline) {
+      return { isOnline: false, isOffline: true }
+    }
+    
+    try {
+      // 軽量な接続テスト
+      const startTime = performance.now()
+      const response = await fetch('/favicon.ico', { 
+        method: 'HEAD',
+        cache: 'no-cache'
+      })
+      const latency = performance.now() - startTime
+      
+      const connection = (navigator as any).connection
+      const bandwidth = connection?.effectiveType || 'unknown'
+      
+      return {
+        isOnline: response.ok,
+        isOffline: !response.ok,
+        latency,
+        bandwidth
+      }
+    } catch (error) {
+      return { isOnline: false, isOffline: true }
+    }
+  }
+
+  /**
+   * DNSキャッシュのクリア
+   */
+  private async clearDNSCache(): Promise<void> {
+    // ブラウザでできる範囲でDNSキャッシュをクリア
+    try {
+      // Service Workerにキャッシュクリアを依頼
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CLEAR_DNS_CACHE'
+        })
+      }
+    } catch (error) {
+      console.warn('[Recovery] Could not clear DNS cache:', error)
+    }
+  }
+
+  /**
+   * オフラインモードの有効化
+   */
+  private async enableOfflineMode(): Promise<boolean> {
+    try {
+      const offlineEvent = new CustomEvent('app:enable-offline-mode', {
+        detail: { reason: 'network-recovery-failed' }
+      })
+      window.dispatchEvent(offlineEvent)
+      return true
+    } catch (error) {
+      console.error('[Recovery] Failed to enable offline mode:', error)
+      return false
+    }
+  }
+
+  /**
+   * ネットワーク健全性チェック
+   */
+  private async checkNetworkHealth(): Promise<boolean> {
+    try {
+      const response = await fetch('/api/health', { 
+        method: 'GET',
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(5000)
+      })
+      return response.ok
+    } catch {
+      return navigator.onLine
+    }
+  }
+
+  /**
+   * 現在のメモリ使用量を取得
+   */
+  private getCurrentMemoryUsage(): number {
+    try {
+      return (performance as any).memory?.usedJSHeapSize || 0
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * 段階的なメモリクリーンアップを実行
+   */
+  private async performMemoryCleanup(): Promise<void> {
+    // 段階1: 軽量なクリーンアップ
+    this.clearCaches()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // 段階2: イベントリスナーのクリーンアップ
+    this.cleanupEventListeners()
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // 段階3: DOM要素の削除
+    await this.cleanupDOMElements()
+    
+    // 段階4: 強制ガベージコレクション
+    if ('gc' in window) {
+      (window as any).gc()
+    }
+    
+    // 段階5: メモリリークの検出と修正
+    await this.detectAndFixMemoryLeaks()
+  }
+
+  /**
+   * DOM要素のクリーンアップ
+   */
+  private async cleanupDOMElements(): Promise<void> {
+    // 非表示の要素や不要な要素を削除
+    const hiddenElements = document.querySelectorAll('[style*="display: none"]')
+    hiddenElements.forEach(el => {
+      if (el.parentNode && !el.hasAttribute('data-keep')) {
+        el.parentNode.removeChild(el)
+      }
+    })
+    
+    // 古いログ要素を削除
+    const logElements = document.querySelectorAll('[data-log-entry]')
+    if (logElements.length > 100) {
+      const toRemove = Array.from(logElements).slice(0, logElements.length - 50)
+      toRemove.forEach(el => el.remove())
+    }
+  }
+
+  /**
+   * メモリリークの検出と修正
+   */
+  private async detectAndFixMemoryLeaks(): Promise<void> {
+    // 循環参照の検出と修正（簡易版）
+    const memoryLeakEvent = new CustomEvent('app:detect-memory-leaks')
+    window.dispatchEvent(memoryLeakEvent)
+    
+    // タイマーの整理
+    this.cleanupOrphanedTimers()
+  }
+
+  /**
+   * 孤立したタイマーのクリーンアップ
+   */
+  private cleanupOrphanedTimers(): void {
+    // この実装は限定的ですが、アプリケーションに通知を送ることで
+    // 各コンポーネントが自身のタイマーをクリーンアップできます
+    const timerCleanupEvent = new CustomEvent('app:cleanup-timers')
+    window.dispatchEvent(timerCleanupEvent)
+  }
+
+  /**
+   * メモリ健全性チェック
+   */
+  private async checkMemoryHealth(): Promise<boolean> {
+    const currentMemory = this.getCurrentMemoryUsage()
+    if (!this.performanceBaseline || currentMemory === 0) {
+      return true // 測定できない場合は健全とみなす
+    }
+    
+    const memoryIncrease = currentMemory - this.performanceBaseline.memory
+    const criticalThreshold = 100 * 1024 * 1024 // 100MB
+    
+    return memoryIncrease < criticalThreshold
+  }
+
+  /**
+   * コンポーネント状態のバックアップ
+   */
+  private async backupComponentState(componentName: string): Promise<void> {
+    const backupEvent = new CustomEvent('app:backup-component-state', {
+      detail: { component: componentName }
+    })
+    window.dispatchEvent(backupEvent)
+  }
+
+  /**
+   * コンポーネント状態の復元
+   */
+  private async restoreComponentState(componentName: string): Promise<void> {
+    const restoreEvent = new CustomEvent('app:restore-component-state', {
+      detail: { component: componentName }
+    })
+    window.dispatchEvent(restoreEvent)
+  }
+
+  /**
+   * ゲーム状態の復旧
+   */
+  private async restoreGameState(): Promise<boolean> {
+    try {
+      // ローカルストレージからの復旧を試みる
+      const savedState = localStorage.getItem('game_state_backup')
+      if (savedState) {
+        const gameState = JSON.parse(savedState)
+        
+        const restoreEvent = new CustomEvent('app:restore-game-state', {
+          detail: { state: gameState, source: 'backup' }
+        })
+        window.dispatchEvent(restoreEvent)
+        
+        return true
+      }
+      
+      // 自動保存からの復旧を試みる
+      const autoSave = localStorage.getItem('game_autosave')
+      if (autoSave) {
+        const gameState = JSON.parse(autoSave)
+        
+        const restoreEvent = new CustomEvent('app:restore-game-state', {
+          detail: { state: gameState, source: 'autosave' }
+        })
+        window.dispatchEvent(restoreEvent)
+        
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      console.error('[Recovery] Failed to restore game state:', error)
+      return false
+    }
+  }
+
+  /**
+   * 前提条件の戦略をチェック
+   */
+  private async checkPrerequisites(strategy: RecoveryStrategy): Promise<boolean> {
+    if (!strategy.prerequisites || strategy.prerequisites.length === 0) {
+      return true
+    }
+    
+    for (const prerequisite of strategy.prerequisites) {
+      const prerequisiteStrategy = this.strategies.find(s => s.name === prerequisite)
+      if (!prerequisiteStrategy) {
+        continue
+      }
+      
+      // 前提条件の戦略を実行
+      try {
+        const result = await prerequisiteStrategy.recover(
+          {} as ErrorInfo // ダミーのエラー情報
+        )
+        if (!result) {
+          console.log(`[Recovery] Prerequisite ${prerequisite} failed`)
+          return false
+        }
+      } catch (error) {
+        console.error(`[Recovery] Prerequisite ${prerequisite} threw error:`, error)
+        return false
+      }
+    }
+    
+    return true
+  }
+
+  /**
+   * 高度なリカバリー実行（前提条件とヘルスチェック付き）
+   */
+  async tryAdvancedRecover(errorInfo: ErrorInfo): Promise<RecoveryResult> {
+    console.log('[Recovery] Starting advanced recovery for error:', errorInfo.message)
+    
+    // 優先度順にソートされた戦略を取得
+    const sortedStrategies = [...this.strategies].sort((a, b) => 
+      (b.priority || 0) - (a.priority || 0)
+    )
+    
+    for (const strategy of sortedStrategies) {
+      if (strategy.condition(errorInfo)) {
+        const attempts = this.getRecoveryAttempts(strategy.name)
+        const maxRetries = strategy.maxRetries || 1
+        
+        if (attempts >= maxRetries) {
+          console.log(`[Recovery] Max retries reached for strategy: ${strategy.name}`)
+          continue
+        }
+        
+        // 前提条件をチェック
+        const prerequisitesMet = await this.checkPrerequisites(strategy)
+        if (!prerequisitesMet) {
+          console.log(`[Recovery] Prerequisites not met for strategy: ${strategy.name}`)
+          continue
+        }
+        
+        try {
+          // リトライ遅延
+          if (attempts > 0 && strategy.retryDelay) {
+            await new Promise(resolve => setTimeout(resolve, strategy.retryDelay))
+          }
+          
+          // リカバリー実行
+          this.incrementRecoveryAttempts(strategy.name)
+          const success = await strategy.recover(errorInfo)
+          
+          // ヘルスチェック
+          let healthCheckPassed = true
+          if (success && strategy.healthCheck) {
+            healthCheckPassed = await strategy.healthCheck()
+            if (!healthCheckPassed) {
+              console.log(`[Recovery] Health check failed for strategy: ${strategy.name}`)
+            }
+          }
+          
+          const result: RecoveryResult = {
+            success: success && healthCheckPassed,
+            strategyUsed: strategy.name,
+            attemptsCount: attempts + 1
+          }
+          
+          // 履歴に記録
+          this.addToHistory(errorInfo, result)
+          
+          if (result.success) {
+            console.log(`[Recovery] Successfully recovered using strategy: ${strategy.name}`)
+            this.resetRecoveryAttempts(strategy.name)
+            return result
+          } else if (strategy.rollback) {
+            // ロールバック実行
+            console.log(`[Recovery] Rolling back strategy: ${strategy.name}`)
+            await strategy.rollback()
+          }
+          
+          return result
+        } catch (error) {
+          console.error(`[Recovery] Strategy ${strategy.name} failed:`, error)
+          
+          if (strategy.rollback) {
+            try {
+              await strategy.rollback()
+            } catch (rollbackError) {
+              console.error(`[Recovery] Rollback failed for ${strategy.name}:`, rollbackError)
+            }
+          }
+          
+          const result: RecoveryResult = {
+            success: false,
+            strategyUsed: strategy.name,
+            attemptsCount: attempts + 1,
+            error: error as Error
+          }
+          
+          this.addToHistory(errorInfo, result)
+          return result
+        }
+      }
+    }
+    
+    // 適用可能な戦略がない
+    const result: RecoveryResult = {
+      success: false,
+      attemptsCount: 0
+    }
+    
+    this.addToHistory(errorInfo, result)
+    return result
+  }
+
+  /**
    * クリーンアップ
    */
   clear(): void {
     this.recoveryAttempts.clear()
     this.recoveryHistory = []
+    this.gameStateBackup = null
+    this.performanceBaseline = null
   }
 }

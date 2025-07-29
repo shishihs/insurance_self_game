@@ -10,6 +10,14 @@ export interface LogEntry {
   timestamp: number
   errorInfo: ErrorInfo
   context?: Record<string, any>
+  sessionId?: string
+  userId?: string
+  buildVersion?: string
+  source: 'user' | 'system' | 'auto' // ログの発生源
+  correlationId?: string // 関連するエラーの結びつけ
+  resolved?: boolean // 解決済みかどうか
+  resolvedBy?: string // 解決方法
+  impact?: 'low' | 'medium' | 'high' | 'critical' // ビジネスインパクト
 }
 
 export interface WarningEntry {
@@ -27,23 +35,43 @@ export class ErrorLogger {
   private logRotationSize = 100
   private storageKey = 'game_error_logs'
   private warningStorageKey = 'game_warning_logs'
+  private analyticsBuffer: LogEntry[] = []
+  private realtimeListeners: Array<(entry: LogEntry) => void> = []
+  private sessionId: string
+  private userId?: string
+  private buildVersion: string
+  private isAnalyzing = false
 
   constructor() {
+    this.sessionId = this.generateSessionId()
+    this.buildVersion = import.meta.env.VITE_BUILD_VERSION || 'unknown'
     this.loadFromStorage()
+    this.startRealtimeAnalysis()
   }
 
   /**
    * エラーをログに記録
    */
-  log(errorInfo: ErrorInfo, context?: Record<string, any>): void {
+  log(errorInfo: ErrorInfo, context?: Record<string, any>, source: LogEntry['source'] = 'auto'): void {
     const entry: LogEntry = {
       id: this.generateId(),
       timestamp: Date.now(),
       errorInfo,
-      context
+      context,
+      sessionId: this.sessionId,
+      userId: this.userId,
+      buildVersion: this.buildVersion,
+      source,
+      correlationId: this.generateCorrelationId(errorInfo),
+      resolved: false,
+      impact: this.calculateBusinessImpact(errorInfo)
     }
 
     this.logs.push(entry)
+    this.analyticsBuffer.push(entry)
+    
+    // リアルタイムリスナーに通知
+    this.notifyRealtimeListeners(entry)
     
     // ログのローテーション
     if (this.logs.length > this.maxLogs) {
@@ -55,13 +83,11 @@ export class ErrorLogger {
 
     // 開発環境では詳細をコンソールに出力
     if (import.meta.env.DEV) {
-      console.group(`🚨 Error Log [${entry.id}]`)
-      console.error('Error Info:', errorInfo)
-      if (context) {
-        console.log('Context:', context)
-      }
-      console.groupEnd()
+      this.logToConsole(entry)
     }
+    
+    // アラート条件のチェック
+    this.checkAlertConditions(entry)
   }
 
   /**
@@ -297,6 +323,426 @@ export class ErrorLogger {
         }
       }
     }
+  }
+
+  /**
+   * セッションIDを生成
+   */
+  private generateSessionId(): string {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+
+  /**
+   * 相関IDを生成
+   */
+  private generateCorrelationId(errorInfo: ErrorInfo): string {
+    // 同じ種類のエラーには同じ相関IDを付与
+    const key = `${errorInfo.category}_${errorInfo.component || 'unknown'}_${errorInfo.message.split(' ')[0]}`
+    let hash = 0
+    for (let i = 0; i < key.length; i++) {
+      const char = key.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // 32bit整数に変換
+    }
+    return `corr_${Math.abs(hash).toString(16)}`
+  }
+
+  /**
+   * ビジネスインパクトを計算
+   */
+  private calculateBusinessImpact(errorInfo: ErrorInfo): LogEntry['impact'] {
+    // ゲーム関連のエラーは高インパクト
+    if (errorInfo.category === 'game' && errorInfo.severity === 'critical') {
+      return 'critical'
+    }
+    
+    // セキュリティエラーは高インパクト
+    if (errorInfo.category === 'security') {
+      return 'high'
+    }
+    
+    // ネットワークエラーは中インパクト
+    if (errorInfo.category === 'network') {
+      return 'medium'
+    }
+    
+    // その他は深刻度に基づく
+    switch (errorInfo.severity) {
+      case 'critical': return 'critical'
+      case 'high': return 'high'
+      case 'medium': return 'medium'
+      case 'low': return 'low'
+    }
+  }
+
+  /**
+   * リアルタイムリスナーに通知
+   */
+  private notifyRealtimeListeners(entry: LogEntry): void {
+    this.realtimeListeners.forEach(listener => {
+      try {
+        listener(entry)
+      } catch (error) {
+        console.warn('[ErrorLogger] Realtime listener failed:', error)
+      }
+    })
+  }
+
+  /**
+   * コンソールログ出力
+   */
+  private logToConsole(entry: LogEntry): void {
+    const impactIcon = {
+      low: '🟢',
+      medium: '🟡',
+      high: '🟠',
+      critical: '🔴'
+    }[entry.impact || 'low']
+
+    console.group(`🚨 Error Log [${entry.id}] ${impactIcon}`)
+    console.error('Error Info:', entry.errorInfo)
+    console.log('Impact:', entry.impact)
+    console.log('Source:', entry.source)
+    if (entry.correlationId) {
+      console.log('Correlation ID:', entry.correlationId)
+    }
+    if (entry.context) {
+      console.log('Context:', entry.context)
+    }
+    console.groupEnd()
+  }
+
+  /**
+   * アラート条件をチェック
+   */
+  private checkAlertConditions(entry: LogEntry): void {
+    // 過去5分間のクリティカルエラー数をチェック
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
+    const recentCriticalErrors = this.logs.filter(log => 
+      log.timestamp > fiveMinutesAgo && 
+      log.errorInfo.severity === 'critical'
+    ).length
+
+    if (recentCriticalErrors >= 3) {
+      this.triggerAlert('critical-error-spike', {
+        count: recentCriticalErrors,
+        timespan: '5 minutes',
+        latestError: entry
+      })
+    }
+
+    // 同じ相関IDのエラーが連続している場合
+    if (entry.correlationId) {
+      const sameCorrelationErrors = this.logs.filter(log => 
+        log.correlationId === entry.correlationId &&
+        log.timestamp > Date.now() - 2 * 60 * 1000 // 2分以内
+      ).length
+
+      if (sameCorrelationErrors >= 5) {
+        this.triggerAlert('repeated-error', {
+          correlationId: entry.correlationId,
+          count: sameCorrelationErrors,
+          errorType: entry.errorInfo.message
+        })
+      }
+    }
+  }
+
+  /**
+   * アラートをトリガー
+   */
+  private triggerAlert(type: string, data: any): void {
+    const alertEvent = new CustomEvent('app:error-alert', {
+      detail: { type, data, timestamp: Date.now() }
+    })
+    window.dispatchEvent(alertEvent)
+  }
+
+  /**
+   * リアルタイム分析を開始
+   */
+  private startRealtimeAnalysis(): void {
+    // 30秒ごとに分析バッファを処理
+    setInterval(() => {
+      if (!this.isAnalyzing && this.analyticsBuffer.length > 0) {
+        this.performRealtimeAnalysis()
+      }
+    }, 30000)
+  }
+
+  /**
+   * リアルタイム分析を実行
+   */
+  private async performRealtimeAnalysis(): Promise<void> {
+    if (this.analyticsBuffer.length === 0) return
+    
+    this.isAnalyzing = true
+    
+    try {
+      const buffer = [...this.analyticsBuffer]
+      this.analyticsBuffer = []
+      
+      // パターン分析
+      const patterns = this.analyzeErrorPatterns(buffer)
+      
+      // トレンド分析
+      const trends = this.analyzeTrends(buffer)
+      
+      // 異常検知
+      const anomalies = this.detectAnomalies(buffer)
+      
+      // 分析結果をイベントとして発火
+      const analysisEvent = new CustomEvent('app:error-analysis', {
+        detail: {
+          patterns,
+          trends,
+          anomalies,
+          timestamp: Date.now(),
+          sampleSize: buffer.length
+        }
+      })
+      window.dispatchEvent(analysisEvent)
+      
+    } catch (error) {
+      console.error('[ErrorLogger] Realtime analysis failed:', error)
+    } finally {
+      this.isAnalyzing = false
+    }
+  }
+
+  /**
+   * エラーパターンを分析
+   */
+  private analyzeErrorPatterns(logs: LogEntry[]): any {
+    const patterns = {
+      byCategory: new Map<string, number>(),
+      byComponent: new Map<string, number>(),
+      byCorrelation: new Map<string, number>(),
+      topErrors: [] as Array<{ message: string; count: number; severity: string }>
+    }
+    
+    const messageCount = new Map<string, { count: number; severity: string }>()
+    
+    logs.forEach(log => {
+      // カテゴリ別集計
+      const category = log.errorInfo.category
+      patterns.byCategory.set(category, (patterns.byCategory.get(category) || 0) + 1)
+      
+      // コンポーネント別集計
+      const component = log.errorInfo.component || 'unknown'
+      patterns.byComponent.set(component, (patterns.byComponent.get(component) || 0) + 1)
+      
+      // 相関ID別集計
+      if (log.correlationId) {
+        patterns.byCorrelation.set(log.correlationId, (patterns.byCorrelation.get(log.correlationId) || 0) + 1)
+      }
+      
+      // メッセージ別集計
+      const message = log.errorInfo.message
+      const existing = messageCount.get(message) || { count: 0, severity: log.errorInfo.severity }
+      messageCount.set(message, { count: existing.count + 1, severity: log.errorInfo.severity })
+    })
+    
+    // トップエラーを抽出
+    patterns.topErrors = Array.from(messageCount.entries())
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5)
+      .map(([message, data]) => ({
+        message,
+        count: data.count,
+        severity: data.severity
+      }))
+    
+    return patterns
+  }
+
+  /**
+   * トレンド分析
+   */
+  private analyzeTrends(logs: LogEntry[]): any {
+    if (logs.length < 2) return null
+    
+    const timeSlots = new Map<string, number>()
+    const slotSize = 5 * 60 * 1000 // 5分スロット
+    
+    logs.forEach(log => {
+      const slot = Math.floor(log.timestamp / slotSize) * slotSize
+      const slotKey = new Date(slot).toISOString()
+      timeSlots.set(slotKey, (timeSlots.get(slotKey) || 0) + 1)
+    })
+    
+    const sortedSlots = Array.from(timeSlots.entries()).sort((a, b) => 
+      new Date(a[0]).getTime() - new Date(b[0]).getTime()
+    )
+    
+    if (sortedSlots.length < 2) return null
+    
+    // 傾向を計算
+    const values = sortedSlots.map(([, count]) => count)
+    const trend = this.calculateTrend(values)
+    
+    return {
+      timeSlots: sortedSlots,
+      trend: trend > 0 ? 'increasing' : trend < 0 ? 'decreasing' : 'stable',
+      trendValue: trend
+    }
+  }
+
+  /**
+   * 傾向計算（線形回帰の簡易版）
+   */
+  private calculateTrend(values: number[]): number {
+    const n = values.length
+    const sumX = (n * (n - 1)) / 2
+    const sumY = values.reduce((a, b) => a + b, 0)
+    const sumXY = values.reduce((sum, y, x) => sum + x * y, 0)
+    const sumXX = values.reduce((sum, _, x) => sum + x * x, 0)
+    
+    return (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX)
+  }
+
+  /**
+   * 異常検知
+   */
+  private detectAnomalies(logs: LogEntry[]): any {
+    const anomalies = []
+    
+    // エラー頻度の異常
+    if (logs.length > 10) { // 30秒で10個以上のエラー
+      anomalies.push({
+        type: 'high_frequency',
+        description: 'Unusually high error frequency detected',
+        count: logs.length,
+        severity: 'high'
+      })
+    }
+    
+    // 新しいエラータイプの検出
+    const recentMessages = new Set(logs.map(log => log.errorInfo.message))
+    const historicalMessages = new Set(
+      this.logs.slice(0, -logs.length).map(log => log.errorInfo.message)
+    )
+    
+    const newMessages = Array.from(recentMessages).filter(msg => !historicalMessages.has(msg))
+    if (newMessages.length > 0) {
+      anomalies.push({
+        type: 'new_error_types',
+        description: 'New error types detected',
+        newErrors: newMessages,
+        severity: 'medium'
+      })
+    }
+    
+    return anomalies
+  }
+
+  /**
+   * リアルタイムリスナーを追加
+   */
+  addRealtimeListener(listener: (entry: LogEntry) => void): () => void {
+    this.realtimeListeners.push(listener)
+    
+    // リスナーを削除する関数を返す
+    return () => {
+      const index = this.realtimeListeners.indexOf(listener)
+      if (index !== -1) {
+        this.realtimeListeners.splice(index, 1)
+      }
+    }
+  }
+
+  /**
+   * エラーを解決済みとしてマーク
+   */
+  markAsResolved(errorId: string, resolvedBy: string): boolean {
+    const entry = this.logs.find(log => log.id === errorId)
+    if (entry) {
+      entry.resolved = true
+      entry.resolvedBy = resolvedBy
+      this.saveToStorage()
+      return true
+    }
+    return false
+  }
+
+  /**
+   * 相関IDで関連エラーを取得
+   */
+  getRelatedErrors(correlationId: string): LogEntry[] {
+    return this.logs.filter(log => log.correlationId === correlationId)
+  }
+
+  /**
+   * ユーザーIDを設定
+   */
+  setUserId(userId: string): void {
+    this.userId = userId
+  }
+
+  /**
+   * 高度な統計を取得
+   */
+  getAdvancedStatistics(timeRange?: { start: number; end: number }) {
+    const logs = timeRange 
+      ? this.getLogs({ startTime: timeRange.start, endTime: timeRange.end })
+      : this.logs
+
+    const baseStats = this.getStatistics(timeRange)
+    
+    // MTTR (Mean Time To Resolution) の計算
+    const resolvedErrors = logs.filter(log => log.resolved)
+    const mttr = resolvedErrors.length > 0
+      ? resolvedErrors.reduce((sum, log) => {
+          // 解決時刻は記録されていないので、簡易的に次のエラーまでの時間を使用
+          return sum + (60 * 1000) // 仮の値: 1分
+        }, 0) / resolvedErrors.length
+      : 0
+
+    // インパクト別統計
+    const impactStats = {
+      low: logs.filter(log => log.impact === 'low').length,
+      medium: logs.filter(log => log.impact === 'medium').length,
+      high: logs.filter(log => log.impact === 'high').length,
+      critical: logs.filter(log => log.impact === 'critical').length
+    }
+
+    // ソース別統計
+    const sourceStats = {
+      user: logs.filter(log => log.source === 'user').length,
+      system: logs.filter(log => log.source === 'system').length,
+      auto: logs.filter(log => log.source === 'auto').length
+    }
+
+    return {
+      ...baseStats,
+      mttr,
+      impactStats,
+      sourceStats,
+      resolutionRate: logs.length > 0 ? resolvedErrors.length / logs.length : 0,
+      correlationGroups: this.getCorrelationGroups(logs)
+    }
+  }
+
+  /**
+   * 相関グループを取得
+   */
+  private getCorrelationGroups(logs: LogEntry[]): Array<{ id: string; count: number; resolved: number }> {
+    const groups = new Map<string, { count: number; resolved: number }>()
+    
+    logs.forEach(log => {
+      if (log.correlationId) {
+        const existing = groups.get(log.correlationId) || { count: 0, resolved: 0 }
+        existing.count++
+        if (log.resolved) {
+          existing.resolved++
+        }
+        groups.set(log.correlationId, existing)
+      }
+    })
+    
+    return Array.from(groups.entries())
+      .map(([id, stats]) => ({ id, ...stats }))
+      .sort((a, b) => b.count - a.count)
   }
 
   /**
