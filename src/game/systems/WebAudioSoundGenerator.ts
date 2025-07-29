@@ -6,7 +6,7 @@ export class WebAudioSoundGenerator {
   private audioContext: AudioContext
   
   constructor() {
-    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    this.audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)()
   }
   
   /**
@@ -319,6 +319,240 @@ export class WebAudioSoundGenerator {
     if (this.audioContext.state === 'suspended') {
       await this.audioContext.resume()
     }
+  }
+  
+  /**
+   * 保険カード獲得音
+   */
+  playInsuranceGet(): void {
+    const time = this.audioContext.currentTime
+    
+    // コインを拾うような明るい音
+    const notes = [659.25, 783.99, 1046.50] // E5, G5, C6
+    
+    notes.forEach((freq, index) => {
+      const osc = this.audioContext.createOscillator()
+      const gain = this.audioContext.createGain()
+      
+      osc.connect(gain)
+      gain.connect(this.audioContext.destination)
+      
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, time + index * 0.03)
+      
+      gain.gain.setValueAtTime(0, time + index * 0.03)
+      gain.gain.linearRampToValueAtTime(0.2, time + index * 0.03 + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.01, time + index * 0.03 + 0.15)
+      
+      osc.start(time + index * 0.03)
+      osc.stop(time + index * 0.03 + 0.15)
+    })
+  }
+  
+  /**
+   * 保険カード期限切れ音
+   */
+  playInsuranceExpire(): void {
+    const time = this.audioContext.currentTime
+    const osc = this.audioContext.createOscillator()
+    const gain = this.audioContext.createGain()
+    
+    osc.connect(gain)
+    gain.connect(this.audioContext.destination)
+    
+    // 下降する悲しげな音
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(440, time)
+    osc.frequency.exponentialRampToValueAtTime(220, time + 0.3)
+    
+    gain.gain.setValueAtTime(0.2, time)
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3)
+    
+    osc.start(time)
+    osc.stop(time + 0.3)
+  }
+  
+  /**
+   * ステージクリア音
+   */
+  playStageComplete(): void {
+    const time = this.audioContext.currentTime
+    
+    // 段階的に上昇する達成感のある音
+    const notes = [
+      { freq: 523.25, start: 0 },     // C5
+      { freq: 659.25, start: 0.1 },   // E5
+      { freq: 783.99, start: 0.2 },   // G5
+      { freq: 1046.50, start: 0.3 },  // C6
+      { freq: 1318.51, start: 0.4 }   // E6
+    ]
+    
+    notes.forEach(({ freq, start }) => {
+      const osc = this.audioContext.createOscillator()
+      const gain = this.audioContext.createGain()
+      
+      osc.connect(gain)
+      gain.connect(this.audioContext.destination)
+      
+      osc.type = 'square'
+      osc.frequency.setValueAtTime(freq, time + start)
+      
+      gain.gain.setValueAtTime(0, time + start)
+      gain.gain.linearRampToValueAtTime(0.15, time + start + 0.02)
+      gain.gain.setValueAtTime(0.15, time + start + 0.08)
+      gain.gain.exponentialRampToValueAtTime(0.01, time + start + 0.3)
+      
+      osc.start(time + start)
+      osc.stop(time + start + 0.3)
+    })
+  }
+  
+  /**
+   * チャレンジ開始音
+   */
+  playChallengeStart(): void {
+    const time = this.audioContext.currentTime
+    
+    // 緊張感のある開始音
+    const osc1 = this.audioContext.createOscillator()
+    const osc2 = this.audioContext.createOscillator()
+    const gain = this.audioContext.createGain()
+    
+    osc1.connect(gain)
+    osc2.connect(gain)
+    gain.connect(this.audioContext.destination)
+    
+    // 不協和音的な音程
+    osc1.type = 'sawtooth'
+    osc2.type = 'sawtooth'
+    osc1.frequency.setValueAtTime(261.63, time) // C4
+    osc2.frequency.setValueAtTime(277.18, time) // C#4
+    
+    gain.gain.setValueAtTime(0, time)
+    gain.gain.linearRampToValueAtTime(0.2, time + 0.05)
+    gain.gain.setValueAtTime(0.2, time + 0.1)
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.2)
+    
+    osc1.start(time)
+    osc2.start(time)
+    osc1.stop(time + 0.2)
+    osc2.stop(time + 0.2)
+  }
+  
+  /**
+   * カードシャッフル音
+   */
+  playCardShuffle(): void {
+    const time = this.audioContext.currentTime
+    
+    // 複数の短いホワイトノイズバーストでシャッフル感を表現
+    for (let i = 0; i < 5; i++) {
+      const bufferSize = 0.02 * this.audioContext.sampleRate
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate)
+      const data = buffer.getChannelData(0)
+      
+      for (let j = 0; j < bufferSize; j++) {
+        data[j] = Math.random() * 2 - 1
+      }
+      
+      const noise = this.audioContext.createBufferSource()
+      const filter = this.audioContext.createBiquadFilter()
+      const gain = this.audioContext.createGain()
+      
+      noise.buffer = buffer
+      filter.type = 'bandpass'
+      filter.frequency.setValueAtTime(2000 + i * 500, time + i * 0.03)
+      filter.Q.value = 10
+      
+      noise.connect(filter)
+      filter.connect(gain)
+      gain.connect(this.audioContext.destination)
+      
+      gain.gain.setValueAtTime(0.1, time + i * 0.03)
+      gain.gain.exponentialRampToValueAtTime(0.01, time + i * 0.03 + 0.02)
+      
+      noise.start(time + i * 0.03)
+      noise.stop(time + i * 0.03 + 0.02)
+    }
+  }
+  
+  /**
+   * ダイアログ開く音
+   */
+  playDialogOpen(): void {
+    const time = this.audioContext.currentTime
+    const osc = this.audioContext.createOscillator()
+    const gain = this.audioContext.createGain()
+    
+    osc.connect(gain)
+    gain.connect(this.audioContext.destination)
+    
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(400, time)
+    osc.frequency.exponentialRampToValueAtTime(800, time + 0.1)
+    
+    gain.gain.setValueAtTime(0, time)
+    gain.gain.linearRampToValueAtTime(0.15, time + 0.02)
+    gain.gain.setValueAtTime(0.15, time + 0.08)
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1)
+    
+    osc.start(time)
+    osc.stop(time + 0.1)
+  }
+  
+  /**
+   * ダイアログ閉じる音
+   */
+  playDialogClose(): void {
+    const time = this.audioContext.currentTime
+    const osc = this.audioContext.createOscillator()
+    const gain = this.audioContext.createGain()
+    
+    osc.connect(gain)
+    gain.connect(this.audioContext.destination)
+    
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(800, time)
+    osc.frequency.exponentialRampToValueAtTime(400, time + 0.1)
+    
+    gain.gain.setValueAtTime(0.15, time)
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1)
+    
+    osc.start(time)
+    osc.stop(time + 0.1)
+  }
+  
+  /**
+   * エラー音
+   */
+  playError(): void {
+    const time = this.audioContext.currentTime
+    
+    // 不快な不協和音
+    const osc1 = this.audioContext.createOscillator()
+    const osc2 = this.audioContext.createOscillator()
+    const gain = this.audioContext.createGain()
+    
+    osc1.connect(gain)
+    osc2.connect(gain)
+    gain.connect(this.audioContext.destination)
+    
+    osc1.type = 'square'
+    osc2.type = 'square'
+    osc1.frequency.setValueAtTime(220, time)
+    osc2.frequency.setValueAtTime(233.08, time) // 不協和音程
+    
+    gain.gain.setValueAtTime(0.2, time)
+    gain.gain.setValueAtTime(0.2, time + 0.1)
+    gain.gain.setValueAtTime(0, time + 0.15)
+    gain.gain.setValueAtTime(0.2, time + 0.2)
+    gain.gain.setValueAtTime(0.2, time + 0.3)
+    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.35)
+    
+    osc1.start(time)
+    osc2.start(time)
+    osc1.stop(time + 0.35)
+    osc2.stop(time + 0.35)
   }
   
   /**

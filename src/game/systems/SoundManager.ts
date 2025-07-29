@@ -256,6 +256,31 @@ export class SoundManager {
         case 'gameVictory':
           this.webAudioGenerator.playVictory()
           break
+        case 'stageComplete':
+          this.webAudioGenerator.playStageComplete()
+          break
+        case 'challengeStart':
+          this.webAudioGenerator.playChallengeStart()
+          break
+        case 'cardShuffle':
+          this.webAudioGenerator.playCardShuffle()
+          break
+        case 'insuranceExpire':
+          this.webAudioGenerator.playInsuranceExpire()
+          break
+        case 'dialogOpen':
+          this.webAudioGenerator.playDialogOpen()
+          break
+        case 'dialogClose':
+          this.webAudioGenerator.playDialogClose()
+          break
+        case 'error':
+          this.webAudioGenerator.playError()
+          break
+        case 'cardPlay':
+          // カードプレイ時は成功音を少し短く
+          this.webAudioGenerator.playCardSelect()
+          break
         default:
           // その他の音は通知音で代用
           this.webAudioGenerator.playNotification()
@@ -332,24 +357,30 @@ export class SoundManager {
    * 音量コントロールのセットアップ
    */
   private setupVolumeControl(): void {
-    // ローカルストレージから音量設定を読み込み
-    const savedVolume = localStorage.getItem('gameVolume')
-    if (savedVolume !== null) {
-      this.volume = parseFloat(savedVolume)
-    }
-    
-    const savedEnabled = localStorage.getItem('soundEnabled')
-    if (savedEnabled !== null) {
-      this.enabled = savedEnabled === 'true'
-    }
+    // loadSettingsメソッドで設定を読み込み済み
   }
   
   /**
    * 音量設定を保存
    */
   saveSettings(): void {
-    localStorage.setItem('gameVolume', this.volume.toString())
-    localStorage.setItem('soundEnabled', this.enabled.toString())
+    localStorage.setItem(SoundManager.STORAGE_KEYS.VOLUME, this.volume.toString())
+    localStorage.setItem(SoundManager.STORAGE_KEYS.ENABLED, this.enabled.toString())
+  }
+  
+  /**
+   * 設定を読み込み
+   */
+  private loadSettings(): void {
+    const savedVolume = localStorage.getItem(SoundManager.STORAGE_KEYS.VOLUME)
+    if (savedVolume !== null) {
+      this.volume = parseFloat(savedVolume)
+    }
+    
+    const savedEnabled = localStorage.getItem(SoundManager.STORAGE_KEYS.ENABLED)
+    if (savedEnabled !== null) {
+      this.enabled = savedEnabled === 'true'
+    }
   }
   
   /**
