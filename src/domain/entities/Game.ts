@@ -341,63 +341,6 @@ export class Game implements IGameState {
    */
   resolveChallenge(): ChallengeResult {
     return this.challengeService.resolveChallenge(this)
-    
-    // Phase 4: 夢カードの場合は年齢調整を適用
-    const challengePower = this.getDreamRequiredPower(this.currentChallenge)
-    
-    // 成功判定
-    const success = playerPower >= challengePower
-    
-    // 統計更新
-    this.stats.totalChallenges++
-    if (success) {
-      this.stats.successfulChallenges++
-    } else {
-      this.stats.failedChallenges++
-    }
-    
-    // 活力変更
-    let vitalityChange = 0
-    if (success) {
-      vitalityChange = Math.floor(playerPower - challengePower) / 2
-    } else {
-      vitalityChange = -(challengePower - playerPower)
-    }
-    
-    this.updateVitality(vitalityChange)
-    
-    // 使用したカードを捨て札に
-    this.cardManager.discardSelectedCards()
-    
-    // 結果作成
-    const result: ChallengeResult = {
-      success,
-      playerPower,
-      challengePower,
-      vitalityChange,
-      message: success 
-        ? `チャレンジ成功！ +${vitalityChange} 活力`
-        : `チャレンジ失敗... ${vitalityChange} 活力`,
-      // Phase 3: パワー計算の詳細を含める
-      powerBreakdown
-    }
-    
-    // 成功時は保険種類選択フェーズへ
-    if (success) {
-      // 保険種類選択肢を生成
-      const insuranceTypeChoices = CardFactory.createInsuranceTypeChoices(this.stage)
-      this.insuranceTypeChoices = insuranceTypeChoices
-      result.insuranceTypeChoices = insuranceTypeChoices
-      this.phase = 'insurance_type_selection'
-    } else {
-      // 失敗時は通常の解決フェーズへ
-      this.phase = 'resolution'
-    }
-    
-    this.currentChallenge = undefined
-    this.cardManager.clearSelection()
-    
-    return result
   }
 
   /**
