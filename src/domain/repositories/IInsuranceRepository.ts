@@ -1,4 +1,4 @@
-import { Insurance, InsuranceId } from '../aggregates/insurance'
+import type { Insurance, InsuranceId } from '../aggregates/insurance'
 
 /**
  * 保険リポジトリインターフェース

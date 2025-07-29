@@ -81,7 +81,7 @@ const initChart = () => {
   chartInstance.value = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: '成功率 (%)',

@@ -61,7 +61,7 @@ const getCardStyle = (stackIndex: number) => {
         rotate(${dragRotation.value}deg)
         scale(${scale})
       `,
-      opacity: opacity,
+      opacity,
       zIndex: maxVisible.value - stackIndex,
       transition: 'none'
     }
@@ -72,7 +72,7 @@ const getCardStyle = (stackIndex: number) => {
       translateY(${translateY}px)
       scale(${scale})
     `,
-    opacity: opacity,
+    opacity,
     zIndex: maxVisible.value - stackIndex,
     transition: 'all var(--transition-normal)'
   }

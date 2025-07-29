@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import GameCanvas from './components/game/GameCanvas.vue'
+import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+// import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
 import TransitionAnimations from './components/animations/TransitionAnimations.vue'
 import AccessibilitySettings from './components/accessibility/AccessibilitySettings.vue'
 import VisualIndicators from './components/accessibility/VisualIndicators.vue'
 import ErrorBoundary from './components/error/ErrorBoundary.vue'
 import ErrorNotification from './components/error/ErrorNotification.vue'
-import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue'
+// import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue' // 動的インポートに変更
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
-import FeedbackButton from './components/feedback/FeedbackButton.vue'
+// import FeedbackButton from './components/feedback/FeedbackButton.vue' // 動的インポートに変更
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
 const showStatistics = ref(false)
+const StatisticsDashboard = defineAsyncComponent(() => import('./components/statistics/StatisticsDashboard.vue'))
+const FeedbackButton = defineAsyncComponent(() => import('./components/feedback/FeedbackButton.vue'))
+const GameCanvas = defineAsyncComponent(() => import('./components/game/GameCanvas.vue'))
 let keyboardManager: KeyboardManager | null = null
 let screenReaderManager: ScreenReaderManager | null = null
 
@@ -207,12 +210,18 @@ onUnmounted(() => {
         <ErrorBoundary fallback="minimal">
           <div class="home-container">
         <header class="hero-section">
-          <h1 class="hero-title">
+          <div class="brand-logo pulse">
+            <span class="logo-icon">🌟</span>
+          </div>
+          <h1 class="hero-title bounce-in" style="animation-delay: 0.2s;">
             人生充実ゲーム
           </h1>
-          <p class="hero-subtitle">
+          <p class="hero-subtitle bounce-in" style="animation-delay: 0.4s;">
             Life Fulfillment - 生命保険を「人生の味方」として描く
           </p>
+          <div class="hero-accent bounce-in" style="animation-delay: 0.6s;">
+            ✨ 一人の時間を、最高の冒険に ✨
+          </div>
         </header>
 
         <section class="action-section" id="navigation" role="navigation" aria-label="メインナビゲーション">
@@ -220,7 +229,7 @@ onUnmounted(() => {
             <button
               ref="gameButtonRef"
               @click="startGame"
-              class="primary-action-btn"
+              class="btn btn-primary ripple-container glow-on-hover bounce-in"
               aria-label="ゲームを開始する (Alt+G)"
               :aria-keyshortcuts="'Alt+G'"
               aria-describedby="game-description"
@@ -231,7 +240,7 @@ onUnmounted(() => {
             <button
               ref="tutorialButtonRef"
               @click="startTutorial"
-              class="secondary-action-btn"
+              class="btn btn-secondary ripple-container"
               aria-label="チュートリアルを開始する (Alt+T)"
               :aria-keyshortcuts="'Alt+T'"
               aria-describedby="tutorial-description"
@@ -241,7 +250,7 @@ onUnmounted(() => {
             </button>
             <button
               @click="openStatistics"
-              class="secondary-action-btn"
+              class="btn btn-secondary ripple-container"
               aria-label="統計ダッシュボードを開く (Alt+S)"
               :aria-keyshortcuts="'Alt+S'"
               aria-describedby="statistics-description"
@@ -262,34 +271,34 @@ onUnmounted(() => {
         <section class="info-section">
           <div class="info-grid">
         <!-- 最新の変更 -->
-        <div class="card">
+        <div class="interactive-card glow-on-hover">
           <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
-            <span>📱</span>
-            最新アップデート v0.2.7
+            <span>🎮</span>
+            最新アップデート v0.2.8
           </h2>
           <div class="text-left space-y-3">
             <div>
-              <h3 class="font-semibold text-lg mb-2">包括的なモバイル最適化</h3>
+              <h3 class="font-semibold text-lg mb-2">新しいゲームメカニクスの実装</h3>
               <ul class="space-y-1 text-sm">
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>タッチ操作完全対応</strong>: スワイプ、ピンチズーム、ドラッグ&ドロップ</span>
+                  <span><strong>高度なゲームシステム</strong>: ライフステージ管理、難易度自動調整</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>レスポンシブデザイン</strong>: あらゆる画面サイズに自動適応</span>
+                  <span><strong>統計・分析システム</strong>: リアルタイムダッシュボード、パフォーマンス分析</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>PWA対応</strong>: ホーム画面追加、オフライン動作可能</span>
+                  <span><strong>実績・プログレッション</strong>: スキルシステム、プレイヤー成長追跡</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>パフォーマンス最適化</strong>: 60fps維持、バッテリー効率向上</span>
+                  <span><strong>フィードバック収集</strong>: リアルタイムユーザー体験分析</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>モバイル専用UI</strong>: タッチに最適化されたインターフェース</span>
+                  <span><strong>セキュリティ監査</strong>: 自動脆弱性検出、コード品質分析</span>
                 </li>
               </ul>
             </div>
@@ -297,7 +306,7 @@ onUnmounted(() => {
         </div>
 
         <!-- 今後のロードマップ -->
-        <div class="card">
+        <div class="interactive-card glow-on-hover">
           <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
             <span>🚀</span>
             今後のロードマップ

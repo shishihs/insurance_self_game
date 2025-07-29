@@ -163,7 +163,7 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
       this.log(`Going to step ${stepIndex}: ${step.title}`)
 
       // ステップのスキップ条件をチェック
-      if (step.skipCondition && step.skipCondition()) {
+      if (step.skipCondition?.()) {
         await this.skipCurrentStep()
         return
       }

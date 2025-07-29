@@ -1,4 +1,4 @@
-import { Card } from './Card'
+import type { Card } from './Card'
 import { Deck } from './Deck'
 import { CardFactory } from '../services/CardFactory'
 import { CardManager, type ICardManager } from '../services/CardManager'

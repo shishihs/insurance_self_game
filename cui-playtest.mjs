@@ -60,7 +60,7 @@ class Card {
       type: 'insurance',
       power,
       cost: 1,
-      effects: effects
+      effects
     })
   }
 
@@ -248,7 +248,7 @@ class PlaytestGameController {
     // ログ用に必要パワーを追加
     const challengeWithRequiredPower = {
       ...selectedChallenge,
-      requiredPower: requiredPower
+      requiredPower
     }
 
     // ログ記録

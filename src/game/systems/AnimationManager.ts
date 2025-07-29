@@ -4,7 +4,7 @@
  */
 
 import { CardAnimations } from '../animations/CardAnimations'
-import { SoundManager } from './SoundManager'
+import type { SoundManager } from './SoundManager'
 
 export interface GameAnimationConfig {
   enableSounds: boolean

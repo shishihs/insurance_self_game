@@ -1,12 +1,12 @@
 # API Documentation
 
-> **最終更新**: 2025/01/28  
+> **最終更新**: 2025/07/29  
 > **文書種別**: 技術仕様書  
 > **更新頻度**: 機能追加・変更時に更新
 
 ## 概要
 
-このドキュメントは、人生充実ゲームのAPIとシステムアーキテクチャの詳細を記述します。開発者が新機能を実装したり、既存システムを理解するための技術的なリファレンスです。
+このドキュメントは、人生充実ゲームのAPI、システムアーキテクチャ、および新しいドメインサービスの詳細を記述します。v0.2.8では、高度なゲームメカニクス、統計システム、フィードバック機能、および実績システムが追加されました。
 
 ## アーキテクチャ概要
 
@@ -514,9 +514,416 @@ pnpm benchmark:massive
 pnpm type-check
 ```
 
-## 新しいドメインサービス API
+## 高度なドメインサービス API（v0.2.8新機能）
 
-### ChallengeResolutionService
+### StatisticsDataService
+
+プレイヤーのパフォーマンス分析と統計データ管理を担当する新しいドメインサービス。
+
+#### 基本API
+
+```typescript
+class StatisticsDataService {
+  /**
+   * プレイヤー統計を取得
+   */
+  getPlayerStatistics(playerId?: string): PlayerStatistics
+  
+  /**
+   * ゲームセッション統計を記録
+   */
+  recordGameSession(sessionData: GameSessionData): void
+  
+  /**
+   * パフォーマンス分析を実行
+   */
+  analyzePerformance(timeRange: TimeRange): PerformanceAnalysis
+  
+  /**
+   * カード使用統計を取得
+   */
+  getCardUsageStatistics(): CardUsageStats
+  
+  /**
+   * 決定時間分析を取得
+   */
+  getDecisionTimeAnalysis(): DecisionTimeStats
+  
+  /**
+   * 戦略パターン分析を実行
+   */
+  analyzeStrategyPatterns(): StrategyPatternAnalysis
+}
+```
+
+### FeedbackManagementService
+
+リアルタイムユーザーフィードバック収集と分析システム。
+
+#### 基本API
+
+```typescript
+class FeedbackManagementService {
+  /**
+   * フィードバックを記録
+   */
+  recordFeedback(feedback: UserFeedback): string
+  
+  /**
+   * バグレポートを処理
+   */
+  processBugReport(bugReport: BugReport): void
+  
+  /**
+   * 満足度調査を実行
+   */
+  conductSatisfactionSurvey(): SurveyResult
+  
+  /**
+   * ユーザー体験データを分析
+   */
+  analyzeUserExperience(): UXAnalysis
+  
+  /**
+   * フィードバック統計を取得
+   */
+  getFeedbackStatistics(): FeedbackStats
+}
+```
+
+### AchievementSystemService
+
+実績システムとプレイヤー達成度管理。
+
+#### 基本API
+
+```typescript
+class AchievementSystemService {
+  /**
+   * 実績をチェック
+   */
+  checkAchievements(gameState: IGameState): Achievement[]
+  
+  /**
+   * 実績を解除
+   */
+  unlockAchievement(achievementId: string, playerId: string): void
+  
+  /**
+   * プレイヤーの実績一覧を取得
+   */
+  getPlayerAchievements(playerId: string): PlayerAchievement[]
+  
+  /**
+   * 実績進捗を更新
+   */
+  updateAchievementProgress(
+    achievementId: string, 
+    progress: number
+  ): void
+  
+  /**
+   * 利用可能な実績一覧を取得
+   */
+  getAvailableAchievements(): Achievement[]
+}
+```
+
+### SkillSystemService
+
+スキル成長システムとプレイヤー能力管理。
+
+#### 基本API
+
+```typescript
+class SkillSystemService {
+  /**
+   * スキル経験値を追加
+   */
+  addSkillExperience(
+    skillType: SkillType, 
+    experience: number
+  ): SkillLevelUpResult
+  
+  /**
+   * プレイヤースキルを取得
+   */
+  getPlayerSkills(playerId: string): PlayerSkills
+  
+  /**
+   * スキルレベルアップをチェック
+   */
+  checkSkillLevelUp(skillType: SkillType): boolean
+  
+  /**
+   * スキルボーナスを計算
+   */
+  calculateSkillBonus(
+    skillType: SkillType, 
+    level: number
+  ): SkillBonus
+  
+  /**
+   * スキル成長予測を生成
+   */
+  predictSkillGrowth(
+    currentSkills: PlayerSkills, 
+    playStyle: PlayStyle
+  ): GrowthPrediction
+}
+```
+
+### PlayerProgressionService
+
+プレイヤー成長追跡と進捗管理システム。
+
+#### 基本API
+
+```typescript
+class PlayerProgressionService {
+  /**
+   * プレイヤー進捗を更新
+   */
+  updateProgression(progressData: ProgressionData): void
+  
+  /**
+   * マイルストーンをチェック
+   */
+  checkMilestones(playerId: string): Milestone[]
+  
+  /**
+   * 成長軌跡を分析
+   */
+  analyzeGrowthTrajectory(
+    playerId: string, 
+    timeRange: TimeRange
+  ): GrowthAnalysis
+  
+  /**
+   * 学習曲線を計算
+   */
+  calculateLearningCurve(playerId: string): LearningCurveData
+  
+  /**
+   * 推奨練習プランを生成
+   */
+  generatePracticePlan(
+    currentLevel: PlayerLevel
+  ): PracticePlan
+}
+```
+
+### DifficultyBalanceService
+
+動的難易度調整システム。
+
+#### 基本API
+
+```typescript
+class DifficultyBalanceService {
+  /**
+   * 難易度を動的調整
+   */
+  adjustDifficulty(
+    currentDifficulty: number, 
+    playerPerformance: PerformanceMetrics
+  ): number
+  
+  /**
+   * 最適な難易度を計算
+   */
+  calculateOptimalDifficulty(
+    playerSkillLevel: number, 
+    challengeType: ChallengeType
+  ): DifficultySettings
+  
+  /**
+   * 難易度曲線を分析
+   */
+  analyzeDifficultyCurve(
+    gameSession: GameSession
+  ): DifficultyAnalysis
+  
+  /**
+   * プレイヤー適応度を測定
+   */
+  measurePlayerAdaptation(
+    recentPerformance: PerformanceHistory
+  ): AdaptationMetrics
+}
+```
+
+### ReplayabilityService
+
+リプレイ性向上とゲーム体験多様化システム。
+
+#### 基本API
+
+```typescript
+class ReplayabilityService {
+  /**
+   * 動的コンテンツを生成
+   */
+  generateDynamicContent(
+    playerProfile: PlayerProfile
+  ): DynamicGameContent
+  
+  /**
+   * ランダムイベントを生成
+   */
+  generateRandomEvents(
+    gameState: IGameState, 
+    eventProbability: number
+  ): RandomEvent[]
+  
+  /**
+   * プレイスタイル分析を実行
+   */
+  analyzePlayStyle(
+    gameHistory: GameHistory
+  ): PlayStyleAnalysis
+  
+  /**
+   * 個人化された挑戦を生成
+   */
+  generatePersonalizedChallenges(
+    playerSkills: PlayerSkills
+  ): PersonalizedChallenge[]
+}
+```
+
+### CacheManager
+
+パフォーマンス最適化のためのキャッシュ管理システム。
+
+#### 基本API
+
+```typescript
+class CacheManager {
+  /**
+   * データをキャッシュに保存
+   */
+  set<T>(key: string, value: T, ttl?: number): void
+  
+  /**
+   * キャッシュからデータを取得
+   */
+  get<T>(key: string): T | null
+  
+  /**
+   * キャッシュをクリア
+   */
+  clear(pattern?: string): void
+  
+  /**
+   * キャッシュ統計を取得
+   */
+  getStats(): CacheStatistics
+  
+  /**
+   * メモリ使用量を最適化
+   */
+  optimizeMemory(): void
+}
+```
+
+## 統計・分析システム
+
+### StatisticsDashboard Component
+
+リアルタイム統計ダッシュボードのVueコンポーネント。
+
+#### Props & Events
+
+```typescript
+interface StatisticsDashboardProps {
+  autoRefresh: boolean
+  refreshInterval: number
+  showDetailedStats: boolean
+}
+
+interface StatisticsDashboardEvents {
+  close: () => void
+  export: (format: ExportFormat) => void
+  refresh: () => void
+}
+```
+
+### チャート系コンポーネント
+
+```typescript
+// カード使用率チャート
+interface CardUsageChartProps {
+  data: CardUsageData[]
+  timeRange: TimeRange
+  chartType: 'bar' | 'pie' | 'line'
+}
+
+// 決定時間分析チャート
+interface DecisionTimeChartProps {
+  decisionData: DecisionTimeData[]
+  showAverage: boolean
+  showTrend: boolean
+}
+
+// 活力推移チャート
+interface VitalityTrendChartProps {
+  vitalityHistory: VitalityData[]
+  showPrediction: boolean
+}
+
+// 戦略パターン分析チャート
+interface StrategyPatternsChartProps {
+  patternData: StrategyPatternData[]
+  analysisDepth: 'basic' | 'advanced'
+}
+```
+
+## フィードバック・ユーザー体験システム
+
+### FeedbackButton Component
+
+ユーザーフィードバック収集用のFloating Action Button。
+
+#### 基本API
+
+```typescript
+interface FeedbackButtonProps {
+  gameState: GameState
+  showStats: boolean
+  autoSurvey: boolean
+}
+
+interface FeedbackButtonEvents {
+  'feedback-submitted': (
+    feedbackId: string, 
+    type: FeedbackType
+  ) => void
+}
+```
+
+### フィードバック管理システム
+
+```typescript
+interface UserFeedback {
+  id: string
+  type: 'bug' | 'suggestion' | 'praise' | 'complaint'
+  content: string
+  gameState: GameStateSnapshot
+  timestamp: Date
+  metadata: FeedbackMetadata
+}
+
+interface BugReport extends UserFeedback {
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  steps: string[]
+  expectedBehavior: string
+  actualBehavior: string
+  browserInfo: BrowserInfo
+}
+```
+
+## ChallengeResolutionService
 
 チャレンジ解決の専門ロジックを担当するドメインサービス。
 

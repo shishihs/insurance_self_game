@@ -234,7 +234,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
-import { SatisfactionRating } from '../../domain/entities/Feedback'
+import type { SatisfactionRating } from '../../domain/entities/Feedback'
 
 // Props & Emits
 interface Props {
@@ -553,7 +553,7 @@ const getRatingDescription = (rating: number): string => {
 }
 
 const generateSessionId = (): string => {
-  return 'review_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  return `review_${  Date.now()  }_${  Math.random().toString(36).substr(2, 9)}`
 }
 
 const getPlayTimeInMinutes = (): number => {

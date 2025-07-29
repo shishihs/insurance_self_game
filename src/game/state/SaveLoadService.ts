@@ -1,4 +1,4 @@
-import { Game } from '@/domain/entities/Game'
+import type { Game } from '@/domain/entities/Game'
 import type { GameConfig, IGameState } from '@/domain/types/game.types'
 import { GameStateManager, type SaveData, type SaveSlot } from './GameStateManager'
 

@@ -6,8 +6,8 @@ import {
   type DropZoneValidator,
   type DropZoneAction 
 } from '../DropZoneValidators'
-import { Card } from '@/domain/entities/Card'
-import { Game } from '@/domain/entities/Game'
+import type { Card } from '@/domain/entities/Card'
+import type { Game } from '@/domain/entities/Game'
 
 describe('DropZoneValidators', () => {
   let mockCard: Card

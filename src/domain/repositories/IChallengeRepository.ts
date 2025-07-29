@@ -1,4 +1,4 @@
-import { Challenge, ChallengeId } from '../aggregates/challenge'
+import type { Challenge, ChallengeId } from '../aggregates/challenge'
 
 /**
  * チャレンジリポジトリインターフェース

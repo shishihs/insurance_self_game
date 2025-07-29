@@ -2,7 +2,7 @@ import type { GameRenderer } from '@/interfaces/GameRenderer'
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
 import type { PlayerStats, ChallengeResult } from '@/domain/types/game.types'
-import { GameScene } from '../scenes/GameScene'
+import type { GameScene } from '../scenes/GameScene'
 
 /**
  * Phaser3ベースのGameRenderer実装

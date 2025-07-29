@@ -1,4 +1,4 @@
-import { InsuranceId } from './InsuranceId'
+import type { InsuranceId } from './InsuranceId'
 
 /**
  * ドメインイベントの基底クラス

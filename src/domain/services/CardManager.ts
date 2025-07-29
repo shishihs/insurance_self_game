@@ -1,4 +1,4 @@
-import { Card } from '../entities/Card'
+import type { Card } from '../entities/Card'
 import { Deck } from '../entities/Deck'
 import type { GameConfig } from '../types/game.types'
 

@@ -209,7 +209,7 @@ export const GameSceneOptimizationMixin = {
     
     // 使用中のテクスチャを収集
     this.children.list.forEach((child: any) => {
-      if (child.texture && child.texture.key) {
+      if (child.texture?.key) {
         usedTextures.add(child.texture.key)
       }
     })
@@ -234,7 +234,7 @@ export const GameSceneOptimizationMixin = {
     const textureGroups = new Map<string, any[]>()
     
     this.children.list.forEach((child: any) => {
-      if (child.texture && child.texture.key) {
+      if (child.texture?.key) {
         const key = child.texture.key
         if (!textureGroups.has(key)) {
           textureGroups.set(key, [])

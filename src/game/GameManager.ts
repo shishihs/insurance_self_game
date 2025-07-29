@@ -318,7 +318,7 @@ export class GameManager {
       // ゲームシーンに回転を通知
       if (this.game) {
         const activeScene = this.game.scene.getScenes(true)[0]
-        if (activeScene && activeScene.events) {
+        if (activeScene?.events) {
           activeScene.events.emit('orientationchange', window.orientation)
         }
       }
@@ -419,8 +419,4 @@ export class GameManager {
     return this.isMobile
   }
 
-  // バインドされたイベントハンドラー
-  private handleOrientationChange!: () => void
-  private handleResize!: () => void
-  private handleVisibilityChange!: () => void
 }

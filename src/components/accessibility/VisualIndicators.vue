@@ -1,234 +1,407 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { FocusIndicatorManager, type FocusIndicatorOptions } from '@/utils/focus-indicator'
 
-interface FocusIndicatorOptions {
+// 開発環境フラグ
+const isDev = import.meta.env.DEV
+
+// Props
+interface Props {
+  enabled?: boolean
   color?: string
   width?: number
   style?: 'solid' | 'dashed' | 'dotted'
   offset?: number
   borderRadius?: number
+  showKeyboardHints?: boolean
+  reducedMotion?: boolean
 }
 
-// フォーカスインジケーターの管理
-export class FocusIndicatorManager {
-  private focusedElement: HTMLElement | null = null
-  private indicator: HTMLElement
-  private options: Required<FocusIndicatorOptions>
+const props = withDefaults(defineProps<Props>(), {
+  enabled: true,
+  color: '#818CF8',
+  width: 3,
+  style: 'solid',
+  offset: 4,
+  borderRadius: 8,
+  showKeyboardHints: true,
+  reducedMotion: false
+})
 
-  constructor(options: FocusIndicatorOptions = {}) {
-    this.options = {
-      color: options.color || '#818CF8',
-      width: options.width || 3,
-      style: options.style || 'solid',
-      offset: options.offset || 4,
-      borderRadius: options.borderRadius || 8
-    }
+// リアクティブな状態
+const isEnabled = ref(props.enabled)
+const currentOptions = ref<FocusIndicatorOptions>({
+  color: props.color,
+  width: props.width,
+  style: props.style,
+  offset: props.offset,
+  borderRadius: props.borderRadius
+})
 
-    this.indicator = this.createIndicator()
-    document.body.appendChild(this.indicator)
-    this.setupEventListeners()
-  }
+// Focus Indicator Manager
+let focusIndicatorManager: FocusIndicatorManager | null = null
 
-  private createIndicator(): HTMLElement {
-    const indicator = document.createElement('div')
-    indicator.className = 'focus-indicator'
-    indicator.style.cssText = `
-      position: fixed;
-      pointer-events: none;
-      z-index: 10000;
-      transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      opacity: 0;
-      border: ${this.options.width}px ${this.options.style} ${this.options.color};
-      border-radius: ${this.options.borderRadius}px;
-      box-shadow: 0 0 20px rgba(129, 140, 248, 0.4);
-    `
-    return indicator
-  }
+// キーボードヒント表示状態
+const showHints = ref(false)
+const hintTimer = ref<number | null>(null)
 
-  private setupEventListeners(): void {
-    // フォーカスイベントの監視
-    document.addEventListener('focusin', this.handleFocusIn.bind(this))
-    document.addEventListener('focusout', this.handleFocusOut.bind(this))
-    
-    // スクロールやリサイズ時の位置更新
-    window.addEventListener('scroll', this.updatePosition.bind(this), true)
-    window.addEventListener('resize', this.updatePosition.bind(this))
-    
-    // MutationObserverで要素の変更を監視
-    const observer = new MutationObserver(() => {
-      if (this.focusedElement) {
-        this.updatePosition()
-      }
-    })
-    
-    observer.observe(document.body, {
-      attributes: true,
-      childList: true,
-      subtree: true,
-      attributeFilter: ['style', 'class']
-    })
-  }
+// 計算されたプロパティ
+const indicatorStyle = computed(() => ({
+  '--focus-color': currentOptions.value.color,
+  '--focus-width': `${currentOptions.value.width}px`,
+  '--focus-offset': `${currentOptions.value.offset}px`,
+  '--focus-radius': `${currentOptions.value.borderRadius}px`
+}))
 
-  private handleFocusIn(event: FocusEvent): void {
-    const target = event.target as HTMLElement
-    
-    // フォーカス可能な要素かチェック
-    if (this.isFocusable(target)) {
-      this.focusedElement = target
-      this.showIndicator(target)
-    }
-  }
+// キーボードショートカット
+const keyboardShortcuts = computed(() => [
+  { key: 'Tab', description: '次の要素にフォーカス' },
+  { key: 'Shift + Tab', description: '前の要素にフォーカス' },
+  { key: 'Enter', description: '選択した要素を実行' },
+  { key: 'Space', description: 'ボタンやチェックボックスを操作' },
+  { key: 'Arrow Keys', description: 'メニューや選択肢を移動' },
+  { key: 'Escape', description: 'モーダルやメニューを閉じる' }
+])
 
-  private handleFocusOut(): void {
-    this.hideIndicator()
-    this.focusedElement = null
-  }
-
-  private isFocusable(element: HTMLElement): boolean {
-    const focusableSelectors = [
-      'a[href]',
-      'button:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      'textarea:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])',
-      '[contenteditable="true"]'
-    ]
-    
-    return focusableSelectors.some(selector => element.matches(selector))
-  }
-
-  private showIndicator(element: HTMLElement): void {
-    const rect = element.getBoundingClientRect()
-    const offset = this.options.offset
-    
-    this.indicator.style.left = `${rect.left - offset}px`
-    this.indicator.style.top = `${rect.top - offset}px`
-    this.indicator.style.width = `${rect.width + offset * 2}px`
-    this.indicator.style.height = `${rect.height + offset * 2}px`
-    this.indicator.style.opacity = '1'
-    
-    // 要素の角丸に合わせる
-    const computedStyle = window.getComputedStyle(element)
-    const borderRadius = computedStyle.borderRadius
-    if (borderRadius && borderRadius !== '0px') {
-      this.indicator.style.borderRadius = borderRadius
-    }
-  }
-
-  private hideIndicator(): void {
-    this.indicator.style.opacity = '0'
-  }
-
-  private updatePosition(): void {
-    if (this.focusedElement && this.focusedElement === document.activeElement) {
-      this.showIndicator(this.focusedElement)
-    }
-  }
-
-  public setOptions(options: Partial<FocusIndicatorOptions>): void {
-    Object.assign(this.options, options)
-    
-    this.indicator.style.border = 
-      `${this.options.width}px ${this.options.style} ${this.options.color}`
-    this.indicator.style.borderRadius = `${this.options.borderRadius}px`
-    
-    if (this.focusedElement) {
-      this.updatePosition()
-    }
-  }
-
-  public destroy(): void {
-    this.indicator.remove()
-    document.removeEventListener('focusin', this.handleFocusIn.bind(this))
-    document.removeEventListener('focusout', this.handleFocusOut.bind(this))
-    window.removeEventListener('scroll', this.updatePosition.bind(this), true)
-    window.removeEventListener('resize', this.updatePosition.bind(this))
+// メソッド
+const initializeFocusIndicator = () => {
+  if (isEnabled.value && !focusIndicatorManager) {
+    focusIndicatorManager = new FocusIndicatorManager(currentOptions.value)
   }
 }
 
-// コンポーネントのセットアップ
-const focusIndicatorManager = ref<FocusIndicatorManager | null>(null)
+const destroyFocusIndicator = () => {
+  if (focusIndicatorManager) {
+    focusIndicatorManager.destroy()
+    focusIndicatorManager = null
+  }
+}
 
-const props = defineProps<{
-  enabled?: boolean
-  options?: FocusIndicatorOptions
-}>()
+const updateOptions = () => {
+  if (focusIndicatorManager) {
+    focusIndicatorManager.setOptions(currentOptions.value)
+  }
+}
 
+const showKeyboardHints = () => {
+  if (!props.showKeyboardHints) return
+  
+  showHints.value = true
+  
+  // 5秒後に自動的に隠す
+  if (hintTimer.value) {
+    clearTimeout(hintTimer.value)
+  }
+  
+  hintTimer.value = window.setTimeout(() => {
+    showHints.value = false
+  }, 5000)
+}
+
+const hideKeyboardHints = () => {
+  showHints.value = false
+  if (hintTimer.value) {
+    clearTimeout(hintTimer.value)
+    hintTimer.value = null
+  }
+}
+
+// キーボード使用検出
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Tab') {
+    showKeyboardHints()
+  }
+}
+
+// 設定を更新
+const updateSettings = (newOptions: Partial<FocusIndicatorOptions>) => {
+  Object.assign(currentOptions.value, newOptions)
+  updateOptions()
+}
+
+// 有効/無効の切り替え
+const toggleEnabled = () => {
+  isEnabled.value = !isEnabled.value
+  
+  if (isEnabled.value) {
+    initializeFocusIndicator()
+  } else {
+    destroyFocusIndicator()
+  }
+}
+
+// ライフサイクル
 onMounted(() => {
-  if (props.enabled !== false) {
-    focusIndicatorManager.value = new FocusIndicatorManager(props.options)
+  initializeFocusIndicator()
+  
+  // キーボード使用検出のためのイベントリスナー
+  document.addEventListener('keydown', handleKeydown)
+  
+  // ユーザーのモーション設定を検出
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+  if (prefersReducedMotion.matches) {
+    currentOptions.value = {
+      ...currentOptions.value,
+      offset: 2 // モーション削減時はオフセットを小さく
+    }
+    updateOptions()
   }
 })
 
-// 外部からオプションを更新できるように公開
-defineExpose({
-  setOptions: (options: Partial<FocusIndicatorOptions>) => {
-    focusIndicatorManager.value?.setOptions(options)
-  },
-  destroy: () => {
-    focusIndicatorManager.value?.destroy()
+onUnmounted(() => {
+  destroyFocusIndicator()
+  document.removeEventListener('keydown', handleKeydown)
+  
+  if (hintTimer.value) {
+    clearTimeout(hintTimer.value)
   }
+})
+
+// 外部に公開する関数
+defineExpose({
+  updateSettings,
+  toggleEnabled,
+  showKeyboardHints,
+  hideKeyboardHints
 })
 </script>
 
 <template>
-  <!-- このコンポーネントはJavaScriptで動的に要素を作成するためテンプレートは空 -->
+  <div 
+    class="visual-indicators"
+    :class="{
+      'reduced-motion': reducedMotion,
+      'hints-visible': showHints
+    }"
+    :style="indicatorStyle"
+  >
+    <!-- キーボードヒント -->
+    <Transition name="hints-fade">
+      <div 
+        v-if="showHints && showKeyboardHints" 
+        class="keyboard-hints"
+        role="tooltip"
+        aria-live="polite"
+      >
+        <div class="hints-header">
+          <h3 class="hints-title">キーボードショートカット</h3>
+          <button 
+            @click="hideKeyboardHints"
+            class="hints-close"
+            aria-label="ヒントを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <ul class="hints-list">
+          <li 
+            v-for="shortcut in keyboardShortcuts"
+            :key="shortcut.key"
+            class="hint-item"
+          >
+            <kbd class="hint-key">{{ shortcut.key }}</kbd>
+            <span class="hint-description">{{ shortcut.description }}</span>
+          </li>
+        </ul>
+      </div>
+    </Transition>
+
+    <!-- 設定パネル（開発環境のみ） -->
+    <div 
+      v-if="isDev" 
+      class="settings-panel"
+    >
+      <h4>フォーカスインジケーター設定</h4>
+      <label>
+        <input 
+          v-model="isEnabled" 
+          type="checkbox"
+          @change="toggleEnabled"
+        >
+        有効
+      </label>
+      
+      <label>
+        色:
+        <input 
+          :value="currentOptions.color"
+          type="color"
+          @input="updateSettings({ color: ($event.target as HTMLInputElement).value })"
+        >
+      </label>
+      
+      <label>
+        幅:
+        <input 
+          :value="currentOptions.width"
+          type="range"
+          min="1"
+          max="10"
+          @input="updateSettings({ width: parseInt(($event.target as HTMLInputElement).value) })"
+        >
+      </label>
+    </div>
+  </div>
 </template>
 
-<style>
-/* グローバルスタイルとして適用 */
-.focus-indicator {
-  animation: focus-pulse 2s ease-in-out infinite;
+<style scoped>
+.visual-indicators {
+  /* CSS変数でスタイルを制御 */
+  --focus-transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-@keyframes focus-pulse {
-  0%, 100% {
-    box-shadow: 
-      0 0 20px rgba(129, 140, 248, 0.4),
-      inset 0 0 10px rgba(129, 140, 248, 0.1);
-  }
-  50% {
-    box-shadow: 
-      0 0 30px rgba(129, 140, 248, 0.6),
-      inset 0 0 15px rgba(129, 140, 248, 0.2);
-  }
+.visual-indicators.reduced-motion {
+  --focus-transition: none;
 }
 
-/* ハイコントラストモード対応 */
-@media (prefers-contrast: high) {
-  .focus-indicator {
-    border-width: 4px !important;
-    border-color: #000 !important;
-    box-shadow: 
-      0 0 0 2px #fff,
-      0 0 0 6px #000 !important;
+/* キーボードヒント */
+.keyboard-hints {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--rounded-lg);
+  padding: var(--space-4);
+  max-width: 300px;
+  
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-xl);
+  
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--text-sm);
+}
+
+.hints-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.hints-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+  color: var(--primary-300);
+}
+
+.hints-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--text-lg);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--rounded);
+}
+
+.hints-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.hints-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.hint-key {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-gray);
+  border-radius: var(--rounded);
+  padding: var(--space-1) var(--space-2);
+  font-family: monospace;
+  font-size: var(--text-xs);
+  min-width: 60px;
+  text-align: center;
+  color: var(--primary-200);
+}
+
+.hint-description {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* アニメーション */
+.hints-fade-enter-active,
+.hints-fade-leave-active {
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+.hints-fade-enter-from,
+.hints-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+/* 設定パネル（開発環境） */
+.settings-panel {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10001;
+  
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--rounded-lg);
+  padding: var(--space-4);
+  
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--text-sm);
+}
+
+.settings-panel h4 {
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--text-base);
+  color: var(--primary-300);
+}
+
+.settings-panel label {
+  display: block;
+  margin-bottom: var(--space-2);
+}
+
+.settings-panel input {
+  margin-left: var(--space-2);
+}
+
+/* レスポンシブ */
+@media (max-width: 640px) {
+  .keyboard-hints {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .settings-panel {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
   }
 }
 
 /* モーション削減対応 */
 @media (prefers-reduced-motion: reduce) {
-  .focus-indicator {
-    animation: none !important;
-    transition: opacity 150ms ease !important;
+  .hints-fade-enter-active,
+  .hints-fade-leave-active {
+    transition: opacity var(--duration-200) linear;
   }
-}
-
-/* ダークモード対応 */
-@media (prefers-color-scheme: dark) {
-  .focus-indicator {
-    border-color: #A5B4FC;
-    box-shadow: 
-      0 0 25px rgba(165, 180, 252, 0.5),
-      inset 0 0 12px rgba(165, 180, 252, 0.15);
-  }
-}
-
-/* 高DPIディスプレイ対応 */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .focus-indicator {
-    border-width: 2px;
-    transform: translateZ(0); /* GPUアクセラレーション */
+  
+  .hints-fade-enter-from,
+  .hints-fade-leave-to {
+    transform: none;
   }
 }
 </style>

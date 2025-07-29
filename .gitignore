@@ -70,6 +70,14 @@ screenshots/
 test-results/
 playwright-report/
 
+# Build reports
+*-report.json
+*-report.md
+code-quality-report.json
+test-coverage-report.json
+security-check-report.json
+performance-reports/
+
 # IDE temporary files
 *.tmp
 *~

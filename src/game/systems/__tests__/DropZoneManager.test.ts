@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { DropZoneManager, type DropZone } from '../DropZoneManager'
-import { Game } from '@/domain/entities/Game'
-import { Card } from '@/domain/entities/Card'
+import type { Game } from '@/domain/entities/Game'
+import type { Card } from '@/domain/entities/Card'
 
 // Phaserモックの設定
 const mockGraphics = {

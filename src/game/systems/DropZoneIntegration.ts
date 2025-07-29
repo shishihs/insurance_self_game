@@ -1,7 +1,7 @@
 import { DropZoneManager, type DropZone, type DropResult } from './DropZoneManager'
 import { DropZonePresets } from './DropZoneValidators'
-import { Game } from '@/domain/entities/Game'
-import { Card } from '@/domain/entities/Card'
+import type { Game } from '@/domain/entities/Game'
+import type { Card } from '@/domain/entities/Card'
 import { GAME_CONSTANTS } from '../config/gameConfig'
 
 /**

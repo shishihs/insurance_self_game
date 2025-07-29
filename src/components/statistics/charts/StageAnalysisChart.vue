@@ -89,7 +89,7 @@ const initChart = () => {
   chartInstance.value = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
           data: counts,

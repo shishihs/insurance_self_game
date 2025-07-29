@@ -4286,12 +4286,13 @@ export class GameScene extends BaseScene {
     endContainer.setDepth(1000)
     endContainer.setAlpha(0)
     
-    // フェードイン
-    this.tweens.add({
-      targets: endContainer,
-      alpha: 1,
-      duration: 1000
-    })
+      // フェードイン
+      this.tweens.add({
+        targets: endContainer,
+        alpha: 1,
+        duration: 1000
+      })
+    }) // delayedCall の閉じ括弧
   }
 
   /**

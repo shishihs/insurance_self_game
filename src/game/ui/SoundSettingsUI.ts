@@ -1,4 +1,4 @@
-import { IntegratedSoundManager } from '../systems/IntegratedSoundManager'
+import type { IntegratedSoundManager } from '../systems/IntegratedSoundManager'
 
 /**
  * サウンド設定UI

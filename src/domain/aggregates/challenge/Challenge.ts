@@ -1,9 +1,11 @@
-import { Card } from '../../entities/Card'
+import type { Card } from '../../entities/Card'
 import { CardPower } from '../../valueObjects/CardPower'
 import { ChallengeId } from './ChallengeId'
-import { ChallengeStatus, ChallengeResult } from './types'
-import { 
-  DomainEvent,
+import type { ChallengeStatus} from './types';
+import { ChallengeResult } from './types'
+import type { 
+  DomainEvent} from './events';
+import {
   CardSelectedForChallengeEvent,
   CardDeselectedFromChallengeEvent,
   ChallengeResolvedEvent

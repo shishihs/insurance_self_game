@@ -1,6 +1,6 @@
 import type { GameRenderer } from '@/interfaces/GameRenderer'
 import { Game } from '@/domain/entities/Game'
-import { Card } from '@/domain/entities/Card'
+import type { Card } from '@/domain/entities/Card'
 import { CardFactory } from '@/domain/services/CardFactory'
 import type { GameConfig, ChallengeResult, PlayerStats } from '@/domain/types/game.types'
 import type { GameStage } from '@/domain/types/card.types'

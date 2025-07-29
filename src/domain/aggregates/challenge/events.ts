@@ -1,4 +1,4 @@
-import { ChallengeId } from './ChallengeId'
+import type { ChallengeId } from './ChallengeId'
 
 /**
  * ドメインイベントの基底クラス

@@ -98,7 +98,7 @@ export class CardFactory {
         power: insurance.power,
         cost: insurance.cost,
         coverage: insurance.coverage,
-        ageBonus: ageBonus
+        ageBonus
       })
     )
     extendedCards.push(...baseCards)
@@ -122,7 +122,7 @@ export class CardFactory {
         power: insurance.power,
         cost: insurance.cost,
         coverage: insurance.coverage,
-        ageBonus: ageBonus
+        ageBonus
       })
     )
     extendedCards.push(...additionalCards)
@@ -199,7 +199,7 @@ export class CardFactory {
             value: selectedType.coverage,
             description: `${selectedType.coverage}ポイントの保障`
           }],
-          ageBonus: ageBonus
+          ageBonus
         },
         termOption: {
           cost: termCost,

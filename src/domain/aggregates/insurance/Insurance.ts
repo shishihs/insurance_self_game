@@ -1,9 +1,10 @@
-import { Card } from '../../entities/Card'
-import { InsurancePremium } from '../../valueObjects/InsurancePremium'
+import type { Card } from '../../entities/Card'
+import type { InsurancePremium } from '../../valueObjects/InsurancePremium'
 import { CardPower } from '../../valueObjects/CardPower'
 import { InsuranceId } from './InsuranceId'
-import { 
-  DomainEvent,
+import type { 
+  DomainEvent} from './events';
+import {
   InsuranceActivatedEvent,
   InsuranceUsedEvent,
   InsuranceExpiredEvent,

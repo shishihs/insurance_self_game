@@ -15,6 +15,9 @@ const props = withDefaults(defineProps<Props>(), {
   recoveryMessage: 'エラーから回復するには、ページを再読み込みしてください'
 })
 
+// 開発環境フラグ
+const isDev = import.meta.env.DEV
+
 const emit = defineEmits<{
   error: [error: Error, info: string]
   recover: []
@@ -194,7 +197,7 @@ const sendErrorReport = () => {
       </div>
       
       <!-- エラー詳細（開発環境のみ） -->
-      <details v-if="import.meta.env.DEV" class="error-details">
+      <details v-if="isDev" class="error-details">
         <summary>エラー詳細（開発者向け）</summary>
         <div class="error-technical">
           <p><strong>エラーメッセージ:</strong> {{ error?.message }}</p>

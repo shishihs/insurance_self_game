@@ -1,5 +1,5 @@
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
-import { Card } from '../entities/Card'
+import type { Card } from '../entities/Card'
 import type { GameStage } from '../types/card.types'
 import type { InsuranceType } from '../types/card.types'
 

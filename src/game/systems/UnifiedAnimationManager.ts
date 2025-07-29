@@ -3,7 +3,8 @@
  * すべてのゲーム内アニメーションを一元管理
  */
 
-import { ref, Ref } from 'vue'
+import type { Ref } from 'vue';
+import { ref } from 'vue'
 
 // アニメーションタイプ
 export type AnimationType = 

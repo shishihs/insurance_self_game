@@ -49,7 +49,7 @@ export class CardAnimations {
         scaleX: flipAxis === 'y' ? 0 : card.scaleX,
         scaleY: flipAxis === 'x' ? 0 : card.scaleY,
         duration: duration / 2,
-        ease: ease,
+        ease,
         onComplete: () => {
           // 中間点でカード面を切り替え
           this.switchCardFace(card, showBack)
@@ -60,7 +60,7 @@ export class CardAnimations {
             scaleX: card.scaleX || 1,
             scaleY: card.scaleY || 1,
             duration: duration / 2,
-            ease: ease,
+            ease,
             onComplete: () => {
               config.onComplete?.()
               resolve()

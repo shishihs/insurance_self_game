@@ -1,8 +1,8 @@
 {
   "summary": {
-    "totalFiles": 184,
-    "totalLines": 72489,
-    "avgComplexity": 28,
+    "totalFiles": 207,
+    "totalLines": 80142,
+    "avgComplexity": 27,
     "complexFiles": [
       "src\\ai\\AdvancedStrategies.ts",
       "src\\analytics\\GameAnalytics.ts",
@@ -18,9 +18,7 @@
       "src\\cui\\utils\\AnimationHelper.ts",
       "src\\cui\\utils\\CardRenderer.ts",
       "src\\cui\\utils\\InputValidator.ts",
-      "src\\domain\\entities\\Game.ts",
       "src\\game\\analytics\\GameAnalytics.ts",
-      "src\\game\\GameManager.ts",
       "src\\game\\input\\TouchGestureManager.ts",
       "src\\game\\scenes\\GameScene.ts",
       "src\\game\\state\\GameStateManager.ts",
@@ -53,6 +51,7 @@
       "src\\components\\interactions\\MicroInteractionManager.ts",
       "src\\components\\interactions\\useFeedbackNotifications.ts",
       "src\\components\\interactions\\useMicroInteractions.ts",
+      "src\\composables\\useStatistics.ts",
       "src\\controllers\\examples\\ConsoleRenderer.ts",
       "src\\controllers\\GameController.ts",
       "src\\controllers\\GameValidator.ts",
@@ -69,14 +68,22 @@
       "src\\cui\\utils\\InputValidator.ts",
       "src\\domain\\constants\\GameConstants.ts",
       "src\\domain\\entities\\Card.ts",
+      "src\\domain\\entities\\Feedback.ts",
       "src\\domain\\entities\\Game.ts",
       "src\\domain\\factories\\ServiceFactory.ts",
+      "src\\domain\\services\\AchievementSystemService.ts",
       "src\\domain\\services\\CardFactory.ts",
       "src\\domain\\services\\CardManager.ts",
       "src\\domain\\services\\ChallengeStrategyService.ts",
+      "src\\domain\\services\\DifficultyBalanceService.ts",
+      "src\\domain\\services\\FeedbackManagementService.ts",
       "src\\domain\\services\\GameProgressService.ts",
       "src\\domain\\services\\GameStateService.ts",
+      "src\\domain\\services\\PlayerProgressionService.ts",
+      "src\\domain\\services\\ReplayabilityService.ts",
+      "src\\domain\\services\\StatisticsDataService.ts",
       "src\\domain\\__tests__\\Game.test.ts",
+      "src\\domain\\__tests__\\GameMechanicsBalance.test.ts",
       "src\\game\\analytics\\GameAnalytics.ts",
       "src\\game\\animations\\CardAnimations.ts",
       "src\\game\\GameManager.ts",
@@ -126,11 +133,14 @@
       "src\\__tests__\\analytics\\GameAnalytics.test.ts",
       "src\\__tests__\\analytics\\StatisticalTests.test.ts",
       "src\\__tests__\\benchmark\\MassiveBenchmark.test.ts",
+      "src\\__tests__\\concurrency\\race-condition.test.ts",
       "src\\__tests__\\controllers\\GameController.test.ts",
       "src\\__tests__\\controllers\\GameValidator.test.ts",
       "src\\__tests__\\cui\\renderers\\InteractiveCUIRenderer.test.ts",
       "src\\__tests__\\cui\\utils\\CardRenderer.test.ts",
       "src\\__tests__\\edge-cases\\ComprehensiveEdgeCases.test.ts",
+      "src\\__tests__\\error-handling\\comprehensive-error-handling.test.ts",
+      "src\\__tests__\\integration\\comprehensive-integration.test.ts",
       "src\\__tests__\\integration\\FullGameWorkflowIntegration.test.ts",
       "src\\__tests__\\integration\\UnifiedArchitecture.test.ts",
       "src\\__tests__\\performance\\PerformanceSystem.test.ts",
@@ -173,8 +183,13 @@
       "src\\domain\\factories\\ServiceFactory.ts",
       "src\\domain\\services\\CardManager.ts",
       "src\\domain\\services\\ChallengeStrategyService.ts",
+      "src\\domain\\services\\DifficultyBalanceService.ts",
+      "src\\domain\\services\\FeedbackManagementService.ts",
+      "src\\domain\\services\\GameChallengeService.ts",
       "src\\domain\\services\\GameProgressService.ts",
       "src\\domain\\services\\GameStateService.ts",
+      "src\\domain\\services\\SkillSystemService.ts",
+      "src\\domain\\services\\StatisticsDataService.ts",
       "src\\game\\analytics\\GameAnalytics.ts",
       "src\\game\\GameManager.ts",
       "src\\game\\input\\TouchGestureManager.ts",
@@ -5189,6 +5204,54 @@
       ]
     },
     {
+      "filePath": "src\\composables\\useStatistics.ts",
+      "lines": 445,
+      "complexity": 28,
+      "methods": [
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 3,
+      "publicMethods": 5,
+      "responsibilities": 2,
+      "issues": [
+        "ファイルが大きすぎる"
+      ]
+    },
+    {
       "filePath": "src\\controllers\\examples\\ConsoleRenderer.ts",
       "lines": 391,
       "complexity": 46,
@@ -8910,7 +8973,7 @@
     },
     {
       "filePath": "src\\domain\\aggregates\\challenge\\Challenge.ts",
-      "lines": 225,
+      "lines": 227,
       "complexity": 12,
       "methods": [
         {
@@ -9103,7 +9166,7 @@
           "isTooLong": false
         }
       ],
-      "imports": 5,
+      "imports": 7,
       "publicMethods": 27,
       "responsibilities": 7,
       "issues": [
@@ -9112,7 +9175,7 @@
     },
     {
       "filePath": "src\\domain\\aggregates\\insurance\\Insurance.ts",
-      "lines": 247,
+      "lines": 248,
       "complexity": 17,
       "methods": [
         {
@@ -9291,7 +9354,7 @@
           "isTooLong": false
         }
       ],
-      "imports": 6,
+      "imports": 7,
       "publicMethods": 25,
       "responsibilities": 7,
       "issues": [
@@ -9376,13 +9439,48 @@
     },
     {
       "filePath": "src\\domain\\entities\\Card.ts",
-      "lines": 356,
-      "complexity": 25,
+      "lines": 496,
+      "complexity": 36,
       "methods": [
         {
           "name": "constructor",
-          "lines": 36,
-          "complexity": 5,
+          "lines": 53,
+          "complexity": 10,
+          "isComplex": false,
+          "isTooLong": true
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
           "isComplex": false,
           "isTooLong": false
         },
@@ -9541,6 +9639,41 @@
           "isTooLong": false
         },
         {
+          "name": "isSkillCard",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isComboCard",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isEventCard",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isLegendaryCard",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isChallengeCard",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
           "name": "toDisplayString",
           "lines": 11,
           "complexity": 2,
@@ -9588,14 +9721,217 @@
           "complexity": 1,
           "isComplex": false,
           "isTooLong": false
+        },
+        {
+          "name": "createSkillCard",
+          "lines": 25,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createComboCard",
+          "lines": 16,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createEventCard",
+          "lines": 16,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createLegendaryCard",
+          "lines": 14,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
         }
       ],
       "imports": 4,
-      "publicMethods": 30,
-      "responsibilities": 7,
+      "publicMethods": 44,
+      "responsibilities": 10,
       "issues": [
         "ファイルが大きすぎる",
-        "責任が多すぎる（God Class）"
+        "責任が多すぎる（God Class）",
+        "メソッド constructor が長すぎる（53行）"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\entities\\Feedback.ts",
+      "lines": 424,
+      "complexity": 38,
+      "methods": [
+        {
+          "name": "constructor",
+          "lines": 13,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateStatus",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "addTag",
+          "lines": 7,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "removeTag",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "addAdminNote",
+          "lines": 5,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateAutoPriority",
+          "lines": 6,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 13,
+          "complexity": 7,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "switch",
+          "lines": 11,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 8,
+          "complexity": 6,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isValidStatusTransition",
+          "lines": 26,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isBugReport",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isReview",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isAnonymous",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isHighPriority",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getSummary",
+          "lines": 8,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getCategoryLabel",
+          "lines": 13,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getPriorityLabel",
+          "lines": 10,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getStatusLabel",
+          "lines": 11,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "toJSON",
+          "lines": 19,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "fromJSON",
+          "lines": 24,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 1,
+      "publicMethods": 23,
+      "responsibilities": 5,
+      "issues": [
+        "ファイルが大きすぎる"
       ]
     },
     {
@@ -9781,12 +10117,12 @@
     },
     {
       "filePath": "src\\domain\\entities\\Game.ts",
-      "lines": 1033,
-      "complexity": 52,
+      "lines": 864,
+      "complexity": 36,
       "methods": [
         {
           "name": "constructor",
-          "lines": 59,
+          "lines": 62,
           "complexity": 3,
           "isComplex": false,
           "isTooLong": true
@@ -9842,8 +10178,8 @@
         },
         {
           "name": "addInsurance",
-          "lines": 7,
-          "complexity": 2,
+          "lines": 4,
+          "complexity": 1,
           "isComplex": false,
           "isTooLong": false
         },
@@ -9877,15 +10213,8 @@
         },
         {
           "name": "startChallenge",
-          "lines": 10,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
           "lines": 4,
-          "complexity": 2,
+          "complexity": 1,
           "isComplex": false,
           "isTooLong": false
         },
@@ -9898,17 +10227,10 @@
         },
         {
           "name": "resolveChallenge",
-          "lines": 68,
-          "complexity": 6,
+          "lines": 61,
+          "complexity": 4,
           "isComplex": false,
           "isTooLong": true
-        },
-        {
-          "name": "if",
-          "lines": 4,
-          "complexity": 3,
-          "isComplex": false,
-          "isTooLong": false
         },
         {
           "name": "if",
@@ -9961,36 +10283,8 @@
         },
         {
           "name": "selectInsuranceType",
-          "lines": 52,
-          "complexity": 5,
-          "isComplex": false,
-          "isTooLong": true
-        },
-        {
-          "name": "if",
           "lines": 4,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
-          "lines": 5,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
-          "lines": 7,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
-          "lines": 4,
-          "complexity": 2,
+          "complexity": 1,
           "isComplex": false,
           "isTooLong": false
         },
@@ -10031,36 +10325,8 @@
         },
         {
           "name": "nextTurn",
-          "lines": 26,
-          "complexity": 3,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
           "lines": 4,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "checkStageProgression",
-          "lines": 13,
-          "complexity": 3,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
-          "lines": 10,
-          "complexity": 3,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
-          "lines": 5,
-          "complexity": 2,
+          "complexity": 1,
           "isComplex": false,
           "isTooLong": false
         },
@@ -10135,6 +10401,13 @@
           "isTooLong": false
         },
         {
+          "name": "setStage",
+          "lines": 5,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
           "name": "getActiveInsurances",
           "lines": 4,
           "complexity": 1,
@@ -10164,10 +10437,10 @@
         },
         {
           "name": "calculateInsuranceBurden",
-          "lines": 51,
-          "complexity": 6,
+          "lines": 21,
+          "complexity": 4,
           "isComplex": false,
-          "isTooLong": true
+          "isTooLong": false
         },
         {
           "name": "if",
@@ -10177,30 +10450,9 @@
           "isTooLong": false
         },
         {
-          "name": "if",
-          "lines": 8,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
           "name": "updateInsuranceBurden",
-          "lines": 10,
-          "complexity": 1,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "updateInsuranceExpirations",
-          "lines": 15,
-          "complexity": 2,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
           "lines": 4,
-          "complexity": 2,
+          "complexity": 1,
           "isComplex": false,
           "isTooLong": false
         },
@@ -10208,13 +10460,6 @@
           "name": "calculateTotalPower",
           "lines": 7,
           "complexity": 1,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
-          "name": "if",
-          "lines": 5,
-          "complexity": 2,
           "isComplex": false,
           "isTooLong": false
         },
@@ -10268,13 +10513,6 @@
           "isTooLong": false
         },
         {
-          "name": "setStage",
-          "lines": 5,
-          "complexity": 1,
-          "isComplex": false,
-          "isTooLong": false
-        },
-        {
           "name": "getSnapshot",
           "lines": 39,
           "complexity": 2,
@@ -10310,17 +10548,14 @@
           "isTooLong": false
         }
       ],
-      "imports": 14,
-      "publicMethods": 75,
-      "responsibilities": 18,
+      "imports": 17,
+      "publicMethods": 61,
+      "responsibilities": 16,
       "issues": [
-        "高い循環的複雑度",
         "ファイルが大きすぎる",
         "責任が多すぎる（God Class）",
-        "メソッド constructor が長すぎる（59行）",
-        "メソッド resolveChallenge が長すぎる（68行）",
-        "メソッド selectInsuranceType が長すぎる（52行）",
-        "メソッド calculateInsuranceBurden が長すぎる（51行）"
+        "メソッド constructor が長すぎる（62行）",
+        "メソッド resolveChallenge が長すぎる（61行）"
       ]
     },
     {
@@ -10542,9 +10777,115 @@
       ]
     },
     {
+      "filePath": "src\\domain\\services\\AchievementSystemService.ts",
+      "lines": 439,
+      "complexity": 37,
+      "methods": [
+        {
+          "name": "getAllAchievements",
+          "lines": 198,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": true
+        },
+        {
+          "name": "updateProgress",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 20,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateProgress",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "switch",
+          "lines": 43,
+          "complexity": 27,
+          "isComplex": true,
+          "isTooLong": false
+        },
+        {
+          "name": "getNewlyUnlockedAchievements",
+          "lines": 9,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateTotalBonuses",
+          "lines": 6,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "formatProgress",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "suggestNextAchievements",
+          "lines": 13,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createInitialPlayerAchievements",
+          "lines": 8,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 3,
+      "publicMethods": 13,
+      "responsibilities": 4,
+      "issues": [
+        "ファイルが大きすぎる",
+        "メソッド getAllAchievements が長すぎる（198行）",
+        "メソッド switch が複雑すぎる（複雑度: 27）"
+      ]
+    },
+    {
       "filePath": "src\\domain\\services\\CardFactory.ts",
-      "lines": 406,
-      "complexity": 9,
+      "lines": 528,
+      "complexity": 11,
       "methods": [
         {
           "name": "calculateAgeBonus",
@@ -10657,11 +10998,39 @@
           "complexity": 1,
           "isComplex": false,
           "isTooLong": false
+        },
+        {
+          "name": "createSkillCards",
+          "lines": 27,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createComboCards",
+          "lines": 30,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createEventCards",
+          "lines": 24,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createLegendaryCards",
+          "lines": 27,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
         }
       ],
       "imports": 4,
-      "publicMethods": 16,
-      "responsibilities": 4,
+      "publicMethods": 20,
+      "responsibilities": 5,
       "issues": [
         "ファイルが大きすぎる",
         "メソッド createExtendedInsuranceCards が長すぎる（54行）",
@@ -11136,6 +11505,665 @@
       "responsibilities": 8,
       "issues": [
         "ファイルが大きすぎる",
+        "責任が多すぎる（God Class）"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\services\\DifficultyBalanceService.ts",
+      "lines": 417,
+      "complexity": 42,
+      "methods": [
+        {
+          "name": "calculateDynamicDifficulty",
+          "lines": 61,
+          "complexity": 14,
+          "isComplex": true,
+          "isTooLong": true
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "adjustChallengePower",
+          "lines": 44,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateChallengeLevel",
+          "lines": 12,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getRecommendedStrategy",
+          "lines": 12,
+          "complexity": 6,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateDifficultyExplanation",
+          "lines": 25,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "adjustRewards",
+          "lines": 10,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 15,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "adjustCardRarity",
+          "lines": 3,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "detectFlowState",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "analyzeLongTermBalance",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 8,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createInitialDifficulty",
+          "lines": 15,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updatePerformanceHistory",
+          "lines": 17,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 4,
+      "publicMethods": 25,
+      "responsibilities": 6,
+      "issues": [
+        "ファイルが大きすぎる",
+        "責任が多すぎる（God Class）",
+        "メソッド calculateDynamicDifficulty が長すぎる（61行）",
+        "メソッド calculateDynamicDifficulty が複雑すぎる（複雑度: 14）"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\services\\FeedbackManagementService.ts",
+      "lines": 530,
+      "complexity": 49,
+      "methods": [
+        {
+          "name": "constructor",
+          "lines": 5,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createFeedback",
+          "lines": 13,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createBugReport",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createReview",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getFeedbackById",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "searchFeedbacks",
+          "lines": 2,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 9,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateFeedbackStatus",
+          "lines": 16,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "addTagToFeedback",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "addAdminNote",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getStatistics",
+          "lines": 2,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 10,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getHighPriorityFeedbacks",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getUnresolvedBugReports",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getRecentReviews",
+          "lines": 8,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "deleteFeedback",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getAllFeedbacks",
+          "lines": 5,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "exportFeedbacks",
+          "lines": 5,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "importFeedbacks",
+          "lines": 20,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getSatisfactionSurveyResults",
+          "lines": 13,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 14,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "loadFromStorage",
+          "lines": 15,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "saveToStorage",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "notifyHighPriorityFeedback",
+          "lines": 11,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 1,
+      "publicMethods": 40,
+      "responsibilities": 9,
+      "issues": [
+        "ファイルが大きすぎる",
+        "責任が多すぎる（God Class）"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\services\\GameChallengeService.ts",
+      "lines": 265,
+      "complexity": 13,
+      "methods": [
+        {
+          "name": "constructor",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "startChallenge",
+          "lines": 8,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "resolveChallenge",
+          "lines": 18,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateTotalPower",
+          "lines": 18,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 9,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createChallengeResult",
+          "lines": 40,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateGameStateAfterChallenge",
+          "lines": 17,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "validatePhase",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "validateChallenge",
+          "lines": 6,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getChallengePower",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateStatistics",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateVitalityChange",
+          "lines": 12,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateVitality",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createResultMessage",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 5,
+      "publicMethods": 23,
+      "responsibilities": 6,
+      "issues": [
         "責任が多すぎる（God Class）"
       ]
     },
@@ -11868,6 +12896,799 @@
       ]
     },
     {
+      "filePath": "src\\domain\\services\\PlayerProgressionService.ts",
+      "lines": 348,
+      "complexity": 31,
+      "methods": [
+        {
+          "name": "addExperience",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 7,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateLevelFromExperience",
+          "lines": 9,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 6,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculatePlayerLevel",
+          "lines": 16,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateVitalityBonus",
+          "lines": 6,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "isFeatureUnlocked",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getRecommendedStrategy",
+          "lines": 16,
+          "complexity": 10,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updatePlayTime",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateGameStats",
+          "lines": 12,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getProgressToNextLevel",
+          "lines": 13,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getPlayerRank",
+          "lines": 10,
+          "complexity": 7,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createInitialProgression",
+          "lines": 17,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateExperienceBonus",
+          "lines": 19,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "spendSkillPoints",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculatePlayerPower",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 2,
+      "publicMethods": 21,
+      "responsibilities": 5,
+      "issues": [
+        "ファイルが大きすぎる"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\services\\ReplayabilityService.ts",
+      "lines": 547,
+      "complexity": 48,
+      "methods": [
+        {
+          "name": "generateDailyChallenge",
+          "lines": 19,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getDailyChallengeTemplates",
+          "lines": 55,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": true
+        },
+        {
+          "name": "generateCustomRuleSet",
+          "lines": 24,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateRandomEvent",
+          "lines": 23,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getRandomEventsPool",
+          "lines": 79,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": true
+        },
+        {
+          "name": "isEventApplicable",
+          "lines": 15,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "recommendGameMode",
+          "lines": 10,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateSeasonalContent",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "analyzePlayStyle",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 12,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "dateSeed",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateWeeklyChallenge",
+          "lines": 25,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 6,
+      "publicMethods": 17,
+      "responsibilities": 5,
+      "issues": [
+        "ファイルが大きすぎる",
+        "メソッド getDailyChallengeTemplates が長すぎる（55行）",
+        "メソッド getRandomEventsPool が長すぎる（79行）"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\services\\SkillSystemService.ts",
+      "lines": 273,
+      "complexity": 50,
+      "methods": [
+        {
+          "name": "useSkill",
+          "lines": 31,
+          "complexity": 11,
+          "isComplex": true,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "processSkillCooldowns",
+          "lines": 22,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "improveMastery",
+          "lines": 28,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateMasteryBonus",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getRarityMultiplier",
+          "lines": 10,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "canUseSkill",
+          "lines": 22,
+          "complexity": 8,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateEffectivePower",
+          "lines": 13,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateSkillDescription",
+          "lines": 30,
+          "complexity": 12,
+          "isComplex": true,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "canLearnSkill",
+          "lines": 30,
+          "complexity": 4,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "checkPrerequisites",
+          "lines": 13,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "shouldAutoImprove",
+          "lines": 20,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 3,
+      "publicMethods": 23,
+      "responsibilities": 6,
+      "issues": [
+        "責任が多すぎる（God Class）",
+        "メソッド useSkill が複雑すぎる（複雑度: 11）",
+        "メソッド generateSkillDescription が複雑すぎる（複雑度: 12）"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\services\\StatisticsDataService.ts",
+      "lines": 608,
+      "complexity": 50,
+      "methods": [
+        {
+          "name": "constructor",
+          "lines": 3,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getInstance",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "startGameTracking",
+          "lines": 17,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "updateTurnData",
+          "lines": 39,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "finishGameTracking",
+          "lines": 20,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 12,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateStatistics",
+          "lines": 50,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getRealtimeStatistics",
+          "lines": 4,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "exportData",
+          "lines": 10,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "applyFilter",
+          "lines": 36,
+          "complexity": 15,
+          "isComplex": true,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "applySorting",
+          "lines": 22,
+          "complexity": 5,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 8,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateTotalPlayTime",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateGamePlayTime",
+          "lines": 7,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateAverageGameDuration",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateOverallSuccessRate",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateAverageVitality",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateStageReachCounts",
+          "lines": 15,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateStageSuccessRates",
+          "lines": 19,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateAverageCardsPerGame",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateCardTypeUsage",
+          "lines": 14,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateFavoriteCardTypes",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateTotalInsurancePurchases",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateInsuranceTypeUsage",
+          "lines": 14,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateAverageInsuranceBurden",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateInsuranceEffectiveness",
+          "lines": 16,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "generateGameHistoryByDate",
+          "lines": 3,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "analyzeDecisionPatterns",
+          "lines": 3,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "analyzeRecentTrends",
+          "lines": 23,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateGameScore",
+          "lines": 19,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "calculateCardEffectiveness",
+          "lines": 9,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "convertToCSV",
+          "lines": 18,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "notifyListeners",
+          "lines": 6,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 4,
+      "publicMethods": 44,
+      "responsibilities": 10,
+      "issues": [
+        "ファイルが大きすぎる",
+        "責任が多すぎる（God Class）",
+        "メソッド applyFilter が複雑すぎる（複雑度: 15）"
+      ]
+    },
+    {
       "filePath": "src\\domain\\__tests__\\Game.test.ts",
       "lines": 360,
       "complexity": 4,
@@ -11897,6 +13718,61 @@
       "imports": 5,
       "publicMethods": 3,
       "responsibilities": 2,
+      "issues": [
+        "ファイルが大きすぎる"
+      ]
+    },
+    {
+      "filePath": "src\\domain\\__tests__\\GameMechanicsBalance.test.ts",
+      "lines": 391,
+      "complexity": 8,
+      "methods": [
+        {
+          "name": "for",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 16,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 10,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 8,
+      "publicMethods": 6,
+      "responsibilities": 3,
       "issues": [
         "ファイルが大きすぎる"
       ]
@@ -12409,8 +14285,8 @@
     },
     {
       "filePath": "src\\game\\GameManager.ts",
-      "lines": 426,
-      "complexity": 51,
+      "lines": 422,
+      "complexity": 50,
       "methods": [
         {
           "name": "constructor",
@@ -12611,21 +14487,21 @@
         {
           "name": "handleOrientationChange",
           "lines": 15,
-          "complexity": 4,
+          "complexity": 3,
           "isComplex": false,
           "isTooLong": false
         },
         {
           "name": "if",
           "lines": 7,
-          "complexity": 4,
+          "complexity": 3,
           "isComplex": false,
           "isTooLong": false
         },
         {
           "name": "if",
           "lines": 4,
-          "complexity": 3,
+          "complexity": 2,
           "isComplex": false,
           "isTooLong": false
         },
@@ -12725,7 +14601,6 @@
       "publicMethods": 44,
       "responsibilities": 10,
       "issues": [
-        "高い循環的複雑度",
         "ファイルが大きすぎる",
         "責任が多すぎる（God Class）",
         "メソッド initialize が長すぎる（58行）"
@@ -13391,7 +15266,7 @@
     },
     {
       "filePath": "src\\game\\scenes\\GameScene.ts",
-      "lines": 5438,
+      "lines": 5439,
       "complexity": 375,
       "methods": [
         {
@@ -14831,9 +16706,9 @@
         },
         {
           "name": "showGameEnd",
-          "lines": 1229,
-          "complexity": 73,
-          "isComplex": true,
+          "lines": 87,
+          "complexity": 3,
+          "isComplex": false,
           "isTooLong": true
         },
         {
@@ -15503,8 +17378,7 @@
         "メソッド showCardSelection が長すぎる（61行）",
         "メソッド createSelectableCard が長すぎる（151行）",
         "メソッド showInsuranceBurdenWarning が長すぎる（107行）",
-        "メソッド showGameEnd が長すぎる（1229行）",
-        "メソッド showGameEnd が複雑すぎる（複雑度: 73）",
+        "メソッド showGameEnd が長すぎる（87行）",
         "メソッド showNotification が長すぎる（51行）",
         "メソッド showInsuranceRenewalDialog が長すぎる（143行）",
         "メソッド handleTutorialStepEnter が長すぎる（64行）",
@@ -15578,7 +17452,7 @@
     {
       "filePath": "src\\game\\scenes\\ResponsiveGameScene.ts",
       "lines": 443,
-      "complexity": 25,
+      "complexity": 24,
       "methods": [
         {
           "name": "initializeResponsive",
@@ -15723,7 +17597,7 @@
         {
           "name": "adjustUIScale",
           "lines": 22,
-          "complexity": 3,
+          "complexity": 2,
           "isComplex": false,
           "isTooLong": false
         },
@@ -19499,7 +21373,7 @@
     {
       "filePath": "src\\game\\systems\\TutorialManager.ts",
       "lines": 814,
-      "complexity": 97,
+      "complexity": 96,
       "methods": [
         {
           "name": "constructor",
@@ -19961,7 +21835,7 @@
     },
     {
       "filePath": "src\\game\\systems\\UnifiedAnimationManager.ts",
-      "lines": 688,
+      "lines": 689,
       "complexity": 72,
       "methods": [
         {
@@ -20350,7 +22224,7 @@
           "isTooLong": false
         }
       ],
-      "imports": 1,
+      "imports": 2,
       "publicMethods": 55,
       "responsibilities": 12,
       "issues": [
@@ -21537,7 +23411,7 @@
     {
       "filePath": "src\\game\\ui\\TutorialOverlay.ts",
       "lines": 890,
-      "complexity": 65,
+      "complexity": 63,
       "methods": [
         {
           "name": "constructor",
@@ -21703,21 +23577,21 @@
         {
           "name": "onResize",
           "lines": 21,
-          "complexity": 5,
+          "complexity": 4,
           "isComplex": false,
           "isTooLong": false
         },
         {
           "name": "if",
           "lines": 10,
-          "complexity": 5,
+          "complexity": 4,
           "isComplex": false,
           "isTooLong": false
         },
         {
           "name": "if",
           "lines": 6,
-          "complexity": 3,
+          "complexity": 2,
           "isComplex": false,
           "isTooLong": false
         },
@@ -26248,6 +28122,47 @@
       ]
     },
     {
+      "filePath": "src\\__tests__\\concurrency\\race-condition.test.ts",
+      "lines": 567,
+      "complexity": 28,
+      "methods": [
+        {
+          "name": "logOperation",
+          "lines": 11,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "getOperationReport",
+          "lines": 3,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "reset",
+          "lines": 6,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 4,
+      "publicMethods": 4,
+      "responsibilities": 2,
+      "issues": [
+        "ファイルが大きすぎる"
+      ]
+    },
+    {
       "filePath": "src\\__tests__\\controllers\\GameController.test.ts",
       "lines": 475,
       "complexity": 25,
@@ -26566,6 +28481,249 @@
       "imports": 7,
       "publicMethods": 13,
       "responsibilities": 4,
+      "issues": [
+        "ファイルが大きすぎる"
+      ]
+    },
+    {
+      "filePath": "src\\__tests__\\error-handling\\comprehensive-error-handling.test.ts",
+      "lines": 551,
+      "complexity": 23,
+      "methods": [
+        {
+          "name": "createInvalidCard",
+          "lines": 7,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "createCorruptedGame",
+          "lines": 8,
+          "complexity": 1,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "simulateMemoryPressure",
+          "lines": 14,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "simulateResourceExhaustion",
+          "lines": 9,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 11,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 9,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 15,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 16,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 9,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 7,
+      "publicMethods": 14,
+      "responsibilities": 5,
+      "issues": [
+        "ファイルが大きすぎる"
+      ]
+    },
+    {
+      "filePath": "src\\__tests__\\integration\\comprehensive-integration.test.ts",
+      "lines": 456,
+      "complexity": 36,
+      "methods": [
+        {
+          "name": "if",
+          "lines": 11,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 11,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 7,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 11,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 5,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 4,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "if",
+          "lines": 8,
+          "complexity": 3,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 38,
+          "complexity": 7,
+          "isComplex": false,
+          "isTooLong": false
+        },
+        {
+          "name": "for",
+          "lines": 6,
+          "complexity": 2,
+          "isComplex": false,
+          "isTooLong": false
+        }
+      ],
+      "imports": 7,
+      "publicMethods": 17,
+      "responsibilities": 5,
       "issues": [
         "ファイルが大きすぎる"
       ]

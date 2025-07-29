@@ -1,5 +1,5 @@
-import { CardPower } from '../../valueObjects/CardPower'
-import { ChallengeId } from './ChallengeId'
+import type { CardPower } from '../../valueObjects/CardPower'
+import type { ChallengeId } from './ChallengeId'
 
 /**
  * チャレンジの状態

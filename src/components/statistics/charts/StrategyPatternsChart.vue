@@ -137,7 +137,7 @@ const initChart = () => {
   chartInstance.value = new Chart(ctx, {
     type: 'scatter',
     data: {
-      datasets: datasets
+      datasets
     },
     options: {
       responsive: true,

@@ -346,7 +346,7 @@ export const ResponsiveGameSceneMixin = {
     this.registry.set('uiScale', scale)
     
     // 各UI要素に適用
-    const uiElements = this.children.list.filter(child => child.getData && child.getData('isUI'))
+    const uiElements = this.children.list.filter(child => child.getData?.('isUI'))
     uiElements.forEach(element => {
       if ('setScale' in element) {
         (element as any).setScale(scale)

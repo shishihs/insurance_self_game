@@ -2,6 +2,9 @@ import { createApp } from 'vue'
 import '@unocss/reset/tailwind.css'
 import 'virtual:uno.css'
 import './style.css'
+import './styles/design-system.css'
+import './styles/micro-interactions.css'
+import './styles/brand-elements.css'
 import App from './App.vue'
 
 // セキュリティシステムの初期化
@@ -12,6 +15,9 @@ import { GlobalErrorHandler } from '@/utils/error-handling/ErrorHandler'
 
 // PWA Service Worker の登録
 import { registerServiceWorker } from '@/pwa/registerServiceWorker'
+
+// リップルエフェクトの初期化
+import { initAutoRipple } from '@/utils/ripple-effect'
 
 // グローバルエラーハンドラーを設定
 const errorHandler = GlobalErrorHandler.getInstance({
@@ -50,6 +56,9 @@ try {
 
 // アプリケーションをマウント
 app.mount('#app')
+
+// UI エンハンスメントの初期化
+initAutoRipple()
 
 // Service Worker の登録
 registerServiceWorker({

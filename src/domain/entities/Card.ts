@@ -407,7 +407,7 @@ export class Card implements IAdvancedCard {
       type: 'insurance',
       power,
       cost: 1,
-      effects: effects
+      effects
     })
   }
 

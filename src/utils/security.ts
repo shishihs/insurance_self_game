@@ -239,7 +239,7 @@ export function secureLocalStorage() {
     },
     
     async getOrCreateEncryptionKey(): Promise<string> {
-      const keyName = ENCRYPTION_KEY_PREFIX + 'master'
+      const keyName = `${ENCRYPTION_KEY_PREFIX  }master`
       let key = localStorage.getItem(keyName)
       
       if (!key) {

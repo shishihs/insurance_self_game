@@ -34,15 +34,53 @@ export default defineConfig({
               return 'vue-vendor'
             }
             if (id.includes('phaser')) {
-              return 'phaser-vendor'
+              // Phaserをさらに細かく分割
+              if (id.includes('phaser/src/scene')) {
+                return 'phaser-scene'
+              }
+              if (id.includes('phaser/src/gameobjects')) {
+                return 'phaser-gameobjects'
+              }
+              return 'phaser-core'
             }
             if (id.includes('@unocss') || id.includes('unocss')) {
               return 'css-vendor'
             }
+            if (id.includes('chart.js')) {
+              return 'chart-vendor'
+            }
             return 'vendor'
           }
           
+          // 統計・分析系コンポーネントを分離（遅延読み込み）
+          if (id.includes('/src/components/statistics/') || 
+              id.includes('/src/analytics/') ||
+              id.includes('/src/benchmark/')) {
+            return 'analytics'
+          }
+          
+          // フィードバック系コンポーネントを分離
+          if (id.includes('/src/components/feedback/')) {
+            return 'feedback'
+          }
+          
+          // CUI/CLI系を分離
+          if (id.includes('/src/cui/') || 
+              id.includes('/src/cli/') ||
+              id.includes('/src/controllers/')) {
+            return 'cli-tools'
+          }
+          
+          // テスト関連を分離
+          if (id.includes('/__tests__/') || 
+              id.includes('/test/')) {
+            return 'tests'
+          }
+          
           // ゲーム関連のコードを分離
+          if (id.includes('/src/game/scenes/')) {
+            return 'game-scenes'
+          }
           if (id.includes('/src/game/')) {
             return 'game-engine'
           }

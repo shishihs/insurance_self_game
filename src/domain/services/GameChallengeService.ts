@@ -27,7 +27,7 @@ import type { Card } from '../entities/Card'
 import type { Game } from '../entities/Game'
 import type { ChallengeResult, InsuranceTypeChoice } from '../types/game.types'
 import { CardFactory } from './CardFactory'
-import { ChallengeResolutionService } from './ChallengeResolutionService'
+import type { ChallengeResolutionService } from './ChallengeResolutionService'
 
 /**
  * パワー計算の内訳

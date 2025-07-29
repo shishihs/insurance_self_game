@@ -9,7 +9,7 @@ import type { Game } from '../entities/Game'
 import type { InsuranceTypeSelectionResult } from '../types/game.types'
 import { CardFactory } from './CardFactory'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
-import { InsurancePremiumCalculationService } from './InsurancePremiumCalculationService'
+import type { InsurancePremiumCalculationService } from './InsurancePremiumCalculationService'
 
 export class GameInsuranceService {
   constructor(

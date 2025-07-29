@@ -297,7 +297,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
-import { FeedbackCategory, SatisfactionRating } from '../../domain/entities/Feedback'
+import type { SatisfactionRating } from '../../domain/entities/Feedback';
+import { FeedbackCategory } from '../../domain/entities/Feedback'
 
 // Props & Emits
 interface Props {
@@ -595,7 +596,7 @@ const captureScreenshot = async (): Promise<string | undefined> => {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = '#ffffff'
     ctx.font = '16px Arial'
-    ctx.fillText('Screenshot captured at ' + new Date().toLocaleString(), 10, 30)
+    ctx.fillText(`Screenshot captured at ${  new Date().toLocaleString()}`, 10, 30)
 
     return canvas.toDataURL('image/png')
   } catch (error) {
@@ -605,7 +606,7 @@ const captureScreenshot = async (): Promise<string | undefined> => {
 }
 
 const generateSessionId = (): string => {
-  return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  return `session_${  Date.now()  }_${  Math.random().toString(36).substr(2, 9)}`
 }
 
 const calculatePlayTime = (): number => {

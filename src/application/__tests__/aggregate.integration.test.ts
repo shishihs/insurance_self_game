@@ -5,7 +5,7 @@ import { Card } from '../../entities/Card'
 import { Challenge } from '../../aggregates/challenge'
 import { Insurance } from '../../aggregates/insurance'
 import { CardFactory } from '../../services/CardFactory'
-import { DomainEvent } from '../../aggregates/challenge/events'
+import type { DomainEvent } from '../../aggregates/challenge/events'
 
 describe('集約間の統合テスト', () => {
   let gameService: GameApplicationService

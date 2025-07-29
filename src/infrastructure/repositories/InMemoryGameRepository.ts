@@ -1,5 +1,5 @@
-import { IGameRepository } from '../../domain/repositories/IGameRepository'
-import { Game } from '../../domain/entities/Game'
+import type { IGameRepository } from '../../domain/repositories/IGameRepository'
+import type { Game } from '../../domain/entities/Game'
 
 /**
  * ゲームリポジトリのインメモリ実装

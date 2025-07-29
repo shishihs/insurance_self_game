@@ -215,7 +215,7 @@ function testKeyboardNavigation() {
     if (currentIndex < focusableElements.length) {
       const element = focusableElements[currentIndex]
       element.focus()
-      console.log(`フォーカス: ${element.tagName}${element.className ? '.' + element.className : ''} (${currentIndex + 1}/${focusableElements.length})`)
+      console.log(`フォーカス: ${element.tagName}${element.className ? `.${  element.className}` : ''} (${currentIndex + 1}/${focusableElements.length})`)
       currentIndex++
       
       if (currentIndex < focusableElements.length) {

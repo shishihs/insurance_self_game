@@ -150,7 +150,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
-import { SatisfactionRating } from '../../domain/entities/Feedback'
+import type { SatisfactionRating } from '../../domain/entities/Feedback'
 
 // Props
 interface Props {
@@ -394,7 +394,7 @@ const submitSurvey = async () => {
 }
 
 const generateSessionId = (): string => {
-  return 'survey_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  return `survey_${  Date.now()  }_${  Math.random().toString(36).substr(2, 9)}`
 }
 
 const calculatePlayTime = (): number => {

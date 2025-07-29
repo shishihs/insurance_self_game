@@ -405,7 +405,7 @@ export class TutorialOverlay {
     options: HighlightOptions = {}
   ): void {
     const element = this.scene.children.getByName(elementName)
-    if (!element || !element.getBounds) return
+    if (!element?.getBounds) return
 
     const bounds = element.getBounds()
     const highlight = this.scene.add.graphics()
@@ -445,7 +445,7 @@ export class TutorialOverlay {
       const glowColorValue = parseInt(finalOptions.borderColor?.substring(1) || 'FFA500', 16)
       glow.lineStyle(8, glowColorValue, 0.3)
       glow.strokeRect(bounds.x - 4, bounds.y - 4, bounds.width + 8, bounds.height + 8)
-      this.highlightElements.set(elementName + '_glow', glow)
+      this.highlightElements.set(`${elementName  }_glow`, glow)
     }
     
     // アニメーション
@@ -495,7 +495,7 @@ export class TutorialOverlay {
         return this.scene.tweens.add({
           targets: target,
           rotation: { from: 0, to: Math.PI * 2 },
-          duration: duration,
+          duration,
           repeat: -1,
           ease: 'Linear'
         })
@@ -580,7 +580,7 @@ export class TutorialOverlay {
     if (this.spotlightMask && this.highlightElements.size > 0) {
       // 最初のハイライト要素でスポットライトを再作成
       const firstElement = this.highlightElements.values().next().value
-      if (firstElement && firstElement.getBounds) {
+      if (firstElement?.getBounds) {
         const bounds = firstElement.getBounds()
         const mockElement = { getBounds: () => bounds }
         this.createSpotlight(mockElement as Phaser.GameObjects.GameObject)

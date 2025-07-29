@@ -300,7 +300,7 @@ const handleReviewSubmitted = (reviewId: string) => {
 
 const handleBugReported = (reportId: string) => {
   showBugReporter.value = false
-  showSuccessToast('バグレポートを送信しました', 'レポートID: ' + reportId.substring(0, 8))
+  showSuccessToast('バグレポートを送信しました', `レポートID: ${  reportId.substring(0, 8)}`)
   emit('feedbackSubmitted', reportId, 'bug')
   loadRecentFeedbacks()
 }

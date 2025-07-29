@@ -1,11 +1,11 @@
-import { Game } from '../../domain/entities/Game'
-import { Card } from '../../domain/entities/Card'
+import type { Game } from '../../domain/entities/Game'
+import type { Card } from '../../domain/entities/Card'
 import { Challenge } from '../../domain/aggregates/challenge'
 import { Insurance } from '../../domain/aggregates/insurance'
-import { ChallengeResult } from '../../domain/aggregates/challenge/types'
-import { DomainEvent } from '../../domain/aggregates/challenge/events'
+import type { ChallengeResult } from '../../domain/aggregates/challenge/types'
+import type { DomainEvent } from '../../domain/aggregates/challenge/events'
 // import { Vitality } from '../../domain/valueObjects/Vitality' // 未使用のためコメントアウト
-import { InsurancePremium } from '../../domain/valueObjects/InsurancePremium'
+import type { InsurancePremium } from '../../domain/valueObjects/InsurancePremium'
 
 /**
  * ゲームアプリケーションサービス

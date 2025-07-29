@@ -1,4 +1,4 @@
-import { Game } from '../entities/Game'
+import type { Game } from '../entities/Game'
 
 /**
  * ゲームリポジトリインターフェース

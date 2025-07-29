@@ -18,8 +18,8 @@
 
 import type { Game } from '../entities/Game'
 import type { TurnResult } from '../types/game.types'
-import { GameStageManager } from './GameStageManager'
-import { InsuranceExpirationManager } from './InsuranceExpirationManager'
+import type { GameStageManager } from './GameStageManager'
+import type { InsuranceExpirationManager } from './InsuranceExpirationManager'
 
 export class GameTurnManager {
   constructor(

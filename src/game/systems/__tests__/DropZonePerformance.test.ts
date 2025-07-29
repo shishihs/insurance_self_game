@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { DropZoneManager, type DropZone } from '../DropZoneManager'
 import { DropZoneIntegration } from '../DropZoneIntegration'
-import { Game } from '@/domain/entities/Game'
-import { Card } from '@/domain/entities/Card'
+import type { Game } from '@/domain/entities/Game'
+import type { Card } from '@/domain/entities/Card'
 
 // phaser3spectorjs モジュールをモック
 vi.mock('phaser3spectorjs', () => ({

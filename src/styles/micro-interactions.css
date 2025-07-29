@@ -1,0 +1,589 @@
+/* =====================================================
+   マイクロインタラクション - 洗練されたユーザー体験
+   ===================================================== */
+
+/* =====================================================
+   ボタンインタラクション - 触れたくなるボタン
+   ===================================================== */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  
+  padding: var(--space-3) var(--space-6);
+  min-height: var(--touch-target-comfortable);
+  
+  border: none;
+  border-radius: var(--rounded-lg);
+  
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  
+  transition: all var(--duration-200) var(--ease-out);
+  transform-origin: center;
+  overflow: hidden;
+}
+
+/* ホバーエフェクト - 微細な動きで生命力を表現 */
+.btn:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--duration-100);
+}
+
+/* フォーカス状態 - アクセシビリティを重視 */
+.btn:focus-visible {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+/* ローディング状態 */
+.btn[data-loading="true"] {
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn[data-loading="true"]::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 1s linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ボタンバリエーション */
+.btn-primary {
+  background: var(--brand-gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-lg), var(--shadow-glow-primary);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--primary-300);
+  border: 1px solid var(--border-primary);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--primary-400);
+  color: var(--primary-200);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--primary-400);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-card);
+  color: var(--primary-300);
+  transform: translateY(-1px);
+}
+
+/* =====================================================
+   カードインタラクション - 魅力的なコンテンツ表示
+   ===================================================== */
+
+.interactive-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gray);
+  border-radius: var(--rounded-2xl);
+  padding: var(--space-6);
+  
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-sm);
+  
+  transition: all var(--duration-300) var(--ease-out);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.interactive-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--brand-gradient-soft);
+  opacity: 0;
+  transition: opacity var(--duration-300) var(--ease-out);
+  pointer-events: none;
+}
+
+.interactive-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--border-primary);
+  box-shadow: var(--shadow-xl);
+}
+
+.interactive-card:hover::before {
+  opacity: 0.05;
+}
+
+/* カード内の要素アニメーション */
+.card-title {
+  transition: color var(--duration-200) var(--ease-out);
+}
+
+.interactive-card:hover .card-title {
+  color: var(--primary-300);
+}
+
+/* =====================================================
+   入力フィールドインタラクション - 直感的なフォーム
+   ===================================================== */
+
+.input-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  min-height: var(--touch-target-comfortable);
+  
+  background: var(--bg-card);
+  border: 2px solid var(--border-gray);
+  border-radius: var(--rounded-lg);
+  
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--text-base);
+  font-family: inherit;
+  
+  transition: all var(--duration-200) var(--ease-out);
+  outline: none;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  transition: color var(--duration-200) var(--ease-out);
+}
+
+.input:focus {
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+  background: var(--bg-card-hover);
+}
+
+.input:focus::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* フローティングラベル */
+.input-floating {
+  position: relative;
+}
+
+.input-floating .input {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-2);
+}
+
+.input-floating .label {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-3);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: var(--text-base);
+  transition: all var(--duration-200) var(--ease-out);
+  pointer-events: none;
+  background: var(--bg-card);
+  padding: 0 var(--space-1);
+}
+
+.input-floating .input:focus + .label,
+.input-floating .input:not(:placeholder-shown) + .label {
+  top: 0;
+  font-size: var(--text-xs);
+  color: var(--primary-400);
+  transform: translateY(-50%);
+}
+
+/* =====================================================
+   トグルスイッチ - 美しい状態切り替え
+   ===================================================== */
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-gray);
+  border-radius: var(--rounded-full);
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-200) var(--ease-back-out);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: var(--primary-600);
+  border-color: var(--primary-400);
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(24px);
+  box-shadow: var(--shadow-md);
+}
+
+.toggle-input:focus-visible + .toggle-slider {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+/* =====================================================
+   プログレスバー - 視覚的な進行状況表示
+   ===================================================== */
+
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--rounded-full);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--brand-gradient-primary);
+  border-radius: var(--rounded-full);
+  transition: width var(--duration-500) var(--ease-out);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: progress-shimmer 2s infinite;
+}
+
+@keyframes progress-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* =====================================================
+   ツールチップ - コンテキスト情報の表示
+   ===================================================== */
+
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-secondary);
+  color: white;
+  font-size: var(--text-sm);
+  border-radius: var(--rounded-md);
+  box-shadow: var(--shadow-lg);
+  
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+  
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--duration-200) var(--ease-out);
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--bg-secondary);
+}
+
+.tooltip-container:hover .tooltip,
+.tooltip-container:focus-within .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* =====================================================
+   リップルエフェクト - マテリアルデザイン風の触覚フィードバック
+   ===================================================== */
+
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(0);
+  animation: ripple-animation var(--duration-700) var(--ease-out);
+  pointer-events: none;
+}
+
+@keyframes ripple-animation {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* =====================================================
+   アコーディオン - スムーズな開閉アニメーション
+   ===================================================== */
+
+.accordion-item {
+  border: 1px solid var(--border-gray);
+  border-radius: var(--rounded-lg);
+  margin-bottom: var(--space-2);
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.accordion-header {
+  padding: var(--space-4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color var(--duration-200) var(--ease-out);
+}
+
+.accordion-header:hover {
+  background: var(--bg-card-hover);
+}
+
+.accordion-icon {
+  transition: transform var(--duration-300) var(--ease-back-out);
+}
+
+.accordion-item[data-expanded="true"] .accordion-icon {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--duration-300) var(--ease-out);
+}
+
+.accordion-content-inner {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.accordion-item[data-expanded="true"] .accordion-content {
+  max-height: 500px; /* 十分に大きな値 */
+}
+
+/* =====================================================
+   スクロールインジケーター - 読み進み状況の可視化
+   ===================================================== */
+
+.scroll-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--bg-tertiary);
+  z-index: var(--z-fixed);
+}
+
+.scroll-progress {
+  height: 100%;
+  background: var(--brand-gradient-primary);
+  width: 0%;
+  transition: width var(--duration-100) var(--ease-out);
+}
+
+/* =====================================================
+   パララックス効果 - 奥行きのある視覚体験
+   ===================================================== */
+
+.parallax-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.parallax-element {
+  transition: transform var(--duration-100) var(--ease-linear);
+}
+
+/* =====================================================
+   グロー効果 - 注目を集める光の演出
+   ===================================================== */
+
+.glow-on-hover {
+  transition: all var(--duration-300) var(--ease-out);
+}
+
+.glow-on-hover:hover {
+  box-shadow: 
+    var(--shadow-lg),
+    0 0 30px rgba(100, 116, 139, 0.3),
+    0 0 60px rgba(100, 116, 139, 0.1);
+}
+
+/* =====================================================
+   パルス効果 - 生命力のあるビート
+   ===================================================== */
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* =====================================================
+   バウンス効果 - 楽しげな動き
+   ===================================================== */
+
+.bounce-in {
+  animation: bounce-in var(--duration-500) var(--ease-back-out);
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3) translateY(100px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) translateY(-10px);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(0.95) translateY(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* =====================================================
+   アクセシビリティ対応 - すべてのユーザーに配慮
+   ===================================================== */
+
+/* モーション削減設定を尊重 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .pulse,
+  .bounce-in,
+  .ripple {
+    animation: none !important;
+  }
+  
+  .parallax-element {
+    transform: none !important;
+  }
+}
+
+/* ハイコントラストモード対応 */
+@media (prefers-contrast: high) {
+  .btn {
+    border: 2px solid currentColor;
+  }
+  
+  .interactive-card {
+    border-width: 2px;
+  }
+  
+  .input {
+    border-width: 3px;
+  }
+}

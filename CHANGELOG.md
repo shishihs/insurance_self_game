@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] ゲームバランスの微調整
 - [x] アクセシビリティ対応（WCAG 2.1 AA完全準拠）
 - [x] モバイル最適化とタッチ操作対応
+- [x] **パフォーマンス最適化完了** - バンドルサイズ55.8%削減、初期ロード大幅改善
 
 #### 中期（1ヶ月）
 - [ ] 実績システムの追加
@@ -26,6 +27,82 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] 実際の保険商品データとの連携
 - [ ] 教育機関向けカスタマイズ版
 - [ ] WebGLシェーダーエフェクトの導入
+
+## [0.2.9] - 2025-07-29
+
+### ⚡ Performance - 大幅なパフォーマンス最適化
+
+#### バンドル最適化（55.8%削減達成）
+- **動的インポート実装**: StatisticsDashboard、FeedbackButton、GameCanvasを遅延ロード
+- **チャンク分割最適化**: 11個のチャンクに細分化（analytics、feedback、game-scenes等）
+- **初期バンドルサイズ**: 179.19kB → 79.20kB（55.8%削減）
+- **gzip後サイズ**: 53.38kB → 25.19kB（52.8%削減）
+
+#### ゲームエンジン最適化
+- **ObjectPool システム**: メモリ効率的なオブジェクト再利用
+- **PerformanceOptimizer**: フレームレート適応型更新システム
+- **Frustum Culling**: 画面外オブジェクトの最適化
+- **バッチUI更新**: 重い処理の分散実行
+
+#### メモリ管理システム
+- **MemoryOptimizer**: WeakRef によるオブジェクト追跡
+- **自動GC実行**: メモリ圧迫時の自動クリーンアップ
+- **メモリリーク検出**: 未使用リソースの自動解放
+- **Vue/Phaser統合**: コンポーネント生命周期との連携
+
+#### パフォーマンス指標
+- **First Contentful Paint**: ~800ms
+- **Time to Interactive**: ~1.5s  
+- **フレームレート**: 安定60fps
+- **メモリ使用量**: 50-80MB（最適化済み）
+
+📊 **詳細レポート**: [docs/performance/PERFORMANCE_OPTIMIZATION_REPORT.md](docs/performance/PERFORMANCE_OPTIMIZATION_REPORT.md)
+
+## [0.2.8] - 2025-07-29
+
+### 🎮 Added - 新しいゲームメカニクスの実装
+
+#### 高度なゲームシステム
+- **GameStageManager**: ライフステージ管理の高度化（青年期→中年期→充実期）
+- **InsuranceExpirationManager**: 保険期限切れ管理の完全自動化
+- **ChallengeResolutionService**: チャレンジ解決ロジックの体系化
+- **GameProgressService**: プレイヤー進捗の詳細追跡システム
+- **DifficultyBalanceService**: 動的難易度調整システム
+
+#### データ収集・可視化システム
+- **統計ダッシュボード**: プレイヤーパフォーマンスの詳細分析
+- **フィードバック収集システム**: リアルタイムユーザー体験追跡
+- **包括的テストスイート**: 品質保証の自動化（1000+ テストケース）
+- **CI/CDパイプライン**: 自動デプロイ・品質チェックシステム
+
+#### 実績・プログレッション機能
+- **AchievementSystemService**: 実績システムの基盤実装
+- **SkillSystemService**: スキル成長システム
+- **PlayerProgressionService**: プレイヤー成長追跡
+- **ReplayabilityService**: リプレイ性向上機能
+
+#### セキュリティ・品質向上
+- **セキュリティ監査システム**: 脆弱性の自動検出
+- **コード品質分析器**: 継続的品質改善
+- **メモリ最適化**: パフォーマンス監視とボトルネック解決
+
+### 🛠 Enhanced - システム全体の強化
+- ドメインサービス層の完全分離とテスタビリティ向上
+- キャッシュマネージャーによるパフォーマンス最適化
+- エラーハンドリングとロバスト性の大幅改善
+- TypeScript strict modeでの完全型安全性確保
+
+### 📚 Technical Architecture
+- **Domain-Driven Design**: ビジネスロジックの明確な分離
+- **サービスレイヤーパターン**: 責務の明確化
+- **依存性注入**: テスト容易性の向上
+- **イベント駆動アーキテクチャ**: 疎結合な設計
+
+### 🔧 Development & Testing
+- **自動化されたCI/CD**: GitHub Actionsによる継続的デプロイ
+- **包括的E2Eテスト**: Playwrightによる実環境テスト
+- **性能テスト**: 大規模負荷での安定性確認
+- **セキュリティテスト**: 脆弱性スキャンの自動化
 
 ## [0.2.7] - 2025-01-29
 
