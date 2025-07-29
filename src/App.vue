@@ -6,12 +6,23 @@ import AccessibilitySettings from './components/accessibility/AccessibilitySetti
 import VisualIndicators from './components/accessibility/VisualIndicators.vue'
 import ErrorBoundary from './components/error/ErrorBoundary.vue'
 import ErrorNotification from './components/error/ErrorNotification.vue'
+import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue'
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
+import FeedbackButton from './components/feedback/FeedbackButton.vue'
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
+const showStatistics = ref(false)
 let keyboardManager: KeyboardManager | null = null
 let screenReaderManager: ScreenReaderManager | null = null
+
+// フィードバック用のゲーム状態
+const gameState = ref({
+  stage: 'youth',
+  turn: 1,
+  vitality: 100,
+  phase: 'setup'
+})
 
 const startGame = () => {
   showGame.value = true
@@ -34,6 +45,16 @@ const backToHome = () => {
   screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
 }
 
+const openStatistics = () => {
+  showStatistics.value = true
+  screenReaderManager?.announceScreenChange('統計ダッシュボード', '統計ダッシュボードを開きました')
+}
+
+const closeStatistics = () => {
+  showStatistics.value = false
+  screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
+}
+
 const handleAccessibilitySettingsChanged = (settings: any) => {
   // アクセシビリティ設定が変更されたときの処理
   console.log('アクセシビリティ設定が更新されました:', settings)
@@ -42,6 +63,13 @@ const handleAccessibilitySettingsChanged = (settings: any) => {
   if (settings.screenReaderEnabled) {
     screenReaderManager?.announce('スクリーンリーダー対応が有効になりました', { priority: 'assertive' })
   }
+}
+
+const handleFeedbackSubmitted = (feedbackId: string, type: string) => {
+  console.log(`フィードバック送信完了: ${type} (${feedbackId})`)
+  
+  // アナリティクスやログ送信（将来的に実装）
+  // trackFeedbackEvent(type, feedbackId)
 }
 
 onMounted(() => {
@@ -93,6 +121,17 @@ onMounted(() => {
     }
   })
   
+  keyboardManager.registerShortcut({
+    key: 's',
+    modifiers: ['alt'],
+    description: '統計ダッシュボードを開く',
+    action: () => {
+      if (!showGame.value && !showStatistics.value) {
+        openStatistics()
+      }
+    }
+  })
+  
   // フォーカス可能要素を登録（ホーム画面のボタン）
   setTimeout(() => {
     const gameButton = document.querySelector('.primary-action-btn') as HTMLElement
@@ -125,7 +164,7 @@ onMounted(() => {
   }, 100)
   
   // 初期アナウンス
-  screenReaderManager.announceScreenChange('ホーム画面', '人生充実ゲーム へようこそ。Alt+Gでゲーム開始、Alt+Tでチュートリアル、Alt+Aでアクセシビリティ設定、F1でヘルプを表示できます')
+  screenReaderManager.announceScreenChange('ホーム画面', '人生充実ゲーム へようこそ。Alt+Gでゲーム開始、Alt+Tでチュートリアル、Alt+Sで統計、Alt+Aでアクセシビリティ設定、F1でヘルプを表示できます')
 })
 
 onUnmounted(() => {
@@ -200,12 +239,23 @@ onUnmounted(() => {
               <span class="btn-icon" aria-hidden="true">📚</span>
               <span class="btn-text">チュートリアル</span>
             </button>
+            <button
+              @click="openStatistics"
+              class="secondary-action-btn"
+              aria-label="統計ダッシュボードを開く (Alt+S)"
+              :aria-keyshortcuts="'Alt+S'"
+              aria-describedby="statistics-description"
+            >
+              <span class="btn-icon" aria-hidden="true">📊</span>
+              <span class="btn-text">統計</span>
+            </button>
           </div>
           
           <!-- ボタンの説明（スクリーンリーダー用） -->
           <div class="sr-only">
             <div id="game-description">保険をテーマにした人生シミュレーションゲームを開始します</div>
             <div id="tutorial-description">ゲームの遊び方を学習するチュートリアルを開始します</div>
+            <div id="statistics-description">プレイ統計とパフォーマンス分析を表示します</div>
           </div>
         </section>
 
@@ -347,6 +397,26 @@ onUnmounted(() => {
         <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15L13.5 7.5C13 7 12.5 6.5 11.9 6.5H12.1C11.5 6.5 11 7 10.5 7.5L7.91 10.09C7.66 10.34 7.66 10.76 7.91 11.01L10.5 13.6C11 14.1 11.5 14.6 12.1 14.6H11.9C12.5 14.6 13 14.1 13.5 13.6L15 12.1H21C21.6 12.1 22 11.7 22 11.1V10C22 9.4 21.6 9 21 9ZM8.5 12.5L12 16L15.5 12.5L12 22L8.5 12.5Z" fill="currentColor"/>
       </svg>
     </button>
+
+    <!-- 統計ダッシュボード -->
+    <Teleport to="body">
+      <div v-if="showStatistics" class="modal-overlay" @click="closeStatistics">
+        <div class="modal-content" @click.stop>
+          <StatisticsDashboard 
+            :auto-refresh="true"
+            @close="closeStatistics"
+          />
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- フィードバックボタン -->
+    <FeedbackButton
+      :game-state="gameState"
+      :show-stats="true"
+      :auto-survey="true"
+      @feedback-submitted="handleFeedbackSubmitted"
+    />
   </div>
 </template>
 
@@ -1145,5 +1215,46 @@ textarea,
 .primary-action-btn,
 .secondary-action-btn {
   transition-duration: calc(var(--transition-normal) / var(--animation-speed-multiplier, 1));
+}
+
+/* =================================
+   統計ダッシュボードモーダル
+   ================================= */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  max-height: 900px;
+  background: var(--bg-primary);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(129, 140, 248, 0.2);
+}
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: var(--space-xs);
+  }
+  
+  .modal-content {
+    border-radius: 12px;
+  }
 }
 </style>

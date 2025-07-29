@@ -45,6 +45,13 @@ export class IdGenerator {
   }
 
   /**
+   * フィードバック用IDを生成
+   */
+  static generateFeedbackId(): string {
+    return this.generate('feedback')
+  }
+
+  /**
    * 連番付きIDを生成（テスト時の予測可能性のため）
    */
   static generateSequential(prefix: string = 'seq'): string {
