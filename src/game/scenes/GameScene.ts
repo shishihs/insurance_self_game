@@ -1,6 +1,6 @@
 import { BaseScene } from './BaseScene'
 import { Game } from '@/domain/entities/Game'
-import { Card } from '@/domain/entities/Card'
+import type { Card } from '@/domain/entities/Card'
 import { CardFactory } from '@/domain/services/CardFactory'
 import { GAME_CONSTANTS } from '../config/gameConfig'
 import type { CardType } from '@/domain/types/card.types'
@@ -605,7 +605,7 @@ export class GameScene extends BaseScene {
       // フェードイン
       this.tweens.add({
         targets: highlight,
-        alpha: alpha,
+        alpha,
         duration: 200,
         ease: 'Power2'
       })
@@ -1566,7 +1566,7 @@ export class GameScene extends BaseScene {
       // カード名
       const nameText = this.add.text(
         -50, 0,
-        insurance.name.length > 8 ? insurance.name.substring(0, 8) + '...' : insurance.name,
+        insurance.name.length > 8 ? `${insurance.name.substring(0, 8)  }...` : insurance.name,
         {
           fontFamily: 'Noto Sans JP',
           fontSize: '12px',
@@ -3282,7 +3282,7 @@ export class GameScene extends BaseScene {
       cardBg.setFillStyle(0x2C3E50)
       this.tweens.add({
         targets: buttonContainer,
-        y: y,
+        y,
         duration: 200,
         ease: 'Power2'
       })
@@ -4133,7 +4133,7 @@ export class GameScene extends BaseScene {
    * ボタンの有効/無効を切り替え
    */
   private setButtonEnabled(button: Phaser.GameObjects.Container, enabled: boolean): void {
-    if (!button || !button.list || button.list.length < 2) {
+    if (!button?.list || button.list.length < 2) {
       console.warn('Invalid button structure')
       return
     }
@@ -4778,7 +4778,7 @@ export class GameScene extends BaseScene {
       const targetElement = this.tutorialStepElements.get(currentStep.targetElement) ||
                           this.children.getByName(currentStep.targetElement)
       
-      if (targetElement && targetElement.getBounds) {
+      if (targetElement?.getBounds) {
         targetBounds = targetElement.getBounds()
         
         // スポットライト効果
@@ -5155,7 +5155,7 @@ export class GameScene extends BaseScene {
       message,
       {
         fontSize: '24px',
-        color: color,
+        color,
         stroke: '#000000',
         strokeThickness: 2
       }
@@ -5423,7 +5423,7 @@ export class GameScene extends BaseScene {
     if (this.objectPools) {
       Object.values(this.objectPools).forEach(pool => {
         pool.forEach((obj: any) => {
-          if (obj && obj.destroy) {
+          if (obj?.destroy) {
             obj.destroy()
           }
         })

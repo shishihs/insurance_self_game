@@ -168,7 +168,7 @@ export const VueMemoryOptimizer = {
     // コンポーネントのクリーンアップタスクを登録
     optimizer.registerCleanupTask(() => {
       // イベントリスナーの削除
-      if (this.$el && this.$el.removeEventListener) {
+      if (this.$el?.removeEventListener) {
         // 自動的にイベントリスナーをクリーンアップ
       }
     })

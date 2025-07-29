@@ -3,6 +3,8 @@
  * WCAG 2.1 AA準拠のキーボードナビゲーション実装
  */
 
+import { sanitizeInput } from '@/utils/security'
+
 export interface FocusableElement {
   element: HTMLElement
   priority: number
@@ -446,40 +448,78 @@ export class KeyboardManager {
     
     const shortcuts = Array.from(this.shortcuts.values())
     
-    panel.innerHTML = `
-      <div class="help-content">
-        <h2 id="help-title">キーボードショートカット</h2>
-        <div class="shortcuts-list">
-          <div class="shortcut-group">
-            <h3>基本ナビゲーション</h3>
-            <dl>
-              <dt>Tab / Shift+Tab</dt>
-              <dd>次/前の要素に移動</dd>
-              <dt>矢印キー</dt>
-              <dd>方向に応じて移動</dd>
-              <dt>Enter / Space</dt>
-              <dd>要素を選択/実行</dd>
-              <dt>Home / End</dt>
-              <dd>最初/最後の要素に移動</dd>
-            </dl>
-          </div>
-          ${shortcuts.length > 0 ? `
-            <div class="shortcut-group">
-              <h3>ゲーム操作</h3>
-              <dl>
-                ${shortcuts.map(shortcut => `
-                  <dt>${this.formatShortcut(shortcut)}</dt>
-                  <dd>${shortcut.description}</dd>
-                `).join('')}
-              </dl>
-            </div>
-          ` : ''}
-        </div>
-        <button type="button" onclick="this.closest('.keyboard-help-panel').remove()">
-          閉じる (Esc)
-        </button>
-      </div>
-    `
+    // セキュリティ対策: innerHTML の代わりに DOM 操作を使用
+    const helpContent = document.createElement('div')
+    helpContent.className = 'help-content'
+    
+    const title = document.createElement('h2')
+    title.id = 'help-title'
+    title.textContent = 'キーボードショートカット'
+    
+    const shortcutsList = document.createElement('div')
+    shortcutsList.className = 'shortcuts-list'
+    
+    // 基本ナビゲーション
+    const basicGroup = document.createElement('div')
+    basicGroup.className = 'shortcut-group'
+    
+    const basicTitle = document.createElement('h3')
+    basicTitle.textContent = '基本ナビゲーション'
+    
+    const basicDl = document.createElement('dl')
+    const basicShortcuts = [
+      { key: 'Tab / Shift+Tab', desc: '次/前の要素に移動' },
+      { key: '矢印キー', desc: '方向に応じて移動' },
+      { key: 'Enter / Space', desc: '要素を選択/実行' },
+      { key: 'Home / End', desc: '最初/最後の要素に移動' }
+    ]
+    
+    basicShortcuts.forEach(({ key, desc }) => {
+      const dt = document.createElement('dt')
+      dt.textContent = key
+      const dd = document.createElement('dd')
+      dd.textContent = desc
+      basicDl.appendChild(dt)
+      basicDl.appendChild(dd)
+    })
+    
+    basicGroup.appendChild(basicTitle)
+    basicGroup.appendChild(basicDl)
+    shortcutsList.appendChild(basicGroup)
+    
+    // ゲーム操作（動的生成）
+    if (shortcuts.length > 0) {
+      const gameGroup = document.createElement('div')
+      gameGroup.className = 'shortcut-group'
+      
+      const gameTitle = document.createElement('h3')
+      gameTitle.textContent = 'ゲーム操作'
+      
+      const gameDl = document.createElement('dl')
+      shortcuts.forEach(shortcut => {
+        const dt = document.createElement('dt')
+        dt.textContent = sanitizeInput(this.formatShortcut(shortcut))
+        const dd = document.createElement('dd')
+        dd.textContent = sanitizeInput(shortcut.description)
+        gameDl.appendChild(dt)
+        gameDl.appendChild(dd)
+      })
+      
+      gameGroup.appendChild(gameTitle)
+      gameGroup.appendChild(gameDl)
+      shortcutsList.appendChild(gameGroup)
+    }
+    
+    const closeButton = document.createElement('button')
+    closeButton.type = 'button'
+    closeButton.textContent = '閉じる (Esc)'
+    closeButton.onclick = () => panel.remove()
+    
+    helpContent.appendChild(title)
+    helpContent.appendChild(shortcutsList)
+    helpContent.appendChild(closeButton)
+    
+    panel.appendChild(helpContent)
     
     return panel
   }

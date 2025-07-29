@@ -10,12 +10,21 @@ import ErrorNotification from './components/error/ErrorNotification.vue'
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
 // import FeedbackButton from './components/feedback/FeedbackButton.vue' // 動的インポートに変更
+
+// レイアウトコンポーネント
+import AppHeader from './components/layout/AppHeader.vue'
+import NavigationActions from './components/layout/NavigationActions.vue'
+import FeatureShowcase from './components/layout/FeatureShowcase.vue'
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
 const showStatistics = ref(false)
 const StatisticsDashboard = defineAsyncComponent(() => import('./components/statistics/StatisticsDashboard.vue'))
 const FeedbackButton = defineAsyncComponent(() => import('./components/feedback/FeedbackButton.vue'))
 const GameCanvas = defineAsyncComponent(() => import('./components/game/GameCanvas.vue'))
+
+// コンポーネント参照
+const navigationRef = ref<InstanceType<typeof NavigationActions>>()
+
 let keyboardManager: KeyboardManager | null = null
 let screenReaderManager: ScreenReaderManager | null = null
 
@@ -137,8 +146,8 @@ onMounted(() => {
   
   // フォーカス可能要素を登録（ホーム画面のボタン）
   setTimeout(() => {
-    const gameButton = document.querySelector('.primary-action-btn') as HTMLElement
-    const tutorialButton = document.querySelector('.secondary-action-btn') as HTMLElement
+    const gameButton = navigationRef.value?.gameButtonRef
+    const tutorialButton = navigationRef.value?.tutorialButtonRef
     const backButton = document.querySelector('.back-to-home-btn') as HTMLElement
     
     if (gameButton) {
@@ -209,171 +218,17 @@ onUnmounted(() => {
       <div v-else class="home-view" id="main-content" role="main" aria-label="ホーム画面">
         <ErrorBoundary fallback="minimal">
           <div class="home-container">
-        <header class="hero-section">
-          <div class="brand-logo pulse">
-            <span class="logo-icon">🌟</span>
-          </div>
-          <h1 class="hero-title bounce-in" style="animation-delay: 0.2s;">
-            人生充実ゲーム
-          </h1>
-          <p class="hero-subtitle bounce-in" style="animation-delay: 0.4s;">
-            Life Fulfillment - 生命保険を「人生の味方」として描く
-          </p>
-          <div class="hero-accent bounce-in" style="animation-delay: 0.6s;">
-            ✨ 一人の時間を、最高の冒険に ✨
-          </div>
-        </header>
+        <AppHeader />
 
-        <section class="action-section" id="navigation" role="navigation" aria-label="メインナビゲーション">
-          <div class="button-group">
-            <button
-              ref="gameButtonRef"
-              @click="startGame"
-              class="btn btn-primary ripple-container glow-on-hover bounce-in"
-              aria-label="ゲームを開始する (Alt+G)"
-              :aria-keyshortcuts="'Alt+G'"
-              aria-describedby="game-description"
-            >
-              <span class="btn-icon" aria-hidden="true">🎮</span>
-              <span class="btn-text">ゲームをプレイ</span>
-            </button>
-            <button
-              ref="tutorialButtonRef"
-              @click="startTutorial"
-              class="btn btn-secondary ripple-container"
-              aria-label="チュートリアルを開始する (Alt+T)"
-              :aria-keyshortcuts="'Alt+T'"
-              aria-describedby="tutorial-description"
-            >
-              <span class="btn-icon" aria-hidden="true">📚</span>
-              <span class="btn-text">チュートリアル</span>
-            </button>
-            <button
-              @click="openStatistics"
-              class="btn btn-secondary ripple-container"
-              aria-label="統計ダッシュボードを開く (Alt+S)"
-              :aria-keyshortcuts="'Alt+S'"
-              aria-describedby="statistics-description"
-            >
-              <span class="btn-icon" aria-hidden="true">📊</span>
-              <span class="btn-text">統計</span>
-            </button>
-          </div>
-          
-          <!-- ボタンの説明（スクリーンリーダー用） -->
-          <div class="sr-only">
-            <div id="game-description">保険をテーマにした人生シミュレーションゲームを開始します</div>
-            <div id="tutorial-description">ゲームの遊び方を学習するチュートリアルを開始します</div>
-            <div id="statistics-description">プレイ統計とパフォーマンス分析を表示します</div>
-          </div>
-        </section>
+        <NavigationActions 
+          @start-game="startGame"
+          @start-tutorial="startTutorial"
+          @open-statistics="openStatistics"
+          ref="navigationRef"
+        />
 
         <section class="info-section">
-          <div class="info-grid">
-        <!-- 最新の変更 -->
-        <div class="interactive-card glow-on-hover">
-          <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
-            <span>🚀</span>
-            本番リリース v0.3.0
-          </h2>
-          <div class="text-left space-y-3">
-            <div>
-              <h3 class="font-semibold text-lg mb-2">Production Release - 本番環境対応完了</h3>
-              <ul class="space-y-1 text-sm">
-                <li class="flex items-start gap-2">
-                  <span class="text-success mt-1">🎯</span>
-                  <span><strong>リリース品質100%</strong>: ビルド・テスト・型チェック全て完了</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <span class="text-success mt-1">♿</span>
-                  <span><strong>アクセシビリティ完全対応</strong>: WCAG 2.1 AA 100%準拠</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <span class="text-success mt-1">📱</span>
-                  <span><strong>モバイル最適化完了</strong>: タッチ操作・レスポンシブデザイン対応</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <span class="text-success mt-1">⚡</span>
-                  <span><strong>パフォーマンス最適化</strong>: バンドルサイズ55.8%削減達成</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <span class="text-success mt-1">✅</span>
-                  <span><strong>セキュリティ監査</strong>: 自動脆弱性検出、コード品質分析</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- 今後のロードマップ -->
-        <div class="interactive-card glow-on-hover">
-          <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
-            <span>🚀</span>
-            今後のロードマップ
-          </h2>
-          <div class="text-left space-y-3">
-            <div>
-              <h3 class="font-semibold mb-2">短期（1-2週間）</h3>
-              <ul class="space-y-1 text-sm">
-                <li class="flex items-center gap-2">
-                  <span class="text-success">✅</span>
-                  保険更新システム
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-success">✅</span>
-                  チュートリアルモード
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-success">✅</span>
-                  サウンドエフェクト
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-gray-400">⭕</span>
-                  ゲームバランス微調整
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 class="font-semibold mb-2">中期（1ヶ月）</h3>
-              <ul class="space-y-1 text-sm">
-                <li class="flex items-center gap-2">
-                  <span class="text-gray-400">⭕</span>
-                  実績システム
-                </li>
-                <li class="flex items-center gap-2">
-                  <span class="text-gray-400">⭕</span>
-                  追加シナリオ（結婚、出産など）
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            <a href="https://github.com/shishihs/insurance_self_game/blob/master/CHANGELOG.md" 
-               target="_blank" 
-               class="hover:text-primary transition-colors">
-              詳細な変更履歴とロードマップ →
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- フッター情報 -->
-      <div class="text-center mt-8 text-sm text-gray-600 dark:text-gray-400">
-        <p>
-          <a href="https://github.com/shishihs/insurance_self_game" 
-             target="_blank" 
-             class="hover:text-primary transition-colors">
-            GitHub
-          </a>
-          <span class="mx-2">•</span>
-          <a href="https://github.com/shishihs/insurance_self_game/issues" 
-             target="_blank" 
-             class="hover:text-primary transition-colors">
-            バグ報告・要望
-          </a>
-        </p>
-        </div>
-      </section>
+            <FeatureShowcase />
         </div>
         </ErrorBoundary>
       </div>
@@ -571,264 +426,11 @@ onUnmounted(() => {
   gap: var(--space-3xl);
 }
 
-/* =================================
-   ヒーローセクション
-   ================================= */
+/* ヒーローセクションのスタイルは AppHeader.vue に移動 */
 
-.hero-section {
-  text-align: center;
-  padding: var(--space-xl) 0;
-}
+/* アクションボタンのスタイルは NavigationActions.vue に移動 */
 
-.hero-title {
-  font-size: clamp(2.5rem, 6vw, 4rem);
-  font-weight: 800;
-  margin-bottom: var(--space-md);
-  
-  background: var(--primary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  
-  text-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-  line-height: 1.1;
-}
-
-.hero-subtitle {
-  font-size: clamp(1rem, 3vw, 1.25rem);
-  color: rgb(156, 163, 175);
-  margin-bottom: var(--space-xl);
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.6;
-}
-
-/* =================================
-   アクションボタンセクション
-   ================================= */
-
-.action-section {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-2xl);
-}
-
-.button-group {
-  display: flex;
-  gap: var(--space-lg);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.primary-action-btn,
-.secondary-action-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  
-  min-width: 180px;
-  min-height: var(--touch-target-comfortable);
-  padding: var(--space-md) var(--space-xl);
-  
-  border: none;
-  border-radius: 12px;
-  
-  font-family: Inter, system-ui, sans-serif;
-  font-size: var(--text-lg);
-  font-weight: 600;
-  text-decoration: none;
-  
-  transition: all var(--transition-normal);
-  cursor: pointer;
-  
-  box-shadow: var(--shadow-card);
-  backdrop-filter: blur(8px);
-}
-
-.primary-action-btn {
-  background: var(--primary-gradient);
-  color: white;
-}
-
-.primary-action-btn:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-glow), 0 12px 40px rgba(102, 126, 234, 0.3);
-}
-
-.secondary-action-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(129, 140, 248, 0.5);
-}
-
-.secondary-action-btn:hover {
-  background: rgba(129, 140, 248, 0.2);
-  border-color: rgba(129, 140, 248, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(129, 140, 248, 0.2);
-}
-
-.primary-action-btn:active,
-.secondary-action-btn:active {
-  transform: translateY(0);
-}
-
-/* ボタンアイコン */
-.primary-action-btn .btn-icon,
-.secondary-action-btn .btn-icon {
-  font-size: var(--text-xl);
-  line-height: 1;
-}
-
-/* モバイル対応 */
-@media (max-width: 640px) {
-  .button-group {
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-  }
-  
-  .primary-action-btn,
-  .secondary-action-btn {
-    width: 100%;
-    max-width: 280px;
-    justify-content: center;
-  }
-}
-
-/* =================================
-   情報セクション
-   ================================= */
-
-.info-section {
-  margin-bottom: var(--space-2xl);
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--space-xl);
-}
-
-/* モバイル対応 */
-@media (max-width: 640px) {
-  .info-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-lg);
-  }
-}
-
-/* =================================
-   情報カード
-   ================================= */
-
-.info-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(129, 140, 248, 0.2);
-  border-radius: 16px;
-  padding: var(--space-xl);
-  
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow-card);
-  
-  transition: all var(--transition-normal);
-}
-
-.info-card:hover {
-  border-color: rgba(129, 140, 248, 0.4);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-}
-
-.card-header {
-  margin-bottom: var(--space-lg);
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  color: rgba(129, 140, 248, 1);
-  margin-bottom: var(--space-md);
-}
-
-.card-icon {
-  font-size: var(--text-3xl);
-  line-height: 1;
-}
-
-.card-content {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* =================================
-   機能リスト
-   ================================= */
-
-.feature-group,
-.roadmap-group {
-  margin-bottom: var(--space-lg);
-}
-
-.feature-title,
-.roadmap-title {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  margin-bottom: var(--space-md);
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.feature-list,
-.roadmap-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.feature-item,
-.roadmap-item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-sm);
-  padding: var(--space-xs) 0;
-}
-
-.feature-status,
-.roadmap-status {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-sm);
-  margin-top: 2px;
-}
-
-.feature-status.success {
-  color: rgb(34, 197, 94);
-}
-
-.roadmap-status.completed {
-  color: rgb(34, 197, 94);
-}
-
-.roadmap-status.pending {
-  color: rgb(156, 163, 175);
-}
-
-.feature-text {
-  flex: 1;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.85);
-}
+/* 情報セクション・カード・機能リストのスタイルは FeatureShowcase.vue に移動 */
 
 /* =================================
    外部リンク

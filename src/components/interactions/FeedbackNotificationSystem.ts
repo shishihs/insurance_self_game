@@ -4,6 +4,7 @@
  */
 
 import { InteractionAudioManager } from './InteractionAudioManager'
+import { sanitizeInput } from '@/utils/security'
 
 export interface NotificationConfig {
   id?: string
@@ -325,27 +326,59 @@ export class FeedbackNotificationSystem {
     const icon = config.icon || this.getDefaultIcon(config.type)
     const hasActions = config.actions && config.actions.length > 0
 
-    notification.innerHTML = `
-      <div class="notification-content">
-        <div class="notification-header">
-          <span class="notification-icon">${icon}</span>
-          <span class="notification-title">${config.title}</span>
-          <button class="notification-close" aria-label="通知を閉じる">×</button>
-        </div>
-        ${config.message ? `<div class="notification-message">${config.message}</div>` : ''}
-        ${hasActions ? `
-          <div class="notification-actions">
-            ${config.actions!.map(action => `
-              <button class="notification-action notification-action-${action.style || 'secondary'}" 
-                      data-action="${action.label}">
-                ${action.label}
-              </button>
-            `).join('')}
-          </div>
-        ` : ''}
-      </div>
-      <div class="notification-progress"></div>
-    `
+    // セキュリティ対策: innerHTML の代わりに DOM 操作を使用
+    const content = document.createElement('div')
+    content.className = 'notification-content'
+    
+    const header = document.createElement('div')
+    header.className = 'notification-header'
+    
+    const iconSpan = document.createElement('span')
+    iconSpan.className = 'notification-icon'
+    iconSpan.textContent = sanitizeInput(icon)
+    
+    const titleSpan = document.createElement('span')
+    titleSpan.className = 'notification-title'
+    titleSpan.textContent = sanitizeInput(config.title)
+    
+    const closeButton = document.createElement('button')
+    closeButton.className = 'notification-close'
+    closeButton.setAttribute('aria-label', '通知を閉じる')
+    closeButton.textContent = '×'
+    
+    header.appendChild(iconSpan)
+    header.appendChild(titleSpan)
+    header.appendChild(closeButton)
+    content.appendChild(header)
+    
+    if (config.message) {
+      const messageDiv = document.createElement('div')
+      messageDiv.className = 'notification-message'
+      messageDiv.textContent = sanitizeInput(config.message)
+      content.appendChild(messageDiv)
+    }
+    
+    if (hasActions) {
+      const actionsDiv = document.createElement('div')
+      actionsDiv.className = 'notification-actions'
+      
+      config.actions!.forEach(action => {
+        const actionButton = document.createElement('button')
+        actionButton.className = `notification-action notification-action-${action.style || 'secondary'}`
+        actionButton.setAttribute('data-action', sanitizeInput(action.label))
+        actionButton.textContent = sanitizeInput(action.label)
+        actionsDiv.appendChild(actionButton)
+      })
+      
+      content.appendChild(actionsDiv)
+    }
+    
+    notification.appendChild(content)
+    
+    // プログレスバーを追加
+    const progressDiv = document.createElement('div')
+    progressDiv.className = 'notification-progress'
+    notification.appendChild(progressDiv)
 
     // イベントリスナー
     this.setupNotificationEvents(notification, config)

@@ -9,6 +9,8 @@ import { ChallengeResolutionService } from '../services/ChallengeResolutionServi
 import { GameTurnManager } from '../services/GameTurnManager'
 import { GameChallengeService } from '../services/GameChallengeService'
 import { GameInsuranceService } from '../services/GameInsuranceService'
+import { GameStateManager } from '../services/GameStateManager'
+import { GameActionProcessor } from '../services/GameActionProcessor'
 import { IdGenerator } from '../../common/IdGenerator'
 import type {
   IGameState,
@@ -66,6 +68,10 @@ export class Game implements IGameState {
   private turnManager: GameTurnManager
   private challengeService: GameChallengeService
   private insuranceService: GameInsuranceService
+  
+  // 新しいアーキテクチャ
+  private stateManager: GameStateManager
+  private actionProcessor: GameActionProcessor
   
   currentChallenge?: Card
   
@@ -141,6 +147,13 @@ export class Game implements IGameState {
     this.turnManager = new GameTurnManager(this.stageManager, this.expirationManager)
     this.challengeService = new GameChallengeService(this.challengeResolutionService)
     this.insuranceService = new GameInsuranceService(this.premiumCalculationService)
+    
+    // 新しいアーキテクチャを初期化
+    this.stateManager = new GameStateManager()
+    this.actionProcessor = new GameActionProcessor()
+    
+    // 状態変更イベントの監視を設定
+    this.setupStateListeners()
     const playerDeck = new Deck('Player Deck')
     const challengeDeck = new Deck('Challenge Deck')
     
@@ -298,19 +311,34 @@ export class Game implements IGameState {
       throw new Error('Game has already started')
     }
     
-    this.status = 'in_progress'
+    this.changeStatus('in_progress')
     this.startedAt = new Date()
-    this.phase = 'draw'
-    this.turn = 1
-    this.stats.turnsPlayed = 1
+    this.changePhase('draw')
+    this.changeTurn(1)
   }
 
   /**
-   * カードをドローする
+   * カードをドローする（リファクタリング版）
+   * @param {number} count - ドローする枚数
+   * @returns {Promise<Card[]>} ドローしたカードの配列
+   */
+  async drawCards(count: number): Promise<Card[]> {
+    const result = await this.actionProcessor.executeAction('draw_cards', this, count)
+    
+    if (!result.success) {
+      throw new Error(result.error || 'カードドローに失敗しました')
+    }
+    
+    return result.data || []
+  }
+
+  /**
+   * カードをドローする（後方互換版）
    * @param {number} count - ドローする枚数
    * @returns {Card[]} ドローしたカードの配列
+   * @deprecated 新しいdrawCardsメソッドを使用してください
    */
-  drawCards(count: number): Card[] {
+  drawCardsSync(count: number): Card[] {
     const result = this.cardManager.drawCards(count)
     return result.drawnCards
   }
@@ -371,7 +399,7 @@ export class Game implements IGameState {
     this.cardManager.clearCardChoices()
     
     // 解決フェーズに移行（ターン終了可能状態）
-    this.phase = 'resolution'
+    this.changePhase('resolution')
     
     return true
   }
@@ -408,8 +436,7 @@ export class Game implements IGameState {
     
     // ゲームオーバー判定
     if (this._vitality.isDepleted()) {
-      this.status = 'game_over'
-      this.completedAt = new Date()
+      this.changeStatus('game_over')
     }
   }
 
@@ -452,11 +479,9 @@ export class Game implements IGameState {
     
     if (advanceResult.isCompleted) {
       // 最終ステージクリア
-      this.status = 'victory'
-      this.completedAt = new Date()
+      this.changeStatus('victory')
     } else if (advanceResult.newStage) {
-      this.stage = advanceResult.newStage
-      this.updateMaxVitalityForAge()
+      this.changeStage(advanceResult.newStage)
     }
   }
 
@@ -577,8 +602,7 @@ export class Game implements IGameState {
    * ステージを設定（内部使用）
    */
   setStage(stage: GameStage): void {
-    this.stage = stage
-    this.updateMaxVitalityForAge()
+    this.changeStage(stage)
   }
 
   /**
@@ -721,7 +745,7 @@ export class Game implements IGameState {
    * テスト用: フェーズを設定
    */
   setPhase(phase: GamePhase): void {
-    this.phase = phase
+    this.changePhase(phase)
   }
 
 
@@ -765,6 +789,109 @@ export class Game implements IGameState {
     })
     
     return snapshot as IGameState
+  }
+
+  /**
+   * 状態変更イベントリスナーを設定
+   * Observer Pattern の実装
+   */
+  private setupStateListeners(): void {
+    // フェーズ変更の監視
+    this.stateManager.addEventListener('phase_change', (event) => {
+      console.log(`🎯 フェーズ変更: ${event.previousValue} → ${event.newValue}`)
+      this.handlePhaseChange(event.previousValue, event.newValue)
+    })
+
+    // ステージ変更の監視
+    this.stateManager.addEventListener('stage_change', (event) => {
+      console.log(`🚀 ステージ変更: ${event.previousValue} → ${event.newValue}`)
+      this.updateMaxVitalityForAge()
+    })
+
+    // ターン変更の監視
+    this.stateManager.addEventListener('turn_change', (event) => {
+      console.log(`⏰ ターン変更: ${event.previousValue} → ${event.newValue}`)
+      this.stats.turnsPlayed = event.newValue
+    })
+
+    // ステータス変更の監視
+    this.stateManager.addEventListener('status_change', (event) => {
+      console.log(`📊 ステータス変更: ${event.previousValue} → ${event.newValue}`)
+      
+      if (event.newValue === 'game_over' || event.newValue === 'victory') {
+        this.completedAt = new Date()
+      }
+    })
+  }
+
+  /**
+   * フェーズ変更のハンドリング
+   */
+  private handlePhaseChange(previousPhase: GamePhase, newPhase: GamePhase): void {
+    switch (newPhase) {
+      case 'draw':
+        // ドローフェーズ開始時の処理
+        break
+      case 'challenge':
+        // チャレンジフェーズ開始時の処理
+        break
+      case 'card_selection':
+        // カード選択フェーズ開始時の処理
+        break
+      case 'resolution':
+        // 解決フェーズ開始時の処理
+        break
+    }
+  }
+
+  /**
+   * フェーズを安全に変更
+   */
+  private changePhase(newPhase: GamePhase): void {
+    const previousPhase = this.phase
+    this.phase = newPhase
+    this.stateManager.notifyPhaseChange(previousPhase, newPhase)
+  }
+
+  /**
+   * ステータスを安全に変更
+   */
+  private changeStatus(newStatus: GameStatus): void {
+    const previousStatus = this.status
+    this.status = newStatus
+    this.stateManager.notifyStatusChange(previousStatus, newStatus)
+  }
+
+  /**
+   * ステージを安全に変更
+   */
+  private changeStage(newStage: GameStage): void {
+    const previousStage = this.stage
+    this.stage = newStage
+    this.stateManager.notifyStageChange(previousStage, newStage)
+  }
+
+  /**
+   * ターンを安全に変更
+   */
+  private changeTurn(newTurn: number): void {
+    const previousTurn = this.turn
+    this.turn = newTurn
+    this.stateManager.notifyTurnChange(previousTurn, newTurn)
+  }
+
+  /**
+   * 状態管理システムにアクセス（テスト・拡張用）
+   */
+  getStateManager(): GameStateManager {
+    return this.stateManager
+  }
+
+  /**
+   * アクション処理システムにアクセス（テスト・拡張用）
+   */
+  getActionProcessor(): GameActionProcessor {
+    return this.actionProcessor
   }
 
   /**

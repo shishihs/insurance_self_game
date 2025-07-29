@@ -398,15 +398,39 @@ ${new Date().toLocaleString()}
 
     const updateOverlay = () => {
       const metrics = this.getCurrentMetrics()
-      overlay.innerHTML = `
-        <div><strong>Performance Monitor</strong></div>
-        <div>FPS: ${metrics.fps.toFixed(1)}</div>
-        <div>Frame: ${metrics.frameTime.toFixed(2)}ms</div>
-        <div>Latency: ${metrics.interactionLatency.toFixed(2)}ms</div>
-        <div>Memory: ${(metrics.memoryUsage / 1024 / 1024).toFixed(1)}MB</div>
-        <div>Queue: ${metrics.animationQueueLength}</div>
-        <div>Dropped: ${metrics.droppedFrames}</div>
-      `
+      // セキュリティ対策: innerHTML の代わりに textContent を使用
+      overlay.textContent = ''
+      
+      const title = document.createElement('div')
+      const titleStrong = document.createElement('strong')
+      titleStrong.textContent = 'Performance Monitor'
+      title.appendChild(titleStrong)
+      
+      const fpsDiv = document.createElement('div')
+      fpsDiv.textContent = `FPS: ${metrics.fps.toFixed(1)}`
+      
+      const frameDiv = document.createElement('div')
+      frameDiv.textContent = `Frame: ${metrics.frameTime.toFixed(2)}ms`
+      
+      const latencyDiv = document.createElement('div')
+      latencyDiv.textContent = `Latency: ${metrics.interactionLatency.toFixed(2)}ms`
+      
+      const memoryDiv = document.createElement('div')
+      memoryDiv.textContent = `Memory: ${(metrics.memoryUsage / 1024 / 1024).toFixed(1)}MB`
+      
+      const queueDiv = document.createElement('div')
+      queueDiv.textContent = `Queue: ${metrics.animationQueueLength}`
+      
+      const droppedDiv = document.createElement('div')
+      droppedDiv.textContent = `Dropped: ${metrics.droppedFrames}`
+      
+      overlay.appendChild(title)
+      overlay.appendChild(fpsDiv)
+      overlay.appendChild(frameDiv)
+      overlay.appendChild(latencyDiv)
+      overlay.appendChild(memoryDiv)
+      overlay.appendChild(queueDiv)
+      overlay.appendChild(droppedDiv)
     }
 
     // 定期更新
