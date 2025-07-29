@@ -7,6 +7,7 @@ import type {
   LifeCardCategory, 
   InsuranceType,
   InsuranceDurationType,
+  InsuranceEffectType,
   DreamCategory,
   SkillCardProperties,
   ComboCardProperties,
@@ -53,6 +54,7 @@ export class Card implements IAdvancedCard {
   readonly ageBonus?: number
   readonly durationType?: InsuranceDurationType
   remainingTurns?: number // 可変プロパティ（ターンごとに減少）
+  readonly insuranceEffectType?: InsuranceEffectType
   // Phase 4 夢カード用プロパティ
   readonly dreamCategory?: DreamCategory
   
@@ -95,6 +97,9 @@ export class Card implements IAdvancedCard {
     }
     if ('remainingTurns' in params) {
       this.remainingTurns = params.remainingTurns
+    }
+    if ('insuranceEffectType' in params) {
+      this.insuranceEffectType = params.insuranceEffectType
     }
     
     // Phase 4 夢カードのプロパティ
@@ -195,6 +200,93 @@ export class Card implements IAdvancedCard {
   }
 
   /**
+   * 保険効果タイプを取得
+   * @returns {InsuranceEffectType | undefined} 保険効果タイプ
+   */
+  getInsuranceEffectType(): InsuranceEffectType | undefined {
+    if (!this.isInsurance()) return undefined
+    return this.insuranceEffectType || 'offensive' // デフォルトは攻撃型
+  }
+
+  /**
+   * 防御型保険かどうか判定
+   * @returns {boolean} 防御型保険の場合true
+   */
+  isDefensiveInsurance(): boolean {
+    return this.isInsurance() && this.getInsuranceEffectType() === 'defensive'
+  }
+
+  /**
+   * 回復型保険かどうか判定
+   * @returns {boolean} 回復型保険の場合true
+   */
+  isRecoveryInsurance(): boolean {
+    return this.isInsurance() && this.getInsuranceEffectType() === 'recovery'
+  }
+
+  /**
+   * 特化型保険かどうか判定
+   * @returns {boolean} 特化型保険の場合true
+   */
+  isSpecializedInsurance(): boolean {
+    return this.isInsurance() && this.getInsuranceEffectType() === 'specialized'
+  }
+
+  /**
+   * ダメージ軽減量を計算（防御型保険用）
+   * @returns {number} ダメージ軽減量
+   */
+  calculateDamageReduction(): number {
+    if (!this.isDefensiveInsurance()) return 0
+    
+    // カバレッジに基づいて軽減量を計算
+    const baseReduction = Math.floor((this.coverage || 0) / 10)
+    
+    // ダメージ軽減効果がある場合はその値を加算
+    const reductionEffect = this.getEffect('damage_reduction')
+    const effectReduction = reductionEffect ? reductionEffect.value : 0
+    
+    return baseReduction + effectReduction
+  }
+
+  /**
+   * ターン回復量を計算（回復型保険用）
+   * @returns {number} ターン回復量
+   */
+  calculateTurnHeal(): number {
+    if (!this.isRecoveryInsurance()) return 0
+    
+    // カバレッジに基づいて回復量を計算
+    const baseHeal = Math.floor((this.coverage || 0) / 20)
+    
+    // ターン回復効果がある場合はその値を加算
+    const healEffect = this.getEffect('turn_heal')
+    const effectHeal = healEffect ? healEffect.value : 0
+    
+    return baseHeal + effectHeal
+  }
+
+  /**
+   * 特定チャレンジへのボーナスを計算（特化型保険用）
+   * @param {string} challengeType チャレンジタイプ
+   * @returns {number} ボーナスパワー
+   */
+  calculateChallengeBonus(challengeType: string): number {
+    if (!this.isSpecializedInsurance()) return 0
+    
+    // 特定チャレンジボーナス効果を確認
+    const bonusEffect = this.getEffect('challenge_bonus')
+    if (!bonusEffect?.condition) return 0
+    
+    // 条件が一致する場合のみボーナスを返す
+    if (bonusEffect.condition.includes(challengeType)) {
+      return bonusEffect.value
+    }
+    
+    return 0
+  }
+
+  /**
    * Phase 4: 夢カードかどうか判定
    * @returns {boolean} 夢カードの場合true
    */
@@ -277,6 +369,11 @@ export class Card implements IAdvancedCard {
     // 保険カードの年齢ボーナスを適用
     if (this.isInsurance() && this.ageBonus) {
       effectivePower += this.ageBonus
+    }
+    
+    // 攻撃型保険以外はパワーを提供しない
+    if (this.isInsurance() && this.getInsuranceEffectType() !== 'offensive') {
+      return 0
     }
 
     return Math.max(0, effectivePower)

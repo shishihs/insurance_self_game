@@ -1,0 +1,390 @@
+/* =====================================================
+   アクセシビリティ向上のためのスタイル
+   ===================================================== */
+
+/* =====================================================
+   フォーカススタイル
+   ===================================================== */
+
+/* キーボードフォーカス時の明確な表示 */
+:focus-visible {
+  outline: 3px solid var(--primary-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 
+    0 0 0 6px rgba(129, 140, 248, 0.2),
+    0 0 20px rgba(129, 140, 248, 0.3);
+  transition: all var(--transition-fast);
+}
+
+/* ボタンのフォーカススタイル */
+button:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid var(--primary-300);
+  outline-offset: 3px;
+  transform: translateY(-1px);
+}
+
+/* カードのフォーカススタイル */
+.game-card:focus-visible {
+  outline: 3px solid var(--primary-400);
+  outline-offset: 4px;
+  transform: scale(1.05);
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.2),
+    0 0 40px rgba(129, 140, 248, 0.4);
+}
+
+/* インプット要素のフォーカススタイル */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--primary-400);
+  box-shadow: 
+    0 0 0 3px rgba(129, 140, 248, 0.2),
+    0 0 20px rgba(129, 140, 248, 0.1);
+}
+
+/* =====================================================
+   ハイコントラストモード対応
+   ===================================================== */
+
+@media (prefers-contrast: high) {
+  /* 背景とテキストのコントラスト強化 */
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-card: rgba(255, 255, 255, 0.15);
+  }
+  
+  /* テキストの強調 */
+  body {
+    color: #FFFFFF;
+    font-weight: 500;
+  }
+  
+  /* ボタンの境界線強調 */
+  button,
+  .btn {
+    border: 3px solid #FFFFFF !important;
+    font-weight: 700;
+  }
+  
+  /* カードの境界線強調 */
+  .game-card {
+    border: 3px solid #FFFFFF;
+    background: #000000;
+    color: #FFFFFF;
+  }
+  
+  /* 保険カードの特別な強調 */
+  .game-card.insurance-card {
+    border: 3px solid #FFD700;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    box-shadow: 
+      0 0 20px rgba(255, 215, 0, 0.5),
+      inset 0 0 20px rgba(255, 215, 0, 0.1);
+  }
+  
+  /* リンクの強調 */
+  a {
+    color: #FFD700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+  
+  /* フォーカス時の強調 */
+  :focus-visible {
+    outline: 4px solid #FFD700;
+    outline-offset: 4px;
+  }
+  
+  /* ドロップゾーンの強調 */
+  .drop-zone.highlight {
+    border: 4px dashed #00FF00;
+    background: rgba(0, 255, 0, 0.2);
+  }
+  
+  .drop-zone.invalid {
+    border: 4px solid #FF0000;
+    background: rgba(255, 0, 0, 0.2);
+  }
+}
+
+/* =====================================================
+   カラーブラインド対応
+   ===================================================== */
+
+/* 色に依存しない情報伝達 */
+.status-indicator {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* 成功状態 */
+.status-success::before {
+  content: '✓';
+  color: var(--success-500);
+  font-weight: bold;
+}
+
+/* エラー状態 */
+.status-error::before {
+  content: '✗';
+  color: var(--error-500);
+  font-weight: bold;
+}
+
+/* 警告状態 */
+.status-warning::before {
+  content: '!';
+  color: var(--warning-500);
+  font-weight: bold;
+}
+
+/* パターンによる差別化 */
+.insurance-card-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.1) 10px,
+    rgba(255, 255, 255, 0.1) 20px
+  );
+}
+
+/* =====================================================
+   モーション削減対応
+   ===================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  /* すべてのアニメーションを最小化 */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  /* スクロールの即座の反応 */
+  html {
+    scroll-behavior: auto;
+  }
+  
+  /* ドラッグ時の視覚効果を簡略化 */
+  .game-card.dragging {
+    transform: scale(1.02);
+    opacity: 0.8;
+  }
+  
+  /* ホバー効果を簡略化 */
+  .game-card:hover,
+  button:hover,
+  .btn:hover {
+    transform: none;
+  }
+  
+  /* パルスアニメーションを静的に */
+  .pulse,
+  .glow-on-hover::after {
+    animation: none;
+  }
+}
+
+/* =====================================================
+   スクリーンリーダー対応
+   ===================================================== */
+
+/* スクリーンリーダー専用テキスト */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* フォーカス時に表示 */
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ライブリージョン */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* =====================================================
+   タッチターゲットサイズの確保
+   ===================================================== */
+
+/* すべてのインタラクティブ要素 */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex]:not([tabindex="-1"]) {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 小さなアイコンボタンの拡張 */
+.icon-button {
+  position: relative;
+  width: var(--touch-target-comfortable);
+  height: var(--touch-target-comfortable);
+}
+
+.icon-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+/* =====================================================
+   読みやすさの向上
+   ===================================================== */
+
+/* 行間の調整 */
+p,
+.description,
+.card-text {
+  line-height: var(--line-height-relaxed);
+  letter-spacing: 0.02em;
+}
+
+/* 長文テキストの最大幅制限 */
+.readable-width {
+  max-width: 65ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+  /* 既存のダークモードスタイルを維持 */
+}
+
+/* ライトモード対応 */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F9FAFB;
+    --bg-card: rgba(0, 0, 0, 0.05);
+    color: #1F2937;
+  }
+  
+  .game-card {
+    background: #FFFFFF;
+    color: #1F2937;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  button,
+  .btn {
+    color: #FFFFFF;
+  }
+}
+
+/* =====================================================
+   エラー状態の明確化
+   ===================================================== */
+
+.error-state {
+  border: 2px solid var(--error-500);
+  background: rgba(239, 68, 68, 0.1);
+  position: relative;
+}
+
+.error-state::before {
+  content: '⚠️';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--error-500);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+/* =====================================================
+   ローディング状態の明確化
+   ===================================================== */
+
+.loading {
+  position: relative;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border: 3px solid transparent;
+  border-top-color: var(--primary-400);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* モーション削減時のローディング表示 */
+@media (prefers-reduced-motion: reduce) {
+  .loading::after {
+    animation: none;
+    border: 3px solid var(--primary-400);
+    border-top-color: transparent;
+  }
+  
+  .loading::before {
+    content: 'Loading...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--primary-400);
+    font-weight: bold;
+  }
+}

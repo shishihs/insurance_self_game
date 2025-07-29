@@ -67,15 +67,28 @@ export class GameChallengeService {
   resolveChallenge(game: Game): ChallengeResult {
     this.validateChallenge(game)
     
-    const selectedCards = game.selectedCards
-    const powerBreakdown = this.calculateTotalPower(game, selectedCards)
-    const challengePower = this.getChallengePower(game)
-    
-    const result = this.createChallengeResult(
-      game,
-      powerBreakdown,
-      challengePower
+    // 新しいChallengeResolutionServiceを使用
+    const result = this.resolutionService.resolveChallenge(
+      game.currentChallenge!,
+      game.selectedCards,
+      game.cardManager,
+      game.stage,
+      game.insuranceBurden,
+      game
     )
+    
+    // 統計更新
+    this.updateStatistics(game, result.success)
+    
+    // 活力更新
+    this.updateVitality(game, result.vitalityChange)
+    
+    // 成功時は保険種類選択肢を追加
+    if (result.success) {
+      const choices = CardFactory.createInsuranceTypeChoices(game.stage)
+      game.insuranceTypeChoices = choices
+      result.insuranceTypeChoices = choices
+    }
     
     this.updateGameStateAfterChallenge(game, result)
     
@@ -224,10 +237,11 @@ export class GameChallengeService {
   }
 
   /**
-   * 活力変更量を計算
+   * 活力変更量を計算（保険効果を考慮）
    * @private
    */
   private calculateVitalityChange(
+    game: Game,
     success: boolean,
     playerPower: number,
     challengePower: number
@@ -235,7 +249,20 @@ export class GameChallengeService {
     if (success) {
       return Math.floor((playerPower - challengePower) / 2)
     } else {
-      return -(challengePower - playerPower)
+      // 失敗時のダメージ計算
+      const baseDamage = challengePower - playerPower
+      
+      // 防御型保険によるダメージ軽渚
+      const activeInsurances = game.getActiveInsurances()
+      let damageReduction = 0
+      
+      activeInsurances.forEach(insurance => {
+        if (insurance.isDefensiveInsurance()) {
+          damageReduction += insurance.calculateDamageReduction()
+        }
+      })
+      
+      return -(Math.max(1, baseDamage - damageReduction))
     }
   }
 

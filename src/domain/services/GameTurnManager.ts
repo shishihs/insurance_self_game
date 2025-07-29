@@ -59,6 +59,9 @@ export class GameTurnManager {
     // ターン開始時のドロー
     game.drawCards(1)
     
+    // 回復型保険の効果を適用
+    this.applyRecoveryInsuranceEffects(game)
+    
     return {
       insuranceExpirations: expirationResult,
       newExpiredCount: expirationResult?.expiredCards.length || 0,
@@ -114,5 +117,25 @@ export class GameTurnManager {
     }
     
     return expirationResult
+  }
+
+  /**
+   * 回復型保険の効果を適用
+   * @private
+   */
+  private applyRecoveryInsuranceEffects(game: Game): void {
+    const activeInsurances = game.getActiveInsurances()
+    let totalHeal = 0
+    
+    activeInsurances.forEach(insurance => {
+      if (insurance.isRecoveryInsurance()) {
+        totalHeal += insurance.calculateTurnHeal()
+      }
+    })
+    
+    if (totalHeal > 0) {
+      game.heal(totalHeal)
+      console.log(`💚 回復型保険効果: +${totalHeal} 活力`)
+    }
   }
 }

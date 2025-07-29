@@ -9,6 +9,7 @@ import type {
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
+import { RiskRewardChallenge } from '../entities/RiskRewardChallenge'
 
 /**
  * カードファクトリー
@@ -131,6 +132,125 @@ export class CardFactory {
   }
 
   /**
+   * 多様な効果タイプの保険カードを生成
+   */
+  static createDiverseInsuranceCards(stage: GameStage = 'youth'): Card[] {
+    const cards: Card[] = []
+    const ageBonus = this.calculateAgeBonus(stage)
+
+    // 攻撃型保険
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '攻撃特化生命保険',
+      description: 'チャレンジ時に大きなパワーを提供',
+      power: 8,
+      cost: 5,
+      insuranceType: 'life',
+      insuranceEffectType: 'offensive',
+      coverage: 150,
+      effects: [],
+      ageBonus,
+      durationType: 'whole_life'
+    }))
+
+    // 防御型保険
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '防御特化医療保険',
+      description: 'ダメージを軽減する防御的保障',
+      power: 0,
+      cost: 4,
+      insuranceType: 'medical',
+      insuranceEffectType: 'defensive',
+      coverage: 100,
+      effects: [{
+        type: 'damage_reduction',
+        value: 3,
+        description: 'ダメージを3ポイント軽減'
+      }],
+      ageBonus: 0,
+      durationType: 'whole_life'
+    }))
+
+    // 回復型保険
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '回復特化健康保険',
+      description: '毎ターン活力を回復',
+      power: 0,
+      cost: 3,
+      insuranceType: 'health',
+      insuranceEffectType: 'recovery',
+      coverage: 80,
+      effects: [{
+        type: 'turn_heal',
+        value: 2,
+        description: '毎ターン終了時に2点回復'
+      }],
+      ageBonus: 0,
+      durationType: 'whole_life'
+    }))
+
+    // 特化型保険
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '仕事特化収入保障保険',
+      description: '仕事関連のチャレンジに特化',
+      power: 3,
+      cost: 4,
+      insuranceType: 'income',
+      insuranceEffectType: 'specialized',
+      coverage: 120,
+      effects: [{
+        type: 'challenge_bonus',
+        value: 5,
+        description: '「就職」「明進」チャレンジ時+5パワー',
+        condition: '就職,明進,転職,仕事'
+      }],
+      ageBonus,
+      durationType: 'whole_life'
+    }))
+
+    // 包括型保険
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: 'オールインワン総合保険',
+      description: '複数の効果を持つ高コスト保障',
+      power: 3,
+      cost: 7,
+      insuranceType: 'life',
+      insuranceEffectType: 'comprehensive',
+      coverage: 200,
+      effects: [
+        {
+          type: 'power_boost',
+          value: 3,
+          description: 'パワー+3'
+        },
+        {
+          type: 'damage_reduction',
+          value: 2,
+          description: 'ダメージ-2'
+        },
+        {
+          type: 'turn_heal',
+          value: 1,
+          description: '毎ターン+1回復'
+        }
+      ],
+      ageBonus,
+      durationType: 'whole_life'
+    }))
+
+    return cards
+  }
+
+  /**
    * 保険種類選択肢を生成（定期保険と終身保険の選択肢）
    */
   static createInsuranceTypeChoices(stage: GameStage = 'youth'): InsuranceTypeChoice[] {
@@ -139,7 +259,7 @@ export class CardFactory {
     // 年齢ボーナスの設定
     const ageBonus = this.calculateAgeBonus(stage)
     
-    // 基本保険タイプの定義
+    // 多様な保険タイプの定義（効果タイプ付き）
     const baseInsuranceTypes = [
       { 
         type: 'medical' as InsuranceType, 
@@ -147,7 +267,8 @@ export class CardFactory {
         description: '病気やケガに備える保障',
         power: 5, 
         baseCost: 4, 
-        coverage: 100 
+        coverage: 100,
+        effectType: 'offensive' as InsuranceEffectType
       },
       { 
         type: 'life' as InsuranceType, 
@@ -155,7 +276,8 @@ export class CardFactory {
         description: '家族を守る保障',
         power: 6, 
         baseCost: 5, 
-        coverage: 200 
+        coverage: 200,
+        effectType: 'offensive' as InsuranceEffectType
       },
       { 
         type: 'income' as InsuranceType, 
@@ -163,7 +285,26 @@ export class CardFactory {
         description: '働けなくなった時の保障',
         power: 5, 
         baseCost: 4, 
-        coverage: 150 
+        coverage: 150,
+        effectType: 'offensive' as InsuranceEffectType
+      },
+      {
+        type: 'health' as InsuranceType,
+        name: '防御型健康保険',
+        description: 'ダメージを軽減する防御的保障',
+        power: 0,
+        baseCost: 3,
+        coverage: 80,
+        effectType: 'defensive' as InsuranceEffectType
+      },
+      {
+        type: 'disability' as InsuranceType,
+        name: '回復型障害保険',
+        description: '定期的に活力を回復',
+        power: 0,
+        baseCost: 3,
+        coverage: 60,
+        effectType: 'recovery' as InsuranceEffectType
       }
     ]
     
@@ -194,6 +335,7 @@ export class CardFactory {
           cost: selectedType.baseCost, // ベースコスト
           insuranceType: selectedType.type,
           coverage: selectedType.coverage,
+          insuranceEffectType: selectedType.effectType,
           effects: [{
             type: 'shield',
             value: selectedType.coverage,
@@ -233,6 +375,7 @@ export class CardFactory {
       coverage: choice.baseCard.coverage,
       effects: choice.baseCard.effects,
       ageBonus: choice.baseCard.ageBonus,
+      insuranceEffectType: choice.baseCard.insuranceEffectType,
       durationType: 'term',
       remainingTurns: choice.termOption.duration
     })
@@ -253,6 +396,7 @@ export class CardFactory {
       coverage: choice.baseCard.coverage,
       effects: choice.baseCard.effects,
       ageBonus: choice.baseCard.ageBonus,
+      insuranceEffectType: choice.baseCard.insuranceEffectType,
       durationType: 'whole_life'
     })
   }
@@ -263,23 +407,94 @@ export class CardFactory {
   static createChallengeCards(stage: GameStage): Card[] {
     const challengeDefinitionsByStage = {
       youth: [
-        { name: '就職活動', description: '新たなキャリアの始まり', power: 5, dreamCategory: 'physical' as DreamCategory },
+        // 基本チャレンジ（難易度: 低）
+        { name: 'アルバイト探し', description: '初めての収入を得る', power: 3, dreamCategory: 'physical' as DreamCategory },
         { name: '一人暮らし', description: '独立への第一歩', power: 4, dreamCategory: 'physical' as DreamCategory },
-        { name: '資格試験', description: 'スキルアップのチャンス', power: 6, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '資格試験', description: 'スキルアップのチャンス', power: 5, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '就職活動', description: '新たなキャリアの始まり', power: 6, dreamCategory: 'physical' as DreamCategory },
+        // 中級チャレンジ
+        { name: '恋人との別れ', description: '初めての大きな失意', power: 5, dreamCategory: 'mixed' as DreamCategory },
+        { name: '転職活動', description: 'キャリアの分岐点', power: 6, dreamCategory: 'intellectual' as DreamCategory }
       ],
       middle: [
-        { name: '子育て', description: '家族の成長', power: 8, dreamCategory: 'physical' as DreamCategory },
-        { name: '住宅購入', description: '大きな決断', power: 10, dreamCategory: 'physical' as DreamCategory },
-        { name: '親の介護', description: '家族の支え合い', power: 9, dreamCategory: 'mixed' as DreamCategory }
+        // 基本チャレンジ（難易度: 中）
+        { name: '結婚資金', description: '新しい家族のスタート', power: 6, dreamCategory: 'mixed' as DreamCategory },
+        { name: '子育て', description: '家族の成長', power: 7, dreamCategory: 'physical' as DreamCategory },
+        { name: '両親の健康', description: '家族の支え合い', power: 8, dreamCategory: 'mixed' as DreamCategory },
+        { name: '住宅購入', description: '大きな決断', power: 9, dreamCategory: 'physical' as DreamCategory },
+        // 高難度チャレンジ
+        { name: '親の介護', description: '家族の責任', power: 10, dreamCategory: 'mixed' as DreamCategory },
+        { name: '教育資金', description: '子供の将来への投資', power: 8, dreamCategory: 'intellectual' as DreamCategory }
       ],
       fulfillment: [
-        { name: '定年退職', description: '新しい人生のスタート', power: 12, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '健康管理', description: '健やかな老後のために', power: 11, dreamCategory: 'mixed' as DreamCategory }
+        // 基本チャレンジ（難易度: 高）
+        { name: '健康管理', description: '健やかな老後のために', power: 8, dreamCategory: 'mixed' as DreamCategory },
+        { name: '趣味の充実', description: '人生の新たな楽しみ', power: 9, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '社会貢献', description: '経験を活かした活動', power: 10, dreamCategory: 'mixed' as DreamCategory },
+        { name: '定年退職', description: '新しい人生のスタート', power: 11, dreamCategory: 'intellectual' as DreamCategory },
+        // 最高難度チャレンジ
+        { name: '遺産相続', description: '家族への最後の贈り物', power: 12, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '健康上の大きな試練', description: '人生最大の挑戦', power: 13, dreamCategory: 'physical' as DreamCategory }
       ]
     }
 
     const definitions = challengeDefinitionsByStage[stage] || challengeDefinitionsByStage.fulfillment
-    return this.createCardsFromDefinitions(definitions, def => this.createChallengeCard(def))
+    
+    // ステージごとに適切な難易度のチャレンジを選択
+    // ランダムに3-4枚選ぶが、難易度のバランスを考慮
+    const shuffled = [...definitions].sort(() => Math.random() - 0.5)
+    const selectedCount = 3 + Math.floor(Math.random() * 2) // 3-4枚
+    const selected = shuffled.slice(0, selectedCount)
+    
+    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard(def))
+    
+    // リスク・リワードチャレンジを追加（20%の確率）
+    const riskChallenges = this.createRiskRewardChallenges(stage)
+    
+    return [...normalChallenges, ...riskChallenges]
+  }
+
+  /**
+   * リスク・リワードチャレンジを生成
+   */
+  static createRiskRewardChallenges(stage: GameStage): Card[] {
+    const challenges: Card[] = []
+    
+    // ステージに応じたリスクレベルの分布
+    const riskDistribution = {
+      youth: { low: 0.5, medium: 0.3, high: 0.15, extreme: 0.05 },
+      middle: { low: 0.3, medium: 0.4, high: 0.2, extreme: 0.1 },
+      fulfillment: { low: 0.2, medium: 0.3, high: 0.3, extreme: 0.2 }
+    }
+    
+    const distribution = riskDistribution[stage as 'youth' | 'middle' | 'fulfillment'] || riskDistribution.youth
+    
+    // 各リスクレベルのチャレンジを生成（確率に基づく）
+    const random = Math.random()
+    
+    if (random < 0.2) { // 20%の確率でリスクチャレンジを追加
+      let riskLevel: 'low' | 'medium' | 'high' | 'extreme'
+      const levelRandom = Math.random()
+      
+      if (levelRandom < distribution.low) {
+        riskLevel = 'low'
+      } else if (levelRandom < distribution.low + distribution.medium) {
+        riskLevel = 'medium'
+      } else if (levelRandom < distribution.low + distribution.medium + distribution.high) {
+        riskLevel = 'high'
+      } else {
+        riskLevel = 'extreme'
+      }
+      
+      const riskChallenge = RiskRewardChallenge.createRiskChallenge(
+        stage as 'youth' | 'middle' | 'fulfillment',
+        riskLevel
+      )
+      
+      challenges.push(riskChallenge)
+    }
+    
+    return challenges
   }
 
   /**

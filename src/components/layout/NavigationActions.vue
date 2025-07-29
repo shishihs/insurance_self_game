@@ -9,8 +9,10 @@
         :aria-keyshortcuts="'Alt+G'"
         aria-describedby="game-description"
       >
+        <span class="btn-bg-effect"></span>
         <span class="btn-icon" aria-hidden="true">🎮</span>
         <span class="btn-text">ゲームをプレイ</span>
+        <span class="btn-arrow" aria-hidden="true">→</span>
       </button>
       
       <button
@@ -21,6 +23,7 @@
         :aria-keyshortcuts="'Alt+T'"
         aria-describedby="tutorial-description"
       >
+        <span class="btn-bg-effect"></span>
         <span class="btn-icon" aria-hidden="true">📚</span>
         <span class="btn-text">チュートリアル</span>
       </button>
@@ -32,6 +35,7 @@
         :aria-keyshortcuts="'Alt+S'"
         aria-describedby="statistics-description"
       >
+        <span class="btn-bg-effect"></span>
         <span class="btn-icon" aria-hidden="true">📊</span>
         <span class="btn-text">統計</span>
       </button>
@@ -91,12 +95,12 @@ defineExpose({
   align-items: center;
   gap: var(--space-sm);
   
-  min-width: 180px;
+  min-width: 200px;
   min-height: var(--touch-target-comfortable);
   padding: var(--space-md) var(--space-xl);
   
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   
   font-family: Inter, system-ui, sans-serif;
   font-size: var(--text-lg);
@@ -108,31 +112,96 @@ defineExpose({
   
   box-shadow: var(--shadow-card);
   backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* 背景エフェクト */
+.btn-bg-effect {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  z-index: -1;
+}
+
+.btn:hover .btn-bg-effect {
+  opacity: 1;
 }
 
 /* プライマリボタン */
 .btn-primary {
-  background: var(--primary-gradient);
+  background: var(--brand-gradient-primary);
   color: white;
+  position: relative;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: var(--brand-gradient-hero);
+  border-radius: inherit;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity var(--transition-normal);
+  filter: blur(10px);
 }
 
 .btn-primary:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-glow), 0 12px 40px rgba(102, 126, 234, 0.3);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 10px 20px rgba(0, 0, 0, 0.2),
+    0 15px 40px rgba(129, 140, 248, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary:hover::before {
+  opacity: 0.5;
+}
+
+.btn-primary .btn-arrow {
+  margin-left: auto;
+  font-size: 1.2em;
+  transition: transform var(--transition-normal);
+}
+
+.btn-primary:hover .btn-arrow {
+  transform: translateX(4px);
 }
 
 /* セカンダリボタン */
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(129, 140, 248, 0.5);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(129, 140, 248, 0.3);
+  position: relative;
+}
+
+.btn-secondary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(129, 140, 248, 0.1) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  border-radius: inherit;
 }
 
 .btn-secondary:hover {
-  background: rgba(129, 140, 248, 0.2);
-  border-color: rgba(129, 140, 248, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(129, 140, 248, 0.2);
+  background: rgba(129, 140, 248, 0.15);
+  border-color: rgba(129, 140, 248, 0.6);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    0 8px 25px rgba(129, 140, 248, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover::after {
+  opacity: 1;
 }
 
 /* アクティブ状態 */
@@ -144,10 +213,17 @@ defineExpose({
 .btn-icon {
   font-size: var(--text-xl);
   line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform var(--transition-normal);
+}
+
+.btn:hover .btn-icon {
+  transform: scale(1.1) rotate(-5deg);
 }
 
 .btn-text {
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* リップルエフェクト */
@@ -175,11 +251,26 @@ defineExpose({
 }
 
 /* グローエフェクト */
-.glow-on-hover:hover {
-  box-shadow: 
-    var(--shadow-glow),
-    0 0 30px rgba(102, 126, 234, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+.glow-on-hover {
+  position: relative;
+}
+
+.glow-on-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--primary-400), var(--secondary-400));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.glow-on-hover:hover::after {
+  opacity: 1;
 }
 
 /* アニメーション */
@@ -191,16 +282,30 @@ defineExpose({
 @keyframes bounce-in {
   0% {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(30px) scale(0.9);
   }
   60% {
     opacity: 1;
-    transform: translateY(-10px);
+    transform: translateY(-5px) scale(1.02);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+/* ホバー時のパルスアニメーション */
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.btn-primary:hover .btn-icon {
+  animation: pulse-subtle 2s infinite;
 }
 
 /* フォーカス表示 */

@@ -218,18 +218,19 @@ onUnmounted(() => {
       <div v-else class="home-view" id="main-content" role="main" aria-label="ホーム画面">
         <ErrorBoundary fallback="minimal">
           <div class="home-container">
-        <AppHeader />
+            <AppHeader />
 
-        <NavigationActions 
-          @start-game="startGame"
-          @start-tutorial="startTutorial"
-          @open-statistics="openStatistics"
-          ref="navigationRef"
-        />
+            <NavigationActions 
+              @start-game="startGame"
+              @start-tutorial="startTutorial"
+              @open-statistics="openStatistics"
+              ref="navigationRef"
+            />
 
-        <section class="info-section">
-            <FeatureShowcase />
-        </div>
+            <section class="info-section">
+              <FeatureShowcase />
+            </section>
+          </div>
         </ErrorBoundary>
       </div>
     </TransitionAnimations>

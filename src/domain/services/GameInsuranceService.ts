@@ -49,6 +49,8 @@ export class GameInsuranceService {
     const selectedCard = this.createInsuranceCard(choice, durationType)
     
     this.addInsuranceCard(game, selectedCard)
+    this.updatePlayerHistory(game, insuranceType)
+    this.updateRiskProfile(game)
     this.completeInsuranceSelection(game)
     
     return this.createSelectionResult(selectedCard, choice, durationType)
@@ -65,7 +67,8 @@ export class GameInsuranceService {
     try {
       const totalBurden = this.premiumService.calculateTotalInsuranceBurden(
         game.insuranceCards,
-        game.stage
+        game.stage,
+        game.getRiskProfile()
       )
       
       // 負の値として返す（活力から差し引かれるため）
@@ -203,5 +206,35 @@ export class GameInsuranceService {
     const activeInsuranceCount = game.insuranceCards.length
     const burden = Math.floor(activeInsuranceCount / 3)
     return burden === 0 ? 0 : -burden
+  }
+
+  /**
+   * プレイヤー履歴を更新
+   * @private
+   */
+  private updatePlayerHistory(game: Game, insuranceType: string): void {
+    const history = game.getPlayerHistory()
+    history.totalInsurancePurchased++
+    
+    // リスクの高い保険種類を選んだ場合
+    if (insuranceType === 'life' || insuranceType === 'cancer') {
+      history.riskyChoiceCount++
+    }
+    history.totalChoiceCount++
+    
+    // Gameの内部プロパティを更新
+    ;(game as any)._playerHistory = history
+  }
+
+  /**
+   * リスクプロファイルを更新
+   * @private
+   */
+  private updateRiskProfile(game: Game): void {
+    const newProfile = this.premiumService.generateRiskProfile(
+      game.getPlayerHistory(),
+      game.stage
+    )
+    ;(game as any)._riskProfile = newProfile
   }
 }

@@ -22,6 +22,11 @@ export type InsuranceType =
   | 'accident'  // 傷害保険
   | 'income'    // 収入保障保険
   | 'asset'     // 資産形成保険
+  | 'health'    // 健康保険
+  | 'disability' // 障害保険
+  | 'cancer'    // がん保険
+  | 'dental'    // 歯科保険
+  | 'travel'    // 旅行保険
 
 /**
  * 保険期間種別
@@ -55,6 +60,11 @@ export type CardEffectType =
   | 'resource_generation' // リソース生成
   | 'card_transform'    // カード変換
   | 'synergy'           // 相乗効果
+  | 'damage_reduction'   // ダメージ軽減
+  | 'turn_heal'          // ターン終了時回復
+  | 'challenge_bonus'    // 特定チャレンジへのボーナス
+  | 'risk_mitigation'    // リスク軽減
+  | 'insurance_coverage' // 保険補償
 
 /**
  * ゲームステージ
@@ -97,6 +107,7 @@ export interface ICard {
   coverage?: number // 保障額
   durationType?: InsuranceDurationType // 保険期間種別
   remainingTurns?: number // 定期保険の残りターン数（定期保険のみ）
+  insuranceEffectType?: InsuranceEffectType // 保険効果タイプ
   
   // 落とし穴カード固有
   penalty?: number // ペナルティ値
@@ -153,6 +164,16 @@ export interface EventCardProperties {
   triggerCondition?: string // 発動条件
   globalEffect?: boolean // 全体効果かどうか
 }
+
+/**
+ * 保険効果タイプ
+ */
+export type InsuranceEffectType = 
+  | 'offensive'   // 攻撃型（パワー提供）
+  | 'defensive'   // 防御型（ダメージ軽減）
+  | 'recovery'    // 回復型（体力回復）
+  | 'specialized' // 特化型（特定チャレンジ特化）
+  | 'comprehensive' // 包括型（複数効果）
 
 /**
  * 拡張カードインターフェース

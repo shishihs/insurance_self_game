@@ -2,6 +2,8 @@ import { InsurancePremium } from '../valueObjects/InsurancePremium'
 import type { Card } from '../entities/Card'
 import type { GameStage } from '../types/card.types'
 import type { InsuranceType } from '../types/card.types'
+import { RiskFactor, type RiskFactorType } from '../valueObjects/RiskFactor'
+import { RiskProfile } from '../valueObjects/RiskProfile'
 
 /**
  * 保険料計算ドメインサービス
@@ -54,13 +56,18 @@ export class InsurancePremiumCalculationService {
   /**
    * 保険カードの総合保険料を計算
    * 
-   * 基本料金 + 年齢調整 + 保険種別調整 + カバレッジ調整を総合的に計算
+   * 基本料金 + 年齢調整 + 保険種別調整 + カバレッジ調整 + リスク調整を総合的に計算
    * 
    * @param card 保険カード
    * @param stage プレイヤーの現在ステージ
+   * @param riskProfile プレイヤーのリスクプロファイル（オプション）
    * @returns 総合保険料
    */
-  calculateComprehensivePremium(card: Card, stage: GameStage): InsurancePremium {
+  calculateComprehensivePremium(
+    card: Card, 
+    stage: GameStage,
+    riskProfile?: RiskProfile
+  ): InsurancePremium {
     if (card.type !== 'insurance') {
       throw new Error('Card must be an insurance card')
     }
@@ -77,6 +84,12 @@ export class InsurancePremiumCalculationService {
     // カバレッジ調整
     const coverageAdjustedPremium = this.applyCoverageAdjustment(typeAdjustedPremium, card.coverage)
     
+    // リスクプロファイル調整
+    if (riskProfile) {
+      const riskMultiplier = this.calculateRiskAdjustment(riskProfile, card.insuranceType)
+      return coverageAdjustedPremium.applyMultiplier(riskMultiplier)
+    }
+    
     return coverageAdjustedPremium
   }
 
@@ -88,12 +101,17 @@ export class InsurancePremiumCalculationService {
    * 
    * @param insuranceCards アクティブな保険カード配列
    * @param stage プレイヤーの現在ステージ
+   * @param riskProfile プレイヤーのリスクプロファイル（オプション）
    * @returns 総保険料負担
    */
-  calculateTotalInsuranceBurden(insuranceCards: Card[], stage: GameStage): InsurancePremium {
+  calculateTotalInsuranceBurden(
+    insuranceCards: Card[], 
+    stage: GameStage,
+    riskProfile?: RiskProfile
+  ): InsurancePremium {
     // 各保険の個別料金計算
     const individualPremiums = insuranceCards.map(card => 
-      this.calculateComprehensivePremium(card, stage)
+      this.calculateComprehensivePremium(card, stage, riskProfile)
     )
     
     // 基本合計
@@ -222,4 +240,142 @@ export class InsurancePremiumCalculationService {
     if (usageHistory >= 3) return 1.1       // 10%増し
     return 1.0                               // 基準料金
   }
+
+  /**
+   * リスクプロファイルに基づく保険料調整を計算
+   * @private
+   */
+  private calculateRiskAdjustment(riskProfile: RiskProfile, insuranceType?: InsuranceType): number {
+    // 基本的なリスク倍率
+    let baseMultiplier = riskProfile.getTotalPremiumMultiplier()
+    
+    // 保険種類ごとに特定のリスクファクターの影響を強化
+    if (insuranceType) {
+      const typeSpecificAdjustments: Partial<Record<InsuranceType, RiskFactorType>> = {
+        'health': 'health',      // 健康保険は健康リスクの影響大
+        'life': 'age',          // 生命保険は年齢リスクの影響大
+        'disability': 'health',  // 障害保険は健康リスクの影響大
+        'accident': 'lifestyle', // 事故保険はライフスタイルの影響大
+        'cancer': 'health',      // がん保険は健康リスクの影響大
+      }
+      
+      const relevantFactorType = typeSpecificAdjustments[insuranceType]
+      if (relevantFactorType) {
+        const specificFactor = riskProfile.getFactor(relevantFactorType)
+        if (specificFactor) {
+          // 特定リスクの影響を20%強化
+          const specificMultiplier = specificFactor.getPremiumMultiplier()
+          baseMultiplier = baseMultiplier * 0.8 + specificMultiplier * 0.2
+        }
+      }
+    }
+    
+    return baseMultiplier
+  }
+
+  /**
+   * プレイヤーの行動履歴からリスクプロファイルを生成
+   * 
+   * @param playerHistory プレイヤーの行動履歴
+   * @param currentStage 現在のステージ
+   * @returns 計算されたリスクプロファイル
+   */
+  generateRiskProfile(playerHistory: PlayerHistory, currentStage: GameStage): RiskProfile {
+    let profile = RiskProfile.default()
+    
+    // 年齢リスクの計算
+    const ageRiskValue = this.calculateAgeRisk(currentStage)
+    profile = profile.withFactor(RiskFactor.create(ageRiskValue, 'age'))
+    
+    // 健康リスクの計算（ダメージ履歴から）
+    const healthRiskValue = this.calculateHealthRisk(playerHistory)
+    profile = profile.withFactor(RiskFactor.create(healthRiskValue, 'health'))
+    
+    // 請求履歴リスクの計算
+    const claimsRiskValue = this.calculateClaimsRisk(playerHistory)
+    profile = profile.withFactor(RiskFactor.create(claimsRiskValue, 'claims'))
+    
+    // ライフスタイルリスクの計算（プレイスタイルから）
+    const lifestyleRiskValue = this.calculateLifestyleRisk(playerHistory)
+    profile = profile.withFactor(RiskFactor.create(lifestyleRiskValue, 'lifestyle'))
+    
+    return profile
+  }
+
+  /**
+   * 年齢によるリスク値を計算
+   * @private
+   */
+  private calculateAgeRisk(stage: GameStage): number {
+    const ageRiskMap: Record<GameStage, number> = {
+      'youth': 0.2,
+      'adult': 0.3,
+      'middle_age': 0.5,
+      'middle': 0.5,
+      'elder': 0.8,
+      'elderly': 0.8,
+      'fulfillment': 0.6
+    }
+    return ageRiskMap[stage] || 0.5
+  }
+
+  /**
+   * 健康履歴からリスク値を計算
+   * @private
+   */
+  private calculateHealthRisk(history: PlayerHistory): number {
+    const totalDamageTaken = history.totalDamageTaken || 0
+    const turnsPlayed = history.turnsPlayed || 1
+    const averageDamagePerTurn = totalDamageTaken / turnsPlayed
+    
+    // 平均ダメージが多いほどリスクが高い
+    if (averageDamagePerTurn >= 3) return 0.8
+    if (averageDamagePerTurn >= 2) return 0.6
+    if (averageDamagePerTurn >= 1) return 0.4
+    return 0.2
+  }
+
+  /**
+   * 保険請求履歴からリスク値を計算
+   * @private
+   */
+  private calculateClaimsRisk(history: PlayerHistory): number {
+    const claimCount = history.insuranceClaimCount || 0
+    const totalInsurances = history.totalInsurancePurchased || 1
+    const claimRate = claimCount / totalInsurances
+    
+    // 請求率が高いほどリスクが高い
+    if (claimRate >= 0.5) return 0.9
+    if (claimRate >= 0.3) return 0.6
+    if (claimRate >= 0.1) return 0.3
+    return 0.1
+  }
+
+  /**
+   * プレイスタイルからライフスタイルリスクを計算
+   * @private
+   */
+  private calculateLifestyleRisk(history: PlayerHistory): number {
+    const riskyChoices = history.riskyChoiceCount || 0
+    const totalChoices = history.totalChoiceCount || 1
+    const riskRate = riskyChoices / totalChoices
+    
+    // リスキーな選択が多いほどリスクが高い
+    if (riskRate >= 0.6) return 0.8
+    if (riskRate >= 0.4) return 0.5
+    if (riskRate >= 0.2) return 0.3
+    return 0.1
+  }
+}
+
+/**
+ * プレイヤー履歴インターフェース
+ */
+export interface PlayerHistory {
+  turnsPlayed: number
+  totalDamageTaken: number
+  insuranceClaimCount: number
+  totalInsurancePurchased: number
+  riskyChoiceCount: number
+  totalChoiceCount: number
 }

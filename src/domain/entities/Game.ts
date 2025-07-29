@@ -28,6 +28,8 @@ import { DREAM_AGE_ADJUSTMENTS, AGE_PARAMETERS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
+import { RiskProfile } from '../valueObjects/RiskFactor'
+import type { PlayerHistory } from '../services/InsurancePremiumCalculationService'
 
 /**
  * ゲームエンティティ - ゲーム全体の状態と進行を管理する中核クラス
@@ -77,6 +79,10 @@ export class Game implements IGameState {
   
   stats: PlayerStats
   config: GameConfig
+  
+  // Phase 5: リスクプロファイルとプレイヤー履歴
+  private _riskProfile: RiskProfile
+  private _playerHistory: PlayerHistory
   
   // Phase 2-4: 保険カード管理
   insuranceCards: Card[]
@@ -176,6 +182,17 @@ export class Game implements IGameState {
       turnsPlayed: 0
     }
     
+    // Phase 5: リスクプロファイルと履歴の初期化
+    this._riskProfile = RiskProfile.default()
+    this._playerHistory = {
+      turnsPlayed: 0,
+      totalDamageTaken: 0,
+      insuranceClaimCount: 0,
+      totalInsurancePurchased: 0,
+      riskyChoiceCount: 0,
+      totalChoiceCount: 0
+    }
+    
     this.config = config || {
       difficulty: 'normal',
       startingVitality,
@@ -249,6 +266,22 @@ export class Game implements IGameState {
    */
   heal(amount: number): void {
     this.updateVitality(amount)
+  }
+
+  /**
+   * 現在のリスクプロファイルを取得
+   * @returns {RiskProfile} リスクプロファイル
+   */
+  getRiskProfile(): RiskProfile {
+    return this._riskProfile
+  }
+
+  /**
+   * プレイヤー履歴を取得
+   * @returns {PlayerHistory} プレイヤー履歴
+   */
+  getPlayerHistory(): PlayerHistory {
+    return { ...this._playerHistory }
   }
 
   /**
@@ -432,6 +465,11 @@ export class Game implements IGameState {
     const currentVitality = this.vitality
     if (currentVitality > this.stats.highestVitality) {
       this.stats.highestVitality = currentVitality
+    }
+    
+    // ダメージ履歴を記録
+    if (change < 0) {
+      this._playerHistory.totalDamageTaken += Math.abs(change)
     }
     
     // ゲームオーバー判定
@@ -630,14 +668,14 @@ export class Game implements IGameState {
    * 特定の保険カードの総合保険料を取得
    * 
    * @param card 保険カード
-   * @returns 年齢・種別調整済み保険料
+   * @returns 年齢・種別・リスク調整済み保険料
    */
   calculateCardPremium(card: Card): InsurancePremium {
     if (card.type !== 'insurance') {
       throw new Error('Card must be an insurance card')
     }
     
-    return this.premiumCalculationService.calculateComprehensivePremium(card, this.stage)
+    return this.premiumCalculationService.calculateComprehensivePremium(card, this.stage, this._riskProfile)
   }
 
   /**
