@@ -3,7 +3,9 @@ import type {
   LifeCardCategory, 
   InsuranceType, 
   GameStage,
-  DreamCategory
+  DreamCategory,
+  SkillRarity,
+  CardEffect
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -373,7 +375,7 @@ export class CardFactory {
   }): Card {
     return new Card({
       id: IdGenerator.generateCardId(),
-      type: 'challenge', // チャレンジカード専用タイプ
+      type: params.dreamCategory ? 'dream' : 'challenge', // 夢カテゴリがある場合はdreamタイプ
       name: params.name,
       description: params.description,
       power: params.power,
@@ -402,5 +404,125 @@ export class CardFactory {
       penalty: params.penalty,
       effects: []
     })
+  }
+
+  /**
+   * スキルカードを生成
+   */
+  static createSkillCards(stage: GameStage = 'youth'): Card[] {
+    const skillDefinitionsByStage = {
+      youth: [
+        { name: '集中力', description: '集中して取り組む能力', rarity: 'common' as SkillRarity, power: 3, cooldown: 0 },
+        { name: 'コミュニケーション', description: '人との関わりを深める', rarity: 'common' as SkillRarity, power: 4, cooldown: 1 },
+        { name: 'リーダーシップ', description: 'チームを率いる力', rarity: 'rare' as SkillRarity, power: 6, cooldown: 2 },
+        { name: '創造性', description: '新しいアイデアを生み出す', rarity: 'epic' as SkillRarity, power: 8, cooldown: 3 }
+      ],
+      middle: [
+        { name: '戦略的思考', description: '長期的な視点で考える', rarity: 'rare' as SkillRarity, power: 7, cooldown: 2 },
+        { name: 'メンタリング', description: '後輩を指導する能力', rarity: 'rare' as SkillRarity, power: 6, cooldown: 1 },
+        { name: '危機管理', description: 'リスクを予測し対処する', rarity: 'epic' as SkillRarity, power: 9, cooldown: 3 },
+        { name: 'イノベーション', description: '革新的な変化を起こす', rarity: 'legendary' as SkillRarity, power: 12, cooldown: 4 }
+      ],
+      fulfillment: [
+        { name: '人生の知恵', description: '経験から得た深い洞察', rarity: 'epic' as SkillRarity, power: 10, cooldown: 2 },
+        { name: 'レガシー構築', description: '次世代への価値ある遺産', rarity: 'legendary' as SkillRarity, power: 15, cooldown: 5 },
+        { name: '精神的平和', description: '内なる調和と安定', rarity: 'legendary' as SkillRarity, power: 13, cooldown: 3 }
+      ]
+    }
+
+    const definitions = skillDefinitionsByStage[stage] || skillDefinitionsByStage.youth
+    return this.createCardsFromDefinitions(definitions, def => 
+      Card.createSkillCard(def.name, def.rarity, def.power, def.cooldown)
+    )
+  }
+
+  /**
+   * コンボカードを生成
+   */
+  static createComboCards(): Card[] {
+    const comboDefinitions = [
+      { 
+        name: 'ワークライフバランス', 
+        power: 2, 
+        requiredCards: ['career', 'family'], 
+        comboBonus: 4,
+        description: 'キャリアと家族の調和' 
+      },
+      { 
+        name: '健康的な成功', 
+        power: 3, 
+        requiredCards: ['health', 'finance'], 
+        comboBonus: 5,
+        description: '健康と経済的安定の両立' 
+      },
+      { 
+        name: '充実した人生', 
+        power: 4, 
+        requiredCards: ['hobby', 'family', 'career'], 
+        comboBonus: 8,
+        description: '趣味・家族・キャリアの三位一体' 
+      }
+    ]
+
+    return this.createCardsFromDefinitions(comboDefinitions, def => 
+      Card.createComboCard(def.name, def.power, def.requiredCards, def.comboBonus)
+    )
+  }
+
+  /**
+   * イベントカードを生成
+   */
+  static createEventCards(stage: GameStage = 'youth'): Card[] {
+    const eventDefinitionsByStage = {
+      youth: [
+        { name: '新年の抱負', description: '新しい年への決意', power: 5, duration: 3, globalEffect: false },
+        { name: '就職ブーム', description: '雇用機会の増加', power: 4, duration: 2, globalEffect: true },
+        { name: '健康ブーム', description: '健康への意識向上', power: 3, duration: 4, globalEffect: true }
+      ],
+      middle: [
+        { name: '経済成長期', description: '社会全体の活況', power: 6, duration: 3, globalEffect: true },
+        { name: '家族の絆', description: '家族関係の深化', power: 7, duration: 2, globalEffect: false },
+        { name: '技術革新', description: 'テクノロジーの進歩', power: 8, duration: 4, globalEffect: true }
+      ],
+      fulfillment: [
+        { name: '人生の総決算', description: '経験の統合と成熟', power: 10, duration: 2, globalEffect: false },
+        { name: '世代交代', description: '次世代への継承', power: 9, duration: 3, globalEffect: true }
+      ]
+    }
+
+    const definitions = eventDefinitionsByStage[stage] || eventDefinitionsByStage.youth
+    return this.createCardsFromDefinitions(definitions, def => 
+      Card.createEventCard(def.name, def.power, def.duration, def.globalEffect)
+    )
+  }
+
+  /**
+   * レジェンダリーカードを生成（アンロック制）
+   */
+  static createLegendaryCards(): Card[] {
+    const legendaryDefinitions = [
+      { 
+        name: '人生の達人', 
+        power: 20, 
+        unlockCondition: '全ステージで50回以上成功',
+        description: '人生経験の集大成'
+      },
+      { 
+        name: '運命を変える決断', 
+        power: 25, 
+        unlockCondition: '連続10回チャレンジ成功',
+        description: '人生を劇的に変える瞬間'
+      },
+      { 
+        name: '完璧な調和', 
+        power: 30, 
+        unlockCondition: '全カテゴリのカードを50枚以上獲得',
+        description: 'すべての側面が完璧にバランスした状態'
+      }
+    ]
+
+    return this.createCardsFromDefinitions(legendaryDefinitions, def => 
+      Card.createLegendaryCard(def.name, def.power, def.unlockCondition)
+    )
   }
 }

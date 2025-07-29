@@ -1,7 +1,7 @@
 /**
  * カード種別
  */
-export type CardType = 'life' | 'insurance' | 'pitfall'
+export type CardType = 'life' | 'insurance' | 'pitfall' | 'challenge' | 'dream' | 'skill' | 'combo' | 'event' | 'legendary'
 
 /**
  * カードカテゴリー（人生カード用）
@@ -45,6 +45,16 @@ export type CardEffectType =
   | 'heal'              // 活力回復
   | 'shield'            // 防御
   | 'special_action'    // 特殊行動
+  | 'vitality_boost'    // 活力上限増加
+  | 'insurance_discount' // 保険料割引
+  | 'double_effect'     // 効果倍加
+  | 'chain_combo'       // 連鎖コンボ
+  | 'persistent'        // 永続効果
+  | 'trigger_on_event'  // 特定イベント時発動
+  | 'multi_turn'        // 複数ターン効果
+  | 'resource_generation' // リソース生成
+  | 'card_transform'    // カード変換
+  | 'synergy'           // 相乗効果
 
 /**
  * ゲームステージ
@@ -106,4 +116,55 @@ export interface DreamCard extends ICard {
   category: DreamCategory
   baseRequiredPower: number
   ageAdjustment: number // 年齢調整値
+}
+
+/**
+ * スキルカードレア度
+ */
+export type SkillRarity = 'common' | 'rare' | 'epic' | 'legendary'
+
+/**
+ * スキルカード専用プロパティ
+ */
+export interface SkillCardProperties {
+  rarity: SkillRarity
+  cooldown?: number // クールダウンターン数
+  remainingCooldown?: number // 残りクールダウン
+  usageCount?: number // 使用回数（制限あり）
+  maxUsages?: number // 最大使用回数
+  prerequisites?: string[] // 前提スキル
+  masteryLevel?: number // 熟練度レベル (1-5)
+}
+
+/**
+ * コンボカード専用プロパティ
+ */
+export interface ComboCardProperties {
+  requiredCards: string[] // 必要なカード名またはタイプ
+  comboBonus: number // コンボ時のボーナスパワー
+  chainLength?: number // 連鎖の長さ
+}
+
+/**
+ * イベントカード専用プロパティ
+ */
+export interface EventCardProperties {
+  duration: number // 効果持続ターン数
+  triggerCondition?: string // 発動条件
+  globalEffect?: boolean // 全体効果かどうか
+}
+
+/**
+ * 拡張カードインターフェース
+ */
+export interface IAdvancedCard extends ICard {
+  // スキルカード用
+  skillProperties?: SkillCardProperties
+  // コンボカード用
+  comboProperties?: ComboCardProperties
+  // イベントカード用
+  eventProperties?: EventCardProperties
+  // レジェンダリーカード固有
+  isUnlockable?: boolean // アンロック可能かどうか
+  unlockCondition?: string // アンロック条件
 }

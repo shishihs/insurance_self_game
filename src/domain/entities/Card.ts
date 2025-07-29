@@ -1,12 +1,17 @@
 import type { 
   ICard, 
+  IAdvancedCard,
   CardType, 
   CardEffect,
   CardEffectType, 
   LifeCardCategory, 
   InsuranceType,
   InsuranceDurationType,
-  DreamCategory
+  DreamCategory,
+  SkillCardProperties,
+  ComboCardProperties,
+  EventCardProperties,
+  SkillRarity
 } from '../types/card.types'
 import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -19,7 +24,7 @@ import { IdGenerator } from '../../common/IdGenerator'
  * - power: CardPower値オブジェクト（カードの効果値）
  * - cost: InsurancePremium値オブジェクト（保険カードの場合）
  * 
- * @implements {ICard} カードインターフェース
+ * @implements {IAdvancedCard} 拡張カードインターフェース
  * 
  * @example
  * // 人生カードの作成
@@ -28,10 +33,10 @@ import { IdGenerator } from '../../common/IdGenerator'
  * // 保険カードの作成
  * const insuranceCard = Card.createInsuranceCard('健康保険', 2);
  * 
- * // チャレンジカードの作成
- * const challengeCard = Card.createChallengeCard('結婚', 4);
+ * // スキルカードの作成
+ * const skillCard = Card.createSkillCard('プロフェッショナル', 'rare', 3);
  */
-export class Card implements ICard {
+export class Card implements IAdvancedCard {
   readonly id: string
   readonly name: string
   readonly description: string
@@ -50,19 +55,19 @@ export class Card implements ICard {
   remainingTurns?: number // 可変プロパティ（ターンごとに減少）
   // Phase 4 夢カード用プロパティ
   readonly dreamCategory?: DreamCategory
+  
+  // 拡張カード用プロパティ
+  readonly skillProperties?: SkillCardProperties
+  readonly comboProperties?: ComboCardProperties
+  readonly eventProperties?: EventCardProperties
+  readonly isUnlockable?: boolean
+  readonly unlockCondition?: string
 
   /**
    * Cardインスタンスを作成
-   * @param {ICard} params - カードのパラメータ
-   * @param {string} params.id - カードID
-   * @param {string} params.name - カード名
-   * @param {string} params.description - カードの説明
-   * @param {CardType} params.type - カードタイプ
-   * @param {number} params.power - カードのパワー
-   * @param {number} params.cost - カードのコスト
-   * @param {CardEffect[]} params.effects - カードの効果
+   * @param {IAdvancedCard} params - カードのパラメータ
    */
-  constructor(params: ICard) {
+  constructor(params: IAdvancedCard) {
     this.id = params.id
     this.name = params.name
     this.description = params.description
@@ -95,6 +100,23 @@ export class Card implements ICard {
     // Phase 4 夢カードのプロパティ
     if ('dreamCategory' in params) {
       this.dreamCategory = params.dreamCategory
+    }
+    
+    // 拡張カード用プロパティ
+    if ('skillProperties' in params) {
+      this.skillProperties = params.skillProperties
+    }
+    if ('comboProperties' in params) {
+      this.comboProperties = params.comboProperties
+    }
+    if ('eventProperties' in params) {
+      this.eventProperties = params.eventProperties
+    }
+    if ('isUnlockable' in params) {
+      this.isUnlockable = params.isUnlockable
+    }
+    if ('unlockCondition' in params) {
+      this.unlockCondition = params.unlockCondition
     }
   }
 
@@ -182,10 +204,10 @@ export class Card implements ICard {
 
   /**
    * カードのコピーを作成（一部のプロパティを更新可能）
-   * @param {Partial<ICard>} [updates] - 更新するプロパティ
+   * @param {Partial<IAdvancedCard>} [updates] - 更新するプロパティ
    * @returns {Card} 新しいCardインスタンス
    */
-  copy(updates?: Partial<ICard>): Card {
+  copy(updates?: Partial<IAdvancedCard>): Card {
     return new Card({
       ...this,
       power: this.power, // getter経由で取得
@@ -282,6 +304,41 @@ export class Card implements ICard {
   }
 
   /**
+   * スキルカードかどうか判定
+   */
+  isSkillCard(): boolean {
+    return this.type === 'skill'
+  }
+
+  /**
+   * コンボカードかどうか判定
+   */
+  isComboCard(): boolean {
+    return this.type === 'combo'
+  }
+
+  /**
+   * イベントカードかどうか判定
+   */
+  isEventCard(): boolean {
+    return this.type === 'event'
+  }
+
+  /**
+   * レジェンダリーカードかどうか判定
+   */
+  isLegendaryCard(): boolean {
+    return this.type === 'legendary'
+  }
+
+  /**
+   * チャレンジカードかどうか判定
+   */
+  isChallengeCard(): boolean {
+    return this.type === 'challenge'
+  }
+
+  /**
    * カードの表示用文字列を生成
    */
   toDisplayString(): string {
@@ -351,6 +408,89 @@ export class Card implements ICard {
       power,
       cost: 1,
       effects: effects
+    })
+  }
+
+  /**
+   * スキルカードを作成
+   */
+  static createSkillCard(name: string, rarity: SkillRarity, power: number, cooldown?: number): Card {
+    const rarityDescriptions = {
+      common: 'コモン',
+      rare: 'レア', 
+      epic: 'エピック',
+      legendary: 'レジェンダリー'
+    }
+    
+    return new Card({
+      id: IdGenerator.generate('skill'),
+      name,
+      description: `${rarityDescriptions[rarity]}スキル - パワー: +${power}`,
+      type: 'skill',
+      power,
+      cost: 0,
+      effects: [],
+      skillProperties: {
+        rarity,
+        cooldown,
+        remainingCooldown: 0,
+        masteryLevel: 1
+      }
+    })
+  }
+
+  /**
+   * コンボカードを作成
+   */
+  static createComboCard(name: string, power: number, requiredCards: string[], comboBonus: number): Card {
+    return new Card({
+      id: IdGenerator.generate('combo'),
+      name,
+      description: `コンボカード - パワー: +${power} (コンボ時: +${comboBonus})`,
+      type: 'combo',
+      power,
+      cost: 0,
+      effects: [],
+      comboProperties: {
+        requiredCards,
+        comboBonus
+      }
+    })
+  }
+
+  /**
+   * イベントカードを作成
+   */
+  static createEventCard(name: string, power: number, duration: number, globalEffect = false): Card {
+    return new Card({
+      id: IdGenerator.generate('event'),
+      name,
+      description: `イベントカード - ${duration}ターン継続`,
+      type: 'event',
+      power,
+      cost: 0,
+      effects: [],
+      eventProperties: {
+        duration,
+        globalEffect
+      }
+    })
+  }
+
+  /**
+   * レジェンダリーカードを作成
+   */
+  static createLegendaryCard(name: string, power: number, unlockCondition: string): Card {
+    return new Card({
+      id: IdGenerator.generate('legendary'),
+      name,
+      description: `レジェンダリーカード - パワー: +${power}`,
+      type: 'legendary',
+      power,
+      cost: 0,
+      effects: [],
+      isUnlockable: true,
+      unlockCondition
     })
   }
 }
