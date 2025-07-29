@@ -26,8 +26,9 @@ class ServiceWorkerManager {
     
     try {
       // Service Worker の登録
-      const registration = await navigator.serviceWorker.register('/service-worker.js', {
-        scope: '/'
+      const basePath = import.meta.env.BASE_URL || '/'
+      const registration = await navigator.serviceWorker.register(`${basePath}service-worker.js`, {
+        scope: basePath
       })
       
       this.registration = registration

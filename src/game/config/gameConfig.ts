@@ -32,13 +32,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   render: {
     pixelArt: false,
     antialias: true,
-    antialiasGL: true,
-    mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
     powerPreference: 'high-performance', // ハードウェアアクセラレーション
     transparent: false,
     preserveDrawingBuffer: false, // メモリ節約
-    failIfMajorPerformanceCaveat: false,
-    desynchronized: true // 描画パフォーマンス向上
+    failIfMajorPerformanceCaveat: false
   },
   // タッチ入力設定
   input: {

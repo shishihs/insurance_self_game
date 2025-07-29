@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Fixed
+- **セキュリティヘッダー修正**: X-Frame-OptionsをHTMLメタタグから削除（HTTPヘッダーのみで設定可能）
+- **CSPエラー修正**: 不要なGoogleフォントのpreconnectタグを削除
+- **Service Worker修正**: GitHub Pages用のbaseパスを適用してService Worker 404エラーを解決
+- **アイコン404エラー修正**: 存在しないアイコンファイルへの参照を削除、manifest.jsonを簡素化
+- **Phaser互換性修正**: Phaser v3.90.0との互換性のため、render設定から非対応オプションを削除
+
 ### 🚀 今後のロードマップ
 
 #### 短期（1-2週間）
