@@ -150,16 +150,16 @@ export class SaveLoadService {
   /**
    * 利用可能なセーブスロット一覧を取得
    */
-  getSaveSlots(): SaveSlot[] {
-    return this.stateManager.getSaveSlots()
+  async getSaveSlots(): Promise<SaveSlot[]> {
+    return await this.stateManager.getSaveSlots()
   }
   
   /**
    * セーブデータを削除
    */
-  deleteSave(slotId: string): SaveLoadResult {
+  async deleteSave(slotId: string): Promise<SaveLoadResult> {
     try {
-      this.stateManager.deleteSave(slotId)
+      await this.stateManager.deleteSave(slotId)
       
       return {
         success: true,
@@ -177,9 +177,9 @@ export class SaveLoadService {
   /**
    * セーブデータをエクスポート
    */
-  exportSaveData(): SaveLoadResult {
+  async exportSaveData(): Promise<SaveLoadResult> {
     try {
-      const exportData = this.stateManager.exportData()
+      const exportData = await this.stateManager.exportData()
       
       return {
         success: true,
@@ -218,13 +218,16 @@ export class SaveLoadService {
   /**
    * ストレージ使用状況を取得
    */
-  getStorageInfo(): {
+  async getStorageInfo(): Promise<{
     usage: { used: number; available: number; percentage: number }
     slots: SaveSlot[]
     totalSaves: number
-  } {
-    const usage = this.stateManager.getStorageUsage()
-    const slots = this.getSaveSlots()
+  }> {
+    const [usage, slots] = await Promise.all([
+      this.stateManager.getStorageUsage(),
+      this.getSaveSlots()
+    ])
+    
     const totalSaves = slots.filter(slot => !slot.isEmpty).length
     
     return {
@@ -239,9 +242,11 @@ export class SaveLoadService {
    */
   private async validateSaveData(slotId: string): Promise<{ isValid: boolean; error?: string }> {
     try {
-      const storage = this.stateManager['storage'] // プライベートプロパティへのアクセス
-      const saveKey = `game_save_${slotId}`
-      const saveData = storage.getItem<SaveData>(saveKey)
+      // StorageAdapterを直接使用
+      const { StorageAdapter } = await import('@/infrastructure/storage/StorageAdapter')
+      const storage = StorageAdapter.getInstance()
+      await storage.initialize()
+      const saveData = await storage.loadSaveData(slotId)
       
       if (!saveData) {
         return { isValid: false, error: 'セーブデータが存在しません' }

@@ -3,6 +3,7 @@ import { InsurancePremiumCalculationService } from '../InsurancePremiumCalculati
 import { InsurancePremium } from '../../valueObjects/InsurancePremium'
 import { Card } from '../../entities/Card'
 import type { GameStage, InsuranceType } from '../../types/card.types'
+import { RiskFactor, RiskProfile } from '../../valueObjects/RiskFactor'
 
 describe('InsurancePremiumCalculationService', () => {
   let service: InsurancePremiumCalculationService
@@ -205,6 +206,136 @@ describe('InsurancePremiumCalculationService', () => {
       
       // カバレッジ調整の最小値0.5が適用される
       expect(result.getValue()).toBe(5) // 10 * 0.5
+    })
+  })
+
+  describe('リスクファクターを使用した保険料計算', () => {
+    it('リスクプロファイルなしでの基本計算', () => {
+      const card = createInsuranceCard('health', 10, 50)
+      const result = service.calculateRiskAdjustedPremium(card, 'youth')
+      
+      // リスクプロファイルなしの場合は通常の計算
+      expect(result.getValue()).toBe(10)
+    })
+
+    it('低リスクプロファイルでの保険料計算', () => {
+      const card = createInsuranceCard('health', 10, 50)
+      const riskProfile = RiskProfile.empty()
+        .withFactor(RiskFactor.create(0.2, 'age'))
+        .withFactor(RiskFactor.create(0.1, 'health'))
+      
+      const result = service.calculateRiskAdjustedPremium(card, 'youth', riskProfile)
+      
+      // 基本料金10 * リスク倍率（低リスクなので1.0に近い）
+      expect(result.getValue()).toBeLessThan(12)
+    })
+
+    it('高リスクプロファイルでの保険料計算', () => {
+      const card = createInsuranceCard('health', 10, 50)
+      const riskProfile = RiskProfile.empty()
+        .withFactor(RiskFactor.create(0.8, 'age'))
+        .withFactor(RiskFactor.create(0.9, 'health'))
+        .withFactor(RiskFactor.create(0.7, 'claims'))
+      
+      const result = service.calculateRiskAdjustedPremium(card, 'youth', riskProfile)
+      
+      // 高リスクなので保険料が大幅に増加
+      expect(result.getValue()).toBeGreaterThan(15)
+    })
+
+    it('特定のリスクファクターが保険種別に応じて影響する', () => {
+      const healthCard = createInsuranceCard('health', 10, 50)
+      const cancerCard = createInsuranceCard('cancer', 10, 50)
+      
+      const riskProfile = RiskProfile.empty()
+        .withFactor(RiskFactor.create(0.8, 'health'))
+      
+      const healthResult = service.calculateRiskAdjustedPremium(healthCard, 'youth', riskProfile)
+      const cancerResult = service.calculateRiskAdjustedPremium(cancerCard, 'youth', riskProfile)
+      
+      // 健康リスクが高い場合、健康保険により大きく影響
+      expect(healthResult.getValue()).toBeGreaterThan(cancerResult.getValue() * 0.6)
+    })
+
+    it('年齢とリスクファクターの複合効果', () => {
+      const card = createInsuranceCard('health', 10, 50)
+      const riskProfile = RiskProfile.empty()
+        .withFactor(RiskFactor.create(0.6, 'age'))
+      
+      const youthResult = service.calculateRiskAdjustedPremium(card, 'youth', riskProfile)
+      const elderResult = service.calculateRiskAdjustedPremium(card, 'elder', riskProfile)
+      
+      // 老年期の方が年齢リスクの影響が大きい
+      expect(elderResult.getValue()).toBeGreaterThan(youthResult.getValue() * 1.3)
+    })
+
+    it('最大リスクでも保険料に上限がある', () => {
+      const card = createInsuranceCard('health', 50, 100)
+      const extremeRiskProfile = RiskProfile.empty()
+        .withFactor(RiskFactor.create(1.0, 'age'))
+        .withFactor(RiskFactor.create(1.0, 'health'))
+        .withFactor(RiskFactor.create(1.0, 'claims'))
+        .withFactor(RiskFactor.create(1.0, 'lifestyle'))
+      
+      const result = service.calculateRiskAdjustedPremium(card, 'elder', extremeRiskProfile)
+      
+      // 最大保険料の上限（99）を超えない
+      expect(result.getValue()).toBeLessThanOrEqual(99)
+    })
+  })
+
+  describe('包括的な保険料最適化', () => {
+    it('複数の保険の組み合わせで最適な保険料を計算', () => {
+      const cards = [
+        createInsuranceCard('health', 15, 60),
+        createInsuranceCard('cancer', 20, 80),
+        createInsuranceCard('accident', 10, 40)
+      ]
+      
+      const totalBurden = service.calculateTotalInsuranceBurden(cards, 'middle_age')
+      const optimalBudget = service.calculateOptimalInsuranceBudget(100, 'middle_age', 'balanced')
+      
+      // 総負担が最適予算を超える場合の警告判定
+      expect(totalBurden.getValue()).toBeGreaterThan(optimalBudget.getValue())
+    })
+
+    it('リスクプロファイルに基づく保険推奨', () => {
+      const highHealthRisk = RiskProfile.empty()
+        .withFactor(RiskFactor.create(0.9, 'health'))
+      
+      const healthCard = createInsuranceCard('health', 15, 70)
+      const accidentCard = createInsuranceCard('accident', 10, 50)
+      
+      const healthPremium = service.calculateRiskAdjustedPremium(healthCard, 'youth', highHealthRisk)
+      const accidentPremium = service.calculateRiskAdjustedPremium(accidentCard, 'youth', highHealthRisk)
+      
+      // 健康リスクが高い場合、健康保険の重要性が高まる
+      const healthValue = healthCard.coverage! / healthPremium.getValue()
+      const accidentValue = accidentCard.coverage! / accidentPremium.getValue()
+      
+      expect(healthValue).toBeGreaterThan(accidentValue * 0.8)
+    })
+  })
+
+  describe('動的保険料調整', () => {
+    it('使用頻度に応じた保険料の動的調整', () => {
+      const card = createInsuranceCard('health', 10, 50)
+      
+      // 使用回数による段階的な保険料増加
+      const premium0 = service.calculateRenewalPremium(card, 'youth', 0)
+      const premium3 = service.calculateRenewalPremium(card, 'youth', 3)
+      const premium7 = service.calculateRenewalPremium(card, 'youth', 7)
+      
+      expect(premium0.getValue()).toBeLessThan(premium3.getValue())
+      expect(premium3.getValue()).toBeLessThan(premium7.getValue())
+    })
+
+    it('長期無事故での優遇料金', () => {
+      const card = createInsuranceCard('health', 20, 60)
+      const longTermNoClaimPremium = service.calculateRenewalPremium(card, 'middle_age', 0)
+      
+      // 無事故継続での大幅割引
+      expect(longTermNoClaimPremium.getValue()).toBeLessThan(18) // 20 * 0.9
     })
   })
 })

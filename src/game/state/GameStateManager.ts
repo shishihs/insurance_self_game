@@ -1,6 +1,6 @@
 import { Game } from '@/domain/entities/Game'
 import type { IGameState, PlayerStats } from '@/domain/types/game.types'
-import { secureLocalStorage } from '@/utils/security'
+import { StorageAdapter } from '@/infrastructure/storage/StorageAdapter'
 
 /**
  * セーブデータの構造
@@ -137,15 +137,31 @@ export class GameStateManager {
   private currentGame: Game | null = null
   private snapshots: GameStateSnapshot[] = []
   private currentSnapshotIndex = -1
-  private storage = secureLocalStorage()
+  private storage: StorageAdapter
   private autoSaveTimer: number | null = null
   private sessionStartTime: Date = new Date()
   private enhancedStats: EnhancedPlayerStats
   private analyticsCallbacks: ((state: any, changeType: 'save' | 'load' | 'reset') => void)[] = []
+  private isStorageInitialized = false
   
   private constructor() {
+    this.storage = StorageAdapter.getInstance()
     this.enhancedStats = this.initializeEnhancedStats()
     this.setupAutoSave()
+    this.initializeStorage()
+  }
+  
+  /**
+   * ストレージを初期化
+   */
+  private async initializeStorage(): Promise<void> {
+    try {
+      await this.storage.initialize()
+      this.isStorageInitialized = true
+      console.log('✅ ストレージ初期化完了')
+    } catch (error) {
+      console.error('❌ ストレージ初期化エラー:', error)
+    }
   }
   
   /**
@@ -166,7 +182,9 @@ export class GameStateManager {
     this.sessionStartTime = new Date()
     
     // 既存の統計データを読み込み
-    this.loadEnhancedStats()
+    this.loadEnhancedStats().catch(error => {
+      console.error('統計データ読み込みエラー:', error)
+    })
     
     // セッション開始を記録
     this.enhancedStats.sessionsPlayed++
@@ -198,11 +216,10 @@ export class GameStateManager {
         statistics: this.enhancedStats
       }
       
-      const saveKey = `game_save_${slotId}`
-      this.storage.setItem(saveKey, saveData)
+      await this.storage.saveSaveData(slotId, saveData)
       
       // セーブスロット一覧を更新
-      this.updateSaveSlotList(slotId, saveData)
+      await this.updateSaveSlotList(slotId, saveData)
       
       // アナリティクスに通知
       this.notifyAnalytics('save')
@@ -219,8 +236,7 @@ export class GameStateManager {
    */
   async load(slotId: string): Promise<Game | null> {
     try {
-      const saveKey = `game_save_${slotId}`
-      const saveData = this.storage.getItem<SaveData>(saveKey)
+      const saveData = await this.storage.loadSaveData(slotId)
       
       if (!saveData) {
         console.log(`セーブデータが見つかりません: スロット ${slotId}`)
@@ -272,37 +288,48 @@ export class GameStateManager {
   /**
    * 利用可能なセーブスロット一覧を取得
    */
-  getSaveSlots(): SaveSlot[] {
+  async getSaveSlots(): Promise<SaveSlot[]> {
     const slots: SaveSlot[] = []
     
-    for (let i = 1; i <= this.MAX_SAVE_SLOTS; i++) {
-      const slotId = i.toString()
-      const saveKey = `game_save_${slotId}`
-      const saveData = this.storage.getItem<SaveData>(saveKey)
+    // ストレージが初期化されていない場合は空配列を返す
+    if (!this.isStorageInitialized) {
+      return this.createEmptySlots()
+    }
+    
+    try {
+      const allSaves = await this.storage.getAllSaveData()
       
-      if (saveData) {
-        slots.push({
-          id: slotId,
-          name: saveData.metadata.slotName || `セーブデータ ${slotId}`,
-          lastSaved: new Date(saveData.metadata.savedAt),
-          playtime: saveData.metadata.playtime,
-          stage: saveData.gameState.stage,
-          turn: saveData.gameState.turn,
-          vitality: saveData.gameState.vitality,
-          isEmpty: false
-        })
-      } else {
-        slots.push({
-          id: slotId,
-          name: `空のスロット ${slotId}`,
-          lastSaved: new Date(0),
-          playtime: 0,
-          stage: '',
-          turn: 0,
-          vitality: 0,
-          isEmpty: true
-        })
+      for (let i = 1; i <= this.MAX_SAVE_SLOTS; i++) {
+        const slotId = i.toString()
+        const saveData = allSaves.find(save => save.id === slotId)
+        
+        if (saveData) {
+          slots.push({
+            id: slotId,
+            name: saveData.metadata.slotName || `セーブデータ ${slotId}`,
+            lastSaved: new Date(saveData.metadata.savedAt),
+            playtime: saveData.metadata.playtime,
+            stage: saveData.gameState.stage,
+            turn: saveData.gameState.turn,
+            vitality: saveData.gameState.vitality,
+            isEmpty: false
+          })
+        } else {
+          slots.push({
+            id: slotId,
+            name: `空のスロット ${slotId}`,
+            lastSaved: new Date(0),
+            playtime: 0,
+            stage: '',
+            turn: 0,
+            vitality: 0,
+            isEmpty: true
+          })
+        }
       }
+    } catch (error) {
+      console.error('セーブスロット取得エラー:', error)
+      return this.createEmptySlots()
     }
     
     return slots
@@ -311,9 +338,8 @@ export class GameStateManager {
   /**
    * セーブデータを削除
    */
-  deleteSave(slotId: string): void {
-    const saveKey = `game_save_${slotId}`
-    this.storage.removeItem(saveKey)
+  async deleteSave(slotId: string): Promise<void> {
+    await this.storage.deleteSaveData(slotId)
     console.log(`🗑️ セーブデータを削除しました: スロット ${slotId}`)
   }
   
@@ -395,7 +421,9 @@ export class GameStateManager {
    */
   updateStatistics(updates: Partial<EnhancedPlayerStats>): void {
     this.enhancedStats = { ...this.enhancedStats, ...updates }
-    this.saveEnhancedStats()
+    this.saveEnhancedStats().catch(error => {
+      console.error('統計データ保存エラー:', error)
+    })
   }
   
   /**
@@ -428,21 +456,28 @@ export class GameStateManager {
     // 日次進捗を更新
     this.updateDailyProgress()
     
-    this.saveEnhancedStats()
+    this.saveEnhancedStats().catch(error => {
+      console.error('統計データ保存エラー:', error)
+    })
   }
   
   /**
    * データのエクスポート
    */
-  exportData(): string {
-    const exportData = {
-      version: this.SAVE_VERSION,
-      exportedAt: new Date(),
-      saves: this.getAllSaveData(),
-      statistics: this.enhancedStats
+  async exportData(): Promise<string> {
+    try {
+      return await this.storage.exportAllData()
+    } catch (error) {
+      console.error('エクスポートエラー:', error)
+      // フォールバック
+      const exportData = {
+        version: this.SAVE_VERSION,
+        exportedAt: new Date(),
+        saves: await this.storage.getAllSaveData(),
+        statistics: this.enhancedStats
+      }
+      return JSON.stringify(exportData, null, 2)
     }
-    
-    return JSON.stringify(exportData, null, 2)
   }
   
   /**
@@ -450,27 +485,7 @@ export class GameStateManager {
    */
   async importData(dataString: string): Promise<void> {
     try {
-      const importData = JSON.parse(dataString)
-      
-      // バージョンチェック
-      if (importData.version !== this.SAVE_VERSION) {
-        throw new Error('互換性のないデータ形式です')
-      }
-      
-      // セーブデータをインポート
-      if (importData.saves) {
-        for (const [slotId, saveData] of Object.entries(importData.saves)) {
-          const saveKey = `game_save_${slotId}`
-          this.storage.setItem(saveKey, saveData)
-        }
-      }
-      
-      // 統計データをインポート
-      if (importData.statistics) {
-        this.enhancedStats = importData.statistics
-        this.saveEnhancedStats()
-      }
-      
+      await this.storage.importAllData(dataString)
       console.log('✅ データのインポートが完了しました')
     } catch (error) {
       console.error('❌ インポートエラー:', error)
@@ -535,7 +550,9 @@ export class GameStateManager {
       )
     }
     
-    this.saveEnhancedStats()
+    this.saveEnhancedStats().catch(error => {
+      console.error('統計データ保存エラー:', error)
+    })
     console.log('✅ アナリティクスデータと同期完了')
   }
   
@@ -565,27 +582,21 @@ export class GameStateManager {
   /**
    * ストレージ使用状況を取得
    */
-  getStorageUsage(): { used: number; available: number; percentage: number } {
-    let totalSize = 0
-    
-    // 全てのゲーム関連データのサイズを計算
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key && key.startsWith('game_')) {
-        const value = localStorage.getItem(key)
-        if (value) {
-          totalSize += key.length + value.length
-        }
+  async getStorageUsage(): Promise<{ used: number; available: number; percentage: number }> {
+    try {
+      const usage = await this.storage.getStorageUsage()
+      return {
+        used: usage.used,
+        available: usage.available,
+        percentage: usage.percentage
       }
-    }
-    
-    // 一般的なLocalStorageの制限は5MB
-    const STORAGE_LIMIT = 5 * 1024 * 1024
-    
-    return {
-      used: totalSize,
-      available: STORAGE_LIMIT - totalSize,
-      percentage: (totalSize / STORAGE_LIMIT) * 100
+    } catch (error) {
+      console.error('ストレージ使用状況取得エラー:', error)
+      return {
+        used: 0,
+        available: 0,
+        percentage: 0
+      }
     }
   }
   
@@ -599,7 +610,9 @@ export class GameStateManager {
     }
     
     // 最終的な統計保存
-    this.saveEnhancedStats()
+    this.saveEnhancedStats().catch(error => {
+      console.error('統計データ保存エラー:', error)
+    })
   }
   
   // === プライベートメソッド ===
@@ -905,31 +918,40 @@ export class GameStateManager {
     }
   }
   
-  private updateSaveSlotList(slotId: string, saveData: SaveData): void {
-    const slotsKey = 'game_save_slots'
-    const slots = this.storage.getItem<Record<string, any>>(slotsKey) || {}
-    
-    slots[slotId] = {
-      name: saveData.metadata.slotName,
-      lastSaved: saveData.metadata.savedAt,
-      playtime: saveData.metadata.playtime
-    }
-    
-    this.storage.setItem(slotsKey, slots)
-  }
-  
-  private loadEnhancedStats(): void {
-    const statsKey = 'game_enhanced_stats'
-    const savedStats = this.storage.getItem<EnhancedPlayerStats>(statsKey)
-    
-    if (savedStats) {
-      this.enhancedStats = { ...this.enhancedStats, ...savedStats }
+  private async updateSaveSlotList(slotId: string, saveData: SaveData): Promise<void> {
+    try {
+      const slotsKey = 'game_save_slots'
+      const slots = await this.storage.loadPreference<Record<string, any>>(slotsKey) || {}
+      
+      slots[slotId] = {
+        name: saveData.metadata.slotName,
+        lastSaved: saveData.metadata.savedAt,
+        playtime: saveData.metadata.playtime
+      }
+      
+      await this.storage.savePreference(slotsKey, slots)
+    } catch (error) {
+      console.error('セーブスロットリスト更新エラー:', error)
     }
   }
   
-  private saveEnhancedStats(): void {
-    const statsKey = 'game_enhanced_stats'
-    this.storage.setItem(statsKey, this.enhancedStats)
+  private async loadEnhancedStats(): Promise<void> {
+    try {
+      const savedStats = await this.storage.loadPreference<EnhancedPlayerStats>('game_enhanced_stats')
+      if (savedStats) {
+        this.enhancedStats = { ...this.enhancedStats, ...savedStats }
+      }
+    } catch (error) {
+      console.error('統計データ読み込みエラー:', error)
+    }
+  }
+  
+  private async saveEnhancedStats(): Promise<void> {
+    try {
+      await this.storage.savePreference('game_enhanced_stats', this.enhancedStats)
+    } catch (error) {
+      console.error('統計データ保存エラー:', error)
+    }
   }
   
   private updatePlayStreak(): void {
@@ -1031,20 +1053,42 @@ export class GameStateManager {
     })
   }
   
-  private getAllSaveData(): Record<string, SaveData> {
+  private async getAllSaveData(): Promise<Record<string, SaveData>> {
     const saves: Record<string, SaveData> = {}
     
-    for (let i = 1; i <= this.MAX_SAVE_SLOTS; i++) {
-      const slotId = i.toString()
-      const saveKey = `game_save_${slotId}`
-      const saveData = this.storage.getItem<SaveData>(saveKey)
-      
-      if (saveData) {
-        saves[slotId] = saveData
+    try {
+      const allSaves = await this.storage.getAllSaveData()
+      for (const save of allSaves) {
+        const { id, ...saveData } = save
+        saves[id] = saveData
       }
+    } catch (error) {
+      console.error('セーブデータ取得エラー:', error)
     }
     
     return saves
+  }
+  
+  /**
+   * 空のセーブスロットを作成
+   */
+  private createEmptySlots(): SaveSlot[] {
+    const slots: SaveSlot[] = []
+    
+    for (let i = 1; i <= this.MAX_SAVE_SLOTS; i++) {
+      slots.push({
+        id: i.toString(),
+        name: `空のスロット ${i}`,
+        lastSaved: new Date(0),
+        playtime: 0,
+        stage: '',
+        turn: 0,
+        vitality: 0,
+        isEmpty: true
+      })
+    }
+    
+    return slots
   }
   
   /**

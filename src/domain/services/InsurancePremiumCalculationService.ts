@@ -303,6 +303,34 @@ export class InsurancePremiumCalculationService {
   }
 
   /**
+   * リスクプロファイルを考慮した保険料を計算
+   * 
+   * @param card 保険カード
+   * @param stage ゲームステージ
+   * @param riskProfile リスクプロファイル（オプション）
+   * @returns リスク調整済み保険料
+   */
+  calculateRiskAdjustedPremium(
+    card: Card,
+    stage: GameStage,
+    riskProfile?: RiskProfile
+  ): InsurancePremium {
+    // 基本的な総合保険料を計算
+    const basePremium = this.calculateComprehensivePremium(card, stage)
+    
+    // リスクプロファイルがない場合は基本保険料をそのまま返す
+    if (!riskProfile) {
+      return basePremium
+    }
+    
+    // リスク調整倍率を計算
+    const riskMultiplier = this.calculateRiskAdjustment(riskProfile, card.insuranceType)
+    
+    // リスク調整を適用
+    return basePremium.applyMultiplier(riskMultiplier)
+  }
+
+  /**
    * 年齢によるリスク値を計算
    * @private
    */
