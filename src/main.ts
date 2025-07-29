@@ -8,7 +8,7 @@ import './styles/brand-elements.css'
 import App from './App.vue'
 
 // セキュリティシステムの初期化
-import { initializeSecurity } from '@/utils/security-extensions'
+import { initializeSecuritySystem } from '@/utils/security-init'
 
 // エラーハンドリングシステムの初期化
 import { ErrorHandlingPlugin, errorHandlingSystem } from '@/utils/error-handling'
@@ -46,21 +46,33 @@ app.use(ErrorHandlingPlugin, {
   }
 })
 
-// セキュリティシステムを起動
-try {
-  initializeSecurity()
-} catch (error) {
-  console.error('セキュリティシステムの初期化に失敗しました:', error)
-  // エラーハンドラーに報告
-  errorHandlingSystem.reportError(
-    error as Error,
-    { component: 'security-system' },
-    'system'
-  )
+// アプリケーション初期化とマウント
+async function initializeApp() {
+  try {
+    // セキュリティシステムを起動
+    await initializeSecuritySystem()
+    console.log('🛡️ セキュリティシステムが正常に初期化されました')
+    
+    // アプリケーションをマウント
+    app.mount('#app')
+    
+  } catch (error) {
+    console.error('アプリケーション初期化に失敗しました:', error)
+    // エラーハンドラーに報告
+    errorHandlingSystem.reportError(
+      error as Error,
+      { component: 'app-initialization' },
+      'system'
+    )
+    
+    // フォールバック: セキュリティなしでアプリケーションをマウント
+    console.warn('⚠️ セキュリティシステムなしでアプリケーションを起動します')
+    app.mount('#app')
+  }
 }
 
-// アプリケーションをマウント
-app.mount('#app')
+// アプリケーション初期化を実行
+initializeApp()
 
 // UI エンハンスメントの初期化
 initAutoRipple()
@@ -92,7 +104,9 @@ registerServiceWorker({
 
 // 開発環境でのデバッグ用
 if (import.meta.env.DEV) {
-  (window as any).__errorHandler = errorHandler
-  console.log('エラーハンドリングシステムが有効化されました')
-  console.log('エラー統計を確認: window.__errorHandler.getErrorStats()')
+  (window as any).__errorHandling = errorHandlingSystem
+  console.log('🚨 エラーハンドリングシステムが有効化されました')
+  console.log('📊 エラー統計を確認: window.__errorHandling.getStatistics()')
+  console.log('🩺 健全性を確認: window.__errorHandling.getHealthStatus()')
+  console.log('🔍 デバッグ情報を収集: window.__errorHandling.collectDebugInfo()')
 }
