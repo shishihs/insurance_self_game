@@ -10,6 +10,9 @@ import { initializeSecurity } from '@/utils/security-extensions'
 // エラーハンドリングシステムの初期化
 import { GlobalErrorHandler } from '@/utils/error-handling/ErrorHandler'
 
+// PWA Service Worker の登録
+import { registerServiceWorker } from '@/pwa/registerServiceWorker'
+
 // グローバルエラーハンドラーを設定
 const errorHandler = GlobalErrorHandler.getInstance({
   enableLogging: true,
@@ -47,6 +50,34 @@ try {
 
 // アプリケーションをマウント
 app.mount('#app')
+
+// Service Worker の登録
+registerServiceWorker({
+  onSuccess: (registration) => {
+    console.log('PWA: Service Worker 登録成功', registration)
+  },
+  onUpdate: (registration) => {
+    console.log('PWA: 新しいバージョンが利用可能です', registration)
+    // ユーザーに更新を通知（実装は別途）
+  },
+  onOffline: () => {
+    console.log('PWA: オフラインモード')
+  },
+  onOnline: () => {
+    console.log('PWA: オンラインに復帰')
+  },
+  onError: (error) => {
+    console.error('PWA: Service Worker エラー', error)
+    errorHandler.handleError({
+      message: 'Service Worker 登録エラー',
+      stack: error.stack,
+      timestamp: Date.now(),
+      userAgent: navigator.userAgent,
+      severity: 'medium',
+      category: 'pwa'
+    })
+  }
+})
 
 // 開発環境でのデバッグ用
 if (import.meta.env.DEV) {

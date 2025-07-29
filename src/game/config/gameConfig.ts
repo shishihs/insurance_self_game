@@ -1,20 +1,20 @@
 import Phaser from 'phaser'
 
 /**
- * Phaserゲームの基本設定
+ * モバイル対応を含むPhaserゲームの基本設定
  */
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
   backgroundColor: '#f5f5f5',
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE, // モバイル対応のためRESIZEモードに変更
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1280,
-    height: 720,
+    width: window.innerWidth,
+    height: window.innerHeight,
     min: {
-      width: 640,
-      height: 360
+      width: 320,
+      height: 480
     },
     max: {
       width: 1920,
@@ -27,6 +27,38 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
       gravity: { y: 0 },
       debug: false
     }
+  },
+  // モバイル最適化
+  render: {
+    pixelArt: false,
+    antialias: true,
+    antialiasGL: true,
+    mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+    powerPreference: 'high-performance', // ハードウェアアクセラレーション
+    transparent: false,
+    preserveDrawingBuffer: false, // メモリ節約
+    failIfMajorPerformanceCaveat: false,
+    desynchronized: true // 描画パフォーマンス向上
+  },
+  // タッチ入力設定
+  input: {
+    touch: {
+      target: null,
+      capture: false
+    },
+    activePointers: 2, // マルチタッチ対応（ピンチズーム用）
+    smoothFactor: 0 // タッチ入力の即時反映
+  },
+  // オーディオ設定（モバイル対応）
+  audio: {
+    disableWebAudio: false,
+    noAudio: false
+  },
+  // パフォーマンス設定
+  fps: {
+    target: 60,
+    min: 30,
+    smoothStep: true
   },
   scene: [] // シーンは後で追加
 }

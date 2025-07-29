@@ -214,32 +214,32 @@ onUnmounted(() => {
         <!-- 最新の変更 -->
         <div class="card">
           <h2 class="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
-            <span>🎯</span>
-            最新アップデート v0.2.6
+            <span>📱</span>
+            最新アップデート v0.2.7
           </h2>
           <div class="text-left space-y-3">
             <div>
-              <h3 class="font-semibold text-lg mb-2">包括的アクセシビリティ対応</h3>
+              <h3 class="font-semibold text-lg mb-2">包括的なモバイル最適化</h3>
               <ul class="space-y-1 text-sm">
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>WCAG 2.1 AA完全準拠</strong>: 4種類の色覚異常対応</span>
+                  <span><strong>タッチ操作完全対応</strong>: スワイプ、ピンチズーム、ドラッグ&ドロップ</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>スクリーンリーダー対応</strong>: ARIA属性と音声通知の完全実装</span>
+                  <span><strong>レスポンシブデザイン</strong>: あらゆる画面サイズに自動適応</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>キーボードナビゲーション</strong>: ショートカットとフォーカス管理</span>
+                  <span><strong>PWA対応</strong>: ホーム画面追加、オフライン動作可能</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>モーション設定</strong>: アニメーション削減、速度調整機能</span>
+                  <span><strong>パフォーマンス最適化</strong>: 60fps維持、バッテリー効率向上</span>
                 </li>
                 <li class="flex items-start gap-2">
                   <span class="text-success mt-1">✅</span>
-                  <span><strong>Alt+Aキーで設定を開く</strong>: 簡単アクセス、設定自動保存</span>
+                  <span><strong>モバイル専用UI</strong>: タッチに最適化されたインターフェース</span>
                 </li>
               </ul>
             </div>

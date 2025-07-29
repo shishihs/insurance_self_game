@@ -9,7 +9,9 @@ export default defineConfig({
   reporter: 'html',
   testMatch: '**/tests/e2e/**/*.spec.ts',
   use: {
-    baseURL: 'https://shishihs.github.io/insurance_self_game/',
+    baseURL: process.env.CI 
+      ? 'https://shishihs.github.io/insurance_self_game/'
+      : 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -20,5 +22,28 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       testMatch: '**/tests/e2e/**/*.spec.ts',
     },
+    // Mobile devices
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+      testMatch: '**/tests/e2e/mobile-*.spec.ts',
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+      testMatch: '**/tests/e2e/mobile-*.spec.ts',
+    },
+    {
+      name: 'Tablet',
+      use: { ...devices['iPad Pro'] },
+      testMatch: '**/tests/e2e/mobile-*.spec.ts',
+    },
   ],
+
+  // Local development server
+  webServer: process.env.CI ? undefined : {
+    command: 'pnpm dev',
+    port: 5173,
+    reuseExistingServer: true,
+  },
 });

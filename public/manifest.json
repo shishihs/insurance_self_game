@@ -1,0 +1,75 @@
+{
+  "name": "人生充実ゲーム - Life Fulfillment",
+  "short_name": "人生充実",
+  "description": "保険をテーマにした一人用ボードゲーム。生命保険を「人生の味方」として描き、プレイヤーの孤独な時間を豊かな体験へと変える。",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#1F2937",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "ja",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "screenshots": [
+    {
+      "src": "/screenshot-1.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "label": "ゲームプレイ画面"
+    },
+    {
+      "src": "/screenshot-2.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "label": "チュートリアル画面"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新しいゲーム",
+      "short_name": "プレイ",
+      "description": "新しいゲームを開始",
+      "url": "/?action=play",
+      "icons": [
+        {
+          "src": "/icon-play-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "チュートリアル",
+      "short_name": "学習",
+      "description": "ゲームの遊び方を学ぶ",
+      "url": "/?action=tutorial",
+      "icons": [
+        {
+          "src": "/icon-tutorial-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "features": [
+    "gamepad",
+    "screen-wake-lock"
+  ]
+}
