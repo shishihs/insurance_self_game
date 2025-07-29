@@ -644,10 +644,4 @@ if (typeof window !== 'undefined') {
   })
 }
 
-// エクスポート
-export {
-  XSSProtection,
-  CSRFProtection, 
-  CSPManager,
-  SecurityInterceptor
-}
+// Classes are already exported above using 'export class' syntax
