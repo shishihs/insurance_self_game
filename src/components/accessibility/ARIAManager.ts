@@ -155,7 +155,7 @@ export class ARIAManager {
       role: 'button',
       label: this.createCardLabel(card),
       describedBy: this.createCardDescription(card, element.id),
-      selected: selected,
+      selected,
       pressed: selected,
       disabled: card.disabled,
       posInSet: position?.index,
@@ -209,9 +209,9 @@ export class ARIAManager {
     this.setARIA(element, {
       role: element.tagName.toLowerCase() === 'button' ? undefined : 'button',
       label: context.label,
-      pressed: pressed,
-      disabled: disabled,
-      hasPopup: hasPopup,
+      pressed,
+      disabled,
+      hasPopup,
       keyShortcuts: shortcut,
       describedBy: action ? this.createActionDescription(action, element.id) : undefined
     })
@@ -250,7 +250,7 @@ export class ARIAManager {
     this.setARIA(element, {
       role: 'dialog',
       labelledBy: title,
-      describedBy: describedBy,
+      describedBy,
       hidden: false
     })
 

@@ -672,5 +672,3 @@ if (typeof window !== 'undefined') {
     return originalConsoleError.apply(console, args)
   }
 }
-
-export { SecurityAuditLogger }

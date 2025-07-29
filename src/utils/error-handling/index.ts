@@ -7,7 +7,7 @@ import { GlobalErrorHandler, type ErrorInfo, type ErrorHandlerOptions } from './
 import { ErrorLogger, type LogEntry } from './ErrorLogger'
 import { ErrorRecovery } from './ErrorRecovery'
 import { ErrorReporter } from './ErrorReporter'
-import { AsyncErrorHandler } from './AsyncErrorHandler'
+import { safeAsync, safeAsyncAll, withAsyncErrorHandler, AsyncQueue } from './AsyncErrorHandler'
 import { userFriendlyMessages, type UserMessage } from './UserFriendlyMessages'
 import { getDebugInfoCollector, type DebugInfo, type CollectionOptions } from './DebugInfoCollector'
 import type { App } from 'vue'
@@ -17,7 +17,10 @@ export {
   ErrorLogger,
   ErrorRecovery,
   ErrorReporter,
-  AsyncErrorHandler,
+  safeAsync,
+  safeAsyncAll,
+  withAsyncErrorHandler,
+  AsyncQueue,
   userFriendlyMessages,
   getDebugInfoCollector
 }

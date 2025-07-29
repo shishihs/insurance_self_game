@@ -626,7 +626,7 @@ class ContrastAnalyzer {
         const requiredRatio = isLargeText ? 3 : 4.5
         
         results.push({
-          element: element.tagName.toLowerCase() + (element.className ? '.' + element.className : ''),
+          element: element.tagName.toLowerCase() + (element.className ? `.${  element.className}` : ''),
           ratio: Math.round(ratio * 100) / 100,
           required: requiredRatio,
           passes: ratio >= requiredRatio,

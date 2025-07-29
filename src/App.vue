@@ -2,23 +2,23 @@
 import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 // import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
-import TransitionAnimations from './components/animations/TransitionAnimations.vue'
-import AccessibilitySettings from './components/accessibility/AccessibilitySettings.vue'
-import VisualIndicators from './components/accessibility/VisualIndicators.vue'
-import ErrorBoundary from './components/error/ErrorBoundary.vue'
-import ErrorNotification from './components/error/ErrorNotification.vue'
+import transitionAnimations from './components/animations/TransitionAnimations.vue'
+import accessibilitySettings from './components/accessibility/AccessibilitySettings.vue'
+import visualIndicators from './components/accessibility/VisualIndicators.vue'
+import errorBoundary from './components/error/ErrorBoundary.vue'
+import errorNotification from './components/error/ErrorNotification.vue'
 // import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue' // 動的インポートに変更
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
 // import FeedbackButton from './components/feedback/FeedbackButton.vue' // 動的インポートに変更
 
 // レイアウトコンポーネント
-import AppHeader from './components/layout/AppHeader.vue'
-import NavigationActions from './components/layout/NavigationActions.vue'
-import FeatureShowcase from './components/layout/FeatureShowcase.vue'
+import appHeader from './components/layout/AppHeader.vue'
+import navigationActions from './components/layout/NavigationActions.vue'
+import featureShowcase from './components/layout/FeatureShowcase.vue'
 
 // 国際化コンポーネント
-import LanguageSwitcher from './components/i18n/LanguageSwitcher.vue'
+import languageSwitcher from './components/i18n/LanguageSwitcher.vue'
 
 // 国際化機能
 const { t } = useI18n()
@@ -30,7 +30,7 @@ const FeedbackButton = defineAsyncComponent(() => import('./components/feedback/
 const GameCanvas = defineAsyncComponent(() => import('./components/game/GameCanvas.vue'))
 
 // コンポーネント参照
-const navigationRef = ref<InstanceType<typeof NavigationActions>>()
+const navigationRef = ref<InstanceType<typeof navigationActions>>()
 
 let keyboardManager: KeyboardManager | null = null
 let screenReaderManager: ScreenReaderManager | null = null
@@ -43,12 +43,12 @@ const gameState = ref({
   phase: 'setup'
 })
 
-const startGame = () => {
+const startGame = (): void => {
   showGame.value = true
   screenReaderManager?.announceScreenChange('ゲーム画面', 'ゲームが開始されました')
 }
 
-const startTutorial = () => {
+const startTutorial = (): void => {
   showGame.value = true
   screenReaderManager?.announceScreenChange('チュートリアル', 'チュートリアルを開始します')
   // GameCanvasコンポーネントにチュートリアル開始を通知
@@ -59,32 +59,32 @@ const startTutorial = () => {
   }, 100)
 }
 
-const backToHome = () => {
+const backToHome = (): void => {
   showGame.value = false
   screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
 }
 
-const openStatistics = () => {
+const openStatistics = (): void => {
   showStatistics.value = true
   screenReaderManager?.announceScreenChange('統計ダッシュボード', '統計ダッシュボードを開きました')
 }
 
-const closeStatistics = () => {
+const closeStatistics = (): void => {
   showStatistics.value = false
   screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
 }
 
-const handleAccessibilitySettingsChanged = (settings: any) => {
+const handleAccessibilitySettingsChanged = (settings: Record<string, boolean | string | number>): void => {
   // アクセシビリティ設定が変更されたときの処理
   console.log('アクセシビリティ設定が更新されました:', settings)
   
   // スクリーンリーダーに通知
-  if (settings.screenReaderEnabled) {
+  if (Boolean(settings.screenReaderEnabled)) {
     screenReaderManager?.announce('スクリーンリーダー対応が有効になりました', { priority: 'assertive' })
   }
 }
 
-const handleFeedbackSubmitted = (feedbackId: string, type: string) => {
+const handleFeedbackSubmitted = (feedbackId: string, type: string): void => {
   console.log(`フィードバック送信完了: ${type} (${feedbackId})`)
   
   // アナリティクスやログ送信（将来的に実装）
@@ -157,7 +157,7 @@ onMounted(() => {
     const tutorialButton = navigationRef.value?.tutorialButtonRef
     const backButton = document.querySelector('.back-to-home-btn') as HTMLElement
     
-    if (gameButton) {
+    if (gameButton !== null && gameButton !== undefined) {
       keyboardManager?.registerFocusableElement(gameButton, {
         priority: 100,
         group: 'main-actions',
@@ -165,7 +165,7 @@ onMounted(() => {
       })
     }
     
-    if (tutorialButton) {
+    if (tutorialButton !== null && tutorialButton !== undefined) {
       keyboardManager?.registerFocusableElement(tutorialButton, {
         priority: 90,
         group: 'main-actions',
@@ -173,7 +173,7 @@ onMounted(() => {
       })
     }
     
-    if (backButton) {
+    if (backButton !== null && backButton !== undefined) {
       keyboardManager?.registerFocusableElement(backButton, {
         priority: 100,
         group: 'game-actions',
@@ -201,14 +201,14 @@ onUnmounted(() => {
     </div>
 
     <!-- エラー通知 -->
-    <ErrorNotification />
+    <errorNotification />
 
     <!-- ゲーム画面 -->
-    <TransitionAnimations type="slide" direction="left" :duration="400" intensity="normal">
+    <transitionAnimations type="slide" direction="left" :duration="400" intensity="normal">
       <div v-if="showGame" class="game-view" id="main-content" role="main" aria-label="ゲーム画面">
-        <ErrorBoundary fallback="detailed" :can-recover="true">
+        <errorBoundary fallback="detailed" :can-recover="true">
           <GameCanvas />
-        </ErrorBoundary>
+        </errorBoundary>
         <button
           ref="backToHomeButtonRef"
           @click="backToHome"
@@ -223,11 +223,11 @@ onUnmounted(() => {
 
       <!-- ホーム画面 -->
       <div v-else class="home-view" id="main-content" role="main" aria-label="ホーム画面">
-        <ErrorBoundary fallback="minimal">
+        <errorBoundary fallback="minimal">
           <div class="home-container">
-            <AppHeader />
+            <appHeader />
 
-            <NavigationActions 
+            <navigationActions 
               @start-game="startGame"
               @start-tutorial="startTutorial"
               @open-statistics="openStatistics"
@@ -235,12 +235,12 @@ onUnmounted(() => {
             />
 
             <section class="info-section">
-              <FeatureShowcase />
+              <featureShowcase />
             </section>
           </div>
-        </ErrorBoundary>
+        </errorBoundary>
       </div>
-    </TransitionAnimations>
+    </transitionAnimations>
 
     <!-- フッター -->
     <footer class="sr-only" id="footer" role="contentinfo">
@@ -248,18 +248,18 @@ onUnmounted(() => {
     </footer>
     
     <!-- アクセシビリティ設定モーダル -->
-    <AccessibilitySettings 
+    <accessibilitySettings 
       :is-open="showAccessibilitySettings"
       @close="showAccessibilitySettings = false"
       @settings-changed="handleAccessibilitySettingsChanged"
     />
     
     <!-- ビジュアルインジケーター -->
-    <VisualIndicators :enabled="true" />
+    <visualIndicators :enabled="true" />
     
     <!-- 言語切り替えボタン -->
     <div class="language-switcher-container">
-      <LanguageSwitcher 
+      <languageSwitcher 
         mode="dropdown" 
         :compact="true"
         :aria-label="t('accessibility.options.changeLanguage', 'Change Language')"
