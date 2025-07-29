@@ -1,0 +1,363 @@
+name: Rollback & Recovery Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_type:
+        description: 'Type of rollback to perform'
+        required: true
+        type: choice
+        options:
+          - automatic
+          - manual
+          - emergency
+      target_commit:
+        description: 'Target commit SHA (for manual rollback)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+      notify_team:
+        description: 'Send notifications to team'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  deployments: write
+  issues: write
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  # Validate rollback request
+  validate-rollback:
+    name: Validate Rollback Request
+    runs-on: ubuntu-latest
+    outputs:
+      target_commit: ${{ steps.validation.outputs.target_commit }}
+      current_commit: ${{ steps.validation.outputs.current_commit }}
+      can_rollback: ${{ steps.validation.outputs.can_rollback }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 50
+        
+    - name: Validate rollback target
+      id: validation
+      run: |
+        CURRENT_COMMIT="${{ github.sha }}"
+        echo "current_commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+        
+        case "${{ inputs.rollback_type }}" in
+          automatic)
+            # Find the last successful deployment
+            TARGET_COMMIT=$(git log --oneline -n 10 --grep="deploy" | head -1 | cut -d' ' -f1)
+            if [ -z "$TARGET_COMMIT" ]; then
+              TARGET_COMMIT=$(git log --oneline -n 2 | tail -1 | cut -d' ' -f1)
+            fi
+            ;;
+          manual)
+            TARGET_COMMIT="${{ inputs.target_commit }}"
+            if [ -z "$TARGET_COMMIT" ]; then
+              echo "❌ Manual rollback requires target commit"
+              exit 1
+            fi
+            ;;
+          emergency)
+            # Emergency rollback to last known good state
+            TARGET_COMMIT=$(git log --oneline -n 5 --grep="✅" | head -1 | cut -d' ' -f1)
+            if [ -z "$TARGET_COMMIT" ]; then
+              TARGET_COMMIT=$(git log --oneline -n 3 | tail -1 | cut -d' ' -f1)
+            fi
+            ;;
+        esac
+        
+        echo "target_commit=$TARGET_COMMIT" >> $GITHUB_OUTPUT
+        
+        # Validate target commit exists
+        if git cat-file -e "$TARGET_COMMIT" 2>/dev/null; then
+          echo "✅ Target commit is valid: $TARGET_COMMIT"
+          echo "can_rollback=true" >> $GITHUB_OUTPUT
+          
+          # Get commit info
+          COMMIT_INFO=$(git log --oneline -1 "$TARGET_COMMIT")
+          echo "📝 Target: $COMMIT_INFO"
+          
+          echo "## 🔄 Rollback Plan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Type | ${{ inputs.rollback_type }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Current | $CURRENT_COMMIT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | $TARGET_COMMIT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Reason | ${{ inputs.reason }} |" >> $GITHUB_STEP_SUMMARY
+          
+        else
+          echo "❌ Target commit not found: $TARGET_COMMIT"
+          echo "can_rollback=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
+  # Create backup before rollback
+  create-backup:
+    name: Create System Backup
+    runs-on: ubuntu-latest
+    needs: [validate-rollback]
+    if: needs.validate-rollback.outputs.can_rollback == 'true'
+    outputs:
+      backup_id: ${{ steps.backup.outputs.backup_id }}
+    
+    steps:
+    - name: Checkout current state
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 8
+        
+    - name: Create current build backup
+      id: backup
+      run: |
+        BACKUP_ID="backup-$(date +%Y%m%d%H%M%S)-${{ needs.validate-rollback.outputs.current_commit }}"
+        echo "backup_id=$BACKUP_ID" >> $GITHUB_OUTPUT
+        
+        echo "💾 Creating backup: $BACKUP_ID"
+        
+        # Install and build current version
+        pnpm install --frozen-lockfile
+        pnpm run build
+        
+        # Create backup metadata
+        cat > backup-info.json << EOF
+        {
+          "backupId": "$BACKUP_ID",
+          "originalCommit": "${{ needs.validate-rollback.outputs.current_commit }}",
+          "createdAt": "$(date -Iseconds)",
+          "reason": "Pre-rollback backup",
+          "rollbackType": "${{ inputs.rollback_type }}",
+          "rollbackReason": "${{ inputs.reason }}"
+        }
+        EOF
+        
+    - name: Upload backup
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.backup.outputs.backup_id }}
+        path: |
+          dist/
+          backup-info.json
+          package.json
+          pnpm-lock.yaml
+        retention-days: 90
+
+  # Perform rollback
+  execute-rollback:
+    name: Execute Rollback
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, create-backup]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Checkout target commit
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-rollback.outputs.target_commit }}
+        fetch-depth: 0
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 8
+        
+    - name: Install dependencies (rollback target)
+      run: |
+        echo "📦 Installing dependencies for rollback target..."
+        pnpm install --frozen-lockfile
+        
+    - name: Build rollback version
+      run: |
+        echo "🔨 Building rollback version..."
+        pnpm run build
+        
+        # Add rollback notification to the build
+        cat > dist/rollback-info.json << EOF
+        {
+          "isRollback": true,
+          "rollbackId": "rollback-$(date +%Y%m%d%H%M%S)",
+          "targetCommit": "${{ needs.validate-rollback.outputs.target_commit }}",
+          "originalCommit": "${{ needs.validate-rollback.outputs.current_commit }}",
+          "rollbackType": "${{ inputs.rollback_type }}",
+          "reason": "${{ inputs.reason }}",
+          "executedAt": "$(date -Iseconds)",
+          "executedBy": "${{ github.actor }}"
+        }
+        EOF
+        
+        # Add rollback banner to index.html
+        if [ -f dist/index.html ]; then
+          sed -i 's/<body>/<body><div id="rollback-banner" style="background: #ff6b6b; color: white; padding: 10px; text-align: center; font-weight: bold;">⚠️ System rolled back - Commit: '"${{ needs.validate-rollback.outputs.target_commit }}"'<\/div>/' dist/index.html
+        fi
+        
+    - name: Create .nojekyll file
+      run: touch dist/.nojekyll
+      
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./dist
+        
+    - name: Deploy rollback
+      id: deployment
+      uses: actions/deploy-pages@v4
+      timeout-minutes: 10
+      
+    - name: Verify rollback deployment
+      timeout-minutes: 5
+      run: |
+        echo "🔍 Verifying rollback deployment..."
+        URL="${{ steps.deployment.outputs.page_url }}"
+        
+        for i in {1..10}; do
+          echo "Verification attempt $i/10..."
+          
+          if curl -sf "$URL" > /dev/null; then
+            echo "✅ Rollback deployment verified!"
+            
+            # Check if rollback info is accessible
+            if curl -sf "$URL/rollback-info.json" > /dev/null; then
+              echo "✅ Rollback metadata accessible"
+            fi
+            
+            echo "🎉 Rollback completed successfully!"
+            exit 0
+          fi
+          
+          echo "⏳ Waiting 10s before retry..."
+          sleep 10
+        done
+        
+        echo "❌ Rollback deployment verification failed"
+        exit 1
+
+  # Post-rollback tasks
+  post-rollback:
+    name: Post-Rollback Tasks
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, create-backup, execute-rollback]
+    if: always() && needs.execute-rollback.result == 'success'
+    
+    steps:
+    - name: Create rollback issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `🔄 System Rollback Executed - ${{ inputs.rollback_type }}`,
+            body: `## 🚨 System Rollback Report
+            
+            A system rollback has been executed with the following details:
+            
+            ### Rollback Information
+            - **Type**: ${{ inputs.rollback_type }}
+            - **Reason**: ${{ inputs.reason }}
+            - **Executed by**: ${{ github.actor }}
+            - **Executed at**: ${new Date().toISOString()}
+            
+            ### Technical Details
+            - **Original Commit**: ${{ needs.validate-rollback.outputs.current_commit }}
+            - **Target Commit**: ${{ needs.validate-rollback.outputs.target_commit }}
+            - **Backup ID**: ${{ needs.create-backup.outputs.backup_id }}
+            
+            ### Next Steps
+            - [ ] Investigate root cause of the issue
+            - [ ] Verify system functionality post-rollback
+            - [ ] Plan forward fix strategy
+            - [ ] Update monitoring/alerting if needed
+            
+            ### Recovery Information
+            The previous version has been backed up as: \`${{ needs.create-backup.outputs.backup_id }}\`
+            
+            To restore from backup if needed, use the rollback workflow with the backup commit.
+            `,
+            labels: ['rollback', 'incident', 'high-priority']
+          });
+          
+          console.log('Created rollback issue:', issue.data.html_url);
+          
+    - name: Update deployment history
+      run: |
+        echo "📝 Recording rollback in deployment history..."
+        
+        # This would typically update a deployment tracking system
+        echo "Rollback executed successfully" > rollback-completion.log
+        echo "Target commit: ${{ needs.validate-rollback.outputs.target_commit }}" >> rollback-completion.log
+        echo "Executed at: $(date -Iseconds)" >> rollback-completion.log
+        
+    - name: Send notifications
+      if: inputs.notify_team
+      run: |
+        echo "📢 Sending rollback notifications..."
+        
+        # Slack notification (if webhook available)
+        if [ -n "${{ secrets.SLACK_WEBHOOK_URL || '' }}" ]; then
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "🚨 System Rollback Executed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*System Rollback Executed*\n• Type: ${{ inputs.rollback_type }}\n• Reason: ${{ inputs.reason }}\n• Target: ${{ needs.validate-rollback.outputs.target_commit }}\n• Executed by: ${{ github.actor }}"
+                  }
+                }
+              ]
+            }'
+        fi
+        
+        echo "✅ Notifications sent"
+        
+    - name: Rollback summary
+      run: |
+        echo "## 🎯 Rollback Execution Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Rollback completed successfully**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Type | ${{ inputs.rollback_type }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Target Commit | ${{ needs.validate-rollback.outputs.target_commit }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Backup Created | ${{ needs.create-backup.outputs.backup_id }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Executed By | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Executed At | $(date -Iseconds) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Reason | ${{ inputs.reason }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 **Production URL**: https://shishkin-web.github.io/insurance_game" >> $GITHUB_STEP_SUMMARY

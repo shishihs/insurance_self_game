@@ -90,11 +90,16 @@
     "test:memory:load": "node scripts/memory-profiler.js --with-load",
     "test:resource": "node scripts/resource-exhaustion.js",
     "test:all:parallel": "node scripts/test-pipeline-enhanced.js --parallel --detailed",
+    "deploy:test": "node scripts/deployment-test.js",
+    "deploy:test:quick": "node scripts/deployment-test.js --quick",
+    "deploy:validate-pipeline": "node scripts/deployment-test.js --validate-only",
     "prepare": "husky"
   },
   "dependencies": {
+    "chart.js": "4.5.0",
     "phaser": "^3.90.0",
-    "vue": "^3.5.18"
+    "vue": "^3.5.18",
+    "vue-chartjs": "5.3.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
