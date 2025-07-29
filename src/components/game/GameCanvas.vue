@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import type { GameManager } from '@/game/GameManager'
 import type { WindowWithTutorialEvents } from '@/types/game-events'
+import { getUnifiedAnimationManager } from '@/game/systems/UnifiedAnimationManager'
 
 const gameContainer = ref<HTMLDivElement>()
 // パフォーマンス最適化: GameManagerは深い監視不要
@@ -12,6 +13,9 @@ const isDev = import.meta.env.DEV
 
 // コンポーネントがマウントされているか追跡
 let isMounted = false
+
+// アニメーションマネージャーのインスタンス
+const animationManager = getUnifiedAnimationManager()
 
 onMounted(async () => {
   isMounted = true

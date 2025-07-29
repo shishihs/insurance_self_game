@@ -16,6 +16,10 @@ import { KeyboardController } from '../systems/KeyboardController'
 import { SoundManager } from '../systems/SoundManager'
 import { GameSceneOptimizationMixin } from './GameSceneOptimized'
 import { EventCleanupManager } from '../systems/EventCleanupManager'
+import { ResponsiveGameSceneMixin } from './ResponsiveGameScene'
+import { getUnifiedAnimationManager } from '../systems/UnifiedAnimationManager'
+import type { UnifiedAnimationManager } from '../systems/UnifiedAnimationManager'
+import { MobilePerformanceManager } from '../systems/MobilePerformanceManager'
 
 /**
  * メインゲームシーン
@@ -73,16 +77,21 @@ export class GameScene extends BaseScene {
   
   // メモリリーク防止用
   private eventCleanupManager: EventCleanupManager = new EventCleanupManager()
-
+  
   // チュートリアル関連
   private tutorialManager?: TutorialManager
   private tutorialOverlay?: TutorialOverlay
   private isTutorialMode: boolean = false
   private tutorialStepElements: Map<string, Phaser.GameObjects.GameObject> = new Map()
   private shouldStartTutorial: boolean = false
+  
+  // アニメーション関連
+  private animationManager: UnifiedAnimationManager
 
   constructor() {
     super({ key: 'GameScene' })
+    // アニメーションマネージャーの取得（シングルトン）
+    this.animationManager = getUnifiedAnimationManager()
   }
 
   init(data: { startTutorial?: boolean }): void {
@@ -119,6 +128,9 @@ export class GameScene extends BaseScene {
     
     // サウンドマネージャーの初期化
     this.initializeSoundManager()
+    
+    // モバイルパフォーマンス管理の初期化
+    this.initializePerformanceManager()
 
     // メニューからチュートリアルが要求された場合は自動開始
     if (this.shouldStartTutorial) {
@@ -1396,25 +1408,55 @@ export class GameScene extends BaseScene {
     
     // フェーズをチェックして適切に処理
     if (this.gameInstance.phase === 'resolution' || this.gameInstance.phase === 'draw') {
-      // ステージ進行チェック
-      this.checkStageProgress()
+      // ターン遷移アニメーション用のオーバーレイ
+      const transitionOverlay = this.add.rectangle(
+        this.centerX,
+        this.centerY,
+        this.gameWidth,
+        this.gameHeight,
+        0x000000,
+        0
+      )
+      transitionOverlay.setDepth(1999)
       
-      // 次のターンへ
-      this.gameInstance.nextTurn()
-      
-      // 簡素化版：保険は永続効果のため、期限切れ処理は不要
-      
-      // UI更新（ダーティフラグを設定）
-      this.dirtyFlags.vitality = true
-      this.dirtyFlags.stage = true  
-      this.dirtyFlags.actionButtons = true
-      this.updateUI()
-      
-      // チュートリアル用にゲーム状態を更新
-      this.updateGameStateForTutorial()
-      
-      // ゲーム終了判定
-      this.checkGameEnd()
+      // フェードイン
+      this.tweens.add({
+        targets: transitionOverlay,
+        alpha: 0.5,
+        duration: 200,
+        ease: 'Power2',
+        onComplete: () => {
+          // ステージ進行チェック
+          this.checkStageProgress()
+          
+          // 次のターンへ
+          this.gameInstance.nextTurn()
+          
+          // 簡素化版：保険は永続効果のため、期限切れ処理は不要
+          
+          // UI更新（ダーティフラグを設定）
+          this.dirtyFlags.vitality = true
+          this.dirtyFlags.stage = true  
+          this.dirtyFlags.actionButtons = true
+          this.updateUI()
+          
+          // チュートリアル用にゲーム状態を更新
+          this.updateGameStateForTutorial()
+          
+          // フェードアウト
+          this.tweens.add({
+            targets: transitionOverlay,
+            alpha: 0,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+              transitionOverlay.destroy()
+              // ゲーム終了判定
+              this.checkGameEnd()
+            }
+          })
+        }
+      })
     }
   }
 
@@ -2592,6 +2634,7 @@ export class GameScene extends BaseScene {
    */
   private showStageTransition(stageName: string, previousMaxVitality: number, newMaxVitality: number): void {
     const transitionContainer = this.add.container(this.centerX, this.centerY)
+    transitionContainer.setDepth(2000)
     
     const bg = this.add.rectangle(0, 0, this.gameWidth, this.gameHeight, 0x000000, 0.8)
     
@@ -2606,6 +2649,15 @@ export class GameScene extends BaseScene {
         fontStyle: 'bold'
       }
     ).setOrigin(0.5)
+    
+    // DOM要素としてアニメーションを適用
+    const textElement = text.canvas as HTMLCanvasElement
+    if (textElement && textElement.parentElement) {
+      this.animationManager.animate(textElement.parentElement, 'scaleIn', {
+        duration: 600,
+        intensity: 'high'
+      })
+    }
     
     // 体力減少メッセージ
     const vitalityChangeText = this.add.text(
@@ -4157,56 +4209,68 @@ export class GameScene extends BaseScene {
    * ゲーム終了画面を表示
    */
   private showGameEnd(isVictory: boolean): void {
-    const endContainer = this.add.container(this.centerX, this.centerY)
-    
-    const bg = this.add.rectangle(0, 0, this.gameWidth, this.gameHeight, 0x000000, 0.9)
-    
-    const titleText = this.add.text(
-      0,
-      -100,
-      isVictory ? '人生充実！' : 'ゲームオーバー',
-      {
-        fontFamily: 'Noto Sans JP',
-        fontSize: '48px',
-        color: isVictory ? '#FFD43B' : '#FF6B6B',
-        fontStyle: 'bold'
+    // 統一アニメーションマネージャーで演出を再生
+    const gameCanvas = document.getElementById('game-container') as HTMLElement
+    if (gameCanvas) {
+      if (isVictory) {
+        this.animationManager.playVictoryAnimation(gameCanvas)
+      } else {
+        this.animationManager.playDefeatAnimation(gameCanvas)
       }
-    ).setOrigin(0.5)
+    }
     
-    const stats = this.gameInstance.stats
-    const statsText = this.add.text(
-      0,
-      0,
-      `最終活力: ${this.gameInstance.vitality}\n` +
-      `総ターン数: ${stats.turnsPlayed}\n` +
-      `チャレンジ成功数: ${stats.successfulChallenges}/${stats.totalChallenges}\n` +
-      `最高活力: ${stats.highestVitality}`,
-      {
-        fontFamily: 'Noto Sans JP',
-        fontSize: '20px',
-        color: '#ffffff',
-        align: 'center',
-        lineSpacing: 10
-      }
-    ).setOrigin(0.5)
-    
-    const retryButton = this.createButton(
-      -100,
-      100,
-      'もう一度',
-      () => {
-        this.scene.restart()
-      },
-      {
-        fontFamily: 'Noto Sans JP',
-        fontSize: '20px',
-        color: '#ffffff'
-      }
-    )
-    
-    const menuButton = this.createButton(
-      100,
-      100,
+    // 既存のゲーム終了画面も表示（アニメーション後に）
+    this.time.delayedCall(1000, () => {
+      const endContainer = this.add.container(this.centerX, this.centerY)
+      
+      const bg = this.add.rectangle(0, 0, this.gameWidth, this.gameHeight, 0x000000, 0.9)
+      
+      const titleText = this.add.text(
+        0,
+        -100,
+        isVictory ? '人生充実！' : 'ゲームオーバー',
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '48px',
+          color: isVictory ? '#FFD43B' : '#FF6B6B',
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5)
+      
+      const stats = this.gameInstance.stats
+      const statsText = this.add.text(
+        0,
+        0,
+        `最終活力: ${this.gameInstance.vitality}\n` +
+        `総ターン数: ${stats.turnsPlayed}\n` +
+        `チャレンジ成功数: ${stats.successfulChallenges}/${stats.totalChallenges}\n` +
+        `最高活力: ${stats.highestVitality}`,
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '20px',
+          color: '#ffffff',
+          align: 'center',
+          lineSpacing: 10
+        }
+      ).setOrigin(0.5)
+      
+      const retryButton = this.createButton(
+        -100,
+        100,
+        'もう一度',
+        () => {
+          this.scene.restart()
+        },
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '20px',
+          color: '#ffffff'
+        }
+      )
+      
+      const menuButton = this.createButton(
+        100,
+        100,
       'メニューへ',
       () => {
         this.scene.start('MainMenuScene')
@@ -5168,6 +5232,56 @@ export class GameScene extends BaseScene {
   }
   
   /**
+   * パフォーマンス管理を初期化
+   */
+  private initializePerformanceManager(): void {
+    const isMobile = this.registry.get('isMobile')
+    
+    if (isMobile) {
+      // モバイルデバイスでのみパフォーマンス管理を有効化
+      this.performanceManager = new MobilePerformanceManager(this, {
+        minFPS: 30,
+        maxMemoryUsage: 75,
+        maxRenderTime: 33.33, // 30fps target for mobile
+        maxDrawCalls: 80
+      })
+      
+      // パフォーマンスレベル変更のリスナー
+      this.events.on('optimizationLevelChanged', (level: 'low' | 'medium' | 'high') => {
+        this.handleOptimizationLevelChange(level)
+      })
+    }
+  }
+  
+  /**
+   * 最適化レベル変更時の処理
+   */
+  private handleOptimizationLevelChange(level: 'low' | 'medium' | 'high'): void {
+    switch (level) {
+      case 'low':
+        // 低品質設定
+        this.frameSkipThreshold = 3
+        this.tweens.timeScale = 0.8 // アニメーション速度を下げる
+        break
+      case 'medium':
+        // 中品質設定
+        this.frameSkipThreshold = 2
+        this.tweens.timeScale = 1.0
+        break
+      case 'high':
+        // 高品質設定
+        this.frameSkipThreshold = 1
+        this.tweens.timeScale = 1.0
+        break
+    }
+    
+    // 最適化レベルの変更を通知
+    if (import.meta.env.DEV) {
+      console.log(`Performance optimization level changed to: ${level}`)
+    }
+  }
+  
+  /**
    * ボタンを作成（サウンド付き）
    */
   protected createButton(
@@ -5259,6 +5373,11 @@ export class GameScene extends BaseScene {
     // サウンドを停止
     if (this.soundManager) {
       this.soundManager.stopAll()
+    }
+    
+    // パフォーマンス管理の破棄
+    if (this.performanceManager) {
+      this.performanceManager.destroy()
     }
     
     // ドロップゾーンの破棄
