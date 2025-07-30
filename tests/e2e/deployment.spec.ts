@@ -29,20 +29,20 @@ test.describe('デプロイメント確認', () => {
     await page.goto('https://shishihs.github.io/insurance_self_game/');
     
     // 最新アップデートのバージョンが表示されている
-    const versionHeader = page.locator('text=最新アップデート v0.2.4');
+    const versionHeader = page.locator('text=本番リリース v0.3.0');
     await expect(versionHeader).toBeVisible();
     
-    // ドラッグ&ドロップシステムの情報が表示されている
-    const dragDropTitle = page.locator('text=高度なドラッグ&ドロップシステム');
-    await expect(dragDropTitle).toBeVisible();
+    // 本番リリースの機能情報が表示されている
+    const productionTitle = page.locator('text=Production Release - 本番環境対応完了');
+    await expect(productionTitle).toBeVisible();
     
     // 主要機能の説明が表示されている
     const features = [
-      'マグネティックスナップ',
-      '60fps維持',
-      'モバイル最適化',
-      'ビジュアルフィードバック',
-      'パフォーマンス最適化'
+      'リリース品質100%',
+      'アクセシビリティ完全対応',
+      'モバイル最適化完了',
+      'パフォーマンス最適化',
+      'セキュリティ監査'
     ];
     
     for (const feature of features) {

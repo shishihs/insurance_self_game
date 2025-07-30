@@ -207,7 +207,7 @@ onUnmounted(() => {
     <transitionAnimations type="slide" direction="left" :duration="400" intensity="normal">
       <div v-if="showGame" class="game-view" id="main-content" role="main" aria-label="ゲーム画面">
         <errorBoundary fallback="detailed" :can-recover="true">
-          <GameCanvas />
+          <GameCanvas @back-to-home="backToHome" />
         </errorBoundary>
         <button
           ref="backToHomeButtonRef"

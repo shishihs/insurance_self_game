@@ -25,18 +25,31 @@ onMounted(async () => {
   
   if (gameContainer.value) {
     try {
+      // タイムアウト付きでPhaserとゲームマネージャーを動的にインポート
+      const importPromise = import('@/game/GameManager')
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('GameManager import timeout after 10 seconds')), 10000)
+      )
       
-      // Phaserとゲームマネージャーを動的にインポート
-      const { GameManager } = await import('@/game/GameManager')
+      if (isDev) console.log('🎮 GameManagerをインポート中...')
+      const { GameManager } = await Promise.race([importPromise, timeoutPromise])
       
       // マウント状態を再確認
       if (!isMounted) return
       
+      if (isDev) console.log('🎮 GameManagerインスタンスを取得中...')
       gameManager.value = GameManager.getInstance()
       
-      // ゲームを初期化
-      gameManager.value.initialize(gameContainer.value)
+      // ゲームを初期化（タイムアウト付き）
+      if (isDev) console.log('🎮 ゲームを初期化中...')
+      const initPromise = gameManager.value.initialize(gameContainer.value)
+      const initTimeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Game initialization timeout after 15 seconds')), 15000)
+      )
       
+      await Promise.race([initPromise, initTimeoutPromise])
+      
+      if (isDev) console.log('✅ ゲーム初期化完了')
       isLoading.value = false
       
       // チュートリアル開始イベントリスナーを設定
@@ -68,10 +81,30 @@ onMounted(async () => {
       console.error('❌ エラー詳細:', {
         name: error instanceof Error ? error.name : 'Unknown',
         message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
       })
-      errorMessage.value = error instanceof Error ? error.message : String(error)
+      
+      // エラーメッセージをより詳細に設定
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      if (errorMsg.includes('timeout')) {
+        errorMessage.value = 'ゲーム読み込みがタイムアウトしました。ページを再読み込みしてください。'
+      } else if (errorMsg.includes('ChunkLoadError') || errorMsg.includes('Loading chunk')) {
+        errorMessage.value = 'ゲームファイルの読み込みに失敗しました。インターネット接続を確認してページを再読み込みしてください。'
+      } else if (errorMsg.includes('Script error')) {
+        errorMessage.value = 'ゲームスクリプトの実行に失敗しました。ブラウザの設定を確認してください。'
+      } else if (errorMsg.includes('WebGL')) {
+        errorMessage.value = 'WebGLの初期化に失敗しました。ブラウザでWebGLが有効になっているか確認してください。'
+      } else {
+        errorMessage.value = `ゲーム初期化エラー: ${errorMsg}`
+      }
+      
       isLoading.value = false
+      
+      // グローバルエラーハンドラーによる重複通知を避けるため、
+      // 手動でエラーハンドリングシステムには報告しない
     }
   } else {
     if (isDev) console.error('❌ gameContainer が見つかりません')
@@ -139,11 +172,30 @@ defineExpose({
     
     <!-- エラー表示 -->
     <div v-else-if="errorMessage" class="error-container">
+      <div class="error-icon">⚠️</div>
       <h3 class="error-title">ゲームの読み込みに失敗しました</h3>
       <p class="error-message">{{ errorMessage }}</p>
-      <p class="error-help">
-        ブラウザのコンソール（F12）でより詳細なエラー情報を確認できます。
-      </p>
+      <div class="error-actions">
+        <button @click="$emit('back-to-home')" class="btn btn-primary">
+          <span>←</span> ホームに戻る
+        </button>
+        <button @click="window.location.reload()" class="btn btn-secondary">
+          <span>↻</span> ページを再読み込み
+        </button>
+      </div>
+      <details class="error-details">
+        <summary>技術的な詳細</summary>
+        <p class="error-help">
+          ブラウザのコンソール（F12）でより詳細なエラー情報を確認できます。
+        </p>
+        <p class="error-troubleshoot">
+          <strong>トラブルシューティング:</strong><br>
+          • インターネット接続を確認してください<br>
+          • ブラウザのキャッシュをクリアしてください<br>
+          • 別のブラウザでお試しください<br>
+          • しばらく時間をおいてから再度お試しください
+        </p>
+      </details>
     </div>
     
     <!-- Phaserゲームがここにマウントされる -->
@@ -204,10 +256,18 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  max-width: 500px;
+  gap: 1.5rem;
+  max-width: 600px;
   padding: 2rem;
   text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
 }
 
 .error-title {
@@ -222,12 +282,88 @@ defineExpose({
   font-size: 1rem;
   margin: 0;
   word-break: break-word;
+  line-height: 1.5;
+}
+
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.error-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.error-actions .btn-primary {
+  background: linear-gradient(135deg, #4C6EF5 0%, #667eea 100%);
+  color: white;
+}
+
+.error-actions .btn-primary:hover {
+  background: linear-gradient(135deg, #3b5bdb 0%, #5a67d8 100%);
+  transform: translateY(-2px);
+}
+
+.error-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.error-actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.error-details {
+  margin-top: 1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.error-details summary {
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  text-align: center;
+}
+
+.error-details summary:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .error-help {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
-  margin: 0;
+  margin: 1rem 0 0 0;
+  line-height: 1.4;
+}
+
+.error-troubleshoot {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  margin: 1rem 0 0 0;
+  line-height: 1.6;
+}
+
+.error-troubleshoot strong {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 @keyframes spin {

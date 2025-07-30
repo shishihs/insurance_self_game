@@ -34,22 +34,29 @@ app.use(ErrorHandlingPlugin, {
   enableLogging: true,
   enableReporting: import.meta.env.PROD,
   enableRecovery: true,
-  enableUserNotifications: true,
+  enableUserNotifications: import.meta.env.DEV, // 本番では通知を無効化
   logToConsole: import.meta.env.DEV,
-  reportToServer: import.meta.env.PROD,
-  maxErrorsPerMinute: 20,
+  reportToServer: false, // サーバー報告を無効化（エンドポイントが未設定のため）
+  maxErrorsPerMinute: import.meta.env.PROD ? 5 : 20, // 本番では制限を厳しく
   environment: import.meta.env.MODE as any,
   buildVersion: import.meta.env.VITE_BUILD_VERSION,
   reportEndpoint: import.meta.env.VITE_ERROR_REPORT_ENDPOINT,
   reportApiKey: import.meta.env.VITE_ERROR_REPORT_API_KEY,
   onError: (errorInfo) => {
-    console.log('[App] Error reported:', errorInfo.message)
+    // 本番では重要なエラーのみログ出力
+    if (import.meta.env.DEV || errorInfo.severity === 'critical' || errorInfo.severity === 'high') {
+      console.log('[App] Error reported:', errorInfo.message)
+    }
   },
   onRecovery: (success, strategy) => {
-    console.log(`[App] Recovery ${success ? 'succeeded' : 'failed'}${strategy ? ` using ${strategy}` : ''}`)
+    if (import.meta.env.DEV) {
+      console.log(`[App] Recovery ${success ? 'succeeded' : 'failed'}${strategy ? ` using ${strategy}` : ''}`)
+    }
   },
   onAlert: (type, data) => {
-    console.warn(`[App] Alert: ${type}`, data)
+    if (import.meta.env.DEV) {
+      console.warn(`[App] Alert: ${type}`, data)
+    }
   }
 })
 
