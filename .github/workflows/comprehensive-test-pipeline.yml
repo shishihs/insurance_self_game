@@ -76,15 +76,27 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          echo "Installing dependencies..."
+          pnpm install --frozen-lockfile
+          echo "Dependencies installed successfully"
 
       - name: Create test results directory
         run: mkdir -p test-results coverage playwright-report
+
+      - name: Check environment
+        run: |
+          echo "Node version: $(node --version)"
+          echo "pnpm version: $(pnpm --version)"
+          echo "Current directory: $(pwd)"
+          echo "Package.json scripts:"
+          cat package.json | grep -A 20 '"scripts"'
 
       - name: Run ${{ matrix.suite }} tests
         env:
           CI: true
         run: |
+          echo "Running ${{ matrix.suite }} tests..."
           case "${{ matrix.suite }}" in
             unit)
               pnpm run test:coverage || true
@@ -108,6 +120,20 @@ jobs:
               pnpm run test:stress || true
               ;;
           esac
+          echo "Test execution completed with exit code: $?"
+
+      - name: Check test output files
+        if: always()
+        run: |
+          echo "Checking for test result files..."
+          echo "Contents of test-results directory:"
+          ls -la test-results/ || echo "test-results directory not found"
+          echo "Contents of coverage directory:"
+          ls -la coverage/ || echo "coverage directory not found"
+          echo "Contents of playwright-report directory:"
+          ls -la playwright-report/ || echo "playwright-report directory not found"
+          echo "Current directory contents:"
+          ls -la
 
       - name: Upload test results
         if: always()
