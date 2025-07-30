@@ -15,7 +15,7 @@
     "cui:integration:regression": "node scripts/cui-auto-integration.js --regression --analysis",
     "cui:integration:continuous": "node scripts/cui-auto-integration.js --continuous --analysis",
     "test:quality-dashboard": "node scripts/test-quality-monitor.js && start test-results/quality-dashboard.md",
-    "test:complete-suite": "pnpm test:orchestrator && pnpm test:quality-monitor && pnpm cui:integration:analysis",
+    "test:complete-suite": "npm run test:orchestrator && npm run test:quality-monitor && npm run cui:integration:analysis",
     "dev": "vite",
     "dev:mobile": "vite --config vite.config.mobile.ts",
     "dev:mobile:host": "vite --config vite.config.mobile.ts --host",
@@ -37,7 +37,7 @@
     "test:mobile:ui": "playwright test tests/e2e/mobile-responsive.spec.ts --ui",
     "setup:mobile": "node scripts/setup/mobile-setup.js",
     "task:complete": "cat docs/PRINCIPLES.md && echo '✅ タスク完了！'",
-    "tc": "pnpm task:complete",
+    "tc": "npm run task:complete",
     "test:mcp": "node scripts/test-mcp.js",
     "mcp:start": "scripts\\start-mcp.bat",
     "cui": "vite-node src/cui/cli.ts",
@@ -93,6 +93,7 @@
     "deploy:test": "node scripts/deployment-test.js",
     "deploy:test:quick": "node scripts/deployment-test.js --quick",
     "deploy:validate-pipeline": "node scripts/deployment-test.js --validate-only",
+    "deploy": "gh-pages -d dist -b gh-pages",
     "prepare": "husky"
   },
   "dependencies": {
@@ -131,6 +132,7 @@
     "eslint": "^9.32.0",
     "eslint-plugin-vue": "^9.33.0",
     "figlet": "^1.8.2",
+    "gh-pages": "6.3.0",
     "husky": "^9.1.7",
     "inquirer": "^12.8.2",
     "jsdom": "^26.1.0",
