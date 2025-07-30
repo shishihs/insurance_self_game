@@ -13,6 +13,30 @@ vi.mock('phaser3spectorjs', () => ({
   }
 }))
 
+// Phaser.Geom.Rectangleのモック
+global.Phaser = {
+  Geom: {
+    Rectangle: class Rectangle {
+      x: number
+      y: number
+      width: number
+      height: number
+      
+      constructor(x: number, y: number, width: number, height: number) {
+        this.x = x
+        this.y = y
+        this.width = width
+        this.height = height
+      }
+      
+      contains(x: number, y: number): boolean {
+        return x >= this.x && x <= this.x + this.width &&
+               y >= this.y && y <= this.y + this.height
+      }
+    }
+  }
+} as any
+
 // Phaserモックの設定
 const mockGraphics = {
   setPosition: vi.fn().mockReturnThis(),
@@ -104,12 +128,18 @@ Object.defineProperty(navigator, 'vibrate', { value: mockWindow.navigator.vibrat
 
 // GAME_CONSTANTSモック
 vi.mock('../config/gameConfig', () => ({
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   GAME_CONSTANTS: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     CARD_WIDTH: 120,
-    CARD_HEIGHT: 160,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    CARD_HEIGHT: 180,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     CHALLENGE_Y_POSITION: 200,
-    DISCARD_X_POSITION: 700,
-    DISCARD_Y_POSITION: 500
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    DISCARD_X_POSITION: 1180,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    DISCARD_Y_POSITION: 550
   }
 }))
 
@@ -358,7 +388,7 @@ describe('DropZoneIntegration', () => {
       // 捨て札エリアでのドロップをシミュレート
       const dragEndHandler = mockCardContainer.on.mock.calls.find(call => call[0] === 'dragend')?.[1]
       if (dragEndHandler) {
-        const mockPointer = { x: 700, y: 500 } // DISCARD_POSITION
+        const mockPointer = { x: 1180, y: 550 } // DISCARD_POSITION
         dragEndHandler(mockPointer)
         
         // アニメーションが実行されることを確認
@@ -547,7 +577,7 @@ describe('DropZoneIntegration', () => {
         // 有効なゾーンでドロップ
         const dragEndHandler = mockCardContainer.on.mock.calls.find(call => call[0] === 'dragend')?.[1]
         if (dragEndHandler) {
-          const mockPointer = { x: 700, y: 500 } // Discard zone position
+          const mockPointer = { x: 1180, y: 550 } // Discard zone position
           dragEndHandler(mockPointer)
           
           // 成功アニメーションが実行される
@@ -617,7 +647,7 @@ describe('DropZoneIntegration', () => {
         // ドロップ
         const dragEndHandler = mockCardContainer.on.mock.calls.find(call => call[0] === 'dragend')?.[1]
         if (dragEndHandler) {
-          dragEndHandler({ x: 700, y: 500 })
+          dragEndHandler({ x: 1180, y: 550 })
           
           // クリーンアップが実行される
           expect(mockCardContainer.setDepth).toHaveBeenCalledWith(0)
@@ -749,7 +779,7 @@ describe('DropZoneIntegration', () => {
         dragHandler({ x: 400, y: 200 }, 400, 200)
         
         // 捨て札ゾーン上
-        dragHandler({ x: 700, y: 500 }, 700, 500)
+        dragHandler({ x: 1180, y: 550 }, 1180, 550)
         
         // ドラッグ更新が正常に処理される
         expect(mockCardContainer.x).toBe(700)

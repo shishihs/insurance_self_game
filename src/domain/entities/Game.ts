@@ -94,6 +94,9 @@ export class Game implements IGameState {
   // 保険種類選択
   insuranceTypeChoices?: InsuranceTypeChoice[]
   
+  // 経験学習システム（GAME_DESIGN.mdより）
+  private _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
+  
   // パフォーマンス最適化: オブジェクトプール
   private static readonly OBJECT_POOLS = {
     cards: [] as Card[],

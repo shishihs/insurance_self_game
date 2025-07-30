@@ -216,9 +216,10 @@ export class InsurancePremiumCalculationService {
    * @private
    */
   private calculateMultiInsurancePenalty(insuranceCount: number): number {
-    // 3枚ごとに10%ずつ負担増加
-    const penaltySteps = Math.floor(insuranceCount / 3)
-    return 1.0 + (penaltySteps * 0.1)
+    // 改善版: 5枚ごとに10%ずつ負担増加、上限30%
+    const penaltySteps = Math.floor(insuranceCount / 5)
+    const penaltyRate = Math.min(penaltySteps * 0.1, 0.3)  // 最大30%増
+    return 1.0 + penaltyRate
   }
 
   /**

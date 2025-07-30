@@ -317,10 +317,23 @@ function createCUIConfig(options: any): Partial<CUIConfig> {
 }
 
 function createGameConfig(options: any): GameConfig {
+  // ルールに基づいた年齢別活力設定（GAME_DESIGN.mdより）
   const difficultyMap = {
-    easy: { startingVitality: 25, startingHandSize: 6, maxHandSize: 8 },
-    normal: { startingVitality: 20, startingHandSize: 5, maxHandSize: 7 },
-    hard: { startingVitality: 15, startingHandSize: 4, maxHandSize: 6 }
+    easy: { 
+      startingVitality: 35,  // 青年期の最大活力
+      startingHandSize: 6, 
+      maxHandSize: 8 
+    },
+    normal: { 
+      startingVitality: 30,  // 青年期と中年期の中間
+      startingHandSize: 5, 
+      maxHandSize: 7 
+    },
+    hard: { 
+      startingVitality: 25,  // 少し余裕を持たせた値
+      startingHandSize: 5,   // 手札は5枚維持（4枚は厳しすぎる）
+      maxHandSize: 6 
+    }
   }
 
   const difficulty = difficultyMap[options.difficulty as keyof typeof difficultyMap] || difficultyMap.normal

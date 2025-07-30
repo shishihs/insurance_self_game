@@ -59,6 +59,13 @@ export class GameChallengeService {
     game.currentChallenge = challengeCard
     game.cardManager.clearSelection()
     game.phase = 'challenge'
+    
+    // 経験学習システム: 同じチャレンジの失敗回数を取得
+    const failureCount = (game as any)._learningHistory.get(challengeCard.name) || 0
+    if (failureCount >= 2) {
+      // 2回目以降の失敗で必要パワー-1（経験による効率化）
+      challengeCard.power = Math.max(1, challengeCard.power - 1)
+    }
   }
 
   /**
@@ -82,6 +89,13 @@ export class GameChallengeService {
     
     // 活力更新
     this.updateVitality(game, result.vitalityChange)
+    
+    // 経験学習システム: 失敗時に学習履歴を更新
+    if (!result.success && game.currentChallenge) {
+      const challengeName = game.currentChallenge.name
+      const currentFailures = (game as any)._learningHistory.get(challengeName) || 0
+      ;(game as any)._learningHistory.set(challengeName, currentFailures + 1)
+    }
     
     // 成功時は保険種類選択肢を追加
     if (result.success) {

@@ -3,6 +3,7 @@ import type { ChallengeResult, GameStage } from '../types/card.types'
 import type { ICardManager } from './CardManager'
 import type { Game } from '../entities/Game'
 import { RiskRewardChallenge } from '../entities/RiskRewardChallenge'
+import { AGE_PARAMETERS } from '../types/game.types'
 
 /**
  * チャレンジ解決サービス
@@ -186,14 +187,25 @@ export class ChallengeResolutionService {
   private calculateInsuranceBonus(game: Game, challenge: Card): number {
     let totalBonus = 0
     const insuranceCards = game.getActiveInsurances()
+    const currentStage = game.stage
+    const ageParams = AGE_PARAMETERS[currentStage] || AGE_PARAMETERS.youth
+    const ageMultiplier = ageParams.ageMultiplier
     
     insuranceCards.forEach(insurance => {
-      // 特化型保険のボーナスを計算
+      // 終身保険の年齢価値上昇を適用
+      let bonus = 0
+      
       if (insurance.isSpecializedInsurance()) {
-        const challengeType = challenge.name // チャレンジ名で判定
-        const bonus = insurance.calculateChallengeBonus(challengeType)
-        totalBonus += bonus
+        const challengeType = challenge.name
+        bonus = insurance.calculateChallengeBonus(challengeType)
       }
+      
+      // 終身保険の場合、年齢倍率を適用
+      if (insurance.isWholeLifeInsurance() && ageMultiplier > 0) {
+        bonus += ageMultiplier  // 中年期+0.5、充実期+1.0
+      }
+      
+      totalBonus += bonus
     })
     
     return totalBonus
