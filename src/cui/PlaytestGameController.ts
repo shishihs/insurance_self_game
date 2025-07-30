@@ -136,7 +136,13 @@ export class PlaytestGameController {
     
     // チャレンジが尽きた場合はゲーム終了
     if (this.currentChallenges.length === 0) {
-      this.game.status = 'victory'
+      // 充実期まで到達している場合は勝利
+      if (this.game.stage === 'fulfillment') {
+        this.game.advanceStage() // これで victory ステータスになる
+      } else {
+        // まだ未到達の場合は次のステージに進める
+        this.game.advanceStage()
+      }
       return false
     }
 
@@ -169,17 +175,22 @@ export class PlaytestGameController {
     // 活力更新
     this.updateVitality(result.vitalityChange)
 
+    // ゲームオーバーは Game クラスが自動的に判定する
+
     // 成功時は保険選択（定期/終身の戦略的選択）
-    if (success) {
+    if (success && this.game.status === 'in_progress') {
       await this.selectInsuranceType(selectedChallenge, interactiveMode)
     }
 
-    // ターン終了処理
-    this.game.nextTurn()
+    // ターン終了処理（ゲームが継続中の場合のみ）
+    if (this.game.status === 'in_progress') {
+      this.game.nextTurn()
+    }
 
     // ログ記録
+    const currentTurn = this.game.status === 'in_progress' ? this.game.turn - 1 : this.game.turn
     renderer.logTurn(
-      this.game.turn - 1, // nextTurn()後なので-1
+      currentTurn,
       this.currentChallenges,
       selectedChallenge,
       handCards,
@@ -431,6 +442,7 @@ export class PlaytestGameController {
     const insuranceCard = Card.createInsuranceCard(
       `定期${challenge.name}保険`,
       2, // 基本パワー+2
+      cost, // コストを作成時に指定
       {
         type: 'shield',
         value: coverage,
@@ -438,10 +450,12 @@ export class PlaytestGameController {
       }
     )
     
-    insuranceCard.coverage = coverage
-    insuranceCard.durationType = 'term'
-    insuranceCard.remainingTurns = 10
-    insuranceCard.cost = cost
+    // プロパティを適用した新しいカードを作成
+    insuranceCard = insuranceCard.copy({
+      coverage,
+      durationType: 'term',
+      remainingTurns: 10
+    })
     
     this.game.addInsurance(insuranceCard)
     console.log(`📋 定期保険追加: ${insuranceCard.name} (保障:${coverage}, 残り10ターン, コスト:${cost})`)
@@ -453,7 +467,8 @@ export class PlaytestGameController {
   private addWholeLifeInsurance(challenge: Card, cost: number, coverage: number): void {
     const insuranceCard = Card.createInsuranceCard(
       `終身${challenge.name}保険`,
-      2, // 基本パワー+2  
+      2, // 基本パワー+2
+      cost, // コストを作成時に指定
       {
         type: 'shield',
         value: coverage,
@@ -461,14 +476,18 @@ export class PlaytestGameController {
       }
     )
     
-    insuranceCard.coverage = coverage
-    insuranceCard.durationType = 'whole_life'
-    insuranceCard.cost = cost
-    
     // 年齢ボーナス適用
     const ageBonus = this.calculateAgeBonus()
+    const finalPower = 2 + ageBonus  // 基本パワー2 + 年齢ボーナス
+    
+    // プロパティを適用した新しいカードを作成
+    insuranceCard = insuranceCard.copy({
+      power: finalPower,
+      coverage,
+      durationType: 'whole_life'
+    })
+    
     if (ageBonus > 0) {
-      insuranceCard.power += ageBonus
       console.log(`🎯 年齢ボーナス: +${ageBonus}パワー`)
     }
     
@@ -491,11 +510,17 @@ export class PlaytestGameController {
    * チャレンジカードを作成（CardFactoryを使用）
    */
   private createChallengeCards(): ChallengeCardWithStatus[] {
-    // CardFactoryから基本チャレンジカードを生成
-    const baseCards = CardFactory.createChallengeCards(this.game.stage)
+    // 全ステージのチャレンジカードを生成
+    const allCards: Card[] = []
+    const stages: ('youth' | 'middle' | 'fulfillment')[] = ['youth', 'middle', 'fulfillment']
+    
+    stages.forEach(stage => {
+      const stageCards = CardFactory.createChallengeCards(stage)
+      allCards.push(...stageCards)
+    })
     
     // isUsedプロパティを追加
-    return baseCards.map(card => ({
+    return allCards.map(card => ({
       ...card,
       isUsed: false
     } as ChallengeCardWithStatus))

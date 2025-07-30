@@ -3,11 +3,11 @@
  * 
  * このクラスはイミュータブルであり、すべての操作は新しいインスタンスを返します。
  * ビジネスルール：
- * - パワーは0以上、999以下でなければならない
- * - 演算結果が最大値を超える場合は最大値に制限される
+ * - パワーは-99以上、999以下でなければならない（ネガティブな人生イベント対応）
+ * - 演算結果が範囲を超える場合は範囲内に制限される
  */
 export class CardPower {
-  private static readonly MIN_POWER = 0
+  private static readonly MIN_POWER = -99
   private static readonly MAX_POWER = 999
 
   private constructor(private readonly value: number) {
@@ -29,7 +29,7 @@ export class CardPower {
    */
   private validate(): void {
     if (this.value < CardPower.MIN_POWER) {
-      throw new Error('CardPower must be non-negative')
+      throw new Error(`CardPower must be at least ${CardPower.MIN_POWER}`)
     }
     if (this.value > CardPower.MAX_POWER) {
       throw new Error('CardPower cannot exceed maximum')
@@ -50,7 +50,7 @@ export class CardPower {
    */
   add(other: CardPower): CardPower {
     const sum = this.value + other.value
-    return new CardPower(Math.min(sum, CardPower.MAX_POWER))
+    return new CardPower(Math.max(CardPower.MIN_POWER, Math.min(sum, CardPower.MAX_POWER)))
   }
 
   /**
@@ -60,7 +60,7 @@ export class CardPower {
    */
   static sum(powers: CardPower[]): CardPower {
     const total = powers.reduce((sum, power) => sum + power.value, 0)
-    return new CardPower(Math.min(total, CardPower.MAX_POWER))
+    return new CardPower(Math.max(CardPower.MIN_POWER, Math.min(total, CardPower.MAX_POWER)))
   }
 
   /**
@@ -74,7 +74,7 @@ export class CardPower {
       throw new Error('Multiplier cannot be negative')
     }
     const result = Math.floor(this.value * multiplier)
-    return new CardPower(Math.min(result, CardPower.MAX_POWER))
+    return new CardPower(Math.max(CardPower.MIN_POWER, Math.min(result, CardPower.MAX_POWER)))
   }
 
   /**

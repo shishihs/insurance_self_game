@@ -65,7 +65,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   displayGameState(game: Game): void {
-    if (!this.isInitialized) return
+    if (!this.isInitialized || !game) return
 
     const theme = this.configManager.getAccessibleColors()
     const lines: string[] = []
@@ -165,7 +165,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   displayProgress(stage: string, turn: number): void {
-    const progressDisplay = this.progressDisplay.renderStageProgress(stage, turn, {
+    // Clamp turn to a reasonable display value
+    const displayTurn = Math.min(turn, 999999)
+    const progressDisplay = this.progressDisplay.renderStageProgress(stage, displayTurn, {
       showStageEmoji: true,
       showTurnNumber: true
     })
@@ -342,6 +344,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
       return confirmed ? 'yes' : 'no'
 
+    } catch (error) {
+      // On error, return default choice
+      return defaultChoice
     } finally {
       this.isWaitingInput = false
     }
@@ -350,6 +355,8 @@ export class InteractiveCUIRenderer implements GameRenderer {
   // === Feedback & Messages ===
 
   showChallengeResult(result: ChallengeResult): void {
+    if (!result) return
+    
     console.log('\n' + chalk.bold.white('⚔️ Challenge Result:'))
     console.log(chalk.gray('═'.repeat(50)))
 
@@ -392,22 +399,26 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   showMessage(message: string, level: 'info' | 'success' | 'warning' = 'info'): void {
-    const icons = {
-      info: 'ℹ️',
-      success: '✅',
-      warning: '⚠️'
+    try {
+      const icons = {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️'
+      }
+
+      const colors = {
+        info: 'blue',
+        success: 'green',
+        warning: 'yellow'
     }
 
-    const colors = {
-      info: 'blue',
-      success: 'green',
-      warning: 'yellow'
+      const icon = icons[level]
+      const color = colors[level] as keyof typeof chalk
+      
+      console.log(`\n${icon} ${chalk[color](message)}`)
+    } catch (e) {
+      // Ignore console errors
     }
-
-    const icon = icons[level]
-    const color = colors[level] as keyof typeof chalk
-    
-    console.log(`\n${icon} ${chalk[color](message)}`)
   }
 
   showError(error: string): void {
@@ -419,6 +430,8 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   showGameOver(stats: PlayerStats): void {
+    if (!stats) return
+    
     console.log('\n')
     
     // Animated game over
@@ -432,6 +445,8 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   showVictory(stats: PlayerStats): void {
+    if (!stats) return
+    
     console.log('\n')
     
     // Animated victory
