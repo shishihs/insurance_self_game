@@ -6,7 +6,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: process.env.CI 
+    ? [['html'], ['json', { outputFile: 'test-results/playwright-results.json' }], ['junit', { outputFile: 'test-results/playwright-junit.xml' }]]
+    : 'html',
   testMatch: '**/tests/e2e/**/*.spec.ts',
   use: {
     baseURL: process.env.CI 

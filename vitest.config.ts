@@ -51,8 +51,12 @@ export default defineConfig({
     isolate: true,
     // Reporter configuration
     reporters: process.env.CI 
-      ? ['default', 'junit'] 
+      ? ['default', 'junit', 'json'] 
       : ['default'],
+    outputFile: {
+      junit: './test-results/junit.xml',
+      json: './test-results/results.json'
+    },
     // Coverage settings
     coverage: {
       provider: 'v8',

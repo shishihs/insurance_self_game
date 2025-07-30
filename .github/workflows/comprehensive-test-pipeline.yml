@@ -55,42 +55,55 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Setup npm cache
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-npm-cache-
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+
+      - name: Create test results directory
+        run: mkdir -p test-results coverage playwright-report
 
       - name: Run ${{ matrix.suite }} tests
         run: |
           case "${{ matrix.suite }}" in
             unit)
-              npm run test:coverage
+              pnpm run test:coverage
               ;;
             integration)
-              npm run test:integration
+              pnpm run test:integration
               ;;
             e2e)
-              npm exec playwright install chromium
-              npm run test:e2e
+              pnpm exec playwright install chromium
+              pnpm run test:e2e
               ;;
             visual)
-              npm exec playwright install chromium
-              npm exec playwright test tests/visual --update-snapshots
+              pnpm exec playwright install chromium
+              pnpm exec playwright test tests/visual --update-snapshots
               ;;
             performance)
-              npm exec playwright install chromium
-              npm exec playwright test tests/performance
+              pnpm exec playwright install chromium
+              pnpm exec playwright test tests/performance
               ;;
             stress)
-              npm run test:stress
+              pnpm run test:stress
               ;;
           esac
 
