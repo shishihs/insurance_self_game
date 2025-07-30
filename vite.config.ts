@@ -22,7 +22,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  base: '/insurance_game/', // GitHub Pages用のベースパス（正しい形式）
+  base: '/insurance_self_game/', // GitHub Pages用のベースパス（正しい形式）
   build: {
     outDir: 'dist',
     sourcemap: true,
