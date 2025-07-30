@@ -1,0 +1,85 @@
+{
+  "name": "人生充実ゲーム - Life Fulfillment",
+  "short_name": "人生充実",
+  "description": "保険をテーマにした一人用ボードゲーム。生命保険を「人生の味方」として描き、プレイヤーの孤独な時間を豊かな体験へと変える。",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1F2937",
+  "theme_color": "#667eea",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["games", "entertainment", "lifestyle"],
+  "lang": "ja",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "scope": "./",
+  "features": [
+    "gamepad",
+    "screen-wake-lock"
+  ],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "capture_links": "existing-client-navigate",
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "shortcuts": [
+    {
+      "name": "新しいゲームを開始",
+      "short_name": "新規ゲーム",
+      "description": "新しいゲームセッションを開始します",
+      "url": "/?action=new-game",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "統計を確認",
+      "short_name": "統計",
+      "description": "ゲームの統計とプログレスを確認します",
+      "url": "/?action=stats",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+lifegame",
+      "url": "/?action=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/save-game",
+      "accept": {
+        "application/json": [".lifegame", ".json"]
+      }
+    }
+  ]
+}
