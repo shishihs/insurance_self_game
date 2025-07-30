@@ -25,10 +25,10 @@ mkcert localhost
 
 ```bash
 # ローカルホストでの開発
-pnpm dev:mobile
+npm run dev:mobile
 
 # ネットワーク経由でのアクセス（実機テスト用）
-pnpm dev:mobile:host
+npm run dev:mobile:host
 ```
 
 起動後、以下のURLでアクセスできます：
@@ -116,10 +116,10 @@ pnpm dev:mobile:host
 
 ```bash
 # すべてのモバイルデバイステストを実行
-pnpm test:e2e tests/e2e/mobile-responsive.spec.ts
+npm run test:e2e tests/e2e/mobile-responsive.spec.ts
 
 # 特定のデバイスのみテスト
-pnpm test:e2e tests/e2e/mobile-responsive.spec.ts --grep "iPhone 12"
+npm run test:e2e tests/e2e/mobile-responsive.spec.ts --grep "iPhone 12"
 ```
 
 ### 対応デバイス一覧

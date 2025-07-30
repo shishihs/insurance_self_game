@@ -139,8 +139,8 @@ jobs:
         echo "💾 Creating backup: $BACKUP_ID"
         
         # Install and build current version
-        pnpm install --frozen-lockfile
-        pnpm run build
+        npm ci
+        npm run build
         
         # Create backup metadata
         cat > backup-info.json << EOF
@@ -162,7 +162,7 @@ jobs:
           dist/
           backup-info.json
           package.json
-          pnpm-lock.yaml
+          package-lock.json
         retention-days: 90
 
   # Perform rollback
@@ -194,12 +194,12 @@ jobs:
     - name: Install dependencies (rollback target)
       run: |
         echo "📦 Installing dependencies for rollback target..."
-        pnpm install --frozen-lockfile
+        npm ci
         
     - name: Build rollback version
       run: |
         echo "🔨 Building rollback version..."
-        pnpm run build
+        npm run build
         
         # Add rollback notification to the build
         cat > dist/rollback-info.json << EOF

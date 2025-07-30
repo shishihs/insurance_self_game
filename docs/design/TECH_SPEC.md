@@ -522,16 +522,16 @@ jobs:
           cache: 'pnpm'
           
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
         
       - name: Type check
-        run: pnpm type-check
+        run: npm type-check
         
       - name: Run tests
-        run: pnpm test
+        run: npm run test
         
       - name: Build
-        run: pnpm build
+        run: npm run build
         
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -595,7 +595,7 @@ jobs:
 
 ### 必要なツール
 - Node.js 20.x
-- pnpm 8.x
+- npm 8.x
 - Git
 - VS Code (推奨)
 
@@ -613,16 +613,16 @@ git clone https://github.com/[username]/solo-boardgame.git
 cd solo-boardgame
 
 # 依存関係インストール
-pnpm install
+npm install
 
 # 開発サーバー起動
-pnpm dev
+npm run dev
 
 # 型チェック（別ターミナル）
-pnpm type-check --watch
+npm type-check --watch
 
 # テスト実行（別ターミナル）
-pnpm test:watch
+npm run test:watch
 ```
 
 ---

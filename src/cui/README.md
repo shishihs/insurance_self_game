@@ -35,15 +35,15 @@ A comprehensive, beautiful terminal-based interface for the Life Enrichment Game
 ### Working Demonstrations
 ```bash
 # Automatic feature showcase (WORKING NOW!)
-pnpm cui:demo:auto
+npm cui:demo:auto
 
 # Interactive demo with user choices
-pnpm cui:demo:standalone
+npm cui:demo:standalone
 
 # Individual components (when GameController is integrated)
-pnpm cui:play
-pnpm cui:tutorial  
-pnpm cui:benchmark
+npm cui:play
+npm cui:tutorial  
+npm cui:benchmark
 ```
 
 ### Current Status

@@ -183,7 +183,7 @@ export class RateLimiter {
 ## 🔍 使用推奨ツール
 
 1. **依存関係チェック**
-   - `pnpm audit`
+   - `npm audit`
    - Snyk
    - Dependabot（GitHub）
 

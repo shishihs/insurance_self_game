@@ -59,10 +59,10 @@
 
 ```bash
 # 依存関係のインストール
-pnpm install
+npm install
 
 # 開発サーバー起動
-pnpm dev
+npm run dev
 
 # ブラウザで http://localhost:5173 にアクセス
 ```
@@ -72,70 +72,70 @@ pnpm dev
 #### 開発・ビルド
 ```bash
 # 開発サーバー（ホットリロード付き）
-pnpm dev
+npm run dev
 
 # プロダクションビルド
-pnpm build
+npm run build
 
 # ビルド結果のプレビュー
-pnpm preview
+npm run preview
 
 # TypeScript型チェック
-pnpm type-check
+npm type-check
 
 # Lintチェック
-pnpm lint
+npm run lint
 
 # Lint自動修正
-pnpm lint:fix
+npm run lint:fix
 ```
 
 #### テスト実行
 ```bash
 # 単体テスト（Vitest）
-pnpm test
+npm run test
 
 # E2Eテスト（Playwright）
-pnpm test:e2e
+npm run test:e2e
 
 # テストカバレッジ
-pnpm test:coverage
+npm run test:coverage
 
 # テストレポート生成
-pnpm test:report
+npm run test:report
 ```
 
 #### CUIツール（開発者向け）
 ```bash
 # インタラクティブゲームプレイ
-pnpm cui:play
+npm cui:play
 
 # AIデモンストレーション
-pnpm cui:demo
+npm cui:demo
 
 # 大規模ベンチマーク
-pnpm benchmark:massive
+npm benchmark:massive
 
 # パフォーマンス分析
-pnpm analyze:performance
+npm analyze:performance
 
 # コード品質分析
-pnpm analyze:quality
+npm analyze:quality
 ```
 
 #### デプロイ・チェック
 ```bash
 # デプロイ状況確認
-pnpm check:deployment
+npm check:deployment
 
 # ゲーム動作確認
-pnpm check:game
+npm check:game
 
 # セキュリティチェック
-pnpm check:security
+npm check:security
 
 # モバイルテスト
-pnpm test:mobile
+npm run test:mobile
 ```
 
 ### 開発環境要件
@@ -220,7 +220,7 @@ insurance_game/
 ### Step 4: 依存関係インストール
 ```bash
 # pnpmを使用（推奨）
-pnpm install
+npm install
 
 # またはnpm
 npm install
@@ -354,19 +354,19 @@ git push -u origin main
 ### 開発サーバー
 ```bash
 # 開発サーバー起動
-pnpm dev
+npm run dev
 
 # ビルド
-pnpm build
+npm run build
 
 # プレビュー
-pnpm preview
+npm run preview
 
 # 型チェック
-pnpm type-check
+npm type-check
 
 # テスト実行
-pnpm test
+npm run test
 ```
 
 ## 📝 タスク完了フック
@@ -402,7 +402,7 @@ fi
 {
   "scripts": {
     "task:complete": "bash scripts/task-complete.sh",
-    "tc": "pnpm task:complete"
+    "tc": "npm task:complete"
   }
 }
 ```
@@ -501,11 +501,11 @@ git commit -m "fix(temp): Temporarily disable failing tests for urgent deploymen
 #### 1. TypeScriptエラー
 ```bash
 # 型定義の再生成
-pnpm type-check
+npm type-check
 
 # node_modulesの再インストール
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 #### 2. Viteが起動しない
@@ -557,10 +557,10 @@ git commit
 ### 確認すべき指標
 ```bash
 # コードカバレッジ
-pnpm test -- --coverage
+npm run test -- --coverage
 
 # バンドルサイズ
-pnpm build
+npm run build
 ls -lh dist/assets/
 
 # パフォーマンス

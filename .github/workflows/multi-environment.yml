@@ -124,40 +124,30 @@ jobs:
       with:
         node-version: "20"
         
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 8
-        
-    - name: Get pnpm store directory
-      id: pnpm-cache
-      run: |
-        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-    - name: Setup pnpm cache
+    - name: Setup npm cache
       uses: actions/cache@v4
       with:
-        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
-          ${{ runner.os }}-pnpm-store-
+          ${{ runner.os }}-npm-cache-
       
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     # Basic checks (all environments)
     - name: Type check
-      run: pnpm run type-check
+      run: npm run type-check
       
     - name: Lint
-      run: pnpm run lint
+      run: npm run lint
       continue-on-error: ${{ needs.deployment-strategy.outputs.environment == 'development' }}
       
     # Extended checks (staging, production, preview)
     - name: Security audit
       if: contains(fromJSON('["staging", "production", "preview"]'), needs.deployment-strategy.outputs.environment)
       run: |
-        pnpm audit --audit-level moderate || {
+        npm run audit --audit-level moderate || {
           echo "⚠️ Security vulnerabilities detected"
           if [ "${{ needs.deployment-strategy.outputs.environment }}" = "production" ]; then
             exit 1
@@ -167,9 +157,9 @@ jobs:
     - name: Unit tests
       run: |
         if [ "${{ needs.deployment-strategy.outputs.test_level }}" = "basic" ]; then
-          pnpm run test:run
+          npm run test:run
         else
-          pnpm run test:coverage
+          npm run test:coverage
         fi
         
     - name: Coverage check
@@ -193,21 +183,21 @@ jobs:
     - name: E2E tests
       if: needs.deployment-strategy.outputs.test_level == 'full'
       run: |
-        pnpm playwright install chromium
-        pnpm test:e2e
+        npm exec playwright install chromium
+        npm run test:e2e
         
     - name: Build verification
       run: |
         # Environment-specific build
         case "${{ needs.deployment-strategy.outputs.environment }}" in
           production)
-            pnpm run build
+            npm run build
             ;;
           staging)
-            VITE_APP_ENV=staging pnpm run build
+            VITE_APP_ENV=staging npm run build
             ;;
           development|preview)
-            VITE_APP_ENV=development pnpm run build
+            VITE_APP_ENV=development npm run build
             ;;
         esac
         

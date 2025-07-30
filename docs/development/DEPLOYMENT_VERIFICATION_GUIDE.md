@@ -34,9 +34,9 @@ git log --oneline -n 1
 ### 2. ローカルでの事前確認
 ```bash
 # デプロイ前に必ず実行
-pnpm run lint        # ESLintエラーの確認
-pnpm run test:run    # テストの実行
-pnpm run build       # ビルドの成功確認
+npm run lint        # ESLintエラーの確認
+npm run test:run    # テストの実行
+npm run build       # ビルドの成功確認
 ```
 
 ### 3. デプロイされたサイトの検証
@@ -104,10 +104,10 @@ curl -s https://{url} | grep -E 'js/.*\.js'
 1. **ESLintエラーでビルド失敗**
    ```bash
    # エラーを確認
-   pnpm run lint
+   npm run lint
    
    # 自動修正を試す
-   pnpm run lint --fix
+   npm run lint --fix
    
    # それでも残るエラーは手動修正
    ```
@@ -115,10 +115,10 @@ curl -s https://{url} | grep -E 'js/.*\.js'
 2. **テスト失敗**
    ```bash
    # 詳細なエラーを確認
-   pnpm run test:run
+   npm run test:run
    
    # 特定のテストだけ実行
-   pnpm run test {ファイル名}
+   npm run test {ファイル名}
    ```
 
 3. **本番環境でスクリプトが404**
@@ -130,9 +130,9 @@ curl -s https://{url} | grep -E 'js/.*\.js'
 
 1. **コミット前のチェックリスト**
    ```bash
-   pnpm run lint
-   pnpm run test:run
-   pnpm run build
+   npm run lint
+   npm run test:run
+   npm run build
    ```
 
 2. **プッシュ後の確認**

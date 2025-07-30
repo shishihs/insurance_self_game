@@ -199,7 +199,7 @@ script-src 'self'; base-uri 'self'; form-action 'self'
 ### 🔧 セキュリティツールチェーン
 - **静的解析**: TypeScript型チェック
 - **動的監視**: SecurityMonitor クラス
-- **依存関係管理**: pnpm audit
+- **依存関係管理**: npm audit
 - **設定検証**: 自動化されたヘッダーチェック
 
 ---

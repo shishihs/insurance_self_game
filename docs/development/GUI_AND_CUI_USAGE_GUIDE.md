@@ -25,13 +25,13 @@
 ### 実行方法
 ```bash
 # 開発サーバー起動
-pnpm dev
+npm run dev
 
 # プロダクションビルド
-pnpm build
+npm run build
 
 # プレビュー
-pnpm preview
+npm run preview
 ```
 
 ### 主要コンポーネント
@@ -50,24 +50,24 @@ pnpm preview
 
 ### 2つのCLIシステム
 
-#### 1. インタラクティブCUI（`pnpm cui`）
+#### 1. インタラクティブCUI（`npm cui`）
 **用途**: 開発中のゲームプレイテスト、ビジュアルデバッグ
 
 ```bash
 # プレイモード（人間プレイヤー）
-pnpm cui:play
+npm cui:play
 
 # デモモード（AI自動プレイ）
-pnpm cui:demo
+npm cui:demo
 
 # チュートリアルモード
-pnpm cui:tutorial
+npm cui:tutorial
 
 # ベンチマークモード
-pnpm cui:benchmark
+npm cui:benchmark
 
 # デバッグモード
-pnpm cui:debug
+npm cui:debug
 ```
 
 **特徴**:
@@ -76,24 +76,24 @@ pnpm cui:debug
 - ⚡ アニメーション効果
 - 🎮 実際のゲームプレイに近い体験
 
-#### 2. Advanced CLI（`pnpm advanced`）
+#### 2. Advanced CLI（`npm advanced`）
 **用途**: 大規模分析、パフォーマンス最適化、研究
 
 ```bash
 # パフォーマンス分析
-pnpm analyze:performance
+npm analyze:performance
 
 # 大規模ベンチマーク（100万ゲームまで）
-pnpm benchmark:massive
+npm benchmark:massive
 
 # ゲームバランス分析
-pnpm analyze:balance
+npm analyze:balance
 
 # AI戦略トーナメント
-pnpm test:ai
+npm run test:ai
 
 # A/Bテスト実験
-pnpm experiment:ab
+npm experiment:ab
 ```
 
 **特徴**:
@@ -109,28 +109,28 @@ pnpm experiment:ab
 1. **新機能開発時**
    ```bash
    # 1. CUIでロジックをテスト
-   pnpm cui:debug
+   npm cui:debug
    
    # 2. ベンチマークでパフォーマンス確認
-   pnpm cui:benchmark:quick
+   npm cui:benchmark:quick
    
    # 3. GUIに統合
-   pnpm dev
+   npm run dev
    ```
 
 2. **ゲームバランス調整時**
    ```bash
    # 1. 大規模データ収集
-   pnpm benchmark:research
+   npm benchmark:research
    
    # 2. バランス分析
-   pnpm analyze:balance -i results.json
+   npm analyze:balance -i results.json
    
    # 3. A/Bテストで検証
-   pnpm experiment:ab
+   npm experiment:ab
    
    # 4. GUIに反映してプレイテスト
-   pnpm dev
+   npm run dev
    ```
 
 3. **AI戦略開発時**
@@ -138,13 +138,13 @@ pnpm experiment:ab
    # 1. AI戦略実装（src/ai/AdvancedStrategies.ts）
    
    # 2. トーナメントで評価
-   pnpm test:ai
+   npm run test:ai
    
    # 3. CUIデモで視覚的確認
-   pnpm cui:demo --strategy your-strategy
+   npm cui:demo --strategy your-strategy
    
    # 4. パフォーマンス検証
-   pnpm benchmark:massive
+   npm benchmark:massive
    ```
 
 ## 📊 データフロー

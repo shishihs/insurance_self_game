@@ -114,7 +114,7 @@ export function secureLocalStorage() {
 ### 5. 依存関係の脆弱性スキャン ⚠️ → ✅
 
 **監査内容**: 
-- `pnpm audit` による依存関係脆弱性チェック
+- `npm audit` による依存関係脆弱性チェック
 - CVE データベースとの照合
 
 **発見された脆弱性**:
@@ -270,7 +270,7 @@ console.log('最近の不審な活動:', monitor.getSuspiciousActivities(20))
 
 1. **依存関係更新**
    ```bash
-   pnpm update esbuild@latest  # GHSA-67mh-4wv8-2f99 対策
+   npm update esbuild@latest  # GHSA-67mh-4wv8-2f99 対策
    ```
 
 2. **CSP強化** (optional)
@@ -378,13 +378,13 @@ console.log('最近の不審な活動:', monitor.getSuspiciousActivities(20))
 ### 実装済み対策
 
 1. **依存関係の固定と検証**
-   - ✅ pnpm-lock.yaml によるバージョン固定
+   - ✅ package-lock.json によるバージョン固定
    - ✅ 整合性ハッシュによる検証
-   - ✅ pnpm audit の定期実行
+   - ✅ npm audit の定期実行
 
 2. **インストールスクリプトの制御**
-   - ⚠️ 未実装 - `pnpm install --ignore-scripts` の使用推奨
-   - 設定方法: `pnpm config set ignore-scripts true`
+   - ⚠️ 未実装 - `npm install --ignore-scripts` の使用推奨
+   - 設定方法: `npm config set ignore-scripts true`
 
 3. **CI/CDパイプラインの保護**
    - ✅ GitHub Actions でのセキュリティチェック
@@ -394,10 +394,10 @@ console.log('最近の不審な活動:', monitor.getSuspiciousActivities(20))
 
 ```bash
 # 1. インストールスクリプトの無効化
-pnpm config set ignore-scripts true
+npm config set ignore-scripts true
 
 # 2. 依存関係の監査
-pnpm audit --fix
+npm audit --fix
 
 # 3. Socket.dev または Snyk の導入
 # GitHub連携で継続的な脆弱性監視

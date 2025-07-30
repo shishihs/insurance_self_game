@@ -3,6 +3,7 @@
 
 ## 📚 関連ドキュメント
 - **[🚨 開発原則](./docs/development/PRINCIPLES.md)** - **プロジェクトの核となる開発思想（必読）**
+- **[📦 パッケージマネージャー選択](./docs/development/PACKAGE_MANAGER_CHOICE.md)** - **npmを使用する理由（Claude Code互換性）**
 - **[🔄 ゲーム改善プロセス](./docs/planning/GAME_IMPROVEMENT_PROCESS.md)** - **テストプレイ時は必ず参照**
 - **[🎮 GUI/CUI使い分けガイド](./docs/development/GUI_AND_CUI_USAGE_GUIDE.md)** - **本番用GUIと開発用CUIの使い分け**
 - **[📝 意思決定記録](./docs/planning/DECISION_RECORD.md)** - **実装しない機能とその理由**
@@ -291,7 +292,6 @@ Pull Request の作成・レビュー・マージ操作
 - `git add -A` - 全体追加は危険
 - `git add --all` - 全体追加は危険  
 - `git add *` - ワイルドカード追加は危険
-- `npm` コマンド全般 - pnpm使用が必須
 
 #### ✅ 推奨される安全な方法
 ```bash
@@ -302,11 +302,8 @@ git add .
 git add src/components/GameCanvas.vue
 git add src/domain/entities/Game.ts
 
-# ❌ 危険：npm使用
+# npm使用例
 npm install lodash
-
-# ✅ 安全：pnpm使用
-pnpm install lodash
 ```
 
 #### 📋 フックシステムの機能

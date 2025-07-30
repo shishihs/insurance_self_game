@@ -163,7 +163,7 @@ git push origin feature/new-feature
 
 ```bash
 # デプロイメントテスト実行
-pnpm run deploy:test
+npm run deploy:test
 
 # 特定環境へのデプロイ
 gh workflow run multi-environment.yml -f environment=staging

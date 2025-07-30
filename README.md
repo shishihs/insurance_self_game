@@ -42,41 +42,41 @@
 
 ```bash
 # 依存関係のインストール
-pnpm install
+npm install
 ```
 
 ## 🎯 実行方法
 
 ### 開発サーバー
 ```bash
-pnpm dev
+npm run dev
 ```
 
 http://localhost:5173 でアクセス可能
 
 ### ビルド
 ```bash
-pnpm build
+npm run build
 ```
 
 ### テスト
 ```bash
-pnpm test
+npm run test
 ```
 
 ### CUIツール（開発者向け）
 ```bash
 # インタラクティブプレイ
-pnpm cui:play
+npm cui:play
 
 # AIデモ
-pnpm cui:demo
+npm cui:demo
 
 # パフォーマンス分析
-pnpm analyze:performance
+npm analyze:performance
 
 # 大規模ベンチマーク
-pnpm benchmark:massive
+npm benchmark:massive
 ```
 
 ## 🎮 操作方法
@@ -117,7 +117,7 @@ pnpm benchmark:massive
 
 初回セットアップ：
 ```bash
-pnpm install  # huskyが自動的にセットアップされます
+npm install  # huskyが自動的にセットアップされます
 ```
 
 ## 📚 プロジェクト構造
@@ -142,6 +142,7 @@ insurance_game/
 
 ### 開発者向け
 - **[開発原則](./docs/development/PRINCIPLES.md)** - プロジェクトの核となる開発思想
+- **[パッケージマネージャー選択ガイド](./docs/development/PACKAGE_MANAGER_CHOICE.md)** - なぜnpmを使用するのか
 - **[GUI/CUI使い分けガイド](./docs/development/GUI_AND_CUI_USAGE_GUIDE.md)** - 本番用GUIと開発用CUIの使い分け
 - **[API ドキュメント](./docs/development/API_DOCUMENTATION.md)** - システムAPI詳細仕様書
 - [開発ガイド](./docs/development/DEVELOPMENT.md) - セットアップと開発手順

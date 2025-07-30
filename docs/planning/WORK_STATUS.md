@@ -267,13 +267,13 @@
 # 開発サーバー起動（Windows）
 run-dev.bat
 # または
-pnpm dev
+npm run dev
 
 # ビルド
-pnpm build
+npm run build
 
 # テスト（現在Windows環境で問題あり）
-pnpm test
+npm run test
 ```
 
 ## 注意事項

@@ -118,23 +118,23 @@ curl -fsSL https://get.pnpm.io/install.sh | sh
 **診断手順**:
 ```bash
 # 競合の詳細確認
-pnpm why package-name
+npm why package-name
 
 # 依存関係ツリー確認
-pnpm list --depth=2
+npm list --depth=2
 ```
 
 **解決方法**:
 ```bash
 # キャッシュクリア
-pnpm store prune
+npm store prune
 
 # node_modules 削除と再インストール
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
+rm -rf node_modules package-lock.json
+npm install
 
 # 特定パッケージの強制更新
-pnpm update package-name --latest
+npm update package-name --latest
 ```
 
 ## ビルドエラー
@@ -157,7 +157,7 @@ cat tsconfig.json | jq '.compilerOptions.paths'
 ls -la src/domain/entities/Game.ts
 
 # 型チェック実行
-pnpm run type-check
+npm run type-check
 ```
 
 **解決方法**:
@@ -220,7 +220,7 @@ export class Game {
 **診断手順**:
 ```bash
 # バンドル分析
-pnpm run build:analyze
+npm run build:analyze
 
 # chunk サイズ確認
 ls -lah dist/assets/
@@ -319,7 +319,7 @@ Error: Card power cannot be negative: -5
 grep -n "Card power cannot be negative" logs/application.log
 
 # テストでの再現
-pnpm test -- --grep "negative card power"
+npm run test -- --grep "negative card power"
 ```
 
 **解決方法**:
@@ -536,7 +536,7 @@ jobs:
       - name: Build with increased memory
         run: |
           export NODE_OPTIONS="--max-old-space-size=4096"
-          pnpm run build
+          npm run build
 ```
 
 #### 問題: GitHub Pages 表示問題

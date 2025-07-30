@@ -60,16 +60,16 @@ git clone https://github.com/your-org/insurance_game.git
 cd insurance_game
 
 # 依存関係インストール
-pnpm install
+npm install
 
 # 開発サーバー起動
-pnpm run dev
+npm run dev
 
 # ビルド確認
-pnpm run build
+npm run build
 
 # テスト実行
-pnpm run test
+npm run test
 ```
 
 #### IDE/エディタ設定
@@ -106,8 +106,8 @@ pnpm run test
 - [ ] pnpm コマンド利用可能
 - [ ] Claude Code CLI インストール済み
 - [ ] リポジトリクローン完了
-- [ ] `pnpm dev` で開発サーバー起動成功
-- [ ] `pnpm test` でテスト実行成功
+- [ ] `npm run dev` で開発サーバー起動成功
+- [ ] `npm run test` でテスト実行成功
 - [ ] VS Code with 推奨拡張機能インストール
 
 ### Day 3-5: コードベース理解
@@ -329,10 +329,10 @@ class GameManagerToRefactor {
 
 ```bash
 # テスト実行コマンドの確認
-pnpm run test:unit        # 単体テスト
-pnpm run test:integration # 統合テスト
-pnpm run test:e2e        # E2Eテスト
-pnpm run test:coverage   # カバレッジ測定
+npm run test:unit        # 単体テスト
+npm run test:integration # 統合テスト
+npm run test:e2e        # E2Eテスト
+npm run test:coverage   # カバレッジ測定
 ```
 
 #### 単体テストの書き方
@@ -1021,16 +1021,16 @@ const myLearningPlan: LearningPlan = {
 
 ```bash
 # 必須ツール
-pnpm install -g @anthropic/claude-cli
-pnpm install -g @vue/cli
-pnpm install -g typescript
-pnpm install -g vitest
+npm install -g @anthropic/claude-cli
+npm install -g @vue/cli
+npm install -g typescript
+npm install -g vitest
 
 # 推奨ツール
-pnpm install -g eslint
-pnpm install -g prettier
-pnpm install -g lighthouse
-pnpm install -g npm-check-updates
+npm install -g eslint
+npm install -g prettier
+npm install -g lighthouse
+npm install -g npm-check-updates
 ```
 
 ### 学習リソース

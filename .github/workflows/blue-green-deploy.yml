@@ -69,28 +69,28 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: Full quality checks
       run: |
         echo "🔍 Running comprehensive quality checks..."
         
         # Type checking
-        pnpm run type-check
+        npm run type-check
         
         # Linting
-        pnpm run lint
+        npm run lint
         
         # Security audit
-        pnpm audit --audit-level high
+        npm run audit --audit-level high
         
         # Tests with coverage
-        pnpm run test:coverage
+        npm run test:coverage
         
         # E2E tests
         if command -v playwright &> /dev/null; then
-          pnpm playwright install chromium
-          pnpm test:e2e
+          npm exec playwright install chromium
+          npm run test:e2e
         fi
         
         echo "✅ All quality checks passed"
@@ -98,7 +98,7 @@ jobs:
     - name: Build application
       run: |
         echo "🔨 Building application..."
-        pnpm run build
+        npm run build
         
         # Verify build
         test -f dist/index.html || exit 1

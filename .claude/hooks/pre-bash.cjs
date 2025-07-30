@@ -146,14 +146,6 @@ function main() {
     
     console.log(`🔍 Pre-bash hook: Checking command - "${command}"`);
     
-    // npmコマンドの禁止（pnpm必須）
-    if (command.startsWith('npm ')) {
-        console.error('❌ npmの使用は禁止されています。pnpmを使用してください。');
-        console.error('例: npm install → pnpm install');
-        logCommand(command, 'BLOCKED_NPM');
-        process.exit(1);
-    }
-    
     // 破壊的コマンドのチェック
     const checkResult = checkDestructiveCommands(command);
     if (checkResult.blocked) {

@@ -502,16 +502,16 @@ await webAudioGenerator.resume();
 ### 開発用コマンド
 ```bash
 # 開発サーバー起動
-pnpm dev
+npm run dev
 
 # CUIテスト実行
-pnpm cui:play
+npm cui:play
 
 # 大規模ベンチマーク
-pnpm benchmark:massive
+npm benchmark:massive
 
 # 型チェック
-pnpm type-check
+npm type-check
 ```
 
 ## 高度なドメインサービス API（v0.2.8新機能）

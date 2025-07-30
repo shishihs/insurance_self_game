@@ -155,22 +155,22 @@
 ### 1. 初期セットアップ
 ```bash
 # 環境セットアップ
-pnpm setup:mobile
+npm setup:mobile
 
 # 開発サーバー起動
-pnpm dev:mobile:host
+npm run dev:mobile:host
 ```
 
 ### 2. 自動テスト実行
 ```bash
 # 全モバイルテスト
-pnpm test:mobile
+npm run test:mobile
 
 # 特定デバイス
-pnpm test:mobile -- --grep "iPhone 12"
+npm run test:mobile -- --grep "iPhone 12"
 
 # UIモードでデバッグ
-pnpm test:mobile:ui
+npm run test:mobile:ui
 ```
 
 ### 3. 実機テスト

@@ -58,8 +58,8 @@ git add src/domain/entities/Game.ts
 # ❌ 危険：npm使用
 npm install lodash
 
-# ✅ 安全：pnpm使用  
-pnpm install lodash
+# ✅ 安全：npm使用  
+npm install lodash
 ```
 
 ### 📋 フック一覧

@@ -40,40 +40,40 @@ src/__tests__/
 
 ```bash
 # 全テスト実行
-pnpm test:all:cui
+npm run test:all:cui
 
 # 個別モジュールテスト
-pnpm test:controllers      # GameController・GameValidator
-pnpm test:cui             # CUIレンダラー・カード表示
-pnpm test:performance     # パフォーマンス分析
-pnpm test:analytics       # 統計分析・データマイニング
-pnpm test:benchmark       # 大規模ベンチマーク（120秒タイムアウト）
+npm run test:controllers      # GameController・GameValidator
+npm run test:cui             # CUIレンダラー・カード表示
+npm run test:performance     # パフォーマンス分析
+npm run test:analytics       # 統計分析・データマイニング
+npm run test:benchmark       # 大規模ベンチマーク（120秒タイムアウト）
 
 # ストレステスト（300秒タイムアウト）
-pnpm test:stress
+npm run test:stress
 
 # ユーティリティテスト
-pnpm test:utils
+npm run test:utils
 ```
 
 ### カバレッジレポート
 
 ```bash
 # CUIシステムカバレッジ
-pnpm test:coverage:cui
+npm run test:coverage:cui
 
 # 全体カバレッジ
-pnpm test:coverage:full
+npm run test:coverage:full
 ```
 
 ### 開発・監視モード
 
 ```bash
 # ウォッチモード（開発中）
-pnpm test:watch:cui
+npm run test:watch:cui
 
 # テストUI（ブラウザ）
-pnpm test:ui
+npm run test:ui
 ```
 
 ## 🧰 テストユーティリティ
@@ -232,9 +232,9 @@ const tTestResult = StatisticalTestHelper.tTest(sample1, sample2)
 ### 自動テスト実行
 ```bash
 # CI/CD統合
-pnpm test:all:cui           # 全テスト実行
-pnpm test:coverage:full     # カバレッジレポート
-pnpm test:benchmark         # 性能ベンチマーク
+npm run test:all:cui           # 全テスト実行
+npm run test:coverage:full     # カバレッジレポート
+npm run test:benchmark         # 性能ベンチマーク
 ```
 
 ### 回帰テスト

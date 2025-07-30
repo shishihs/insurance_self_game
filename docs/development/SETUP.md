@@ -95,7 +95,7 @@ mkdir -p scripts
 ### 4. 依存関係のインストール
 ```bash
 # pnpm推奨
-pnpm install
+npm install
 
 # npmの場合
 npm install
@@ -212,7 +212,7 @@ coverage
 ### 6. 開発サーバー起動
 ```bash
 # 開発サーバー起動
-pnpm dev
+npm run dev
 
 # ブラウザが自動で開く
 # http://localhost:5173
@@ -416,14 +416,14 @@ export default defineConfig({
 #### 1. "Cannot find module" エラー
 ```bash
 # node_modulesを削除して再インストール
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
+rm -rf node_modules package-lock.json
+npm install
 ```
 
 #### 2. TypeScriptエラー
 ```bash
 # 型定義を再生成
-pnpm type-check
+npm type-check
 
 # VS Codeの場合、TypeScriptサーバーを再起動
 # Cmd/Ctrl + Shift + P → "TypeScript: Restart TS Server"
@@ -432,7 +432,7 @@ pnpm type-check
 #### 3. Viteのポートが使用中
 ```bash
 # 別のポートで起動
-pnpm dev -- --port 3000
+npm run dev -- --port 3000
 
 # または既存プロセスを終了
 lsof -ti:5173 | xargs kill
@@ -454,7 +454,7 @@ npm run dev
 - [ ] Gitがインストールされている
 - [ ] プロジェクトフォルダが作成されている
 - [ ] 依存関係がインストールされている
-- [ ] 開発サーバーが起動する（pnpm dev）
+- [ ] 開発サーバーが起動する（npm run dev）
 - [ ] ブラウザでOKボタンゲームが表示される
 - [ ] OKボタンをクリックすると数字が増える
 - [ ] コンソールにエラーが出ていない

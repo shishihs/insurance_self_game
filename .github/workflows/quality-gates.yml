@@ -50,12 +50,12 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: NPM Security Audit
       run: |
         echo "🔍 Running NPM security audit..."
-        pnpm audit --audit-level moderate --json > npm-audit.json || true
+        npm run audit --audit-level moderate --json > npm-audit.json || true
         
         # Parse and display results
         if [ -s npm-audit.json ]; then
@@ -79,7 +79,7 @@ jobs:
     - name: License compliance check
       run: |
         echo "📋 Checking license compliance..."
-        pnpm licenses list --json > licenses.json
+        npm run licenses list --json > licenses.json
         
         # Check for problematic licenses
         PROBLEMATIC_LICENSES=("GPL-2.0" "GPL-3.0" "AGPL-1.0" "AGPL-3.0")
@@ -103,7 +103,7 @@ jobs:
         echo "Dependencies: $DEPS, Dev Dependencies: $DEV_DEPS"
         
         # Check for outdated packages
-        pnpm outdated --format json > outdated.json || true
+        npm run outdated --format json > outdated.json || true
         
         if [ -s outdated.json ]; then
           OUTDATED_COUNT=$(cat outdated.json | jq 'length')
@@ -175,12 +175,12 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: Build current PR
       run: |
         echo "🔨 Building PR version..."
-        pnpm run build
+        npm run build
         
         # Analyze bundle size
         BUNDLE_SIZE=$(du -sb dist | cut -f1)
@@ -195,8 +195,8 @@ jobs:
     - name: Build base version
       run: |
         echo "🔨 Building base version..."
-        pnpm install --frozen-lockfile
-        pnpm run build
+        npm ci
+        npm run build
         
         # Analyze bundle size
         BUNDLE_SIZE=$(du -sb dist | cut -f1)
@@ -255,11 +255,11 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: Run tests with coverage
       run: |
-        pnpm run test:coverage
+        npm run test:coverage
         
     - name: Coverage analysis
       run: |

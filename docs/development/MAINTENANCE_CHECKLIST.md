@@ -43,7 +43,7 @@ echo "🚀 日次ビルド確認開始..."
 
 # 1. 依存関係の確認
 echo "📦 依存関係チェック..."
-pnpm audit --audit-level high
+npm audit --audit-level high
 if [ $? -ne 0 ]; then
     echo "❌ 高リスクの脆弱性が発見されました"
     exit 1
@@ -51,7 +51,7 @@ fi
 
 # 2. TypeScript型チェック
 echo "🔍 型チェック..."
-pnpm run type-check
+npm run type-check
 if [ $? -ne 0 ]; then
     echo "❌ 型エラーが発見されました"
     exit 1
@@ -59,7 +59,7 @@ fi
 
 # 3. Lintチェック
 echo "🧹 Lintチェック..."
-pnpm run lint
+npm run lint
 if [ $? -ne 0 ]; then
     echo "❌ Lintエラーが発見されました"
     exit 1
@@ -67,7 +67,7 @@ fi
 
 # 4. ビルド確認
 echo "🏗️ ビルド確認..."
-pnpm run build
+npm run build
 if [ $? -ne 0 ]; then
     echo "❌ ビルドが失敗しました"
     exit 1
@@ -75,7 +75,7 @@ fi
 
 # 5. テスト実行
 echo "🧪 テスト実行..."
-pnpm run test:unit
+npm run test:unit
 if [ $? -ne 0 ]; then
     echo "❌ テストが失敗しました"
     exit 1
@@ -88,27 +88,27 @@ echo "✅ 日次ビルド確認完了"
 
 - [ ] **ビルド成功確認**
   ```bash
-  pnpm run build
+  npm run build
   ```
 
 - [ ] **TypeScript型チェック**
   ```bash
-  pnpm run type-check
+  npm run type-check
   ```
 
 - [ ] **Lintエラー確認**
   ```bash
-  pnpm run lint
+  npm run lint
   ```
 
 - [ ] **単体テスト実行**
   ```bash
-  pnpm run test:unit
+  npm run test:unit
   ```
 
 - [ ] **E2Eテスト実行**
   ```bash
-  pnpm run test:e2e
+  npm run test:e2e
   ```
 
 - [ ] **GitHub Actions確認**
@@ -139,7 +139,7 @@ echo "📊 週次コード品質チェック開始..."
 
 # 1. コードカバレッジ確認
 echo "📈 コードカバレッジ確認..."
-pnpm run test:coverage
+npm run test:coverage
 COVERAGE=$(grep -o 'Lines.*: [0-9.]*%' coverage/lcov-report/index.html | grep -o '[0-9.]*%')
 echo "カバレッジ: $COVERAGE"
 
@@ -153,7 +153,7 @@ npx jscpd src/
 
 # 4. バンドルサイズ確認
 echo "📦 バンドルサイズ確認..."
-pnpm run build:analyze
+npm run build:analyze
 
 echo "✅ 週次コード品質チェック完了"
 ```
@@ -177,20 +177,20 @@ echo "✅ 週次コード品質チェック完了"
 - [ ] **依存関係の更新**
   ```bash
   # 依存関係の確認と更新
-  pnpm outdated
-  pnpm update --latest
+  npm outdated
+  npm update --latest
   ```
 
 - [ ] **セキュリティスキャン**
   ```bash
-  pnpm audit
+  npm audit
   npm audit fix
   ```
 
 - [ ] **パフォーマンステスト**
   ```bash
   # Lighthouseスコア確認
-  pnpm run lighthouse
+  npm run lighthouse
   ```
   - Performance: 90点以上
   - Accessibility: 100点
@@ -215,7 +215,7 @@ echo "🛡️ 月次セキュリティ監査開始..."
 
 # 1. 依存関係の脆弱性チェック
 echo "🔍 依存関係脆弱性スキャン..."
-pnpm audit --json > security-audit.json
+npm audit --json > security-audit.json
 
 # 2. Semgrepによる静的解析
 echo "🔬 静的セキュリティ解析..."
@@ -467,7 +467,7 @@ jobs:
           cache: 'pnpm'
       
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
       
       - name: Run maintenance checks
         run: ./scripts/comprehensive-check.sh
@@ -514,10 +514,10 @@ jobs:
    git log --grep="vulnerable-package"
    
    # 緊急パッチの適用
-   pnpm update vulnerable-package
+   npm update vulnerable-package
    
    # 緊急デプロイ
-   pnpm run build && pnpm run deploy:emergency
+   npm run build && npm run deploy:emergency
    ```
 
 2. **影響評価**
@@ -535,8 +535,8 @@ jobs:
 1. **原因特定**
    ```bash
    # パフォーマンス分析
-   pnpm run analyze:bundle
-   pnpm run profile:memory
+   npm run analyze:bundle
+   npm run profile:memory
    ```
 
 2. **緊急対応**

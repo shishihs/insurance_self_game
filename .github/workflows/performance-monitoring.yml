@@ -55,12 +55,12 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: Build current version
       run: |
         echo "🔨 Building current version..."
-        pnpm run build
+        npm run build
         
     - name: Analyze current bundle
       id: analysis
@@ -149,11 +149,11 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: Build for lighthouse
       run: |
-        pnpm run build
+        npm run build
         
     - name: Install Lighthouse
       run: |
@@ -272,10 +272,10 @@ jobs:
         version: 8
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: npm ci
       
     - name: Build application
-      run: pnpm run build
+      run: npm run build
       
     - name: Install testing tools
       run: |

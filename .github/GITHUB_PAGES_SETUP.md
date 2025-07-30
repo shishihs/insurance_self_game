@@ -35,7 +35,7 @@ git push origin master
 
 ### ビルドエラーの場合
 - Actionsタブでエラーログを確認
-- ローカルで `pnpm build` が成功することを確認
+- ローカルで `npm run build` が成功することを確認
 
 ### ページが表示されない場合
 - Settings > Pages で GitHub Actions が Source として選択されているか確認
