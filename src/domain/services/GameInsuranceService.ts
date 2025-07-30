@@ -74,7 +74,10 @@ export class GameInsuranceService {
       // 負の値として返す（活力から差し引かれるため）
       return -totalBurden.getValue()
     } catch (error) {
-      console.warn('保険料計算でエラーが発生しました:', error)
+      // テスト環境では期待される挙動なのでエラーログを抑制
+      if (process.env.NODE_ENV !== 'test') {
+        console.warn('保険料計算でエラーが発生しました:', error)
+      }
       return this.fallbackBurdenCalculation(game)
     }
   }

@@ -110,9 +110,11 @@ export class InsurancePremiumCalculationService {
     riskProfile?: RiskProfile
   ): InsurancePremium {
     // 各保険の個別料金計算
-    const individualPremiums = insuranceCards.map(card => 
-      this.calculateComprehensivePremium(card, stage, riskProfile)
-    )
+    const individualPremiums = insuranceCards
+      .filter(card => card && card.type === 'insurance')
+      .map(card => 
+        this.calculateComprehensivePremium(card, stage, riskProfile)
+      )
     
     // 基本合計
     const baseTotalPremium = InsurancePremium.sum(individualPremiums)

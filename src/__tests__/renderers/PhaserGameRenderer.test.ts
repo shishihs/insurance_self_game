@@ -244,13 +244,13 @@ describe('PhaserGameRenderer Tests', () => {
   })
 
   describe('エラーハンドリング', () => {
-    it('GameScene が設定されていない場合のエラーハンドリング', () => {
+    it('GameScene が設定されていない場合のエラーハンドリング', async () => {
       // GameScene を設定せずにメソッドを呼び出す
       expect(() => renderer.displayGameState(testGame)).not.toThrow()
       expect(() => renderer.displayHand([])).not.toThrow()
       
       // 非同期メソッドもエラーを投げない
-      expect(renderer.askCardSelection([], 0, 1, 'test')).resolves.toEqual([])
+      await expect(renderer.askCardSelection([], 0, 1, 'test')).resolves.toEqual([])
     })
 
     it('GameScene のメソッドがエラーを投げた場合の処理', () => {

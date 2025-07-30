@@ -140,13 +140,18 @@ export interface AgeParameters {
 /**
  * 年齢別設定
  */
-export const AGE_PARAMETERS: Record<GameStage, AgeParameters> = {
+export const AGE_PARAMETERS: Record<string, AgeParameters> = {
   youth: { 
     maxVitality: 35, 
     label: '青年期',
     ageMultiplier: 0
   },
   middle: { 
+    maxVitality: 30, 
+    label: '中年期',
+    ageMultiplier: 0.5
+  },
+  middle_age: { 
     maxVitality: 30, 
     label: '中年期',
     ageMultiplier: 0.5

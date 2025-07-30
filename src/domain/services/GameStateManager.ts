@@ -85,7 +85,10 @@ export class GameStateManager {
       try {
         listener(event)
       } catch (error) {
-        console.error(`GameStateManager: イベントリスナーでエラーが発生しました`, error)
+        // テスト環境では期待される挙動なのでエラーログを抑制
+        if (process.env.NODE_ENV !== 'test') {
+          console.error(`GameStateManager: イベントリスナーでエラーが発生しました`, error)
+        }
       }
     })
   }

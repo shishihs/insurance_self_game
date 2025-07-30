@@ -139,7 +139,8 @@ export class Game implements IGameState {
     
     // 値オブジェクトで初期化（年齢別最大活力を適用）
     const startingVitality = config?.startingVitality ?? 100
-    const maxVitality = AGE_PARAMETERS[this.stage].maxVitality
+    const ageParams = AGE_PARAMETERS[this.stage] || AGE_PARAMETERS.youth
+    const maxVitality = ageParams.maxVitality
     this._vitality = Vitality.create(Math.min(startingVitality, maxVitality), maxVitality)
     
     // CardManagerを初期化
@@ -485,6 +486,11 @@ export class Game implements IGameState {
    */
   private updateMaxVitalityForAge(): void {
     const ageParams = AGE_PARAMETERS[this.stage]
+    if (!ageParams) {
+      console.warn(`Unknown stage: ${this.stage}`)
+      return
+    }
+    
     const newMaxVitality = ageParams.maxVitality
     
     // 現在の活力値が新しい上限を超える場合は調整
