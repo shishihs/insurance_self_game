@@ -32,8 +32,25 @@ SubAgent に依頼した方が良さそうなことがあればどんどん依�
 ### 🚀 デプロイ実行
 /agents use deploy-specialist
 
-#### deploy-specialist 改良版指示書 v2.0
+#### deploy-specialist 改良版指示書 v3.0
+
+**重要**: 正確なデプロイ確認ができなかった教訓については[DEPLOYMENT_VERIFICATION_LESSONS.md](./docs/development/DEPLOYMENT_VERIFICATION_LESSONS.md)を参照
+
 ```
+【🔍 技術的制約と回避策】
+1. WebFetchの制約
+   - ❌ GitHub Actionsのアイコン（✅/❌）は取得できない
+   - ✅ 代替策: ワークフローURLで"failed"や"success"のテキストを探す
+   - ✅ 代替策: 実行時間が異常に短い場合は失敗の可能性
+
+2. HTTPステータスコードの誤解
+   - ❌ curlで200が返っても、古いデプロイ内容の可能性
+   - ✅ 代替策: deploy-info.jsonを生成してコミットハッシュを確認
+
+3. GitHub CLIが使えない
+   - ❌ ghコマンドでAPIレベルの確認ができない
+   - ✅ 代替策: 具体的なワークフローURLを直接確認
+
 【デプロイ前必須確認事項】
 1. ローカルでのテスト実行と成功確認
    - npm run test:run が全て成功すること
@@ -93,12 +110,21 @@ SubAgent に依頼した方が良さそうなことがあればどんどん依�
 以下の全てが満たされた時のみ「デプロイ完了」と報告すること：
 
 1. 必須ワークフローの成功：
-   ✅ Deploy to GitHub Pages: 緑色チェックマーク
-   ✅ 本番URL (https://shishihs.github.io/insurance_self_game/) でサイトが表示される
+   ✅ Deploy to GitHub Pages: 以下のいずれかで確認
+      - WebFetchで"success"テキストを確認
+      - ワークフローURLでエラーがないことを確認
+      - 最新コミットのワークフローが実行完了
+   ✅ 本番URLの検証:
+      - https://shishihs.github.io/insurance_self_game/ が200を返す
+      - 可能であればdeploy-info.jsonでコミットハッシュを確認
 
 2. その他のワークフローの状態を明記：
    - 成功/失敗/実行中の状態を全て報告
    - 失敗がある場合は、その原因と影響を説明
+
+3. 確認できない場合の報告:
+   - 「確認できませんでした」と正直に報告
+   - 推測ではなく、確認できた事実のみを報告
 
 【🔧 失敗時の対応フロー】
 1. 失敗ワークフローのログURLを取得
@@ -111,8 +137,33 @@ SubAgent に依頼した方が良さそうなことがあればどんどん依�
 ❌ 「実行された」だけで「成功」と判断しない
 ❌ ステータスアイコンを確認せずに推測しない
 ❌ 失敗ログを読まずに修正を試みない
+❌ HTTP 200だけでデプロイ成功と判断しない
+❌「errorsが見えない」だけで成功と判断しない
 ✅ 必ず具体的なエラー内容を含めて報告
 ✅ 不明な点はワークフローURLを提供して確認依頼
+✅ 確認できない場合は「確認できません」と正直に報告
+
+【📦 デプロイ検証のベストプラクティス】
+1. ビルド時にバージョン情報を埋め込む
+   ```javascript
+   // vite.config.ts
+   define: {
+     '__BUILD_TIME__': JSON.stringify(new Date().toISOString()),
+     '__COMMIT_HASH__': JSON.stringify(process.env.GITHUB_SHA || 'local')
+   }
+   ```
+
+2. デプロイ確認用エンドポイントを設置
+   ```json
+   // public/deploy-info.json
+   {
+     "deployedAt": "2025-01-30T12:00:00Z",
+     "commitHash": "abc123",
+     "workflowRunId": "12345678"
+   }
+   ```
+
+3. 「推測」ではなく「確実な証拠」に基づいた判断
 ```
 
 ## 🔗 MCP (Model Context Protocol) 統合

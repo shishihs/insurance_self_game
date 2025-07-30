@@ -235,8 +235,9 @@ export class ProgressDisplay {
 
   private createHeartBar(current: number, max: number): string {
     const hearts = Math.ceil(max / 5) // Each heart represents ~5 vitality
-    const fullHearts = Math.floor((current / max) * hearts)
-    const emptyHearts = hearts - fullHearts
+    const clampedCurrent = Math.max(0, Math.min(current, max))
+    const fullHearts = Math.floor((clampedCurrent / max) * hearts)
+    const emptyHearts = Math.max(0, hearts - fullHearts)
     
     const full = chalk.red('❤️'.repeat(fullHearts))
     const empty = chalk.gray('🤍'.repeat(emptyHearts))
@@ -245,8 +246,10 @@ export class ProgressDisplay {
   }
 
   private createMiniBar(value: number, max: number, width: number, color: keyof typeof chalk): string {
-    const filledLength = Math.round((value / max) * width)
-    const emptyLength = width - filledLength
+    // Clamp value to be between 0 and max
+    const clampedValue = Math.max(0, Math.min(value, max))
+    const filledLength = Math.round((clampedValue / max) * width)
+    const emptyLength = Math.max(0, width - filledLength)
     
     const filled = chalk[color]('█'.repeat(filledLength))
     const empty = chalk.gray('░'.repeat(emptyLength))

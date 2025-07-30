@@ -193,24 +193,29 @@ export class TestDataGenerator {
    * Create deterministic test cards with known properties
    */
   static createTestCards(count: number = 5): Card[] {
-    const cardFactory = new CardFactory()
     const cards: Card[] = []
     
-    // Create predictable test cards
+    // Create predictable test cards using Card static factory methods
     for (let i = 0; i < count; i++) {
-      const card = cardFactory.createCard({
-        id: `test-card-${i}`,
-        type: i % 2 === 0 ? 'challenge' : 'insurance',
-        stage: 'youth',
-        name: `Test Card ${i}`,
-        description: `Test card description ${i}`,
-        effects: {
-          vitalityDamage: i % 3 === 0 ? 10 : 0,
-          insuranceBenefit: i % 3 === 1 ? 15 : 0,
-          insuranceCost: i % 3 === 2 ? 5 : 0
-        },
-        rarity: i % 4 === 0 ? 'legendary' : i % 3 === 0 ? 'rare' : 'common'
-      })
+      let card: Card
+      
+      if (i % 2 === 0) {
+        // Create challenge cards
+        card = CardFactory.createChallengeCards('youth')[0]
+        // Override properties for test predictability
+        Object.defineProperty(card, 'id', { value: `test-card-${i}`, configurable: true })
+        Object.defineProperty(card, 'name', { value: `Test Card ${i}`, configurable: true })
+        Object.defineProperty(card, 'description', { value: `Test card description ${i}`, configurable: true })
+      } else {
+        // Create insurance cards
+        const insuranceCards = CardFactory.createBasicInsuranceCards('youth')
+        card = insuranceCards[i % insuranceCards.length]
+        // Override properties for test predictability
+        Object.defineProperty(card, 'id', { value: `test-card-${i}`, configurable: true })
+        Object.defineProperty(card, 'name', { value: `Test Card ${i}`, configurable: true })
+        Object.defineProperty(card, 'description', { value: `Test card description ${i}`, configurable: true })
+      }
+      
       cards.push(card)
     }
     
@@ -223,10 +228,11 @@ export class TestDataGenerator {
   static createTestChallengeResult(overrides: Partial<ChallengeResult> = {}): ChallengeResult {
     return {
       success: true,
-      vitalityDamage: 10,
-      insuranceBenefit: 5,
+      playerPower: 10,
+      challengePower: 8,
+      vitalityChange: -5,
       message: 'Test challenge result',
-      usedInsurances: [],
+      rewards: [],
       ...overrides
     }
   }
@@ -236,16 +242,12 @@ export class TestDataGenerator {
    */
   static createTestPlayerStats(overrides: Partial<PlayerStats> = {}): PlayerStats {
     return {
-      totalTurns: 8,
-      challengesCompleted: 6,
-      challengesFailed: 2,
-      totalVitalityLost: 45,
-      totalInsuranceBenefit: 30,
-      finalVitality: 85,
-      finalInsuranceBurden: 25,
-      gameResult: 'completed',
-      score: 750,
-      achievements: ['survivor', 'strategic'],
+      totalChallenges: 8,
+      successfulChallenges: 6,
+      failedChallenges: 2,
+      cardsAcquired: 10,
+      highestVitality: 100,
+      turnsPlayed: 20,
       ...overrides
     }
   }

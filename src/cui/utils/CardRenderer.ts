@@ -17,6 +17,11 @@ export class CardRenderer {
    * Render a single card with beautiful formatting
    */
   renderCard(card: Card, options: CardRenderOptions = {}): string {
+    // Handle null/undefined cards
+    if (!card) {
+      return ''
+    }
+
     const {
       style = this.config.cardDisplayStyle,
       selected = false,
@@ -42,18 +47,35 @@ export class CardRenderer {
    * Render multiple cards in a grid layout
    */
   renderCardGrid(cards: Card[], options: CardGridOptions = {}): string {
+    // Handle null/undefined or empty arrays
+    if (!cards || cards.length === 0) {
+      return ''
+    }
+
     const {
       columns = 3,
       showIndices = true,
       selectedIndices = [],
       maxCards = this.config.maxCardsDisplayed
     } = options
+    
+    // Ensure columns is valid
+    const validColumns = Math.max(1, columns || 3)
+    
+    // Ensure maxCards is valid
+    const validMaxCards = maxCards > 0 ? maxCards : this.config.maxCardsDisplayed
 
-    const cardsToShow = cards.slice(0, maxCards)
+    // Filter out null/undefined cards and limit to maxCards
+    const validCards = cards.filter(card => card != null)
+    const cardsToShow = validCards.slice(0, validMaxCards)
     const rows: string[] = []
     
-    for (let i = 0; i < cardsToShow.length; i += columns) {
-      const rowCards = cardsToShow.slice(i, i + columns)
+    if (cardsToShow.length === 0) {
+      return ''
+    }
+    
+    for (let i = 0; i < cardsToShow.length; i += validColumns) {
+      const rowCards = cardsToShow.slice(i, i + validColumns)
       const cardStrings = rowCards.map((card, colIndex) => {
         const cardIndex = i + colIndex
         return this.renderCard(card, {
@@ -80,7 +102,7 @@ export class CardRenderer {
         rows.push(rowLine)
       }
       
-      if (i + columns < cardsToShow.length) {
+      if (i + validColumns < cardsToShow.length) {
         rows.push('') // Add spacing between rows
       }
     }
@@ -161,7 +183,7 @@ export class CardRenderer {
     const { selected, dimmed, showIndex, index } = options
     
     const emoji = this.getCardEmoji(card)
-    const name = this.truncateText(card.name, 15)
+    const name = this.truncateText(card.name || 'Unnamed', 15)
     const power = card.power !== undefined ? `P:${card.power}` : ''
     const cost = card.cost !== undefined ? `C:${card.cost}` : ''
     
@@ -204,7 +226,7 @@ export class CardRenderer {
     
     const lines = [
       '┌─────────────────────┐',
-      `│ ${this.padText(card.name, 19)} │`,
+      `│ ${this.padText(card.name || 'Unnamed', 19)} │`,
       '├─────────────────────┤',
       `│ ${this.padText(this.getCardTypeText(card), 19)} │`,
       '├─────────────────────┤'
@@ -238,8 +260,13 @@ export class CardRenderer {
   private renderUnicodeCard(card: Card, options: CardRenderOptions): string {
     const { selected, dimmed, showIndex, index } = options
     
+    // If unicode is disabled, fall back to ASCII
+    if (!this.config.useUnicode) {
+      return this.renderAsciiCard(card, options)
+    }
+    
     const emoji = this.getCardEmoji(card)
-    const name = this.truncateText(card.name, 18)
+    const name = this.truncateText(card.name || 'Unnamed', 18)
     
     const lines = [
       '╭─────────────────────╮',
@@ -282,7 +309,7 @@ export class CardRenderer {
    */
   private formatCardTitle(card: Card): string {
     const emoji = this.getCardEmoji(card)
-    const name = chalk.bold(card.name)
+    const name = chalk.bold(card.name || 'Unnamed Card')
     return `${emoji} ${name}`
   }
 
