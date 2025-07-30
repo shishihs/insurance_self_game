@@ -62,7 +62,7 @@ test.describe('デプロイメント確認', () => {
     await expect(canvas).toBeVisible({ timeout: 10000 });
     
     // ホームに戻るボタンが表示される
-    const backButton = page.locator('button:has-text("ホームに戻る")');
+    const backButton = page.locator('button:has-text("ホーム")');
     await expect(backButton).toBeVisible();
   });
 
