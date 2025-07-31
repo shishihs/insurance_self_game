@@ -367,13 +367,19 @@ export class Card implements IAdvancedCard {
 
   /**
    * 効果的なパワーを計算（年齢ボーナス等を含む）
+   * @param {number} [bonus] - 追加ボーナス（オプション）
    */
-  calculateEffectivePower(): number {
+  calculateEffectivePower(bonus?: number): number {
     let effectivePower = this.power
 
     // 保険カードの年齢ボーナスを適用
     if (this.isInsurance() && this.ageBonus) {
       effectivePower += this.ageBonus
+    }
+
+    // 引数で渡されたボーナスを加算
+    if (bonus !== undefined) {
+      effectivePower += bonus
     }
     
     // 攻撃型保険以外はパワーを提供しない

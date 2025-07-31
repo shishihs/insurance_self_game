@@ -239,6 +239,14 @@ export class Game implements IGameState {
   }
 
   /**
+   * 完了したチャレンジ数を取得
+   * @returns {number} 完了したチャレンジ数
+   */
+  get challengesCompleted(): number {
+    return this.stats.challengesCompleted || 0
+  }
+
+  /**
    * 値オブジェクトとしての活力取得
    * @returns {Vitality} 活力値オブジェクト
    */
