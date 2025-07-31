@@ -137,8 +137,14 @@ for (const [name, suite] of Object.entries(results.suites)) {
   console.log(`  ${name}: ✅ ${suite.passed} ❌ ${suite.failed} ⏭️  ${suite.skipped}`);
 }
 
+// Ensure test-results directory exists
+const testResultsDir = path.join(process.cwd(), 'test-results');
+if (!fs.existsSync(testResultsDir)) {
+  fs.mkdirSync(testResultsDir, { recursive: true });
+}
+
 // Write aggregated results
-const outputPath = path.join(process.cwd(), 'test-results-summary.json');
+const outputPath = path.join(testResultsDir, 'aggregated-results.json');
 fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
 console.log(`\n📁 Aggregated results written to: ${outputPath}`);
 
