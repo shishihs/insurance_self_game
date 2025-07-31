@@ -30,6 +30,14 @@ export class Vitality {
    * @private
    */
   private validate(): void {
+    // 型チェック
+    if (!isFinite(this.value)) {
+      throw new Error('Vitality value must be a finite number')
+    }
+    if (!isFinite(this.maxVitality)) {
+      throw new Error('Maximum vitality must be a finite number')
+    }
+    
     if (this.maxVitality <= 0) {
       throw new Error('Maximum vitality must be positive')
     }
@@ -59,9 +67,12 @@ export class Vitality {
    * 活力を減少させる
    * @param amount 減少量
    * @returns 新しいVitalityインスタンス
-   * @throws {Error} 減少量が負の場合
+   * @throws {Error} 減少量が負の場合または無効な値の場合
    */
   decrease(amount: number): Vitality {
+    if (typeof amount !== 'number' || !isFinite(amount)) {
+      throw new Error('Decrease amount must be a finite number')
+    }
     if (amount < 0) {
       throw new Error('Decrease amount must be non-negative')
     }
@@ -72,9 +83,12 @@ export class Vitality {
    * 活力を増加させる
    * @param amount 増加量
    * @returns 新しいVitalityインスタンス
-   * @throws {Error} 増加量が負の場合
+   * @throws {Error} 増加量が負の場合または無効な値の場合
    */
   increase(amount: number): Vitality {
+    if (typeof amount !== 'number' || !isFinite(amount)) {
+      throw new Error('Increase amount must be a finite number')
+    }
     if (amount < 0) {
       throw new Error('Increase amount must be non-negative')
     }
@@ -109,6 +123,9 @@ export class Vitality {
    * @returns 新しいVitalityインスタンス
    */
   withMaxVitality(newMaxVitality: number): Vitality {
+    if (typeof newMaxVitality !== 'number' || !isFinite(newMaxVitality)) {
+      throw new Error('Maximum vitality must be a finite number')
+    }
     const adjustedValue = Math.min(this.value, newMaxVitality)
     return new Vitality(adjustedValue, newMaxVitality)
   }

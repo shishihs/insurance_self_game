@@ -268,6 +268,16 @@ export class Game implements IGameState {
    * @throws {Error} ダメージが負の値の場合
    */
   applyDamage(damage: number): void {
+    // 型チェック
+    if (damage === null || damage === undefined) {
+      throw new Error('Change amount must not be null or undefined')
+    }
+    if (typeof damage !== 'number') {
+      throw new Error('Change amount must be a number')
+    }
+    if (!isFinite(damage)) {
+      throw new Error('Change amount must be a finite number')
+    }
     this.updateVitality(-damage)
   }
 
@@ -277,6 +287,16 @@ export class Game implements IGameState {
    * @throws {Error} 回復量が負の値の場合
    */
   heal(amount: number): void {
+    // 型チェック
+    if (amount === null || amount === undefined) {
+      throw new Error('Change amount must not be null or undefined')
+    }
+    if (typeof amount !== 'number') {
+      throw new Error('Change amount must be a number')
+    }
+    if (!isFinite(amount)) {
+      throw new Error('Change amount must be a finite number')
+    }
     this.updateVitality(amount)
   }
 
@@ -480,11 +500,26 @@ export class Game implements IGameState {
   }
 
   /**
-   * 活力を更新（最適化版）
+   * 活力を更新（契約による設計版）
+   * 
+   * 事前条件: changeは数値である
+   * 事後条件: 
+   *   - 活力は0以上maxVitality以下である
+   *   - change < 0の場合、活力は減少または0になる
+   *   - change > 0の場合、活力は増加またはmaxVitalityになる
+   *   - 統計情報が適切に更新される
+   * 不変条件: ゲーム状態の整合性が保たれる
    */
   private updateVitality(change: number): void {
+    // 事前条件チェック
+    if (typeof change !== 'number' || !isFinite(change)) {
+      throw new Error('Change amount must be a finite number')
+    }
+    
     // 変更がない場合は処理をスキップ
     if (change === 0) return
+    
+    const previousVitality = this.vitality
     
     if (change >= 0) {
       this._vitality = this._vitality.increase(change)
@@ -492,12 +527,17 @@ export class Game implements IGameState {
       this._vitality = this._vitality.decrease(-change)
     }
     
+    // 事後条件チェック
+    const currentVitality = this.vitality
+    if (currentVitality < 0 || currentVitality > this.maxVitality) {
+      throw new Error(`Vitality invariant violation: ${currentVitality} not in [0, ${this.maxVitality}]`)
+    }
+    
     // ダーティフラグを設定
     this._dirtyFlags.vitality = true
     this._dirtyFlags.stats = true
     
-    // 統計更新
-    const currentVitality = this.vitality
+    // 統計更新（防御的プログラミング）
     if (currentVitality > this.stats.highestVitality) {
       this.stats.highestVitality = currentVitality
     }
@@ -510,6 +550,11 @@ export class Game implements IGameState {
     // ゲームオーバー判定
     if (this._vitality.isDepleted()) {
       this.changeStatus('game_over')
+    }
+    
+    // 不変条件チェック
+    if (this.status === 'game_over' && !this._vitality.isDepleted()) {
+      throw new Error('Game over state inconsistency: vitality not depleted')
     }
   }
 

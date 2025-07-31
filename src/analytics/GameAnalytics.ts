@@ -438,44 +438,231 @@ export class GameAnalytics {
    */
   /**
    * Analyze win rate distribution
+   * 
+   * 事前条件: gameData は空でない配列でなければならない
+   * 事前条件: 各 game.stats は successfulChallenges と totalChallenges を持つ
+   * 事後条件: mean, median, standardDeviation は有限数値である
+   * 事後条件: mean と median は [0, 1] の範囲内である
+   * 
+   * @throws {Error} 事前条件違反の場合
    */
   analyzeWinRateDistribution(gameData: GameResultSummary[]): WinRateDistribution {
-    const winRates = gameData.map(game => game.stats.successfulChallenges / game.stats.totalChallenges || 0)
+    // 事前条件チェック
+    if (!Array.isArray(gameData)) {
+      throw new Error('gameData must be an array')
+    }
+    if (gameData.length === 0) {
+      throw new Error('gameData cannot be empty')
+    }
+    
+    // データ整合性チェック
+    for (let i = 0; i < gameData.length; i++) {
+      const game = gameData[i]
+      if (!game.stats) {
+        throw new Error(`Game at index ${i} missing stats property`)
+      }
+      if (typeof game.stats.successfulChallenges !== 'number') {
+        throw new Error(`Game at index ${i} has invalid successfulChallenges`)
+      }
+      if (typeof game.stats.totalChallenges !== 'number') {
+        throw new Error(`Game at index ${i} has invalid totalChallenges`)
+      }
+    }
+    
+    const winRates = gameData.map(game => {
+      const total = game.stats.totalChallenges
+      if (total === 0) return 0
+      return game.stats.successfulChallenges / total
+    })
+    
+    const mean = winRates.reduce((a, b) => a + b, 0) / winRates.length
+    const median = this.calculateMedian(winRates)
+    const standardDeviation = this.calculateStandardDeviation(winRates)
+    
+    // 事後条件チェック
+    if (!isFinite(mean) || !isFinite(median) || !isFinite(standardDeviation)) {
+      throw new Error('Analysis resulted in non-finite values')
+    }
+    if (mean < 0 || mean > 1 || median < 0 || median > 1) {
+      throw new Error('Win rates must be between 0 and 1')
+    }
+    
     return {
-      mean: winRates.reduce((a, b) => a + b, 0) / winRates.length,
-      median: this.calculateMedian(winRates),
-      standardDeviation: this.calculateStandardDeviation(winRates)
+      mean,
+      median,
+      standardDeviation
     }
   }
 
   /**
    * Analyze optimal game length
+   * 
+   * 事前条件: gameData は空でない配列でなければならない
+   * 事前条件: 各 game.stats.turnsPlayed は正の整数でなければならない
+   * 事後条件: optimalLength と averageLength は正の数値である
+   * 
+   * @throws {Error} 事前条件違反の場合
    */
   analyzeOptimalGameLength(gameData: GameResultSummary[]): GameLengthAnalysis {
+    // 事前条件チェック
+    if (!Array.isArray(gameData)) {
+      throw new Error('gameData must be an array')
+    }
+    if (gameData.length === 0) {
+      throw new Error('gameData cannot be empty')
+    }
+    
+    // データ整合性チェック
+    for (let i = 0; i < gameData.length; i++) {
+      const game = gameData[i]
+      if (!game.stats) {
+        throw new Error(`Game at index ${i} missing stats property`)
+      }
+      if (typeof game.stats.turnsPlayed !== 'number' || !isFinite(game.stats.turnsPlayed)) {
+        throw new Error(`Game at index ${i} has invalid turnsPlayed: ${game.stats.turnsPlayed}`)
+      }
+      if (game.stats.turnsPlayed <= 0) {
+        throw new Error(`Game at index ${i} has non-positive turnsPlayed: ${game.stats.turnsPlayed}`)
+      }
+    }
+    
     const gameLengths = gameData.map(game => game.stats.turnsPlayed)
+    const optimalLength = this.calculateMedian(gameLengths)
+    const averageLength = gameLengths.reduce((a, b) => a + b, 0) / gameLengths.length
+    
+    // 事後条件チェック
+    if (!isFinite(optimalLength) || !isFinite(averageLength)) {
+      throw new Error('Analysis resulted in non-finite values')
+    }
+    if (optimalLength <= 0 || averageLength <= 0) {
+      throw new Error('Game lengths must be positive')
+    }
+    
     return {
-      optimalLength: this.calculateMedian(gameLengths),
-      averageLength: gameLengths.reduce((a, b) => a + b, 0) / gameLengths.length
+      optimalLength,
+      averageLength
     }
   }
 
   /**
    * Analyze challenge balance
+   * 
+   * 事前条件: challengeData は空でない配列でなければならない
+   * 事前条件: 各チャレンジは valid な successRate を持つ
+   * 事後条件: balanceScore は [0, 100] の範囲内である
+   * 事後条件: recommendations は配列である
+   * 
+   * @throws {Error} 事前条件違反の場合
    */
   analyzeChallengeBalance(challengeData: ChallengeData[]): ChallengeBalanceResult {
+    // 事前条件チェック
+    if (!Array.isArray(challengeData)) {
+      throw new Error('challengeData must be an array')
+    }
+    if (challengeData.length === 0) {
+      throw new Error('challengeData cannot be empty')
+    }
+    
+    // データ整合性チェック
+    for (let i = 0; i < challengeData.length; i++) {
+      const challenge = challengeData[i]
+      if (typeof challenge.successRate !== 'number' || !isFinite(challenge.successRate)) {
+        throw new Error(`Challenge at index ${i} has invalid successRate: ${challenge.successRate}`)
+      }
+      if (challenge.successRate < 0 || challenge.successRate > 1) {
+        throw new Error(`Challenge at index ${i} has successRate outside [0,1]: ${challenge.successRate}`)
+      }
+    }
+    
+    // バランス分析
+    const successRates = challengeData.map(c => c.successRate)
+    const mean = successRates.reduce((a, b) => a + b, 0) / successRates.length
+    const variance = this.calculateVariance(successRates)
+    
+    // バランススコア計算（0-100）
+    // 理想的なバランス: 成功率の平均が0.5付近、分散が適度に小さい
+    const meanScore = Math.max(0, 100 - Math.abs(mean - 0.5) * 200)
+    const varianceScore = Math.max(0, 100 - variance * 400)
+    const balanceScore = Math.round((meanScore + varianceScore) / 2)
+    
+    const recommendations: string[] = []
+    if (mean < 0.3) {
+      recommendations.push('チャレンジが難しすぎます。難易度を下げることを検討してください。')
+    } else if (mean > 0.7) {
+      recommendations.push('チャレンジが簡単すぎます。難易度を上げることを検討してください。')
+    }
+    if (variance > 0.1) {
+      recommendations.push('チャレンジ間の難易度のばらつきが大きすぎます。')
+    }
+    
+    // 事後条件チェック
+    if (balanceScore < 0 || balanceScore > 100) {
+      throw new Error(`Balance score out of range: ${balanceScore}`)
+    }
+    
     return {
-      balanceScore: 75, // Placeholder
-      recommendations: []
+      balanceScore,
+      recommendations
     }
   }
 
   /**
    * Detect overpowered strategies
+   * 
+   * 事前条件: gameData は空でない配列でなければならない
+   * 事前条件: 各 game は strategy と score を持つ
+   * 事後条件: balanceScore は [0, 1] の範囲内である
+   * 
+   * @throws {Error} 事前条件違反の場合
    */
-  detectOverpoweredStrategies(gameData: GameResultSummary[]): StrategyBalanceAnalysis {
+  detectOverpoweredStrategies(gameData: any[]): {
+    strategyPerformance: Record<string, number>
+    dominantStrategies: string[]
+    balanceScore: number
+  } {
+    // 事前条件チェック
+    if (!Array.isArray(gameData)) {
+      throw new Error('gameData must be an array')
+    }
+    if (gameData.length === 0) {
+      throw new Error('gameData cannot be empty')
+    }
+    
+    // ストラテジー別パフォーマンスを分析
+    const strategyPerformance: Record<string, number[]> = {}
+    
+    for (const game of gameData) {
+      if (!game.strategy || typeof game.score !== 'number') {
+        continue // 無効なデータはスキップ
+      }
+      
+      if (!strategyPerformance[game.strategy]) {
+        strategyPerformance[game.strategy] = []
+      }
+      strategyPerformance[game.strategy].push(game.score)
+    }
+    
+    // 各ストラテジーの平均スコアを計算
+    const avgPerformance: Record<string, number> = {}
+    for (const [strategy, scores] of Object.entries(strategyPerformance)) {
+      avgPerformance[strategy] = scores.reduce((a, b) => a + b, 0) / scores.length
+    }
+    
+    // 支配的なストラテジーを特定
+    const overallAverage = Object.values(avgPerformance).reduce((a, b) => a + b, 0) / Object.values(avgPerformance).length
+    const dominantStrategies = Object.entries(avgPerformance)
+      .filter(([_, score]) => score > overallAverage * 1.2) // 20%以上高い
+      .map(([strategy, _]) => strategy)
+    
+    // バランススコア計算（分散が小さいほどバランスが良い）
+    const scores = Object.values(avgPerformance)
+    const variance = this.calculateVariance(scores)
+    const balanceScore = Math.max(0, Math.min(1, 1 - variance / (overallAverage * overallAverage)))
+    
     return {
-      overpoweredStrategies: [],
-      balanceIssues: []
+      strategyPerformance: avgPerformance,
+      dominantStrategies,
+      balanceScore
     }
   }
 
@@ -488,20 +675,111 @@ export class GameAnalytics {
   }
 
   private calculateStandardDeviation(values: number[]): number {
+    if (values.length === 0) {
+      throw new Error('Cannot calculate standard deviation of empty array')
+    }
+    
     const mean = values.reduce((a, b) => a + b, 0) / values.length
     const squaredDiffs = values.map(value => Math.pow(value - mean, 2))
     const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / squaredDiffs.length
-    return Math.sqrt(avgSquaredDiff)
+    const result = Math.sqrt(avgSquaredDiff)
+    
+    if (!isFinite(result)) {
+      throw new Error('Standard deviation calculation resulted in non-finite value')
+    }
+    
+    return result
+  }
+  
+  private calculateVariance(values: number[]): number {
+    if (values.length === 0) {
+      throw new Error('Cannot calculate variance of empty array')
+    }
+    
+    const mean = values.reduce((a, b) => a + b, 0) / values.length
+    const squaredDiffs = values.map(value => Math.pow(value - mean, 2))
+    const result = squaredDiffs.reduce((a, b) => a + b, 0) / squaredDiffs.length
+    
+    if (!isFinite(result)) {
+      throw new Error('Variance calculation resulted in non-finite value')
+    }
+    
+    return result
   }
 
   /**
    * Calculate balance metrics
+   * 
+   * 事前条件: gameData は空でない配列でなければならない
+   * 事後条件: giniCoefficient は [0, 1] の範囲内である
+   * 事後条件: varianceInOutcomes は非負である
+   * 
+   * @throws {Error} 事前条件違反の場合
    */
-  calculateBalanceMetrics(gameData: GameResultSummary[]): BalanceMetricsResult {
+  calculateBalanceMetrics(gameData: GameResultSummary[]): {
+    giniCoefficient: number
+    varianceInOutcomes: number
+    playerProgression: any
+    difficultyProgression: any
+  } {
+    // 事前条件チェック
+    if (!Array.isArray(gameData)) {
+      throw new Error('gameData must be an array')
+    }
+    if (gameData.length === 0) {
+      throw new Error('gameData cannot be empty')
+    }
+    
+    // スコアを収集
+    const scores = gameData
+      .map(game => game.stats?.score || 0)
+      .filter(score => typeof score === 'number' && isFinite(score))
+    
+    if (scores.length === 0) {
+      throw new Error('No valid scores found in gameData')
+    }
+    
+    // Gini係数を計算（不平等指数）
+    const sortedScores = [...scores].sort((a, b) => a - b)
+    const n = sortedScores.length
+    const mean = sortedScores.reduce((a, b) => a + b, 0) / n
+    
+    let giniNumerator = 0
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        giniNumerator += Math.abs(sortedScores[i] - sortedScores[j])
+      }
+    }
+    
+    const giniCoefficient = giniNumerator / (2 * n * n * mean)
+    
+    // 結果の分散を計算
+    const varianceInOutcomes = this.calculateVariance(scores)
+    
+    // プレイヤー進行と難易度進行のプレースホルダー
+    const playerProgression = {
+      averageImprovement: 0.1,
+      learningCurve: 'steady'
+    }
+    
+    const difficultyProgression = {
+      stageBalance: 'good',
+      progression: 'linear'
+    }
+    
+    // 事後条件チェック
+    if (giniCoefficient < 0 || giniCoefficient > 1) {
+      throw new Error(`Gini coefficient out of range: ${giniCoefficient}`)
+    }
+    if (varianceInOutcomes < 0) {
+      throw new Error(`Variance cannot be negative: ${varianceInOutcomes}`)
+    }
+    
     return {
-      overallBalance: 75,
-      stageBalance: {},
-      recommendations: []
+      giniCoefficient,
+      varianceInOutcomes,
+      playerProgression,
+      difficultyProgression
     }
   }
 
