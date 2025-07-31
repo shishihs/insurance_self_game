@@ -116,7 +116,7 @@ class Game {
     const actualDamage = Math.max(0, damage - insuranceReduction)
     
     if (insuranceReduction > 0) {
-      console.log(chalk.green(`🛡️ 保険効果: ${damage}ダメージを${insuranceReduction}軽減 → 実際のダメージ:${actualDamage}`))
+      console.warn(chalk.green(`🛡️ 保険効果: ${damage}ダメージを${insuranceReduction}軽減 → 実際のダメージ:${actualDamage}`))
     }
     
     this.vitality = Math.max(0, this.vitality - actualDamage)
@@ -142,10 +142,10 @@ class Game {
     // ステージ進行の実装
     if (this.turn === 8 && this.stage === 'youth') {
       this.stage = 'middle'
-      console.log(chalk.yellow(`🔄 ステージ進行: ${this.stage} フェーズに移行（ターン${this.turn}）`))
+      console.warn(chalk.yellow(`🔄 ステージ進行: ${this.stage} フェーズに移行（ターン${this.turn}）`))
     } else if (this.turn === 15 && this.stage === 'middle') {
       this.stage = 'fulfillment'
-      console.log(chalk.yellow(`🔄 ステージ進行: ${this.stage} フェーズに移行（ターン${this.turn}）`))
+      console.warn(chalk.yellow(`🔄 ステージ進行: ${this.stage} フェーズに移行（ターン${this.turn}）`))
     }
     
     return {
@@ -183,10 +183,10 @@ class PlaytestGameController {
     this.drawCards(5)
     
     // ログ出力
-    console.log(`🎮 ゲーム初期化完了`)
-    console.log(`📊 初期活力: ${this.game.vitality}`)
-    console.log(`🎯 初期ステージ: ${this.game.stage}`)
-    console.log(`🃏 初期手札: ${this.hand.length}枚`)
+    console.warn(`🎮 ゲーム初期化完了`)
+    console.warn(`📊 初期活力: ${this.game.vitality}`)
+    console.warn(`🎯 初期ステージ: ${this.game.stage}`)
+    console.warn(`🃏 初期手札: ${this.hand.length}枚`)
   }
 
   async playTurn(renderer) {
@@ -207,18 +207,18 @@ class PlaytestGameController {
     }
 
     // インタラクティブモード: チャレンジの表示
-    console.log(chalk.cyan('\n📋 今回のチャレンジ選択肢:'))
+    console.warn(chalk.cyan('\n📋 今回のチャレンジ選択肢:'))
     this.currentChallenges.forEach((challenge, index) => {
       const requiredPower = this.getRequiredPower(challenge)
       const label = String.fromCharCode(65 + index) // A, B, C...
-      console.log(chalk.white(`  ${label}: ${challenge.name} (必要パワー: ${requiredPower})`))
+      console.warn(chalk.white(`  ${label}: ${challenge.name} (必要パワー: ${requiredPower})`))
     })
 
     // AIによるチャレンジ選択（成功率重視）
     const selectedChallenge = this.selectChallengeByAI(this.currentChallenges)
     const selectedIndex = this.currentChallenges.findIndex(c => c.id === selectedChallenge.id)
     const selectedLabel = String.fromCharCode(65 + selectedIndex)
-    console.log(chalk.magenta(`🤖 AI選択: ${selectedLabel} - ${selectedChallenge.name}`))
+    console.warn(chalk.magenta(`🤖 AI選択: ${selectedLabel} - ${selectedChallenge.name}`))
 
     // 選択されたチャレンジを使用済みにマーク
     const originalChallenge = this.challengeCards.find(c => c.id === selectedChallenge.id)
@@ -336,7 +336,7 @@ class PlaytestGameController {
     cards.push(Card.createLifeCard('風邪をひく', -1))
     cards.push(Card.createLifeCard('予期しない出費', -2))
 
-    console.log(`📊 カードバランス - ポジティブ:${cards.filter(c => c.power > 0).length}枚(${(cards.filter(c => c.power > 0).length/cards.length*100).toFixed(0)}%), ニュートラル:${cards.filter(c => c.power === 0).length}枚(${(cards.filter(c => c.power === 0).length/cards.length*100).toFixed(0)}%), ネガティブ:${cards.filter(c => c.power < 0).length}枚(${(cards.filter(c => c.power < 0).length/cards.length*100).toFixed(0)}%)`)
+    console.warn(`📊 カードバランス - ポジティブ:${cards.filter(c => c.power > 0).length}枚(${(cards.filter(c => c.power > 0).length/cards.length*100).toFixed(0)}%), ニュートラル:${cards.filter(c => c.power === 0).length}枚(${(cards.filter(c => c.power === 0).length/cards.length*100).toFixed(0)}%), ネガティブ:${cards.filter(c => c.power < 0).length}枚(${(cards.filter(c => c.power < 0).length/cards.length*100).toFixed(0)}%)`)
 
     return cards
   }
@@ -482,7 +482,7 @@ class CUIPlaytestLogger {
   async initialize(purpose = 'テストプレイ') {
     this.purpose = purpose
     this.testNumber = await this.getNextTestNumber()
-    console.log(chalk.green(`📝 プレイテスト #${this.testNumber.toString().padStart(3, '0')} 開始`))
+    console.warn(chalk.green(`📝 プレイテスト #${this.testNumber.toString().padStart(3, '0')} 開始`))
   }
 
   async getNextTestNumber() {
@@ -549,18 +549,18 @@ class CUIPlaytestLogger {
     this.log.push(turnLog)
     
     // コンソール表示
-    console.log(chalk.magenta(`\n=== ターン ${turnNumber} ===`))
+    console.warn(chalk.magenta(`\n=== ターン ${turnNumber} ===`))
     if (selectedChallenge) {
-      console.log(chalk.cyan(`🎯 選択: ${selectedChallenge.name} (必要パワー: ${selectedChallenge.requiredPower || selectedChallenge.power})`))
+      console.warn(chalk.cyan(`🎯 選択: ${selectedChallenge.name} (必要パワー: ${selectedChallenge.requiredPower || selectedChallenge.power})`))
     }
     if (handCards?.length > 0) {
-      console.log(chalk.white(`🃏 手札: ${handCards.map(c => `${c.name}(${c.power > 0 ? '+' : ''}${c.power})`).join(', ')}`))
+      console.warn(chalk.white(`🃏 手札: ${handCards.map(c => `${c.name}(${c.power > 0 ? '+' : ''}${c.power})`).join(', ')}`))
     }
     if (result) {
       const statusIcon = result.success ? '✅' : '❌'
-      console.log(chalk.white(`${statusIcon} 結果: 合計パワー${result.totalPower}, ${result.success ? '成功' : '失敗'}`))
+      console.warn(chalk.white(`${statusIcon} 結果: 合計パワー${result.totalPower}, ${result.success ? '成功' : '失敗'}`))
     }
-    console.log(chalk.blue(`💪 活力: ${gameState?.vitality || 0}, 🛡️ 保険: ${gameState?.insuranceCards?.length || 0}枚`))
+    console.warn(chalk.blue(`💪 活力: ${gameState?.vitality || 0}, 🛡️ 保険: ${gameState?.insuranceCards?.length || 0}枚`))
   }
 
   async savePlaytestLog() {
@@ -571,10 +571,10 @@ class CUIPlaytestLogger {
     
     try {
       await writeFile(filepath, markdown, 'utf-8')
-      console.log(chalk.green(`📄 プレイテストログ保存: ${filename}`))
+      console.warn(chalk.green(`📄 プレイテストログ保存: ${filename}`))
       
       await this.updateCounter()
-      console.log(chalk.blue(`🔢 次回テスト番号: ${this.testNumber + 1}`))
+      console.warn(chalk.blue(`🔢 次回テスト番号: ${this.testNumber + 1}`))
     } catch (error) {
       console.error(chalk.red('❌ ログ保存エラー:'), error.message)
     }
@@ -672,13 +672,13 @@ class CUIPlaytestLogger {
 }
 
 async function runPlaytest(purpose = 'CUIテスト') {
-  console.log(chalk.blue('🎮 === CUI プレイテスト開始 ==='))
-  console.log(chalk.gray('本物のGameドメインロジックを使用\n'))
+  console.warn(chalk.blue('🎮 === CUI プレイテスト開始 ==='))
+  console.warn(chalk.gray('本物のGameドメインロジックを使用\n'))
   
   const logger = new CUIPlaytestLogger()
   await logger.initialize(purpose)
   
-  console.log(chalk.green('✅ PlaytestGameController使用'))
+  console.warn(chalk.green('✅ PlaytestGameController使用'))
   
   const controller = new PlaytestGameController({
     difficulty: 'normal',
@@ -702,10 +702,10 @@ async function runPlaytest(purpose = 'CUIテスト') {
   }
   
   const gameState = controller.getGameState()
-  console.log(chalk.green('\n🎉 プレイテスト完了！'))
-  console.log(chalk.blue(`最終結果: 活力${gameState.vitality}, 保険${gameState.insuranceCards.length}枚`))
-  console.log(chalk.blue(`最終ステータス: ${gameState.status}`))
-  console.log(chalk.blue(`総ターン数: ${turnCount}`))
+  console.warn(chalk.green('\n🎉 プレイテスト完了！'))
+  console.warn(chalk.blue(`最終結果: 活力${gameState.vitality}, 保険${gameState.insuranceCards.length}枚`))
+  console.warn(chalk.blue(`最終ステータス: ${gameState.status}`))
+  console.warn(chalk.blue(`総ターン数: ${turnCount}`))
   
   // ログ保存
   await logger.savePlaytestLog()
@@ -716,9 +716,9 @@ if (process.argv.length > 2) {
   const purpose = process.argv[2] || 'CUIテスト'
   runPlaytest(purpose)
 } else {
-  console.log(chalk.blue('🎮 CUI Playtest Script'))
-  console.log(chalk.gray('使用例:'))
-  console.log(chalk.white('  node cui-playtest.mjs "初見体験"'))
-  console.log(chalk.white('  node cui-playtest.mjs "バランス調整"'))
-  console.log(chalk.white('  node cui-playtest.mjs "新機能テスト"'))
+  console.warn(chalk.blue('🎮 CUI Playtest Script'))
+  console.warn(chalk.gray('使用例:'))
+  console.warn(chalk.white('  node cui-playtest.mjs "初見体験"'))
+  console.warn(chalk.white('  node cui-playtest.mjs "バランス調整"'))
+  console.warn(chalk.white('  node cui-playtest.mjs "新機能テスト"'))
 }
