@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable max-lines-per-function */
+/* eslint-disable no-console */
 
 /**
  * CUI Playtest Script - 本物のGameドメインを使用

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Enhanced Service Worker for 人生充実ゲーム PWA
  * 
