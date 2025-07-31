@@ -289,7 +289,9 @@ export class GameChallengeService {
         }
       })
       
-      return -(Math.max(1, baseDamage - damageReduction))
+      const finalDamage = baseDamage - damageReduction
+      // 保険で完全にカバーできる場合はダメージ0、そうでなければ最低1ダメージ
+      return finalDamage <= 0 ? 0 : -Math.max(1, finalDamage)
     }
   }
 

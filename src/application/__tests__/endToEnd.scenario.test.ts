@@ -122,7 +122,8 @@ describe('エンドツーエンドシナリオテスト', () => {
         insuranceType: 'health',
         coverage: 20,
         durationType: 'term',
-        remainingTurns: 10
+        remainingTurns: 10,
+        insuranceEffectType: 'defensive'
       })
 
       const lifeInsurance = new Card({
@@ -135,7 +136,8 @@ describe('エンドツーエンドシナリオテスト', () => {
         effects: [],
         insuranceType: 'life',
         coverage: 40,
-        durationType: 'whole_life'
+        durationType: 'whole_life',
+        insuranceEffectType: 'defensive'
       })
 
       // 保険を有効化

@@ -244,8 +244,8 @@ export class Card implements IAdvancedCard {
   calculateDamageReduction(): number {
     if (!this.isDefensiveInsurance()) return 0
     
-    // カバレッジに基づいて軽減量を計算
-    const baseReduction = Math.floor((this.coverage || 0) / 10)
+    // カバレッジがそのままダメージ軽減量となる
+    const baseReduction = this.coverage || 0
     
     // ダメージ軽減効果がある場合はその値を加算
     const reductionEffect = this.getEffect('damage_reduction')
