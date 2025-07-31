@@ -450,11 +450,11 @@ export class Card implements IAdvancedCard {
    * カードの表示用文字列を生成
    */
   toDisplayString(): string {
-    let display = `${this.name} (${this.power})`
+    let display = `${this.name} - Power: ${this.power}, Cost: ${this.cost}`
     
     if (this.effects.length > 0) {
       const effectDescriptions = this.effects.map(effect => effect.description).join(', ')
-      display += ` - ${effectDescriptions}`
+      display += ` - Effects: ${effectDescriptions}`
     }
     
     return display

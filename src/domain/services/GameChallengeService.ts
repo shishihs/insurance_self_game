@@ -248,8 +248,18 @@ export class GameChallengeService {
     game.stats.totalChallenges++
     if (success) {
       game.stats.successfulChallenges++
+      // challengesCompletedも更新（テストでの期待値対応）
+      if (!game.stats.challengesCompleted) {
+        game.stats.challengesCompleted = 0
+      }
+      game.stats.challengesCompleted++
     } else {
       game.stats.failedChallenges++
+      // challengesFailedも更新（統計の整合性確保）
+      if (!game.stats.challengesFailed) {
+        game.stats.challengesFailed = 0
+      }
+      game.stats.challengesFailed++
     }
   }
 
