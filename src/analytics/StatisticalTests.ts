@@ -692,6 +692,26 @@ export class StatisticalTests {
     
     return interpretation
   }
+
+  /**
+   * Calculate mean of an array of numbers
+   */
+  calculateMean(data: number[]): number {
+    if (data.length === 0) return 0
+    return data.reduce((sum, val) => sum + val, 0) / data.length
+  }
+
+  /**
+   * Calculate median of an array of numbers
+   */
+  calculateMedian(data: number[]): number {
+    if (data.length === 0) return 0
+    const sorted = [...data].sort((a, b) => a - b)
+    const n = sorted.length
+    return n % 2 === 0 ? 
+      (sorted[n / 2 - 1] + sorted[n / 2]) / 2 : 
+      sorted[Math.floor(n / 2)]
+  }
 }
 
 export default StatisticalTests
