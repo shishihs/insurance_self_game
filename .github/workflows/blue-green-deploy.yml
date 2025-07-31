@@ -175,7 +175,8 @@ jobs:
         EOF
         
         # Add slot identifier to the page
-        sed -i 's/<title>/<title>[${{ needs.pre-deployment.outputs.target_slot|upper }}] /' dist/index.html
+        SLOT_UPPER=$(echo "${{ needs.pre-deployment.outputs.target_slot }}" | tr '[:lower:]' '[:upper:]')
+        sed -i "s/<title>/<title>[$SLOT_UPPER] /" dist/index.html
         
         # Health check endpoint
         cat > dist/health.json << EOF
