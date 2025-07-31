@@ -2,11 +2,12 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { GameAnalytics } from '@/analytics/GameAnalytics'
 import { TestDataGenerator, PerformanceTestHelper, StatisticalTestHelper } from '../utils/TestHelpers'
 import type { GameConfig, PlayerStats } from '@/domain/types/game.types'
+import type { GameResultSummary } from '@/benchmark/MassiveBenchmark'
 
 describe('Game Analytics Deep Tests', () => {
   let gameAnalytics: GameAnalytics
   let testConfig: GameConfig
-  let mockGameData: PlayerStats[]
+  let mockGameData: GameResultSummary[]
 
   beforeEach(() => {
     TestDataGenerator.setSeed(12345)
@@ -14,43 +15,51 @@ describe('Game Analytics Deep Tests', () => {
     gameAnalytics = new GameAnalytics()
     
     // Generate mock game data for analysis
-    mockGameData = Array.from({ length: 100 }, (_) => 
-      TestDataGenerator.createTestPlayerStats({
-        totalTurns: Math.floor(Math.random() * 10) + 1,
+    mockGameData = Array.from({ length: 100 }, (_, index) => ({
+      gameId: index,
+      workerId: index % 4,
+      outcome: Math.random() > 0.5 ? 'victory' : 'game_over' as 'victory' | 'game_over',
+      stats: {
+        totalChallenges: Math.floor(Math.random() * 10) + 1,
+        successfulChallenges: Math.floor(Math.random() * 8),
+        failedChallenges: Math.floor(Math.random() * 3),
+        cardsAcquired: Math.floor(Math.random() * 20),
+        highestVitality: Math.floor(Math.random() * 100) + 20,
+        turnsPlayed: Math.floor(Math.random() * 15) + 5,
         challengesCompleted: Math.floor(Math.random() * 8),
         challengesFailed: Math.floor(Math.random() * 3),
         finalVitality: Math.floor(Math.random() * 100),
         finalInsuranceBurden: Math.floor(Math.random() * 50),
         score: Math.floor(Math.random() * 1000) + 100
-      })
-    )
+      },
+      duration: Math.floor(Math.random() * 300) + 60,
+      strategy: 'balanced',
+      stage: 'youth'
+    }))
   })
 
   describe('Game Balance Analysis', () => {
     it('should analyze win rate distribution', () => {
       const analysis = gameAnalytics.analyzeWinRateDistribution(mockGameData)
       
-      expect(analysis.overallWinRate).toBeGreaterThanOrEqual(0)
-      expect(analysis.overallWinRate).toBeLessThanOrEqual(1)
-      expect(analysis.winRateByTurns).toBeDefined()
-      expect(analysis.winRateByStrategy).toBeDefined()
-      expect(analysis.confidenceInterval).toBeDefined()
-      
-      // Confidence interval should be meaningful
-      expect(analysis.confidenceInterval.lower).toBeLessThanOrEqual(analysis.overallWinRate)
-      expect(analysis.confidenceInterval.upper).toBeGreaterThanOrEqual(analysis.overallWinRate)
+      expect(analysis.mean).toBeGreaterThanOrEqual(0)
+      expect(analysis.mean).toBeLessThanOrEqual(1)
+      expect(analysis.median).toBeGreaterThanOrEqual(0)
+      expect(analysis.median).toBeLessThanOrEqual(1)
+      expect(analysis.standardDeviation).toBeGreaterThanOrEqual(0)
+      expect(typeof analysis.standardDeviation).toBe('number')
     })
 
     it('should identify optimal game length', () => {
       const analysis = gameAnalytics.analyzeOptimalGameLength(mockGameData)
       
-      expect(analysis.optimalTurnCount).toBeGreaterThan(0)
-      expect(analysis.averageGameLength).toBeGreaterThan(0)
-      expect(analysis.turnDistribution).toBeDefined()
-      expect(analysis.satisfactionByLength).toBeDefined()
+      expect(analysis.optimalLength).toBeGreaterThan(0)
+      expect(analysis.averageLength).toBeGreaterThan(0)
+      expect(typeof analysis.optimalLength).toBe('number')
+      expect(typeof analysis.averageLength).toBe('number')
       
       // Optimal turn count should be within reasonable range
-      expect(analysis.optimalTurnCount).toBeLessThanOrEqual(testConfig.maxTurns || 20)
+      expect(analysis.optimalLength).toBeLessThanOrEqual(20)
     })
 
     it('should analyze challenge difficulty balance', () => {

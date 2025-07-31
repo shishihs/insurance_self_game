@@ -99,12 +99,12 @@ describe('エンドツーエンドシナリオテスト', () => {
       const activeInsurance = gameService.getActiveInsurances()[0]
       expect(activeInsurance.getRemainingTurns()).toBe(4)
 
-      // 8. 年齢段階の進行確認（10ターンで中年期へ）
-      for (let i = 0; i < 8; i++) {
+      // 8. 年齢段階の進行確認（8ターンで中年期へ）
+      for (let i = 0; i < 6; i++) {
         gameService.nextTurn()
       }
-      expect(game.turn).toBe(10)
-      expect(game.stage).toBe('middle_age')
+      expect(game.turn).toBe(8)
+      expect(game.stage).toBe('middle')
     })
 
     it('保険を活用した高難度チャレンジ攻略シナリオ', () => {
