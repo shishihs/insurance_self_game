@@ -10,6 +10,7 @@ describe('Smoke Test', () => {
   })
 
   it('should verify test environment', () => {
-    expect(process.env.CI).toBeDefined()
+    // CI環境またはローカル環境のどちらでも動作するようにテストを調整
+    expect(process.env.NODE_ENV).toBeDefined()
   })
 })

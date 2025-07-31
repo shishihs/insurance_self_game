@@ -65,7 +65,10 @@ describe('エンドツーエンドシナリオテスト', () => {
         effects: []
       }))
 
-      // 3. 最初のチャレンジ
+      // 3. drawフェーズに移行
+      game.phase = 'draw'
+      
+      // 4. 最初のチャレンジ
       const firstChallenge = challengeDeck.drawCard()!
       const challenge = gameService.startChallenge(firstChallenge)
       expect(game.phase).toBe('challenge')
@@ -150,6 +153,9 @@ describe('エンドツーエンドシナリオテスト', () => {
         effects: []
       })
 
+      // drawフェーズに移行
+      game.phase = 'draw'
+      
       gameService.startChallenge(hardChallenge)
 
       // 部分的な対応しかできない
@@ -291,6 +297,8 @@ describe('エンドツーエンドシナリオテスト', () => {
           baseCost: 5
         })
 
+        // drawフェーズに移行
+        game.phase = 'draw'
         gameService.startChallenge(challengeCard)
         gameService.selectCardForChallenge(responseCard)
         gameService.resolveChallenge()
@@ -408,6 +416,8 @@ describe('エンドツーエンドシナリオテスト', () => {
         effects: []
       })
 
+      // drawフェーズに移行
+      game.phase = 'draw'
       gameService.startChallenge(fatalChallenge)
       // カードを選択せずに解決
       gameService.resolveChallenge()
@@ -446,6 +456,8 @@ describe('エンドツーエンドシナリオテスト', () => {
         effects: []
       })
 
+      // drawフェーズに移行
+      game.phase = 'draw'
       gameService.startChallenge(fatalChallenge)
       gameService.resolveChallenge()
 
