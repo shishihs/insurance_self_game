@@ -189,8 +189,13 @@ export class CSPManager {
   generateCSPHeader(forMetaTag = false): string {
     const policies: string[] = []
     
-    // メタタグ経由では無効なディレクティブ
-    const metaTagInvalidDirectives = ['frame-ancestors', 'report-uri', 'report-to', 'sandbox']
+    // メタタグ経由では無効なディレクティブ（すべて拡張）
+    const metaTagInvalidDirectives = [
+      'frame-ancestors',  // HTTP headerでのみ有効
+      'report-uri', 
+      'report-to', 
+      'sandbox'
+    ]
     
     for (const [directive, values] of Object.entries(this.directives)) {
       // メタタグ用の場合、無効なディレクティブをスキップ
@@ -480,14 +485,15 @@ export class SecurityHeaderManager {
    */
   initializeSecurityHeaders(): void {
     this.setContentTypeOptions()
-    this.setFrameOptions()
+    // X-Frame-Optionsはmetaタグでは無効なため削除
+    // this.setFrameOptions()
     this.setXSSProtection()
     this.setReferrerPolicy()
     this.setPermissionsPolicy()
     this.setStrictTransportSecurity()
     this.setCrossOriginPolicies()
     
-    console.log('🛡️ Security headers initialized')
+    console.log('🛡️ Security headers initialized (X-Frame-Options skipped for meta tag compatibility)')
   }
 
   /**
@@ -630,13 +636,9 @@ export class SecurityHeaderManager {
   }
 }
 
-// 自動初期化
-if (typeof window !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const cspManager = CSPManager.getInstance()
-    const headerManager = SecurityHeaderManager.getInstance()
-    
-    cspManager.initialize()
-    headerManager.initializeSecurityHeaders()
-  })
-}
+// 自動初期化は削除（main.tsからの初期化で重複を防ぐ）
+// 手動初期化が必要な場合は、以下のコードを使用：
+// const cspManager = CSPManager.getInstance()
+// const headerManager = SecurityHeaderManager.getInstance()
+// cspManager.initialize()
+// headerManager.initializeSecurityHeaders()

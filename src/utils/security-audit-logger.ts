@@ -65,8 +65,8 @@ export class SecurityAuditLogger {
     enableStackTrace: true,
     enableGeoLocation: false,
     enablePerformanceMetrics: true,
-    autoFlushInterval: 10000, // 10秒
-    compressionThreshold: 100 // 100イベント以上で圧縮
+    autoFlushInterval: 30000, // 30秒に変更（レート制限緩和）
+    compressionThreshold: 200 // 200イベント以上で圧縮（閾値を上げる）
   }
 
   private constructor() {
@@ -151,9 +151,14 @@ export class SecurityAuditLogger {
       })
 
     } catch (error) {
-      console.error('セキュリティイベントのログ記録に失敗:', error)
-      // フォールバック: 最低限の情報をコンソールに出力
-      console.warn(`🚨 Security Event: ${eventType} [${severity.toUpperCase()}] ${message}`)
+      // エラーが頻発しないよう、エラーログの出力を制限
+      if (Math.random() < 0.1) { // 10%の確率でエラーをログ出力
+        console.error('セキュリティイベントのログ記録に失敗:', error)
+      }
+      // フォールバック: クリティカルなイベントのみコンソールに出力
+      if (severity === 'critical' || severity === 'high') {
+        console.warn(`🚨 Security Event: ${eventType} [${severity.toUpperCase()}] ${message}`)
+      }
     }
   }
 

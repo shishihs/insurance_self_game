@@ -289,7 +289,7 @@ function setupSecurityEventListeners(): void {
 function startPeriodicSecurityChecks(): void {
   const auditLogger = SecurityAuditLogger.getInstance()
 
-  // 30秒ごとの軽量チェック
+  // 2分ごとの軽量チェック（頻度を下げる）
   setInterval(async () => {
     try {
       // メモリ使用量チェック
@@ -333,9 +333,9 @@ function startPeriodicSecurityChecks(): void {
     } catch (error) {
       console.warn('定期セキュリティチェック中にエラー:', error)
     }
-  }, 30000)
+  }, 120000) // 2分 = 120000ms
 
-  // 5分ごとの詳細チェック
+  // 10分ごとの詳細チェック（頻度を下げる）
   setInterval(async () => {
     try {
       // LocalStorage のサイズチェック
@@ -362,7 +362,7 @@ function startPeriodicSecurityChecks(): void {
     } catch (error) {
       console.warn('詳細セキュリティチェック中にエラー:', error)
     }
-  }, 5 * 60 * 1000)
+  }, 10 * 60 * 1000) // 10分 = 600000ms
 
   // 1時間ごとのセキュリティレポート
   setInterval(async () => {
@@ -507,14 +507,8 @@ export function debugSecuritySystem(): void {
   console.groupEnd()
 }
 
-// 自動初期化（本番環境）
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initializeSecuritySystem().catch(error => {
-      console.error('セキュリティシステム自動初期化失敗:', error)
-    })
-  })
-}
+// 自動初期化は削除（main.tsからの初期化で重複を防ぐ）
+// 手動初期化が必要な場合は initializeSecuritySystem() を呼び出してください
 
 // 開発環境でのデバッグ支援
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
