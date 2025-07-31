@@ -48,13 +48,7 @@ export class GameManager {
         // ビューポート設定
         this.setupMobileViewport()
         
-        // モバイル用の設定調整
-        config.scale = {
-          ...config.scale,
-          mode: Phaser.Scale.RESIZE,
-          width: window.innerWidth,
-          height: window.innerHeight
-        }
+        // モバイルでもFITモードを使用（設定変更なし）
       }
       
       // シーンを追加

@@ -224,6 +224,7 @@ defineExpose({
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 600px; /* 最小高さを確保 */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -373,6 +374,10 @@ defineExpose({
 
 .game-container {
   /* Phaserが自動的にcanvasのサイズを設定 */
+  width: 100%;
+  height: 100%;
+  max-width: 1280px;
+  max-height: 720px;
 }
 
 .debug-controls {

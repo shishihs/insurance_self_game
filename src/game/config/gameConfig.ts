@@ -8,10 +8,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   parent: 'game-container',
   backgroundColor: '#f5f5f5',
   scale: {
-    mode: Phaser.Scale.RESIZE, // モバイル対応のためRESIZEモードに変更
+    mode: Phaser.Scale.FIT, // 画面に合わせてフィットするように変更
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: window.innerWidth,
-    height: window.innerHeight,
+    width: 1280, // 固定幅
+    height: 720, // 固定高さ（16:9のアスペクト比）
     min: {
       width: 320,
       height: 480
@@ -76,13 +76,13 @@ export const GAME_CONSTANTS = {
   CARD_MOVE_DURATION: 200,
   CARD_DRAW_DURATION: 400,
   
-  // レイアウト
-  HAND_Y_POSITION: 550,
-  CHALLENGE_Y_POSITION: 200,
+  // レイアウト（1280x720基準）
+  HAND_Y_POSITION: 600,
+  CHALLENGE_Y_POSITION: 180,
   DECK_X_POSITION: 100,
-  DECK_Y_POSITION: 550,
+  DECK_Y_POSITION: 600,
   DISCARD_X_POSITION: 1180,
-  DISCARD_Y_POSITION: 550,
+  DISCARD_Y_POSITION: 600,
   
   // ゲームプレイ
   MAX_HAND_SIZE: 7,
