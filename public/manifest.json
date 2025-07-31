@@ -34,7 +34,7 @@
   "handle_links": "preferred",
   "capture_links": "existing-client-navigate",
   "share_target": {
-    "action": "/share",
+    "action": "./share",
     "method": "GET",
     "params": {
       "title": "title",
@@ -47,7 +47,7 @@
       "name": "新しいゲームを開始",
       "short_name": "新規ゲーム",
       "description": "新しいゲームセッションを開始します",
-      "url": "/?action=new-game",
+      "url": "./?action=new-game",
       "icons": [
         {
           "src": "/favicon.ico",
@@ -59,7 +59,7 @@
       "name": "統計を確認",
       "short_name": "統計",
       "description": "ゲームの統計とプログレスを確認します",
-      "url": "/?action=stats",
+      "url": "./?action=stats",
       "icons": [
         {
           "src": "/favicon.ico",
@@ -71,12 +71,12 @@
   "protocol_handlers": [
     {
       "protocol": "web+lifegame",
-      "url": "/?action=%s"
+      "url": "./?action=%s"
     }
   ],
   "file_handlers": [
     {
-      "action": "/save-game",
+      "action": "./save-game",
       "accept": {
         "application/json": [".lifegame", ".json"]
       }

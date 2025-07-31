@@ -62,7 +62,7 @@ export class CSPManager {
     this.directives = {
       'default-src': ["'self'"],
       'script-src': ["'self'", `'nonce-${this.generateNewNonce()}'`, "'strict-dynamic'"],
-      'style-src': ["'self'", "'unsafe-inline'", "'nonce-${nonce}'"],
+      'style-src': ["'self'", "'unsafe-inline'"],
       'img-src': ["'self'", 'data:', 'blob:', 'https:'],
       'font-src': ["'self'", 'data:', 'https:'],
       'connect-src': ["'self'", 'https:'],
@@ -186,10 +186,18 @@ export class CSPManager {
   /**
    * CSPヘッダー文字列を生成
    */
-  generateCSPHeader(): string {
+  generateCSPHeader(forMetaTag = false): string {
     const policies: string[] = []
     
+    // メタタグ経由では無効なディレクティブ
+    const metaTagInvalidDirectives = ['frame-ancestors', 'report-uri', 'report-to', 'sandbox']
+    
     for (const [directive, values] of Object.entries(this.directives)) {
+      // メタタグ用の場合、無効なディレクティブをスキップ
+      if (forMetaTag && metaTagInvalidDirectives.includes(directive)) {
+        continue
+      }
+      
       if (values && values.length > 0) {
         let policyValues = values.join(' ')
         
@@ -218,7 +226,7 @@ export class CSPManager {
     // 新しいCSPメタタグを作成
     const cspMeta = document.createElement('meta')
     cspMeta.httpEquiv = 'Content-Security-Policy'
-    cspMeta.content = this.generateCSPHeader()
+    cspMeta.content = this.generateCSPHeader(true) // メタタグ用のCSPを生成
     document.head.appendChild(cspMeta)
 
     // HTMLのプレースホルダーを置換

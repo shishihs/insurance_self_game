@@ -218,12 +218,24 @@ export function secureLocalStorage() {
         let data = item
         if (decrypt) {
           const encryptionKey = await this.getOrCreateEncryptionKey()
-          data = await this.simpleDecrypt(data, encryptionKey)
+          try {
+            data = await this.simpleDecrypt(data, encryptionKey)
+          } catch (decryptError) {
+            // 復号化に失敗した場合、データが破損している可能性があるため削除
+            console.warn('⚠️ 復号化失敗のためデータをクリアします:', sanitizedKey)
+            this.removeItem(sanitizedKey)
+            return null
+          }
         }
         
         return JSON.parse(data)
       } catch (error) {
         console.error('❌ セキュアストレージ読み込み失敗:', error)
+        // JSON解析エラーの場合もデータを削除
+        if (error instanceof SyntaxError) {
+          const sanitizedKey = sanitizeInput(key)
+          this.removeItem(sanitizedKey)
+        }
         return null
       }
     },
@@ -263,6 +275,11 @@ export function secureLocalStorage() {
     
     async simpleDecrypt(encryptedData: string, key: string): Promise<string> {
       try {
+        // 空文字列や無効なデータのチェック
+        if (!encryptedData || encryptedData.trim() === '') {
+          throw new Error('暗号化データが空です')
+        }
+        
         const data = atob(encryptedData)
         const result = []
         for (let i = 0; i < data.length; i++) {
@@ -271,8 +288,9 @@ export function secureLocalStorage() {
           result.push(String.fromCharCode(dataChar ^ keyChar))
         }
         return result.join('')
-      } catch {
-        throw new Error('復号化に失敗しました')
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '不明なエラー'
+        throw new Error(`復号化に失敗しました: ${message}`)
       }
     }
   }
