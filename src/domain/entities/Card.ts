@@ -12,7 +12,8 @@ import type {
   SkillCardProperties,
   ComboCardProperties,
   EventCardProperties,
-  SkillRarity
+  SkillRarity,
+  RewardType
 } from '../types/card.types'
 import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -64,6 +65,7 @@ export class Card implements IAdvancedCard {
   readonly eventProperties?: EventCardProperties
   readonly isUnlockable?: boolean
   readonly unlockCondition?: string
+  readonly rewardType?: RewardType
 
   /**
    * Cardインスタンスを作成
@@ -122,6 +124,9 @@ export class Card implements IAdvancedCard {
     }
     if ('unlockCondition' in params) {
       this.unlockCondition = params.unlockCondition
+    }
+    if ('rewardType' in params) {
+      this.rewardType = params.rewardType
     }
   }
 

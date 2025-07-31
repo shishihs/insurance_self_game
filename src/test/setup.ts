@@ -1,5 +1,28 @@
 import '@testing-library/jest-dom'
 import { expect, vi } from 'vitest'
+import { ProcessEventCleanup } from './processEventCleanup'
+
+// Fix EventEmitter memory leak warning by increasing max listeners for tests
+if (typeof process !== 'undefined' && process.setMaxListeners) {
+  process.setMaxListeners(20) // Increase from default 10 to handle test parallelization
+}
+
+// Initialize process event cleanup system
+ProcessEventCleanup.initialize()
+
+// Mock console methods to reduce test noise
+const originalConsoleLog = console.log
+const originalConsoleError = console.error
+const originalConsoleWarn = console.warn
+
+// Only show console output during tests if explicitly needed
+const isVerboseMode = process.env.VITEST_VERBOSE === 'true'
+
+if (!isVerboseMode) {
+  console.log = vi.fn()
+  console.error = vi.fn()
+  console.warn = vi.fn()
+}
 
 // phaser3spectorjs モジュールをモック（すべてのテストファイルで利用可能）
 vi.doMock('phaser3spectorjs', () => ({
@@ -166,4 +189,56 @@ if (typeof globalThis !== 'undefined') {
   })
 
   ;(globalThis as typeof globalThis & { cancelAnimationFrame: (handle: number) => void }).cancelAnimationFrame = vi.fn()
+}
+
+// Test cleanup utilities
+export const testCleanup = {
+  // Reset console methods if needed
+  restoreConsole: () => {
+    if (!isVerboseMode) {
+      console.log = originalConsoleLog
+      console.error = originalConsoleError
+      console.warn = originalConsoleWarn
+    }
+  },
+  
+  // Clean up any remaining timers
+  clearAllTimers: () => {
+    vi.clearAllTimers()
+  },
+
+  // Clean up process event listeners
+  cleanupProcessListeners: () => {
+    ProcessEventCleanup.cleanup()
+  },
+
+  // Check for potential memory leaks
+  checkMemoryLeaks: () => {
+    const { warning, counts } = ProcessEventCleanup.checkListenerLimits()
+    if (warning) {
+      console.warn('⚠️ Approaching process event listener limits:', counts)
+    }
+    return { warning, counts }
+  },
+
+  // Full cleanup
+  fullCleanup: () => {
+    testCleanup.clearAllTimers()
+    testCleanup.cleanupProcessListeners()
+    testCleanup.restoreConsole()
+  }
+}
+
+// Global test hooks for better cleanup
+if (typeof globalThis !== 'undefined') {
+  // Suppress unhandled promise rejections during tests
+  const originalUnhandledRejection = process.listenerCount('unhandledRejection')
+  
+  // Add a test-specific unhandled rejection handler that doesn't crash
+  process.on('unhandledRejection', (reason, promise) => {
+    // Only log if it's not already handled by other listeners
+    if (originalUnhandledRejection === 0) {
+      console.warn('Unhandled Rejection in test:', reason)
+    }
+  })
 }

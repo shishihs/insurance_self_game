@@ -36,6 +36,8 @@ SubAgent に依頼した方が良さそうなことがあればどんどん依�
 
 **重要**: 正確なデプロイ確認ができなかった教訓については[DEPLOYMENT_VERIFICATION_LESSONS.md](./docs/development/DEPLOYMENT_VERIFICATION_LESSONS.md)を参照
 
+**🚨 総合禁止事項**: 本番サイト https://shishihs.github.io/insurance_self_game/ には直接アクセスしないこと。エラーが発生している可能性があります。詳細は[PRODUCTION_SITE_VERIFICATION_FAILURE.md](./docs/development/PRODUCTION_SITE_VERIFICATION_FAILURE.md)を参照。
+
 ```
 【🔍 技術的制約と回避策】
 1. WebFetchの制約

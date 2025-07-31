@@ -42,6 +42,11 @@ export type InsuranceDurationType =
 export type DreamCategory = 'physical' | 'intellectual' | 'mixed'
 
 /**
+ * チャレンジ報酬タイプ
+ */
+export type RewardType = 'insurance' | 'vitality' | 'card'
+
+/**
  * カード効果タイプ
  */
 export type CardEffectType = 
@@ -188,4 +193,6 @@ export interface IAdvancedCard extends ICard {
   // レジェンダリーカード固有
   isUnlockable?: boolean // アンロック可能かどうか
   unlockCondition?: string // アンロック条件
+  // チャレンジカード用
+  rewardType?: RewardType // チャレンジ成功時の報酬タイプ
 }

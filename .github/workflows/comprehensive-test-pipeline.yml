@@ -110,7 +110,7 @@ jobs:
               ;;
             visual)
               pnpm exec playwright install chromium
-              pnpm run test:visual:update || true
+              pnpm run test:visual || true
               ;;
             performance)
               pnpm exec playwright install chromium

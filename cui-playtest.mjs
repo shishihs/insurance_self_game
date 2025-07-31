@@ -41,6 +41,16 @@ class Card {
   }
 
   static createChallengeCard(name, power) {
+    // パワーレベルに基づいて報酬タイプを決定
+    let rewardType = '保険獲得'
+    if (power <= 3) {
+      rewardType = '保険獲得'
+    } else if (power <= 6) {
+      rewardType = '保険獲得'
+    } else {
+      rewardType = '追加カード獲得'
+    }
+    
     return new Card({
       id: `challenge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name,
@@ -48,7 +58,8 @@ class Card {
       type: 'challenge',
       power,
       cost: 0,
-      effects: []
+      effects: [],
+      rewardType
     })
   }
 
@@ -168,8 +179,8 @@ class PlaytestGameController {
     this.playerDeck = this.createInitialDeck()
     this.shuffleDeck()
     
-    // 初期手札をドロー
-    this.drawCards(this.game.config.startingHandSize)
+    // 初期手札をドロー（標準5枚）
+    this.drawCards(5)
     
     // ログ出力
     console.log(`🎮 ゲーム初期化完了`)
@@ -355,8 +366,15 @@ class PlaytestGameController {
 
   // 手札を補充
   refillHand() {
-    const cardsToDrawn = Math.max(0, this.game.config.maxHandSize - this.hand.length)
+    // 標準的な5枚手札に調整（PlaytestGameControllerに合わせる）
+    const standardHandSize = 5
+    const cardsToDrawn = Math.max(0, standardHandSize - this.hand.length)
     this.drawCards(cardsToDrawn)
+    
+    // 手札が5枚を超える場合は調整
+    if (this.hand.length > standardHandSize) {
+      this.hand = this.hand.slice(0, standardHandSize)
+    }
   }
 
   // チャレンジ用にカードを選択（AI）
@@ -506,7 +524,7 @@ class CUIPlaytestLogger {
       challenges: challenges?.map(c => ({
         name: c.name,
         requiredPower: c.requiredPower,
-        reward: c.rewardType
+        rewardType: c.rewardType || '保険獲得'
       })) || [],
       selectedChallenge: selectedChallenge ? {
         name: selectedChallenge.name,
@@ -557,7 +575,7 @@ class CUIPlaytestLogger {
       
       await this.updateCounter()
       console.log(chalk.blue(`🔢 次回テスト番号: ${this.testNumber + 1}`))
-    } catch {
+    } catch (error) {
       console.error(chalk.red('❌ ログ保存エラー:'), error.message)
     }
   }
@@ -586,7 +604,7 @@ class CUIPlaytestLogger {
         markdown += `- 公開されたチャレンジ:\n`
         turnLog.challenges.forEach((challenge, index) => {
           const label = String.fromCharCode(65 + index) // A, B, C...
-          markdown += `  - ${label}: ${challenge.name}（必要パワー: ${challenge.requiredPower}）→ 報酬: ${challenge.reward}\n`
+          markdown += `  - ${label}: ${challenge.name}（必要パワー: ${challenge.requiredPower}）→ 報酬: ${challenge.rewardType || '保険獲得'}\n`
         })
       }
       

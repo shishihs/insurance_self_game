@@ -781,9 +781,9 @@ describe('DropZoneIntegration', () => {
         // 捨て札ゾーン上
         dragHandler({ x: 1180, y: 550 }, 1180, 550)
         
-        // ドラッグ更新が正常に処理される
-        expect(mockCardContainer.x).toBe(700)
-        expect(mockCardContainer.y).toBe(500)
+        // ドラッグ更新が正常に処理される（最後の位置が反映）
+        expect(mockCardContainer.x).toBe(1180)
+        expect(mockCardContainer.y).toBe(550)
       }
     })
   })

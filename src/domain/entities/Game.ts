@@ -809,7 +809,7 @@ export class Game implements IGameState {
       snapshot = {}
     }
     
-    // プロパティを設定（浅いコピーで済む部分は浅く）
+    // プロパティを設定（配列は適切にコピー）
     Object.assign(snapshot, {
       id: this.id,
       status: this.status,
@@ -819,12 +819,12 @@ export class Game implements IGameState {
       vitality: this.vitality,
       maxVitality: this.maxVitality,
       playerDeck: cardState.playerDeck,
-      hand: cardState.hand,
-      discardPile: cardState.discardPile,
+      hand: [...cardState.hand], // 配列をコピー
+      discardPile: [...cardState.discardPile], // 配列をコピー
       challengeDeck: cardState.challengeDeck,
       currentChallenge: this.currentChallenge,
-      selectedCards: cardState.selectedCards,
-      cardChoices: cardState.cardChoices,
+      selectedCards: [...cardState.selectedCards], // 配列をコピー
+      cardChoices: cardState.cardChoices ? [...cardState.cardChoices] : undefined, // 配列をコピー
       insuranceTypeChoices: this.insuranceTypeChoices,
       insuranceCards: [...this.insuranceCards],
       expiredInsurances: [...this.expiredInsurances],

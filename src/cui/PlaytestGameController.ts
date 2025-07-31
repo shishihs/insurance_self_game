@@ -5,6 +5,8 @@
 import { Game } from '../domain/entities/Game'
 import { Card } from '../domain/entities/Card'
 import { CardFactory } from '../domain/services/CardFactory'
+import { VitalityCalculationService } from '../domain/services/VitalityCalculationService'
+import { GameStageManager } from '../domain/services/GameStageManager'
 import type { GameConfig } from '../domain/types/game.types'
 
 export interface SimpleGameRenderer {
@@ -158,22 +160,43 @@ export class PlaytestGameController {
 
     // 2. 挑戦フェーズ - 手札ドロー
     const requiredPower = this.getRequiredPower(selectedChallenge)
-    const handCards = this.drawHandCards(requiredPower)
+    const handCards = this.drawStandardHand()
 
     // 3. パワー計算と成功判定
     const totalPower = this.calculateTotalPower(handCards)
     const success = totalPower >= requiredPower
 
-    // 4. 結果処理
+    // 4. 結果処理（統一サービス使用）
+    const vitalityCalculation = VitalityCalculationService.calculateVitalityChange(
+      this.game,
+      success,
+      totalPower,
+      requiredPower
+    )
+
     const result = {
       success,
       totalPower,
       requiredPower,
-      vitalityChange: this.calculateVitalityChange(success, totalPower, requiredPower)
+      vitalityChange: vitalityCalculation.finalChange,
+      vitalityDetails: vitalityCalculation.details
     }
 
-    // 活力更新
-    this.updateVitality(result.vitalityChange)
+    // 活力更新（統一サービス使用）
+    const beforeVitality = this.game.vitality
+    VitalityCalculationService.applyVitalityChange(this.game, result.vitalityChange)
+    const afterVitality = this.game.vitality
+    
+    // デバッグログ出力（詳細な活力変化追跡）
+    console.log(`🔄 ${vitalityCalculation.details}`)
+    console.log(`   活力変化: ${beforeVitality} → ${afterVitality} (変化量: ${afterVitality - beforeVitality})`)
+    
+    // 活力変化の不整合チェック
+    const expectedChange = result.vitalityChange
+    const actualChange = afterVitality - beforeVitality
+    if (expectedChange !== actualChange) {
+      console.warn(`⚠️ 活力変化の不整合検出: 期待値${expectedChange}, 実際${actualChange}`)
+    }
 
     // ゲームオーバーは Game クラスが自動的に判定する
 
@@ -185,6 +208,12 @@ export class PlaytestGameController {
     // ターン終了処理（ゲームが継続中の場合のみ）
     if (this.game.status === 'in_progress') {
       this.game.nextTurn()
+      
+      // ステージ進行状況をチェック
+      this.checkAndLogStageProgression()
+      
+      // ゲーム状態の整合性をチェック
+      this.validateGameStateConsistency()
     }
 
     // ログ記録
@@ -237,18 +266,22 @@ export class PlaytestGameController {
   }
 
   /**
-   * 手札をドロー（必要パワー分）
+   * 標準手札をドロー（固定5枚）
+   * 修正版: 必要パワー分ではなく、標準的な手札枚数をドロー
    */
-  private drawHandCards(requiredPower: number): Card[] {
+  private drawStandardHand(): Card[] {
     const handCards: Card[] = []
     const cardPool = this.createLifeCardPool()
-
-    // 必要パワー分だけカードをドロー
-    for (let i = 0; i < requiredPower; i++) {
+    
+    // 固定5枚をドロー（標準的なカードゲームのルール）
+    const handSize = 5
+    
+    for (let i = 0; i < handSize; i++) {
       const randomIndex = Math.floor(Math.random() * cardPool.length)
       handCards.push(cardPool[randomIndex])
     }
 
+    console.log(`手札をドロー: ${handSize}枚（標準的なカードゲームルール）`)
     return handCards
   }
 
@@ -317,53 +350,76 @@ export class PlaytestGameController {
   /**
    * 活力変化を計算（保険効果込み）
    */
-  private calculateVitalityChange(success: boolean, totalPower: number, requiredPower: number): number {
-    let change: number
+  // 旧実装削除: VitalityCalculationServiceに移行済み
+  // 統一サービスで活力計算と保険効果を一元管理
+
+  /**
+   * ゲーム全体状態の一貫性をチェック
+   */
+  private validateGameStateConsistency(): void {
+    const currentVitality = this.game.vitality
+    const maxVitality = this.game.maxVitality
+    const insuranceCount = this.game.insuranceCards.length
+    const stage = this.game.stage
+    const turn = this.game.turn
     
-    if (success) {
-      // 成功時は余剰パワーの半分を活力回復
-      change = Math.floor((totalPower - requiredPower) / 2)
-    } else {
-      // 失敗時は不足分だけ活力減少
-      change = -(requiredPower - totalPower)
-      
-      // 保険効果でダメージを軽減
-      const damageReduction = this.calculateInsuranceCoverage(-change)
-      change = Math.max(change + damageReduction, Math.floor(change * 0.3)) // 最低30%のダメージは残る
-      
-      console.log(`🛡️ 保険効果: ${damageReduction}ポイントのダメージを軽減`)
+    // 基本的な整合性チェック
+    const issues: string[] = []
+    
+    if (currentVitality < 0) {
+      issues.push(`活力が負の値: ${currentVitality}`)
     }
     
-    return change
-  }
-
-  /**
-   * 保険効果による軽減量を計算
-   */
-  private calculateInsuranceCoverage(damage: number): number {
-    const insuranceCards = this.game.insuranceCards
-    if (insuranceCards.length === 0) return 0
-
-    // 保険の合計保障力を計算
-    const totalCoverage = insuranceCards.reduce((total, card) => {
-      return total + (card.coverage || 0)
-    }, 0)
-
-    // ダメージの70%まで軽減可能（保険の保障力に基づく）
-    const maxReduction = Math.floor(damage * 0.7)
-    const actualReduction = Math.min(totalCoverage, maxReduction)
+    if (currentVitality > maxVitality) {
+      issues.push(`活力が上限超過: ${currentVitality}/${maxVitality}`)
+    }
     
-    return actualReduction
+    // ステージに応じた上限チェック
+    const expectedMaxVitality = { youth: 35, middle: 30, fulfillment: 27 }[stage]
+    if (maxVitality !== expectedMaxVitality) {
+      issues.push(`ステージ${stage}の活力上限異常: 期待${expectedMaxVitality}, 実際${maxVitality}`)
+    }
+    
+    if (issues.length > 0) {
+      console.warn(`🚨 ゲーム状態の不整合検出:`)
+      issues.forEach(issue => console.warn(`   ${issue}`))
+    }
+    
+    // 詳細状態ログ（定期的に出力）
+    if (turn % 3 === 0) {
+      console.log(`📊 ゲーム状態詳細 (ターン${turn}):`)
+      console.log(`   ステージ: ${stage}, 活力: ${currentVitality}/${maxVitality}`)
+      console.log(`   保険枚数: ${insuranceCount}, ステータス: ${this.game.status}`)
+    }
   }
 
   /**
-   * 活力を更新
+   * ステージ進行状況をチェックしてログ出力
    */
-  private updateVitality(change: number): void {
-    if (change > 0) {
-      this.game.heal(change)
-    } else if (change < 0) {
-      this.game.applyDamage(-change)
+  private checkAndLogStageProgression(): void {
+    const stageManager = new GameStageManager()
+    const progression = stageManager.checkStageProgression(this.game.stage, this.game.turn)
+    
+    // ステージ変更があった場合
+    if (progression.hasChanged && progression.transitionMessage) {
+      console.log(progression.transitionMessage)
+      
+      // 新しいステージの詳細情報を表示
+      const stageDetails = GameStageManager.getStageDetails(progression.newStage, this.game.turn)
+      console.log(`📋 ${stageDetails.stageName}: ${stageDetails.description}`)
+      console.log(`   体力上限: ${stageDetails.vitalityLimit}`)
+      console.log(`   特徴: ${stageDetails.characteristics.join(', ')}`)
+    }
+    
+    // 次のステージ移行予告
+    if (progression.upcomingTransition) {
+      console.log(progression.upcomingTransition)
+    }
+    
+    // 初回起動時にステージ進行条件を表示
+    if (this.game.turn === 1) {
+      const transitionInfo = GameStageManager.getStageTransitionInfo()
+      console.log(`📅 ステージ進行条件: ${transitionInfo.description}`)
     }
   }
 
@@ -451,13 +507,13 @@ export class PlaytestGameController {
     )
     
     // プロパティを適用した新しいカードを作成
-    insuranceCard = insuranceCard.copy({
+    const finalInsuranceCard = insuranceCard.copy({
       coverage,
       durationType: 'term',
       remainingTurns: 10
     })
     
-    this.game.addInsurance(insuranceCard)
+    this.game.addInsurance(finalInsuranceCard)
     console.log(`📋 定期保険追加: ${insuranceCard.name} (保障:${coverage}, 残り10ターン, コスト:${cost})`)
   }
 
@@ -481,7 +537,7 @@ export class PlaytestGameController {
     const finalPower = 2 + ageBonus  // 基本パワー2 + 年齢ボーナス
     
     // プロパティを適用した新しいカードを作成
-    insuranceCard = insuranceCard.copy({
+    const finalInsuranceCard = insuranceCard.copy({
       power: finalPower,
       coverage,
       durationType: 'whole_life'
@@ -491,7 +547,7 @@ export class PlaytestGameController {
       console.log(`🎯 年齢ボーナス: +${ageBonus}パワー`)
     }
     
-    this.game.addInsurance(insuranceCard)
+    this.game.addInsurance(finalInsuranceCard)
     console.log(`📋 終身保険追加: ${insuranceCard.name} (保障:${coverage}, 永続, コスト:${cost})`)
   }
 

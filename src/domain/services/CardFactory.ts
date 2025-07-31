@@ -5,7 +5,8 @@ import type {
   GameStage,
   DreamCategory,
   SkillRarity,
-  CardEffect
+  CardEffect,
+  RewardType
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -588,6 +589,9 @@ export class CardFactory {
     power: number
     dreamCategory?: DreamCategory
   }): Card {
+    // チャレンジの難易度に基づいて報酬タイプを決定
+    const rewardType = this.determineRewardType(params.power, params.dreamCategory)
+    
     return new Card({
       id: IdGenerator.generateCardId(),
       type: params.dreamCategory ? 'dream' : 'challenge', // 夢カテゴリがある場合はdreamタイプ
@@ -596,8 +600,28 @@ export class CardFactory {
       power: params.power,
       cost: 0,
       effects: [],
-      dreamCategory: params.dreamCategory
+      dreamCategory: params.dreamCategory,
+      rewardType // 報酬タイプを追加
     })
+  }
+
+  /**
+   * チャレンジの難易度と種類に基づいて報酬タイプを決定
+   */
+  private static determineRewardType(power: number, dreamCategory?: DreamCategory): RewardType {
+    // 夢カードの場合は活力回復
+    if (dreamCategory) {
+      return 'vitality'
+    }
+    
+    // パワーレベルに基づいて報酬を決定
+    if (power <= 3) {
+      return 'insurance' // 低難易度：保険獲得
+    } else if (power <= 6) {
+      return 'insurance' // 中難易度：保険獲得（基本）
+    } else {
+      return 'card' // 高難易度：追加カード獲得
+    }
   }
 
   /**

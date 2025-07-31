@@ -210,6 +210,9 @@ export class GameChallengeService {
    */
   private validatePhase(game: Game, expectedPhase: string): void {
     if (game.phase !== expectedPhase) {
+      if (expectedPhase === 'draw') {
+        throw new Error('Can only start challenge during draw phase')
+      }
       throw new Error(`Can only perform this action during ${expectedPhase} phase`)
     }
   }
