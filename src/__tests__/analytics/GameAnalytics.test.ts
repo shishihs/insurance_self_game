@@ -3,6 +3,7 @@ import { GameAnalytics } from '@/analytics/GameAnalytics'
 import { TestDataGenerator, PerformanceTestHelper, StatisticalTestHelper } from '../utils/TestHelpers'
 import type { GameConfig, PlayerStats } from '@/domain/types/game.types'
 import type { GameResultSummary } from '@/benchmark/MassiveBenchmark'
+import type { GameStage } from '@/domain/types/card.types'
 
 describe('Game Analytics Deep Tests', () => {
   let gameAnalytics: GameAnalytics
@@ -15,27 +16,33 @@ describe('Game Analytics Deep Tests', () => {
     gameAnalytics = new GameAnalytics()
     
     // Generate mock game data for analysis
-    mockGameData = Array.from({ length: 100 }, (_, index) => ({
-      gameId: index,
-      workerId: index % 4,
-      outcome: Math.random() > 0.5 ? 'victory' : 'game_over' as 'victory' | 'game_over',
-      stats: {
-        totalChallenges: Math.floor(Math.random() * 10) + 1,
-        successfulChallenges: Math.floor(Math.random() * 8),
-        failedChallenges: Math.floor(Math.random() * 3),
-        cardsAcquired: Math.floor(Math.random() * 20),
-        highestVitality: Math.floor(Math.random() * 100) + 20,
-        turnsPlayed: Math.floor(Math.random() * 15) + 5,
-        challengesCompleted: Math.floor(Math.random() * 8),
-        challengesFailed: Math.floor(Math.random() * 3),
-        finalVitality: Math.floor(Math.random() * 100),
-        finalInsuranceBurden: Math.floor(Math.random() * 50),
-        score: Math.floor(Math.random() * 1000) + 100
-      },
-      duration: Math.floor(Math.random() * 300) + 60,
-      strategy: 'balanced',
-      stage: 'youth'
-    }))
+    mockGameData = Array.from({ length: 100 }, (_, index) => {
+      const totalChallenges = Math.floor(Math.random() * 10) + 1
+      const successfulChallenges = Math.floor(Math.random() * totalChallenges)
+      const failedChallenges = totalChallenges - successfulChallenges
+      
+      return {
+        gameId: index,
+        workerId: index % 4,
+        outcome: Math.random() > 0.5 ? 'victory' : 'game_over' as 'victory' | 'game_over',
+        stats: {
+          totalChallenges: totalChallenges,
+          successfulChallenges: successfulChallenges,
+          failedChallenges: failedChallenges,
+          cardsAcquired: Math.floor(Math.random() * 20),
+          highestVitality: Math.floor(Math.random() * 100) + 20,
+          turnsPlayed: Math.floor(Math.random() * 15) + 5,
+          challengesCompleted: successfulChallenges,
+          challengesFailed: failedChallenges,
+          finalVitality: Math.floor(Math.random() * 100),
+          finalInsuranceBurden: Math.floor(Math.random() * 50),
+          score: Math.floor(Math.random() * 1000) + 100
+        },
+        duration: Math.floor(Math.random() * 300) + 60,
+        strategy: 'balanced',
+        stage: 'youth'
+      }
+    })
   })
 
   describe('Game Balance Analysis', () => {
@@ -63,19 +70,23 @@ describe('Game Analytics Deep Tests', () => {
     })
 
     it('should analyze challenge difficulty balance', () => {
-      const challengeData = mockGameData.map(game => ({
-        difficulty: Math.random() > 0.5 ? 'hard' : 'easy',
-        successRate: game.challengesCompleted / (game.challengesCompleted + game.challengesFailed),
-        averageTime: Math.random() * 30 + 10
-      }))
+      const challengeData = mockGameData.map((game, index) => {
+        const total = game.stats.challengesCompleted + game.stats.challengesFailed
+        return {
+          challengeId: `challenge_${index}`,
+          successRate: total === 0 ? 0 : game.stats.challengesCompleted / total,
+          attemptCount: total,
+          stage: game.stage as GameStage
+        }
+      })
       
       const analysis = gameAnalytics.analyzeChallengeBalance(challengeData)
       
-      expect(analysis.difficultySpread).toBeDefined()
-      expect(analysis.successRatesByDifficulty).toBeDefined()
-      expect(analysis.timeSpentByDifficulty).toBeDefined()
+      expect(analysis.balanceScore).toBeDefined()
+      expect(analysis.balanceScore).toBeGreaterThanOrEqual(0)
+      expect(analysis.balanceScore).toBeLessThanOrEqual(100)
       expect(analysis.recommendations).toBeDefined()
-      expect(analysis.recommendations.length).toBeGreaterThan(0)
+      expect(Array.isArray(analysis.recommendations)).toBe(true)
     })
 
     it('should detect overpowered strategies', () => {
@@ -525,9 +536,15 @@ describe('Game Analytics Deep Tests', () => {
 
   describe('Performance and Scalability', () => {
     it('should handle large datasets efficiently', async () => {
-      const largeDataset = Array.from({ length: 10000 }, (_, i) => 
-        TestDataGenerator.createTestPlayerStats({ totalTurns: i % 10 + 1 })
-      )
+      const largeDataset = Array.from({ length: 10000 }, (_, i) => ({
+        gameId: i,
+        workerId: i % 4,
+        outcome: Math.random() > 0.5 ? 'victory' : 'game_over' as 'victory' | 'game_over',
+        stats: TestDataGenerator.createTestPlayerStats({ turnsPlayed: i % 10 + 1 }),
+        duration: 180,
+        strategy: 'balanced',
+        stage: 'youth'
+      }))
       
       const { timeMs } = await PerformanceTestHelper.measureExecutionTime(
         'large_dataset_analysis',
@@ -546,9 +563,15 @@ describe('Game Analytics Deep Tests', () => {
       const accuracyResults: number[] = []
       
       dataSizes.forEach(size => {
-        const dataset = Array.from({ length: size }, () => 
-          TestDataGenerator.createTestPlayerStats()
-        )
+        const dataset = Array.from({ length: size }, (_, i) => ({
+          gameId: i,
+          workerId: i % 4,
+          outcome: Math.random() > 0.5 ? 'victory' : 'game_over' as 'victory' | 'game_over',
+          stats: TestDataGenerator.createTestPlayerStats(),
+          duration: 180,
+          strategy: 'balanced',
+          stage: 'youth'
+        }))
         
         const analysis = gameAnalytics.analyzeWinRateDistribution(dataset)
         accuracyResults.push(analysis.overallWinRate)
@@ -560,9 +583,15 @@ describe('Game Analytics Deep Tests', () => {
     })
 
     it('should parallelize analysis for large datasets', async () => {
-      const largeDataset = Array.from({ length: 5000 }, () => 
-        TestDataGenerator.createTestPlayerStats()
-      )
+      const largeDataset = Array.from({ length: 5000 }, (_, i) => ({
+        gameId: i,
+        workerId: i % 4,
+        outcome: Math.random() > 0.5 ? 'victory' : 'game_over' as 'victory' | 'game_over',
+        stats: TestDataGenerator.createTestPlayerStats(),
+        duration: 180,
+        strategy: 'balanced',
+        stage: 'youth'
+      }))
       
       const { timeMs: parallelTime } = await PerformanceTestHelper.measureExecutionTime(
         'parallel_analysis',

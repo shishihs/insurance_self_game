@@ -857,11 +857,8 @@ describe('Game Entity', () => {
       
       // 文字列入力のテスト（型安全性確保）
       maliciousStringInputs.forEach(input => {
-        // 文字列入力では適切に処理される（エラーでなくて0として扱われる）
-        const initialVitality = game.vitality
-        game.applyDamage(input as any)
-        // 文字列はNaNになり、Vitalityでエラーが発生する可能性がある
-        // この場合はゲームの安全性を確認する
+        // 文字列入力は型チェックでエラーになるべき
+        expect(() => game.applyDamage(input as any)).toThrow('Change amount must be a number')
       })
       
       // 有効な数値入力の正常動作確認
@@ -885,15 +882,11 @@ describe('Game Entity', () => {
         const testGame = new Game(defaultConfig)
         testGame.start()
         
-        // 無効な入力ではエラーが発生するか、適切に処理される
-        try {
-          testGame.applyDamage(input as any)
-          // エラーが発生しなかった場合は値が適切であることを確認
-          expect(isFinite(testGame.vitality)).toBe(true)
-          expect(!isNaN(testGame.vitality)).toBe(true)
-        } catch (error) {
-          // エラーが発生した場合は適切なエラーメッセージであることを確認
-          expect(error instanceof Error).toBe(true)
+        // 無効な入力ではエラーが発生する
+        if (input === null || input === undefined) {
+          expect(() => testGame.applyDamage(input as any)).toThrow('Change amount must not be null or undefined')
+        } else {
+          expect(() => testGame.applyDamage(input as any)).toThrow('Change amount must be a finite number')
         }
       })
     })
