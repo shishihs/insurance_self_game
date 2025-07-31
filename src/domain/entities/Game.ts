@@ -417,6 +417,29 @@ export class Game implements IGameState {
   }
 
   /**
+   * チャレンジ結果を記録し、統計とゲーム状態を更新（ApplicationService用）
+   * @param {number} totalPower プレイヤーの総パワー
+   * @param {boolean} success チャレンジの成功/失敗
+   */
+  recordChallengeResult(totalPower: number, success: boolean): void {
+    // 統計更新
+    this.stats.totalChallenges++
+    if (success) {
+      this.stats.successfulChallenges++
+      if (!this.stats.challengesCompleted) {
+        this.stats.challengesCompleted = 0
+      }
+      this.stats.challengesCompleted++
+    } else {
+      this.stats.failedChallenges++
+      if (!this.stats.challengesFailed) {
+        this.stats.challengesFailed = 0
+      }
+      this.stats.challengesFailed++
+    }
+  }
+
+  /**
    * カードを選択してデッキに追加（従来のカード選択フェーズ用）
    */
   selectCard(cardId: string): boolean {

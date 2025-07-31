@@ -94,7 +94,7 @@ export class GameApplicationService {
     this.currentChallenge = undefined
     
     // Game集約に結果を反映
-    this.game.resolveChallenge(
+    this.game.recordChallengeResult(
       result.getTotalPower().getValue(),
       result.isSuccess()
     )
