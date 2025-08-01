@@ -68,28 +68,90 @@ jobs:
         ls -la dist/js/ || echo "No js directory"
       
         
-    - name: Setup Pages
+    - name: 🔧 Setup GitHub Pages
       uses: actions/configure-pages@v4
       
-    - name: Upload artifact
+    - name: 📦 Upload optimized artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: ./dist
         
-    - name: Deploy to GitHub Pages
+    - name: 🚀 Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
       
-    - name: Wait for deployment
-      run: sleep 30
-      
-    - name: Verify deployment
+    - name: ⏳ Smart deployment wait
       run: |
-        echo "Verifying deployment at ${{ steps.deployment.outputs.page_url }}"
-        response=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.deployment.outputs.page_url }}")
-        if [ $response -eq 200 ]; then
-          echo "✅ Deployment successful - HTTP $response"
-        else
-          echo "❌ Deployment failed - HTTP $response"
-          exit 1
-        fi
+        echo "⏳ Allowing deployment to propagate..."
+        sleep 20 # Reduced from 30s for faster feedback
+      
+    - name: 🔍 Enhanced deployment verification
+      run: |
+        URL="${{ steps.deployment.outputs.page_url }}"
+        echo "🔍 Verifying deployment at: $URL"
+        
+        # Multiple verification attempts with progressive delays
+        for attempt in {1..4}; do
+          echo "📡 Verification attempt $attempt/4..."
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          
+          if [ $response -eq 200 ]; then
+            echo "✅ HTTP check passed (HTTP $response)"
+            
+            # Additional verification: check deploy-info.json
+            echo "🔍 Verifying deployment metadata..."
+            deploy_info=$(curl -s "${URL}deploy-info.json" 2>/dev/null || echo "{}")
+            
+            if echo "$deploy_info" | jq -e .deployedAt > /dev/null 2>&1; then
+              deployed_commit=$(echo "$deploy_info" | jq -r .commitHash)
+              current_commit="${{ github.sha }}"
+              
+              if [ "$deployed_commit" = "$current_commit" ]; then
+                echo "✅ Deployment verified: commit $current_commit deployed successfully"
+                echo "📊 Deployment info: $(echo "$deploy_info" | jq -c .)"
+                exit 0
+              else
+                echo "⚠️ Commit mismatch: deployed=$deployed_commit, current=$current_commit"
+              fi
+            else
+              echo "⚠️ Deployment metadata incomplete, but HTTP response OK"
+              exit 0
+            fi
+          else
+            echo "⚠️ HTTP check failed (HTTP $response)"
+          fi
+          
+          if [ $attempt -lt 4 ]; then
+            delay=$((attempt * 10))
+            echo "⏳ Waiting ${delay}s before retry..."
+            sleep $delay
+          fi
+        done
+        
+        echo "❌ Deployment verification failed after 4 attempts"
+        echo "🔍 Final attempt details:"
+        echo "  URL: $URL"
+        echo "  HTTP Response: $response"
+        echo "  Expected commit: ${{ github.sha }}"
+        exit 1
+        
+    # Add success summary
+    - name: 🎉 Deployment Success Summary
+      if: success()
+      run: |
+        echo "🎉 ================================"
+        echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
+        echo "🎉 ================================"
+        echo ""
+        echo "🔗 Site URL: ${{ steps.deployment.outputs.page_url }}"
+        echo "📋 Commit: ${{ github.sha }}"
+        echo "⏱️ Node.js: ${{ env.NODE_VERSION }}"
+        echo "💾 Cache Hit: ${{ steps.deps-cache.outputs.cache-hit }}"
+        echo ""
+        echo "⚡ Optimizations applied:"
+        echo "  ✅ Advanced caching strategy"
+        echo "  ✅ Parallel quality checks"
+        echo "  ✅ Smart deployment verification"
+        echo "  ✅ Build artifact analysis"
+        echo "  ✅ Deployment metadata tracking"
