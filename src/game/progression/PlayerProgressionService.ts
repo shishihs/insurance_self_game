@@ -88,9 +88,7 @@ export class PlayerProgressionService {
   }
   
   static getInstance(): PlayerProgressionService {
-    if (PlayerProgressionService.instance === null || PlayerProgressionService.instance === undefined) {
-      PlayerProgressionService.instance = new PlayerProgressionService()
-    }
+    PlayerProgressionService.instance ??= new PlayerProgressionService()
     return PlayerProgressionService.instance
   }
   
