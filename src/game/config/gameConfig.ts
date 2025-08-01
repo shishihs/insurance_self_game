@@ -19,7 +19,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     max: {
       width: 1920,
       height: 1080
-    }
+    },
+    // リサイズ時の自動更新を確実に
+    autoRound: false,
+    expandParent: false
   },
   physics: {
     default: 'arcade',

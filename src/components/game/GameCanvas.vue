@@ -23,7 +23,13 @@ onMounted(async () => {
   // requestAnimationFrameでDOMが完全に準備されるまで待機
   await new Promise(resolve => requestAnimationFrame(resolve))
   
+  // 親要素のサイズを確認（サイズ0の場合は待機）
   if (gameContainer.value) {
+    // 親要素のサイズが0の場合は少し待つ
+    if (gameContainer.value.offsetWidth === 0 || gameContainer.value.offsetHeight === 0) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    
     try {
       // タイムアウト付きでPhaserとゲームマネージャーを動的にインポート
       const importPromise = import('@/game/GameManager')
@@ -134,6 +140,11 @@ onUnmounted(() => {
   if (gameManager.value) {
     gameManager.value.destroy()
     gameManager.value = null
+  }
+  
+  // 親要素のスタイルをリセット（確実にクリーンアップ）
+  if (gameContainer.value) {
+    gameContainer.value.style.cssText = ''
   }
 })
 

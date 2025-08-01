@@ -27,17 +27,20 @@ export class GameManager {
   }
 
   /**
-   * ゲームを初期化
+   * ゲームを初期化（非同期処理で最適化）
    */
-  initialize(parent: string | HTMLElement): void {
+  async initialize(parent: string | HTMLElement): Promise<void> {
     
     if (this.game) {
       return
     }
 
     try {
-      // モバイル判定
-      this.isMobile = this.checkMobileDevice()
+      // パフォーマンス計測開始
+      performance.mark('game-init-start')
+      
+      // モバイル判定（非同期化）
+      this.isMobile = await this.checkMobileDeviceAsync()
       
       // 設定をコピー（元の設定を変更しないため）
       const config = { ...gameConfig }
@@ -51,16 +54,28 @@ export class GameManager {
         // モバイルでもFITモードを使用（設定変更なし）
       }
       
-      // シーンを追加
+      // シーンを追加（遅延読み込み可能）
       config.scene = [
         PreloadScene,
         MainMenuScene,
         GameScene
       ]
 
+      // レンダラーを別スレッドで初期化（フレームを分割）
+      await new Promise(resolve => requestAnimationFrame(resolve))
       
       // ゲームインスタンスを作成
       this.game = new Phaser.Game(config)
+      
+      // 次のフレームまで待機（メインスレッドのブロックを防ぐ）
+      await new Promise(resolve => requestAnimationFrame(resolve))
+      
+      // 初期化直後に一度リサイズを実行（サイズ問題の対策）
+      if (this.game && this.game.scale) {
+        this.game.scale.refresh()
+        // 強制的にリサイズイベントを発火
+        window.dispatchEvent(new Event('resize'))
+      }
       
       // タッチジェスチャーマネージャーを初期化
       if (typeof parent === 'string') {
@@ -75,10 +90,28 @@ export class GameManager {
       // 画面回転とリサイズの処理
       this.setupResponsiveHandlers()
       
+      // パフォーマンス計測終了
+      performance.mark('game-init-end')
+      performance.measure('game-initialization', 'game-init-start', 'game-init-end')
+      
+      const measure = performance.getEntriesByName('game-initialization')[0]
+      console.log(`✅ Game initialization completed in ${measure.duration.toFixed(2)}ms`)
+      
     } catch (error) {
       console.error('❌ GameManager: ゲーム初期化エラー:', error)
       throw error
     }
+  }
+  
+  /**
+   * モバイルデバイスかどうかを非同期で判定
+   */
+  private async checkMobileDeviceAsync(): Promise<boolean> {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => {
+        resolve(this.checkMobileDevice())
+      })
+    })
   }
 
   /**
@@ -95,8 +128,18 @@ export class GameManager {
     this.removeResponsiveHandlers()
     
     if (this.game) {
+      // スケールマネージャーのイベントリスナーをクリア
+      this.game.scale.removeAllListeners()
+      
+      // ゲームを完全に破棄
       this.game.destroy(true, false)
       this.game = null
+      
+      // 親要素のスタイルをリセット（重要：残留スタイルが原因の場合がある）
+      const parentElement = document.querySelector('.game-wrapper')
+      if (parentElement) {
+        (parentElement as HTMLElement).style.cssText = ''
+      }
     }
   }
 
