@@ -577,7 +577,7 @@ export class TouchGestureManager {
 
   public on(type: GestureEvent['type'], handler: (event: GestureEvent) => void, element?: HTMLElement): void {
     const listener: GestureListener = {
-      element: element || this.element,
+      element: element ?? this.element,
       type,
       handler
     }
@@ -659,7 +659,7 @@ export const getDeviceInfo = () => {
   const isMobile = isIOS || isAndroid || isTouchDevice()
   
   // ハードウェア情報の取得（可能な場合）
-  const hardwareConcurrency = navigator.hardwareConcurrency || 4
+  const hardwareConcurrency = navigator.hardwareConcurrency ?? 4
   const deviceMemory = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 4
   
   // パフォーマンスレベルの推定
@@ -724,7 +724,7 @@ export const getOptimizedTouchConfig = () => {
 export const vibrate = (pattern: number | number[], fallback?: () => void) => {
   if ('vibrate' in navigator && navigator.vibrate !== null && navigator.vibrate !== undefined) {
     navigator.vibrate(pattern)
-  } else if (fallback) {
+  } else if (fallback !== null && fallback !== undefined) {
     fallback()
   }
 }
