@@ -22,7 +22,7 @@ export interface LevelReward {
   type: 'unlock' | 'bonus' | 'cosmetic' | 'ability'
   name: string
   description: string
-  value: any
+  value: unknown
   claimed: boolean
 }
 
@@ -33,7 +33,7 @@ export interface ProgressionEvent {
   details: {
     name: string
     description: string
-    reward?: any
+    reward?: unknown
     previousValue?: number
     newValue?: number
   }
@@ -88,7 +88,7 @@ export class PlayerProgressionService {
   }
   
   static getInstance(): PlayerProgressionService {
-    if (!PlayerProgressionService.instance) {
+    if (PlayerProgressionService.instance === null || PlayerProgressionService.instance === undefined) {
       PlayerProgressionService.instance = new PlayerProgressionService()
     }
     return PlayerProgressionService.instance
@@ -127,7 +127,7 @@ export class PlayerProgressionService {
     // 経験値を付与
     const expGained = this.calculateExperienceGained(game)
     const levelUpEvent = await this.addExperience(expGained)
-    if (levelUpEvent) {
+    if (levelUpEvent !== null && levelUpEvent !== undefined) {
       events.push(levelUpEvent)
     }
     
@@ -153,7 +153,7 @@ export class PlayerProgressionService {
     
     const savedSystem = await this.storage.loadPreference<LevelSystem>('level_system')
     
-    if (!savedSystem) {
+    if (savedSystem === null || savedSystem === undefined) {
       // デフォルトのレベルシステムを作成
       const defaultSystem: LevelSystem = {
         currentLevel: 1,
@@ -261,7 +261,7 @@ export class PlayerProgressionService {
     const currentSeason = await this.getCurrentSeason()
     const savedProgress = await this.storage.loadPreference<SeasonalProgress>(`season_${currentSeason.seasonId}`)
     
-    if (!savedProgress) {
+    if (savedProgress === null || savedProgress === undefined) {
       // 新しいシーズンの進行状況を作成
       const newProgress: SeasonalProgress = {
         ...currentSeason,
@@ -358,7 +358,7 @@ export class PlayerProgressionService {
   private async checkFirstTimeSetup(): Promise<void> {
     const hasPlayedBefore = await this.storage.loadPreference<boolean>('has_played_before')
     
-    if (!hasPlayedBefore) {
+    if (hasPlayedBefore !== true) {
       // 初回プレイヤー向けのセットアップ
       console.log('🎮 初回プレイヤーを検出しました')
       
@@ -449,7 +449,7 @@ export class PlayerProgressionService {
     const levelSystem = await this.getLevelSystem()
     
     for (const reward of levelSystem.levelUpRewards) {
-      if (reward.level >= fromLevel && reward.level <= toLevel && !reward.claimed) {
+      if (reward.level >= fromLevel && reward.level <= toLevel && reward.claimed === false) {
         // 報酬を適用
         await this.applyLevelReward(reward)
         reward.claimed = true
@@ -651,7 +651,7 @@ export class PlayerProgressionService {
       }
       
       // 完了チェック
-      if (progressMade && challenge.progress >= challenge.target && !challenge.completed) {
+      if (progressMade === true && challenge.progress >= challenge.target && challenge.completed === false) {
         challenge.completed = true
         pointsGained += challenge.points
         
@@ -699,7 +699,7 @@ export class PlayerProgressionService {
     const levelSystem = await this.getLevelSystem()
     const reward = levelSystem.levelUpRewards.find(r => r.level === level)
     
-    if (reward && !reward.claimed && levelSystem.currentLevel >= level) {
+    if (reward !== null && reward !== undefined && reward.claimed === false && levelSystem.currentLevel >= level) {
       await this.applyLevelReward(reward)
       reward.claimed = true
       await this.storage.savePreference('level_system', levelSystem)
@@ -713,7 +713,7 @@ export class PlayerProgressionService {
     const seasonProgress = await this.getSeasonalProgress()
     const reward = seasonProgress.rewards.find(r => r.tier === tier)
     
-    if (reward && !reward.claimed && seasonProgress.currentTier >= tier) {
+    if (reward !== null && reward !== undefined && reward.claimed === false && seasonProgress.currentTier >= tier) {
       // 報酬を適用
       console.log(`🎁 シーズン報酬獲得: ${reward.name}`)
       reward.claimed = true

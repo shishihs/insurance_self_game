@@ -12,7 +12,7 @@
 export interface GestureEvent {
   type: 'swipe' | 'pinch' | 'longpress' | 'doubletap' | 'drag' | 'dragend' | 'momentum' | 'bounce'
   target: HTMLElement | null
-  detail: any
+  detail: SwipeDetail | PinchDetail | LongPressDetail | DoubleTapDetail | DragDetail | MomentumDetail | BounceDetail
   timestamp: number
   preventDefault: () => void
 }
@@ -114,7 +114,7 @@ export class TouchGestureManager {
 
   constructor(element: HTMLElement, config?: Partial<typeof TouchGestureManager.prototype.config>) {
     this.element = element
-    if (config) {
+    if (config !== undefined && config !== null) {
       this.config = { ...this.config, ...config }
     }
     this.setupEventListeners()
@@ -177,14 +177,14 @@ export class TouchGestureManager {
     for (let i = 0; i < event.changedTouches.length; i++) {
       const touch = event.changedTouches[i]
       const point = this.touchPoints.get(touch.identifier)
-      if (point) {
+      if (point !== null && point !== undefined) {
         point.x = touch.clientX
         point.y = touch.clientY
         point.timestamp = Date.now()
       }
     }
 
-    if (this.isDragging && this.shouldPreventDefault('drag')) {
+    if (this.isDragging === true && this.shouldPreventDefault('drag')) {
       event.preventDefault()
     }
   }
@@ -196,7 +196,7 @@ export class TouchGestureManager {
       const touch = event.changedTouches[i]
       const startPoint = this.touchPoints.get(touch.identifier)
       
-      if (startPoint) {
+      if (startPoint !== null && startPoint !== undefined) {
         const endPoint = {
           x: touch.clientX,
           y: touch.clientY,
@@ -211,7 +211,7 @@ export class TouchGestureManager {
     }
 
     // ドラッグ終了
-    if (this.touchPoints.size === 0 && this.isDragging) {
+    if (this.touchPoints.size === 0 && this.isDragging === true) {
       this.endDrag(event.changedTouches[0])
     }
   }
@@ -219,7 +219,7 @@ export class TouchGestureManager {
   private handleTouchCancel(event: TouchEvent): void {
     this.cancelLongPress()
     this.touchPoints.clear()
-    if (this.isDragging) {
+    if (this.isDragging === true) {
       this.isDragging = false
       this.dragStartPoint = null
       this.dragTotalDelta = { x: 0, y: 0 }
@@ -254,7 +254,7 @@ export class TouchGestureManager {
       } as Touch)
 
       const point = this.touchPoints.get(-1)
-      if (point) {
+      if (point !== null && point !== undefined) {
         point.x = event.clientX
         point.y = event.clientY
         point.timestamp = Date.now()
@@ -266,7 +266,7 @@ export class TouchGestureManager {
     this.cancelLongPress()
     
     const startPoint = this.touchPoints.get(-1)
-    if (startPoint) {
+    if (startPoint !== null && startPoint !== undefined) {
       const endPoint = {
         x: event.clientX,
         y: event.clientY,
@@ -277,7 +277,7 @@ export class TouchGestureManager {
       this.touchPoints.delete(-1)
     }
 
-    if (this.isDragging) {
+    if (this.isDragging === true) {
       this.endDrag({
         clientX: event.clientX,
         clientY: event.clientY
@@ -300,7 +300,7 @@ export class TouchGestureManager {
   }
 
   private cancelLongPress(): void {
-    if (this.longPressTimer !== null) {
+    if (this.longPressTimer !== null && this.longPressTimer !== undefined) {
       clearTimeout(this.longPressTimer)
       this.longPressTimer = null
     }
@@ -309,7 +309,7 @@ export class TouchGestureManager {
   private checkDoubleTap(x: number, y: number): void {
     const now = Date.now()
     
-    if (this.lastTap) {
+    if (this.lastTap !== null && this.lastTap !== undefined) {
       const timeDiff = now - this.lastTap.timestamp
       const distance = Math.sqrt(
         Math.pow(x - this.lastTap.x, 2) + 
@@ -376,7 +376,7 @@ export class TouchGestureManager {
     const point1 = this.touchPoints.get(touch1.identifier)
     const point2 = this.touchPoints.get(touch2.identifier)
     
-    if (point1 && point2) {
+    if (point1 !== null && point1 !== undefined && point2 !== null && point2 !== undefined) {
       const previousDistance = Math.sqrt(
         Math.pow(point1.x - point2.x, 2) +
         Math.pow(point1.y - point2.y, 2)
@@ -404,8 +404,8 @@ export class TouchGestureManager {
   private detectDrag(touch: Touch): void {
     const currentTime = Date.now()
     
-    if (!this.isDragging) {
-      if (!this.dragStartPoint) {
+    if (this.isDragging === false) {
+      if (this.dragStartPoint === null || this.dragStartPoint === undefined) {
         this.dragStartPoint = { x: touch.clientX, y: touch.clientY }
         this.moveHistory = [{ x: touch.clientX, y: touch.clientY, time: currentTime }]
       }
@@ -420,7 +420,7 @@ export class TouchGestureManager {
       }
     }
 
-    if (this.isDragging && this.dragStartPoint) {
+    if (this.isDragging === true && this.dragStartPoint !== null && this.dragStartPoint !== undefined) {
       // 移動履歴を更新（速度計算用）
       this.moveHistory.push({ x: touch.clientX, y: touch.clientY, time: currentTime })
       
@@ -450,7 +450,7 @@ export class TouchGestureManager {
   }
 
   private endDrag(touch: Touch): void {
-    if (this.isDragging && this.dragStartPoint) {
+    if (this.isDragging === true && this.dragStartPoint !== null && this.dragStartPoint !== undefined) {
       // 速度を計算
       this.calculateVelocity()
       
@@ -546,13 +546,13 @@ export class TouchGestureManager {
   }
 
   private stopMomentumScroll(): void {
-    if (this.momentumTimer !== null) {
+    if (this.momentumTimer !== null && this.momentumTimer !== undefined) {
       cancelAnimationFrame(this.momentumTimer)
       this.momentumTimer = null
     }
   }
 
-  private emitGesture(type: GestureEvent['type'], target: HTMLElement | null, detail: any): void {
+  private emitGesture(type: GestureEvent['type'], target: HTMLElement | null, detail: SwipeDetail | PinchDetail | LongPressDetail | DoubleTapDetail | DragDetail | MomentumDetail | BounceDetail): void {
     const event: GestureEvent = {
       type,
       target,
@@ -562,9 +562,9 @@ export class TouchGestureManager {
     }
 
     const listeners = this.listeners.get(type)
-    if (listeners) {
+    if (listeners !== undefined && listeners !== null) {
       listeners.forEach(listener => {
-        if (!listener.element || listener.element === target || listener.element.contains(target!)) {
+        if (listener.element === null || listener.element === undefined || listener.element === target || (target !== null && listener.element.contains(target))) {
           listener.handler(event)
         }
       })
@@ -591,7 +591,7 @@ export class TouchGestureManager {
 
   public off(type: GestureEvent['type'], handler: (event: GestureEvent) => void): void {
     const listeners = this.listeners.get(type)
-    if (listeners) {
+    if (listeners !== undefined && listeners !== null) {
       listeners.forEach(listener => {
         if (listener.handler === handler) {
           listeners.delete(listener)
@@ -660,7 +660,7 @@ export const getDeviceInfo = () => {
   
   // ハードウェア情報の取得（可能な場合）
   const hardwareConcurrency = navigator.hardwareConcurrency || 4
-  const deviceMemory = (navigator as any).deviceMemory || 4
+  const deviceMemory = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 4
   
   // パフォーマンスレベルの推定
   let performanceLevel: 'low' | 'medium' | 'high' = 'medium'
@@ -722,7 +722,7 @@ export const getOptimizedTouchConfig = () => {
 
 // 振動フィードバックのユーティリティ
 export const vibrate = (pattern: number | number[], fallback?: () => void) => {
-  if ('vibrate' in navigator) {
+  if ('vibrate' in navigator && navigator.vibrate !== null && navigator.vibrate !== undefined) {
     navigator.vibrate(pattern)
   } else if (fallback) {
     fallback()

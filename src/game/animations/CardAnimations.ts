@@ -57,8 +57,8 @@ export class CardAnimations {
           // フリップの第2段階: カードを元のサイズに戻す
           this.scene.tweens.add({
             targets: card,
-            scaleX: card.scaleX || 1,
-            scaleY: card.scaleY || 1,
+            scaleX: card.scaleX ?? 1,
+            scaleY: card.scaleY ?? 1,
             duration: duration / 2,
             ease,
             onComplete: () => {
@@ -125,7 +125,7 @@ export class CardAnimations {
     return new Promise((resolve) => {
       const { from, to, duration, ease, overshoot } = config
 
-      if (overshoot) {
+      if (overshoot === true) {
         // オーバーシュート効果: 目標値を超えてから戻る
         const overshootScale = to * 1.15
         
@@ -327,7 +327,7 @@ export class CardAnimations {
     const cardBack = card.getByName('cardBack')
     const cardFront = card.getByName('cardFront')
     
-    if (cardBack && cardFront) {
+    if (cardBack !== null && cardBack !== undefined && cardFront !== null && cardFront !== undefined) {
       cardBack.setVisible(showBack)
       cardFront.setVisible(!showBack)
     }
@@ -339,7 +339,7 @@ export class CardAnimations {
   private addDropShadow(card: Phaser.GameObjects.Container): void {
     // 既存のシャドウを削除
     const existingShadow = card.getByName('dropShadow')
-    if (existingShadow) existingShadow.destroy()
+    if (existingShadow !== null && existingShadow !== undefined) existingShadow.destroy()
 
     // 新しいシャドウを作成
     const shadow = this.scene.add.ellipse(0, 5, 140, 30, 0x000000, 0.3)

@@ -29,6 +29,11 @@ class Card {
     this.effects = params.effects || []
   }
 
+  /**
+   * @param {string} name
+   * @param {number} power
+   * @returns {Card}
+   */
   static createLifeCard(name, power) {
     const powerSign = power > 0 ? '+' : ''
     return new Card({
@@ -42,6 +47,11 @@ class Card {
     })
   }
 
+  /**
+   * @param {string} name
+   * @param {number} power
+   * @returns {Card}
+   */
   static createChallengeCard(name, power) {
     // パワーレベルに基づいて報酬タイプを決定
     let rewardType = '保険獲得'
@@ -65,6 +75,12 @@ class Card {
     })
   }
 
+  /**
+   * @param {string} name
+   * @param {number} power
+   * @param {...unknown} effects
+   * @returns {Card}
+   */
   static createInsuranceCard(name, power, ...effects) {
     return new Card({
       id: `insurance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -77,6 +93,9 @@ class Card {
     })
   }
 
+  /**
+   * @returns {boolean}
+   */
   isInsurance() {
     return this.type === 'insurance'
   }
@@ -102,16 +121,26 @@ class Game {
     }
   }
 
+  /**
+   * @returns {void}
+   */
   start() {
     this.status = 'in_progress'
     this.phase = 'draw'
     this.turn = 1
   }
 
+  /**
+   * @returns {boolean}
+   */
   isGameOver() {
     return this.status === 'game_over' || this.vitality <= 0
   }
 
+  /**
+   * @param {number} damage
+   * @returns {void}
+   */
   applyDamage(damage) {
     // 保険によるダメージ軽減効果
     const insuranceReduction = Math.min(damage, this.insuranceCards.length)
@@ -127,10 +156,18 @@ class Game {
     }
   }
 
+  /**
+   * @param {number} amount
+   * @returns {void}
+   */
   heal(amount) {
     this.vitality = Math.min(this.maxVitality, this.vitality + amount)
   }
 
+  /**
+   * @param {Card} card
+   * @returns {void}
+   */
   addInsurance(card) {
     if (!card.isInsurance()) {
       throw new Error('Only insurance cards can be added')
@@ -138,6 +175,9 @@ class Game {
     this.insuranceCards.push(card)
   }
 
+  /**
+   * @returns {{insuranceExpirations: undefined, newExpiredCount: number, remainingInsuranceCount: number}}
+   */
   nextTurn() {
     this.turn++
     
@@ -170,6 +210,9 @@ class PlaytestGameController {
     this.initializeGame()
   }
 
+  /**
+   * @returns {void}
+   */
   initializeGame() {
     // ゲーム開始
     this.game.start()
@@ -191,6 +234,10 @@ class PlaytestGameController {
     console.warn(`🃏 初期手札: ${this.hand.length}枚`)
   }
 
+  /**
+   * @param {CUIPlaytestLogger} renderer
+   * @returns {Promise<boolean>}
+   */
   async playTurn(renderer) {
     if (this.game.isGameOver() || this.game.status !== 'in_progress') {
       return false
@@ -281,6 +328,9 @@ class PlaytestGameController {
     return !this.game.isGameOver()
   }
 
+  /**
+   * @returns {Card[]}
+   */
   drawChallenges() {
     const available = this.challengeCards.filter(card => !card.isUsed)
     if (available.length === 0) return []
@@ -297,6 +347,10 @@ class PlaytestGameController {
     return challenges
   }
 
+  /**
+   * @param {Card[]} challenges
+   * @returns {Card}
+   */
   selectChallengeByAI(challenges) {
     // 最も必要パワーが低いものを選択（成功率重視）
     return challenges.reduce((easiest, current) => 
@@ -304,6 +358,10 @@ class PlaytestGameController {
     )
   }
 
+  /**
+   * @param {Card} challenge
+   * @returns {number}
+   */
   getRequiredPower(challenge) {
     const basePower = challenge.power || 2
     
@@ -317,9 +375,12 @@ class PlaytestGameController {
   }
 
   // 初期デッキを作成（修正版：ポジティブ60%、ニュートラル20%、ネガティブ20%）
+  /**
+   * @returns {Card[]}
+   */
   createInitialDeck() {
     const cards = []
-    const totalCards = 20
+    const _totalCards = 20
 
     // ポジティブカード（12枚 = 60%）
     for (let i = 0; i < 4; i++) cards.push(Card.createLifeCard('アルバイト収入', 1))
@@ -344,6 +405,9 @@ class PlaytestGameController {
   }
 
   // デッキをシャッフル
+  /**
+   * @returns {void}
+   */
   shuffleDeck() {
     for (let i = this.playerDeck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -352,6 +416,10 @@ class PlaytestGameController {
   }
 
   // カードをドロー
+  /**
+   * @param {number} count
+   * @returns {void}
+   */
   drawCards(count) {
     for (let i = 0; i < count; i++) {
       if (this.playerDeck.length === 0) {
@@ -367,6 +435,9 @@ class PlaytestGameController {
   }
 
   // 手札を補充
+  /**
+   * @returns {void}
+   */
   refillHand() {
     // 標準的な5枚手札に調整（PlaytestGameControllerに合わせる）
     const standardHandSize = 5
@@ -380,6 +451,10 @@ class PlaytestGameController {
   }
 
   // チャレンジ用にカードを選択（AI）
+  /**
+   * @param {number} requiredPower
+   * @returns {Card[]}
+   */
   selectCardsForChallenge(requiredPower) {
     // 簡易AI: パワーが高いカードから選択
     const sortedHand = [...this.hand].sort((a, b) => b.power - a.power)
@@ -396,6 +471,10 @@ class PlaytestGameController {
   }
 
   // カードを捨て札へ
+  /**
+   * @param {Card[]} cards
+   * @returns {void}
+   */
   discardCards(cards) {
     for (const card of cards) {
       const index = this.hand.indexOf(card)
@@ -406,10 +485,20 @@ class PlaytestGameController {
     }
   }
 
+  /**
+   * @param {Card[]} cards
+   * @returns {number}
+   */
   calculateTotalPower(cards) {
     return cards.reduce((total, card) => total + (card.power || 0), 0)
   }
 
+  /**
+   * @param {boolean} success
+   * @param {number} totalPower
+   * @param {number} requiredPower
+   * @returns {number}
+   */
   calculateVitalityChange(success, totalPower, requiredPower) {
     if (success) {
       // 成功時は余剰パワーの半分を活力回復
@@ -420,6 +509,10 @@ class PlaytestGameController {
     }
   }
 
+  /**
+   * @param {number} change
+   * @returns {void}
+   */
   updateVitality(change) {
     if (change > 0) {
       this.game.heal(change)
@@ -428,6 +521,10 @@ class PlaytestGameController {
     }
   }
 
+  /**
+   * @param {Card} challenge
+   * @returns {void}
+   */
   addInsurance(challenge) {
     const insuranceCard = Card.createInsuranceCard(
       `${challenge.name}保険`,
@@ -438,6 +535,9 @@ class PlaytestGameController {
     this.game.addInsurance(insuranceCard)
   }
 
+  /**
+   * @returns {Card[]}
+   */
   createChallengeCards() {
     const cards = []
 
@@ -464,10 +564,16 @@ class PlaytestGameController {
     return cards
   }
 
+  /**
+   * @returns {Game}
+   */
   getGameState() {
     return this.game
   }
 
+  /**
+   * @returns {number}
+   */
   getRemainingChallenges() {
     return this.challengeCards.filter(card => !card.isUsed).length
   }
@@ -481,12 +587,19 @@ class CUIPlaytestLogger {
     this.gameState = null
   }
 
+  /**
+   * @param {string} purpose
+   * @returns {Promise<void>}
+   */
   async initialize(purpose = 'テストプレイ') {
     this.purpose = purpose
     this.testNumber = await this.getNextTestNumber()
     console.warn(chalk.green(`📝 プレイテスト #${this.testNumber.toString().padStart(3, '0')} 開始`))
   }
 
+  /**
+   * @returns {Promise<number>}
+   */
   async getNextTestNumber() {
     const counterPath = './test-results/counter.json'
     let counter = { playtest: 1, analysis: 1 }
@@ -503,6 +616,9 @@ class CUIPlaytestLogger {
     return counter.playtest
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async updateCounter() {
     const counterPath = './test-results/counter.json'
     let counter = { playtest: 1, analysis: 1 }
@@ -520,31 +636,40 @@ class CUIPlaytestLogger {
     await writeFile(counterPath, JSON.stringify(counter, null, 2))
   }
 
+  /**
+   * @param {number} turnNumber
+   * @param {Card[]} challenges
+   * @param {Card} selectedChallenge
+   * @param {Card[]} handCards
+   * @param {{success: boolean, totalPower: number, vitalityChange: number}} result
+   * @param {{vitality: number, stage: string, insuranceCards: Card[]}} gameState
+   * @returns {void}
+   */
   logTurn(turnNumber, challenges, selectedChallenge, handCards, result, gameState) {
     const turnLog = {
       turn: turnNumber,
-      challenges: challenges?.map(c => ({
+      challenges: (challenges !== null && challenges !== undefined) ? challenges.map(c => ({
         name: c.name,
         requiredPower: c.requiredPower,
-        rewardType: c.rewardType || '保険獲得'
-      })) || [],
-      selectedChallenge: selectedChallenge ? {
+        rewardType: c.rewardType ?? '保険獲得'
+      })) : [],
+      selectedChallenge: (selectedChallenge !== null && selectedChallenge !== undefined) ? {
         name: selectedChallenge.name,
         requiredPower: selectedChallenge.requiredPower
       } : null,
-      handCards: handCards?.map(c => ({
+      handCards: (handCards !== null && handCards !== undefined) ? handCards.map(c => ({
         name: c.name,
         power: c.power
-      })) || [],
+      })) : [],
       result: {
-        success: result?.success || false,
-        totalPower: result?.totalPower || 0,
-        vitalityChange: result?.vitalityChange || 0
+        success: result?.success ?? false,
+        totalPower: result?.totalPower ?? 0,
+        vitalityChange: result?.vitalityChange ?? 0
       },
       gameState: {
-        vitality: gameState?.vitality || 0,
-        stage: gameState?.stage || 'unknown',
-        insuranceCards: gameState?.insuranceCards?.length || 0
+        vitality: gameState?.vitality ?? 0,
+        stage: gameState?.stage ?? 'unknown',
+        insuranceCards: gameState?.insuranceCards?.length ?? 0
       }
     }
     
@@ -552,19 +677,22 @@ class CUIPlaytestLogger {
     
     // コンソール表示
     console.warn(chalk.magenta(`\n=== ターン ${turnNumber} ===`))
-    if (selectedChallenge) {
-      console.warn(chalk.cyan(`🎯 選択: ${selectedChallenge.name} (必要パワー: ${selectedChallenge.requiredPower || selectedChallenge.power})`))
+    if (selectedChallenge !== null && selectedChallenge !== undefined) {
+      console.warn(chalk.cyan(`🎯 選択: ${selectedChallenge.name} (必要パワー: ${selectedChallenge.requiredPower ?? selectedChallenge.power})`))
     }
-    if (handCards?.length > 0) {
+    if ((handCards?.length ?? 0) > 0) {
       console.warn(chalk.white(`🃏 手札: ${handCards.map(c => `${c.name}(${c.power > 0 ? '+' : ''}${c.power})`).join(', ')}`))
     }
-    if (result) {
-      const statusIcon = result.success ? '✅' : '❌'
-      console.warn(chalk.white(`${statusIcon} 結果: 合計パワー${result.totalPower}, ${result.success ? '成功' : '失敗'}`))
+    if (result !== null && result !== undefined) {
+      const statusIcon = result.success === true ? '✅' : '❌'
+      console.warn(chalk.white(`${statusIcon} 結果: 合計パワー${result.totalPower}, ${result.success === true ? '成功' : '失敗'}`))
     }
-    console.warn(chalk.blue(`💪 活力: ${gameState?.vitality || 0}, 🛡️ 保険: ${gameState?.insuranceCards?.length || 0}枚`))
+    console.warn(chalk.blue(`💪 活力: ${gameState?.vitality ?? 0}, 🛡️ 保険: ${gameState?.insuranceCards?.length ?? 0}枚`))
   }
 
+  /**
+   * @returns {Promise<void>}
+   */
   async savePlaytestLog() {
     const filename = `PLAYTEST_${this.testNumber.toString().padStart(3, '0')}_${this.purpose}.md`
     const filepath = `./test-results/playtest-logs/${filename}`
@@ -582,10 +710,17 @@ class CUIPlaytestLogger {
     }
   }
 
+  /**
+   * @param {{totalChallenges: number, successfulChallenges: number}} stats
+   * @returns {void}
+   */
   addFinalStats(stats) {
     this.finalStats = stats
   }
 
+  /**
+   * @returns {string}
+   */
   generateMarkdown() {
     const date = new Date().toLocaleString('ja-JP')
     
@@ -617,7 +752,7 @@ class CUIPlaytestLogger {
       }
       
       markdown += `**[フェーズ2: 挑戦]**\n`
-      markdown += `- 必要パワー: ${turnLog.selectedChallenge?.requiredPower || 0}\n`
+      markdown += `- 必要パワー: ${turnLog.selectedChallenge?.requiredPower ?? 0}\n`
       
       if (turnLog.handCards.length > 0) {
         markdown += `- ドローしたカード:\n`
@@ -673,6 +808,10 @@ class CUIPlaytestLogger {
   }
 }
 
+/**
+ * @param {string} purpose
+ * @returns {Promise<void>}
+ */
 async function runPlaytest(purpose = 'CUIテスト') {
   console.warn(chalk.blue('🎮 === CUI プレイテスト開始 ==='))
   console.warn(chalk.gray('本物のGameドメインロジックを使用\n'))
