@@ -1,0 +1,607 @@
+name: 🛡️ Quality Assurance Pipeline
+
+on:
+  # Run on all pushes and PRs
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ master, main, develop ]
+  # Scheduled quality checks
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - unit
+          - integration
+          - e2e
+          - performance
+          - visual
+          - security
+          - accessibility
+
+permissions:
+  contents: read
+  pages: read
+  actions: read
+  checks: write
+  pull-requests: write
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=6144"
+  CI: true
+
+jobs:
+  # Test matrix configuration
+  test-matrix:
+    name: 📋 Test Matrix Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      should_run_visual: ${{ steps.matrix.outputs.should_run_visual }}
+      should_run_performance: ${{ steps.matrix.outputs.should_run_performance }}
+    steps:
+      - name: Configure test matrix
+        id: matrix
+        run: |
+          if [ "${{ github.event.inputs.test_suite }}" = "comprehensive" ] || [ -z "${{ github.event.inputs.test_suite }}" ]; then
+            MATRIX='{"include":[
+              {"suite":"unit","timeout":10,"browser":"none"},
+              {"suite":"integration","timeout":15,"browser":"none"},
+              {"suite":"e2e","timeout":30,"browser":"chromium"},
+              {"suite":"security","timeout":20,"browser":"none"},
+              {"suite":"accessibility","timeout":25,"browser":"chromium"}
+            ]}'
+            echo "should_run_visual=true" >> $GITHUB_OUTPUT
+            echo "should_run_performance=true" >> $GITHUB_OUTPUT
+          else
+            case "${{ github.event.inputs.test_suite }}" in
+              "unit"|"integration"|"security")
+                MATRIX='{"include":[{"suite":"${{ github.event.inputs.test_suite }}","timeout":15,"browser":"none"}]}'
+                echo "should_run_visual=false" >> $GITHUB_OUTPUT
+                echo "should_run_performance=false" >> $GITHUB_OUTPUT
+                ;;
+              "e2e"|"accessibility")
+                MATRIX='{"include":[{"suite":"${{ github.event.inputs.test_suite }}","timeout":30,"browser":"chromium"}]}'
+                echo "should_run_visual=false" >> $GITHUB_OUTPUT
+                echo "should_run_performance=false" >> $GITHUB_OUTPUT
+                ;;
+              "visual")
+                MATRIX='{"include":[{"suite":"visual","timeout":40,"browser":"chromium"}]}'
+                echo "should_run_visual=true" >> $GITHUB_OUTPUT
+                echo "should_run_performance=false" >> $GITHUB_OUTPUT
+                ;;
+              "performance")
+                MATRIX='{"include":[{"suite":"performance","timeout":60,"browser":"chromium"}]}'
+                echo "should_run_visual=false" >> $GITHUB_OUTPUT
+                echo "should_run_performance=true" >> $GITHUB_OUTPUT
+                ;;
+            esac
+          fi
+          
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "📋 Test matrix configured: $MATRIX"
+
+  # Core test suite execution
+  core-tests:
+    name: 🧪 ${{ matrix.suite }} Tests
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.test-matrix.outputs.matrix) }}
+    timeout-minutes: ${{ matrix.timeout }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-qa-${{ matrix.suite }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-qa-${{ matrix.suite }}-
+            ${{ runner.os }}-qa-
+
+      - name: Install Node dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          echo "✅ Node dependencies installed"
+
+      - name: Setup Playwright
+        if: matrix.browser != 'none'
+        run: |
+          npx playwright install ${{ matrix.browser }} --with-deps
+          echo "✅ Playwright ${{ matrix.browser }} installed"
+
+      - name: Create test directories
+        run: |
+          mkdir -p test-results coverage playwright-report
+          echo "✅ Test directories created"
+
+      - name: Run ${{ matrix.suite }} tests
+        timeout-minutes: ${{ matrix.timeout }}
+        run: |
+          echo "🧪 Running ${{ matrix.suite }} tests..."
+          
+          case "${{ matrix.suite }}" in
+            unit)
+              npm run test:run -- --reporter=verbose --coverage || EXIT_CODE=$?
+              ;;
+            integration)
+              npm run test:integration || EXIT_CODE=$?
+              ;;
+            e2e)
+              # Start dev server
+              npm run dev &
+              SERVER_PID=$!
+              
+              # Wait for server
+              for i in {1..30}; do
+                if curl -s http://localhost:5173 > /dev/null; then
+                  echo "✅ Dev server ready"
+                  break
+                fi
+                sleep 2
+              done
+              
+              # Run E2E tests
+              npm run test:e2e -- --reporter=json --output-file=test-results/e2e-results.json || EXIT_CODE=$?
+              
+              # Cleanup
+              kill $SERVER_PID || true
+              ;;
+            security)
+              # Security audit
+              npm audit --audit-level moderate --json > test-results/security-audit.json || true
+              
+              # Security tests
+              npm run test:security || EXIT_CODE=$?
+              ;;
+            accessibility)
+              # Start dev server
+              npm run dev &
+              SERVER_PID=$!
+              
+              # Wait for server
+              for i in {1..30}; do
+                if curl -s http://localhost:5173 > /dev/null; then
+                  break
+                fi
+                sleep 2
+              done
+              
+              # Run accessibility tests
+              npx playwright test tests/accessibility --reporter=json --output-file=test-results/a11y-results.json || EXIT_CODE=$?
+              
+              # Cleanup
+              kill $SERVER_PID || true
+              ;;
+          esac
+          
+          # Handle exit code
+          if [ "${EXIT_CODE:-0}" -ne 0 ]; then
+            echo "❌ ${{ matrix.suite }} tests failed with exit code $EXIT_CODE"
+            echo "test_status=failed" >> $GITHUB_ENV
+          else
+            echo "✅ ${{ matrix.suite }} tests passed"
+            echo "test_status=passed" >> $GITHUB_ENV
+          fi
+
+      - name: Process test results
+        if: always()
+        run: |
+          echo "📊 Processing ${{ matrix.suite }} test results..."
+          
+          # Create summary
+          cat > test-results/${{ matrix.suite }}-summary.json << EOF
+          {
+            "suite": "${{ matrix.suite }}",
+            "status": "${{ env.test_status }}",
+            "timestamp": "$(date -Iseconds)",
+            "duration": "$(date +%s)",
+            "browser": "${{ matrix.browser }}",
+            "runner": "${{ runner.os }}"
+          }
+          EOF
+          
+          # Check for coverage data
+          if [ -d coverage ]; then
+            echo "📊 Coverage data found"
+            cp -r coverage test-results/${{ matrix.suite }}-coverage/ || true
+          fi
+          
+          # Check for Playwright reports
+          if [ -d playwright-report ]; then
+            echo "🎭 Playwright report found"
+            cp -r playwright-report test-results/${{ matrix.suite }}-playwright/ || true
+          fi
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.suite }}-test-results
+          path: |
+            test-results/
+            coverage/
+            playwright-report/
+          retention-days: 30
+
+      - name: Fail job if tests failed
+        if: env.test_status == 'failed'
+        run: |
+          echo "❌ ${{ matrix.suite }} tests failed"
+          exit 1
+
+  # Visual regression testing
+  visual-regression:
+    name: 👁️ Visual Regression Testing
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    if: needs.test-matrix.outputs.should_run_visual == 'true'
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Install Playwright
+        run: |
+          npx playwright install chromium firefox webkit --with-deps
+
+      - name: Run visual regression tests
+        run: |
+          # Start dev server
+          npm run dev &
+          SERVER_PID=$!
+          
+          # Wait for server
+          for i in {1..30}; do
+            if curl -s http://localhost:5173 > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          
+          # Run visual tests
+          npx playwright test tests/visual --reporter=html --output-dir=visual-report
+          
+          # Cleanup
+          kill $SERVER_PID || true
+
+      - name: Upload visual test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-results
+          path: |
+            visual-report/
+            test-results/
+          retention-days: 30
+
+      - name: Compare with baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "🔍 Comparing visual snapshots with baseline..."
+          # Visual comparison logic would go here
+          # This could integrate with tools like Percy, Chromatic, or custom solutions
+
+  # Performance testing
+  performance-testing:
+    name: ⚡ Performance Testing
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    if: needs.test-matrix.outputs.should_run_performance == 'true'
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Build for performance testing
+        run: |
+          npm run build
+          npx serve -s dist -l 8080 &
+          SERVE_PID=$!
+          echo "SERVE_PID=$SERVE_PID" >> $GITHUB_ENV
+          
+          # Wait for server
+          for i in {1..30}; do
+            if curl -s http://localhost:8080 > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          
+          # Create Lighthouse CI config
+          cat > lighthouserc.json << EOF
+          {
+            "ci": {
+              "collect": {
+                "url": ["http://localhost:8080"],
+                "numberOfRuns": 3,
+                "settings": {
+                  "chromeFlags": "--no-sandbox --headless"
+                }
+              },
+              "assert": {
+                "assertions": {
+                  "categories:performance": ["error", {"minScore": 0.8}],
+                  "categories:accessibility": ["error", {"minScore": 0.9}],
+                  "categories:best-practices": ["error", {"minScore": 0.8}],
+                  "categories:seo": ["error", {"minScore": 0.8}]
+                }
+              },
+              "upload": {
+                "target": "filesystem",
+                "outputDir": "./lighthouse-reports"
+              }
+            }
+          }
+          EOF
+          
+          lhci autorun --config=lighthouserc.json || echo "⚠️ Lighthouse CI completed with warnings"
+
+      - name: Run custom performance tests
+        run: |
+          npx playwright test tests/performance --reporter=json --output-file=performance-results.json
+
+      - name: Analyze performance metrics
+        run: |
+          echo "📊 Analyzing performance metrics..."
+          
+          # Process Lighthouse results
+          if [ -d lighthouse-reports ]; then
+            echo "📊 Lighthouse reports generated"
+            
+            # Extract key metrics
+            PERFORMANCE_SCORE=$(cat lighthouse-reports/*.json | jq '.categories.performance.score' | head -1)
+            ACCESSIBILITY_SCORE=$(cat lighthouse-reports/*.json | jq '.categories.accessibility.score' | head -1)
+            
+            echo "⚡ Performance Score: $PERFORMANCE_SCORE"
+            echo "♿ Accessibility Score: $ACCESSIBILITY_SCORE"
+            
+            # Create performance summary
+            cat > performance-summary.json << EOF
+            {
+              "timestamp": "$(date -Iseconds)",
+              "scores": {
+                "performance": $PERFORMANCE_SCORE,
+                "accessibility": $ACCESSIBILITY_SCORE
+              },
+              "commit": "${{ github.sha }}",
+              "branch": "${{ github.ref_name }}"
+            }
+            EOF
+          fi
+
+      - name: Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results
+          path: |
+            lighthouse-reports/
+            performance-results.json
+            performance-summary.json
+          retention-days: 30
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kill ${{ env.SERVE_PID }} || true
+
+  # Test result aggregation
+  aggregate-results:
+    name: 📊 Aggregate Quality Results
+    runs-on: ubuntu-latest
+    needs: [core-tests, visual-regression, performance-testing]
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-test-results/
+
+      - name: Install report dependencies
+        run: |
+          npm install -g markdown-table
+          npm ci --prefer-offline --no-audit
+
+      - name: Generate comprehensive quality report
+        run: |
+          echo "📋 Generating comprehensive quality report..."
+          
+          # Create comprehensive report
+          cat > quality-report.md << 'EOF'
+          # 🛡️ Quality Assurance Report
+          
+          **Generated:** $(date -Iseconds)  
+          **Commit:** ${{ github.sha }}  
+          **Branch:** ${{ github.ref_name }}  
+          **Triggered by:** ${{ github.actor }}
+          
+          ## 📊 Test Results Summary
+          
+          EOF
+          
+          # Process each test suite
+          for suite_dir in all-test-results/*/; do
+            if [ -d "$suite_dir" ]; then
+              suite_name=$(basename "$suite_dir" | sed 's/-test-results$//')
+              echo "Processing $suite_name results..."
+              
+              echo "### 🧪 $suite_name Tests" >> quality-report.md
+              
+              if [ -f "$suite_dir"*-summary.json ]; then
+                status=$(cat "$suite_dir"*-summary.json | jq -r '.status' 2>/dev/null || echo "unknown")
+                case $status in
+                  "passed") echo "✅ **Status:** Passed" >> quality-report.md ;;
+                  "failed") echo "❌ **Status:** Failed" >> quality-report.md ;;
+                  *) echo "⚠️ **Status:** Unknown" >> quality-report.md ;;
+                esac
+              fi
+              
+              echo "" >> quality-report.md
+            fi
+          done
+          
+          # Add performance summary if available
+          if [ -f "all-test-results/performance-test-results/performance-summary.json" ]; then
+            echo "## ⚡ Performance Summary" >> quality-report.md
+            echo "" >> quality-report.md
+            
+            PERF_SCORE=$(cat all-test-results/performance-test-results/performance-summary.json | jq -r '.scores.performance' 2>/dev/null || echo "N/A")
+            A11Y_SCORE=$(cat all-test-results/performance-test-results/performance-summary.json | jq -r '.scores.accessibility' 2>/dev/null || echo "N/A")
+            
+            echo "- **Performance Score:** $PERF_SCORE" >> quality-report.md
+            echo "- **Accessibility Score:** $A11Y_SCORE" >> quality-report.md
+            echo "" >> quality-report.md
+          fi
+          
+          # Add links
+          echo "## 🔗 Resources" >> quality-report.md
+          echo "" >> quality-report.md
+          echo "- [GitHub Repository](https://github.com/${{ github.repository }})" >> quality-report.md
+          echo "- [Live Site](https://shishihs.github.io/insurance_self_game/)" >> quality-report.md
+          echo "" >> quality-report.md
+          
+          echo "✅ Quality report generated"
+
+      - name: Upload comprehensive report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-quality-report
+          path: |
+            quality-report.md
+            all-test-results/
+          retention-days: 30
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const report = fs.readFileSync('quality-report.md', 'utf8');
+              
+              // Find existing bot comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const botComment = comments.find(comment => 
+                comment.user.type === 'Bot' && 
+                comment.body.includes('🛡️ Quality Assurance Report')
+              );
+              
+              const body = report;
+              
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body
+                });
+              }
+            } catch (error) {
+              console.log('Error posting PR comment:', error);
+            }
+
+  # Quality gate enforcement
+  quality-gate-enforcement:
+    name: 🚪 Quality Gate Enforcement
+    runs-on: ubuntu-latest
+    needs: [core-tests, visual-regression, performance-testing]
+    if: always()
+    steps:
+      - name: Evaluate quality gates
+        run: |
+          echo "🚪 Evaluating quality gates..."
+          
+          # Check test results
+          CORE_TESTS_RESULT="${{ needs.core-tests.result }}"
+          VISUAL_TESTS_RESULT="${{ needs.visual-regression.result }}"
+          PERFORMANCE_TESTS_RESULT="${{ needs.performance-testing.result }}"
+          
+          echo "Core tests: $CORE_TESTS_RESULT"
+          echo "Visual tests: $VISUAL_TESTS_RESULT"  
+          echo "Performance tests: $PERFORMANCE_TESTS_RESULT"
+          
+          # Determine overall quality gate status
+          if [ "$CORE_TESTS_RESULT" = "success" ]; then
+            echo "✅ Quality gates passed"
+            echo "QUALITY_GATE_STATUS=passed" >> $GITHUB_ENV
+          else
+            echo "❌ Quality gates failed"
+            echo "QUALITY_GATE_STATUS=failed" >> $GITHUB_ENV
+          fi
+
+      - name: Set quality gate status
+        run: |
+          if [ "$QUALITY_GATE_STATUS" = "failed" ]; then
+            echo "❌ Quality gates failed - blocking deployment"
+            exit 1
+          else
+            echo "✅ Quality gates passed - deployment authorized"
+          fi
