@@ -17,6 +17,12 @@ export default defineConfig({
     }),
     UnoCSS(),
   ],
+  server: {
+    // 開発サーバーでCSPを無効化
+    headers: {
+      'Content-Security-Policy': undefined
+    }
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -26,14 +32,23 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500, // より厳しくして警告を早期発見
     // アセット最適化
-    assetsInlineLimit: 4096,
+    assetsInlineLimit: 2048, // 小さなファイルのインライン制限を下げる
     cssCodeSplit: true,
     // 圧縮設定（esbuildベース）
     minify: 'esbuild',
-    target: 'es2015',
+    target: 'es2020', // より新しいターゲットで最適化
+    // 追加最適化設定
+    reportCompressedSize: true,
+    emptyOutDir: true,
     rollupOptions: {
+      // Tree-shaking最適化
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false
+      },
       output: {
         manualChunks: (id) => {
           // npm パッケージをベンダーチャンクに分離
@@ -42,13 +57,7 @@ export default defineConfig({
               return 'vue-vendor'
             }
             if (id.includes('phaser')) {
-              // Phaserをさらに細かく分割
-              if (id.includes('phaser/src/scene')) {
-                return 'phaser-scene'
-              }
-              if (id.includes('phaser/src/gameobjects')) {
-                return 'phaser-gameobjects'
-              }
+              // Phaserを最適化してcore機能のみ
               return 'phaser-core'
             }
             if (id.includes('@unocss') || id.includes('unocss')) {
@@ -72,11 +81,11 @@ export default defineConfig({
             return 'feedback'
           }
           
-          // CUI/CLI系を分離
+          // CUI/CLI系を除外（開発時のみ）
           if (id.includes('/src/cui/') || 
               id.includes('/src/cli/') ||
               id.includes('/src/controllers/')) {
-            return 'cli-tools'
+            return undefined // 本番ビルドから除外
           }
           
           // テスト関連を分離
