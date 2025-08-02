@@ -1,1 +1,790 @@
-import Phaser from 'phaser'\nimport { GameStateManager, type EnhancedPlayerStats } from '../state/GameStateManager'\nimport { GameAnalytics, type StrategyPattern, type EfficiencyMetrics, type LearningProgress } from '../analytics/GameAnalytics'\nimport { SaveLoadUtils } from '../state/SaveLoadService'\n\n/**\n * 統計パネルの設定\n */\ninterface StatisticsPanelConfig {\n  scene: Phaser.Scene\n  x: number\n  y: number\n  width: number\n  height: number\n}\n\n/**\n * 統計表示パネル\n * プレイヤーの詳細な統計情報を表示するUI\n */\nexport class StatisticsPanel extends Phaser.GameObjects.Container {\n  private stateManager: GameStateManager\n  private analytics: GameAnalytics\n  private background: Phaser.GameObjects.Rectangle\n  private scrollContainer: Phaser.GameObjects.Container\n  private scrollY = 0\n  private maxScrollY = 0\n  \n  private readonly config: StatisticsPanelConfig\n  private currentTab: 'overview' | 'detailed' | 'patterns' | 'achievements' = 'overview'\n  \n  constructor(config: StatisticsPanelConfig) {\n    super(config.scene, config.x, config.y)\n    \n    this.config = config\n    this.stateManager = GameStateManager.getInstance()\n    this.analytics = new GameAnalytics()\n    \n    this.setSize(config.width, config.height)\n    this.createUI()\n    this.refreshContent()\n    \n    config.scene.add.existing(this)\n  }\n  \n  /**\n   * UIを作成\n   */\n  private createUI(): void {\n    // 背景\n    this.background = this.scene.add.rectangle(\n      0, 0,\n      this.config.width, this.config.height,\n      0x1a1a1a, 0.95\n    )\n    this.add(this.background)\n    \n    // タイトル\n    const title = this.scene.add.text(\n      0, -this.config.height / 2 + 20,\n      'プレイヤー統計',\n      {\n        fontSize: '24px',\n        color: '#ffffff',\n        fontFamily: 'Arial, sans-serif'\n      }\n    ).setOrigin(0.5, 0)\n    this.add(title)\n    \n    // 閉じるボタン\n    const closeButton = this.scene.add.text(\n      this.config.width / 2 - 20, -this.config.height / 2 + 15,\n      '×',\n      {\n        fontSize: '28px',\n        color: '#ff6b6b',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    .setInteractive({ useHandCursor: true })\n    .on('pointerdown', () => this.close())\n    .on('pointerover', () => closeButton.setColor('#ff5252'))\n    .on('pointerout', () => closeButton.setColor('#ff6b6b'))\n    \n    this.add(closeButton)\n    \n    // タブ\n    this.createTabs()\n    \n    // スクロール可能なコンテンツエリア\n    this.scrollContainer = this.scene.add.container(0, -50)\n    this.add(this.scrollContainer)\n    \n    // スクロール機能を設定\n    this.setupScrolling()\n  }\n  \n  /**\n   * タブを作成\n   */\n  private createTabs(): void {\n    const tabY = -this.config.height / 2 + 60\n    const tabs = [\n      { key: 'overview', label: '概要' },\n      { key: 'detailed', label: '詳細' },\n      { key: 'patterns', label: '戦略' },\n      { key: 'achievements', label: '実績' }\n    ]\n    \n    const tabWidth = 80\n    const totalWidth = tabs.length * tabWidth + (tabs.length - 1) * 10\n    const startX = -totalWidth / 2 + tabWidth / 2\n    \n    tabs.forEach((tab, index) => {\n      const x = startX + index * (tabWidth + 10)\n      const tabButton = this.createTabButton(\n        x, tabY, tabWidth, 30, \n        tab.label, tab.key as any\n      )\n      this.add(tabButton)\n    })\n  }\n  \n  /**\n   * タブボタンを作成\n   */\n  private createTabButton(\n    x: number, y: number, width: number, height: number,\n    label: string, tabKey: typeof this.currentTab\n  ): Phaser.GameObjects.Container {\n    const container = this.scene.add.container(x, y)\n    \n    const isActive = this.currentTab === tabKey\n    const bgColor = isActive ? 0x4c6ef5 : 0x333333\n    \n    const background = this.scene.add.rectangle(0, 0, width, height, bgColor)\n    const text = this.scene.add.text(0, 0, label, {\n      fontSize: '12px',\n      color: '#ffffff',\n      fontFamily: 'Arial'\n    }).setOrigin(0.5, 0.5)\n    \n    container.add([background, text])\n    container.setInteractive(\n      new Phaser.Geom.Rectangle(-width/2, -height/2, width, height),\n      Phaser.Geom.Rectangle.Contains\n    )\n    .on('pointerdown', () => this.switchTab(tabKey))\n    .on('pointerover', () => {\n      if (this.currentTab !== tabKey) {\n        background.setFillStyle(0x444444)\n      }\n    })\n    .on('pointerout', () => {\n      if (this.currentTab !== tabKey) {\n        background.setFillStyle(0x333333)\n      }\n    })\n    \n    container.setData('background', background)\n    container.setData('tabKey', tabKey)\n    \n    return container\n  }\n  \n  /**\n   * タブを切り替え\n   */\n  private switchTab(tabKey: typeof this.currentTab): void {\n    this.currentTab = tabKey\n    this.updateTabAppearance()\n    this.refreshContent()\n  }\n  \n  /**\n   * タブの外観を更新\n   */\n  private updateTabAppearance(): void {\n    this.list.forEach(child => {\n      if (child instanceof Phaser.GameObjects.Container) {\n        const tabKey = child.getData('tabKey')\n        const background = child.getData('background')\n        \n        if (tabKey && background) {\n          const isActive = tabKey === this.currentTab\n          background.setFillStyle(isActive ? 0x4c6ef5 : 0x333333)\n        }\n      }\n    })\n  }\n  \n  /**\n   * コンテンツを更新\n   */\n  private refreshContent(): void {\n    // 既存のコンテンツをクリア\n    this.scrollContainer.removeAll(true)\n    this.scrollY = 0\n    \n    const stats = this.stateManager.getEnhancedStats()\n    \n    switch (this.currentTab) {\n      case 'overview':\n        this.createOverviewContent(stats)\n        break\n      case 'detailed':\n        this.createDetailedContent(stats)\n        break\n      case 'patterns':\n        this.createPatternsContent()\n        break\n      case 'achievements':\n        this.createAchievementsContent(stats)\n        break\n    }\n    \n    this.updateScrollBounds()\n  }\n  \n  /**\n   * 概要コンテンツを作成\n   */\n  private createOverviewContent(stats: EnhancedPlayerStats): void {\n    let yOffset = 20\n    \n    // 基本統計\n    const basicStats = [\n      { label: 'ゲーム完了数', value: stats.gamesCompleted.toString() },\n      { label: 'プレイセッション', value: stats.sessionsPlayed.toString() },\n      { label: '総プレイ時間', value: SaveLoadUtils.formatPlaytime(stats.totalPlaytime) },\n      { label: 'ベストスコア', value: stats.bestScore.toString() },\n      { label: '平均ターン数', value: stats.averageTurnsPerGame.toFixed(1) }\n    ]\n    \n    basicStats.forEach(stat => {\n      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)\n      this.scrollContainer.add(container)\n      yOffset += 35\n    })\n    \n    yOffset += 20\n    \n    // チャレンジ統計\n    const challengeSuccessRate = stats.totalChallenges > 0 \n      ? (stats.successfulChallenges / stats.totalChallenges * 100).toFixed(1)\n      : '0'\n    \n    const challengeStats = [\n      { label: '総チャレンジ数', value: stats.totalChallenges.toString() },\n      { label: '成功数', value: stats.successfulChallenges.toString() },\n      { label: '成功率', value: `${challengeSuccessRate}%` },\n      { label: '失敗数', value: stats.failedChallenges.toString() }\n    ]\n    \n    // セクションヘッダー\n    const challengeHeader = this.scene.add.text(\n      0, yOffset,\n      '🎯 チャレンジ統計',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(challengeHeader)\n    yOffset += 30\n    \n    challengeStats.forEach(stat => {\n      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)\n      this.scrollContainer.add(container)\n      yOffset += 35\n    })\n    \n    yOffset += 20\n    \n    // 保険統計\n    const insuranceHeader = this.scene.add.text(\n      0, yOffset,\n      '🛡️ 保険統計',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(insuranceHeader)\n    yOffset += 30\n    \n    const insuranceTypes = stats.insuranceUsagePatterns.length\n    const totalInsuranceUsage = stats.insuranceUsagePatterns.reduce(\n      (sum, pattern) => sum + pattern.usageCount, 0\n    )\n    \n    const insuranceStats = [\n      { label: '利用した保険種類', value: `${insuranceTypes}種類` },\n      { label: '保険購入回数', value: totalInsuranceUsage.toString() },\n      { label: '現在の連続記録', value: `${stats.streaks.current}日` },\n      { label: '最長連続記録', value: `${stats.streaks.best}日` }\n    ]\n    \n    insuranceStats.forEach(stat => {\n      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)\n      this.scrollContainer.add(container)\n      yOffset += 35\n    })\n  }\n  \n  /**\n   * 詳細コンテンツを作成\n   */\n  private createDetailedContent(stats: EnhancedPlayerStats): void {\n    let yOffset = 20\n    \n    // 効率性指標\n    const efficiency = this.analytics.getEfficiencyMetrics()\n    \n    const efficiencyHeader = this.scene.add.text(\n      0, yOffset,\n      '⚡ 効率性指標',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(efficiencyHeader)\n    yOffset += 30\n    \n    const efficiencyStats = [\n      { label: '平均決定時間', value: `${efficiency.decisionSpeed.toFixed(1)}秒` },\n      { label: '最適プレイ率', value: `${efficiency.optimalPlayRate.toFixed(1)}%` },\n      { label: 'リソース効率性', value: `${efficiency.resourceEfficiency.toFixed(1)}%` },\n      { label: '適応性スコア', value: `${efficiency.adaptabilityScore.toFixed(1)}点` }\n    ]\n    \n    efficiencyStats.forEach(stat => {\n      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)\n      this.scrollContainer.add(container)\n      yOffset += 35\n    })\n    \n    yOffset += 20\n    \n    // ステージ別成功率\n    const stageHeader = this.scene.add.text(\n      0, yOffset,\n      '📊 ステージ別成功率',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(stageHeader)\n    yOffset += 30\n    \n    const stageNames = { youth: '青年期', middle: '中年期', fulfillment: '充実期' }\n    Object.entries(stats.challengeSuccessRates).forEach(([stage, rate]) => {\n      const stageName = stageNames[stage as keyof typeof stageNames] || stage\n      const container = this.createStatRow(\n        stageName, \n        `${(rate * 100).toFixed(1)}%`,\n        0, yOffset\n      )\n      this.scrollContainer.add(container)\n      yOffset += 35\n    })\n    \n    yOffset += 20\n    \n    // 学習進度\n    const learning = this.analytics.getLearningProgress()\n    \n    const learningHeader = this.scene.add.text(\n      0, yOffset,\n      '🎓 学習進度',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(learningHeader)\n    yOffset += 30\n    \n    const skillLevelNames = {\n      beginner: '初心者',\n      intermediate: '中級者',\n      advanced: '上級者',\n      expert: 'エキスパート'\n    }\n    \n    const learningStats = [\n      { label: 'スキルレベル', value: skillLevelNames[learning.skillLevel] },\n      { label: '改善率', value: `${learning.improvementRate.toFixed(1)}%` },\n      { label: '習得概念数', value: `${learning.masteredConcepts.length}個` },\n      { label: '次のマイルストーン', value: learning.nextMilestone }\n    ]\n    \n    learningStats.forEach(stat => {\n      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)\n      this.scrollContainer.add(container)\n      yOffset += 35\n    })\n    \n    // パーソナライズされたアドバイス\n    yOffset += 20\n    const adviceHeader = this.scene.add.text(\n      0, yOffset,\n      '💡 アドバイス',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(adviceHeader)\n    yOffset += 30\n    \n    const advice = this.analytics.generatePersonalizedAdvice()\n    advice.forEach(tip => {\n      const adviceText = this.scene.add.text(\n        -this.config.width / 2 + 20, yOffset,\n        tip,\n        {\n          fontSize: '12px',\n          color: '#cccccc',\n          fontFamily: 'Arial',\n          wordWrap: { width: this.config.width - 40 }\n        }\n      )\n      this.scrollContainer.add(adviceText)\n      yOffset += 60\n    })\n  }\n  \n  /**\n   * 戦略パターンコンテンツを作成\n   */\n  private createPatternsContent(): void {\n    let yOffset = 20\n    \n    const patterns = this.analytics.getStrategyPatterns()\n    \n    if (patterns.length === 0) {\n      const noDataText = this.scene.add.text(\n        0, yOffset,\n        'まだ十分なデータがありません\\n数回プレイすると戦略パターンが表示されます',\n        {\n          fontSize: '14px',\n          color: '#888888',\n          fontFamily: 'Arial',\n          align: 'center'\n        }\n      ).setOrigin(0.5, 0)\n      this.scrollContainer.add(noDataText)\n      return\n    }\n    \n    patterns.forEach((pattern, index) => {\n      const patternContainer = this.createPatternCard(pattern, 0, yOffset)\n      this.scrollContainer.add(patternContainer)\n      yOffset += 150\n    })\n  }\n  \n  /**\n   * 実績コンテンツを作成\n   */\n  private createAchievementsContent(stats: EnhancedPlayerStats): void {\n    let yOffset = 20\n    \n    // 実績の進行状況\n    const achievementProgress = this.analytics.checkAchievementProgress()\n    \n    // 取得済み実績\n    const unlockedHeader = this.scene.add.text(\n      0, yOffset,\n      '🏆 取得済み実績',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(unlockedHeader)\n    yOffset += 30\n    \n    if (stats.achievements.length === 0) {\n      const noAchievements = this.scene.add.text(\n        0, yOffset,\n        'まだ実績を獲得していません',\n        {\n          fontSize: '12px',\n          color: '#888888',\n          fontFamily: 'Arial'\n        }\n      ).setOrigin(0.5, 0)\n      this.scrollContainer.add(noAchievements)\n      yOffset += 40\n    } else {\n      stats.achievements.forEach(achievement => {\n        const achievementCard = this.createAchievementCard(achievement, 0, yOffset, true)\n        this.scrollContainer.add(achievementCard)\n        yOffset += 80\n      })\n    }\n    \n    yOffset += 20\n    \n    // 進行中の実績\n    const progressHeader = this.scene.add.text(\n      0, yOffset,\n      '📈 進行中の実績',\n      {\n        fontSize: '16px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0.5, 0)\n    this.scrollContainer.add(progressHeader)\n    yOffset += 30\n    \n    Object.entries(achievementProgress.progress).forEach(([id, progress]) => {\n      const progressCard = this.createProgressCard(id, progress, 0, yOffset)\n      this.scrollContainer.add(progressCard)\n      yOffset += 60\n    })\n  }\n  \n  /**\n   * 統計行を作成\n   */\n  private createStatRow(label: string, value: string, x: number, y: number): Phaser.GameObjects.Container {\n    const container = this.scene.add.container(x, y)\n    \n    const labelText = this.scene.add.text(\n      -this.config.width / 2 + 20, 0,\n      label,\n      {\n        fontSize: '14px',\n        color: '#ffffff',\n        fontFamily: 'Arial'\n      }\n    )\n    \n    const valueText = this.scene.add.text(\n      this.config.width / 2 - 20, 0,\n      value,\n      {\n        fontSize: '14px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(1, 0)\n    \n    container.add([labelText, valueText])\n    return container\n  }\n  \n  /**\n   * 戦略パターンカードを作成\n   */\n  private createPatternCard(pattern: StrategyPattern, x: number, y: number): Phaser.GameObjects.Container {\n    const container = this.scene.add.container(x, y)\n    const cardWidth = this.config.width - 40\n    const cardHeight = 130\n    \n    // 背景\n    const background = this.scene.add.rectangle(0, 0, cardWidth, cardHeight, 0x2a2a2a)\n    container.add(background)\n    \n    // タイトル\n    const title = this.scene.add.text(\n      -cardWidth / 2 + 15, -cardHeight / 2 + 15,\n      pattern.name,\n      {\n        fontSize: '16px',\n        color: '#ffffff',\n        fontFamily: 'Arial'\n      }\n    )\n    container.add(title)\n    \n    // 説明\n    const description = this.scene.add.text(\n      -cardWidth / 2 + 15, -cardHeight / 2 + 40,\n      pattern.description,\n      {\n        fontSize: '12px',\n        color: '#cccccc',\n        fontFamily: 'Arial',\n        wordWrap: { width: cardWidth - 30 }\n      }\n    )\n    container.add(description)\n    \n    // 統計\n    const stats = [\n      `使用頻度: ${(pattern.frequency * 100).toFixed(1)}%`,\n      `成功率: ${(pattern.successRate * 100).toFixed(1)}%`,\n      `平均活力: ${pattern.averageVitality.toFixed(0)}`\n    ]\n    \n    stats.forEach((stat, index) => {\n      const statText = this.scene.add.text(\n        -cardWidth / 2 + 15, -cardHeight / 2 + 80 + index * 15,\n        stat,\n        {\n          fontSize: '11px',\n          color: '#aaaaaa',\n          fontFamily: 'Arial'\n        }\n      )\n      container.add(statText)\n    })\n    \n    return container\n  }\n  \n  /**\n   * 実績カードを作成\n   */\n  private createAchievementCard(\n    achievement: any, x: number, y: number, unlocked: boolean\n  ): Phaser.GameObjects.Container {\n    const container = this.scene.add.container(x, y)\n    const cardWidth = this.config.width - 40\n    const cardHeight = 60\n    \n    // 背景\n    const bgColor = unlocked ? 0x2a4a2a : 0x2a2a2a\n    const background = this.scene.add.rectangle(0, 0, cardWidth, cardHeight, bgColor)\n    container.add(background)\n    \n    // アイコン\n    const icon = this.scene.add.text(\n      -cardWidth / 2 + 25, 0,\n      achievement.icon || '🏆',\n      {\n        fontSize: '24px'\n      }\n    ).setOrigin(0.5, 0.5)\n    container.add(icon)\n    \n    // 名前\n    const name = this.scene.add.text(\n      -cardWidth / 2 + 60, -10,\n      achievement.name,\n      {\n        fontSize: '14px',\n        color: unlocked ? '#4caf50' : '#888888',\n        fontFamily: 'Arial'\n      }\n    )\n    container.add(name)\n    \n    // 説明\n    const description = this.scene.add.text(\n      -cardWidth / 2 + 60, 10,\n      achievement.description,\n      {\n        fontSize: '11px',\n        color: '#cccccc',\n        fontFamily: 'Arial'\n      }\n    )\n    container.add(description)\n    \n    return container\n  }\n  \n  /**\n   * 進行度カードを作成\n   */\n  private createProgressCard(id: string, progress: number, x: number, y: number): Phaser.GameObjects.Container {\n    const container = this.scene.add.container(x, y)\n    const cardWidth = this.config.width - 40\n    \n    // プログレスバー\n    const barWidth = cardWidth - 100\n    const barHeight = 20\n    \n    const barBackground = this.scene.add.rectangle(\n      50, 0, barWidth, barHeight, 0x333333\n    )\n    container.add(barBackground)\n    \n    const barFill = this.scene.add.rectangle(\n      50 - barWidth / 2 + (barWidth * progress / 100) / 2, 0,\n      barWidth * progress / 100, barHeight, 0x4c6ef5\n    )\n    container.add(barFill)\n    \n    // ラベル\n    const label = this.scene.add.text(\n      -cardWidth / 2 + 10, 0,\n      id.replace('_', ' '),\n      {\n        fontSize: '12px',\n        color: '#ffffff',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(0, 0.5)\n    container.add(label)\n    \n    // 進行度テキスト\n    const progressText = this.scene.add.text(\n      cardWidth / 2 - 10, 0,\n      `${progress.toFixed(0)}%`,\n      {\n        fontSize: '12px',\n        color: '#4c6ef5',\n        fontFamily: 'Arial'\n      }\n    ).setOrigin(1, 0.5)\n    container.add(progressText)\n    \n    return container\n  }\n  \n  /**\n   * スクロール機能を設定\n   */\n  private setupScrolling(): void {\n    const scrollZone = this.scene.add.zone(\n      0, 0, this.config.width, this.config.height - 120\n    ).setInteractive()\n    \n    this.add(scrollZone)\n    \n    scrollZone.on('wheel', (pointer: Phaser.Input.Pointer, deltaX: number, deltaY: number) => {\n      this.scroll(deltaY > 0 ? 50 : -50)\n    })\n  }\n  \n  /**\n   * スクロール実行\n   */\n  private scroll(deltaY: number): void {\n    this.scrollY = Phaser.Math.Clamp(this.scrollY + deltaY, -this.maxScrollY, 0)\n    this.scrollContainer.setY(-50 + this.scrollY)\n  }\n  \n  /**\n   * スクロール範囲を更新\n   */\n  private updateScrollBounds(): void {\n    const contentHeight = this.getContentHeight()\n    const visibleHeight = this.config.height - 120\n    this.maxScrollY = Math.max(0, contentHeight - visibleHeight)\n  }\n  \n  /**\n   * コンテンツの高さを取得\n   */\n  private getContentHeight(): number {\n    let maxY = 0\n    this.scrollContainer.each((child) => {\n      if (child instanceof Phaser.GameObjects.GameObject) {\n        const bounds = child.getBounds()\n        maxY = Math.max(maxY, bounds.bottom)\n      }\n    })\n    return maxY + 50\n  }\n  \n  /**\n   * パネルを閉じる\n   */\n  close(): void {\n    this.scene.events.emit('statisticsPanelClosed')\n    this.destroy()\n  }\n  \n  /**\n   * パネルを表示\n   */\n  show(): void {\n    this.setVisible(true)\n    this.refreshContent()\n  }\n  \n  /**\n   * パネルを非表示\n   */\n  hide(): void {\n    this.setVisible(false)\n  }\n}
+import Phaser from 'phaser'
+import { GameStateManager, type EnhancedPlayerStats } from '../state/GameStateManager'
+import { GameAnalytics, type StrategyPattern, type EfficiencyMetrics, type LearningProgress } from '../analytics/GameAnalytics'
+import { SaveLoadUtils } from '../state/SaveLoadService'
+
+/**
+ * 統計パネルの設定
+ */
+interface StatisticsPanelConfig {
+  scene: Phaser.Scene
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * 統計表示パネル
+ * プレイヤーの詳細な統計情報を表示するUI
+ */
+export class StatisticsPanel extends Phaser.GameObjects.Container {
+  private stateManager: GameStateManager
+  private analytics: GameAnalytics
+  private background: Phaser.GameObjects.Rectangle
+  private scrollContainer: Phaser.GameObjects.Container
+  private scrollY = 0
+  private maxScrollY = 0
+  
+  private readonly config: StatisticsPanelConfig
+  private currentTab: 'overview' | 'detailed' | 'patterns' | 'achievements' = 'overview'
+  
+  constructor(config: StatisticsPanelConfig) {
+    super(config.scene, config.x, config.y)
+    
+    this.config = config
+    this.stateManager = GameStateManager.getInstance()
+    this.analytics = new GameAnalytics()
+    
+    this.setSize(config.width, config.height)
+    this.createUI()
+    this.refreshContent()
+    
+    config.scene.add.existing(this)
+  }
+  
+  /**
+   * UIを作成
+   */
+  private createUI(): void {
+    // 背景
+    this.background = this.scene.add.rectangle(
+      0, 0,
+      this.config.width, this.config.height,
+      0x1a1a1a, 0.95
+    )
+    this.add(this.background)
+    
+    // タイトル
+    const title = this.scene.add.text(
+      0, -this.config.height / 2 + 20,
+      'プレイヤー統計',
+      {
+        fontSize: '24px',
+        color: '#ffffff',
+        fontFamily: 'Arial, sans-serif'
+      }
+    ).setOrigin(0.5, 0)
+    this.add(title)
+    
+    // 閉じるボタン
+    const closeButton = this.scene.add.text(
+      this.config.width / 2 - 20, -this.config.height / 2 + 15,
+      '×',
+      {
+        fontSize: '28px',
+        color: '#ff6b6b',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerdown', () => this.close())
+    .on('pointerover', () => closeButton.setColor('#ff5252'))
+    .on('pointerout', () => closeButton.setColor('#ff6b6b'))
+    
+    this.add(closeButton)
+    
+    // タブ
+    this.createTabs()
+    
+    // スクロール可能なコンテンツエリア
+    this.scrollContainer = this.scene.add.container(0, -50)
+    this.add(this.scrollContainer)
+    
+    // スクロール機能を設定
+    this.setupScrolling()
+  }
+  
+  /**
+   * タブを作成
+   */
+  private createTabs(): void {
+    const tabY = -this.config.height / 2 + 60
+    const tabs = [
+      { key: 'overview', label: '概要' },
+      { key: 'detailed', label: '詳細' },
+      { key: 'patterns', label: '戦略' },
+      { key: 'achievements', label: '実績' }
+    ]
+    
+    const tabWidth = 80
+    const totalWidth = tabs.length * tabWidth + (tabs.length - 1) * 10
+    const startX = -totalWidth / 2 + tabWidth / 2
+    
+    tabs.forEach((tab, index) => {
+      const x = startX + index * (tabWidth + 10)
+      const tabButton = this.createTabButton(
+        x, tabY, tabWidth, 30, 
+        tab.label, tab.key as any
+      )
+      this.add(tabButton)
+    })
+  }
+  
+  /**
+   * タブボタンを作成
+   */
+  private createTabButton(
+    x: number, y: number, width: number, height: number,
+    label: string, tabKey: typeof this.currentTab
+  ): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y)
+    
+    const isActive = this.currentTab === tabKey
+    const bgColor = isActive ? 0x4c6ef5 : 0x333333
+    
+    const background = this.scene.add.rectangle(0, 0, width, height, bgColor)
+    const text = this.scene.add.text(0, 0, label, {
+      fontSize: '12px',
+      color: '#ffffff',
+      fontFamily: 'Arial'
+    }).setOrigin(0.5, 0.5)
+    
+    container.add([background, text])
+    container.setInteractive(
+      new Phaser.Geom.Rectangle(-width/2, -height/2, width, height),
+      Phaser.Geom.Rectangle.Contains
+    )
+    .on('pointerdown', () => this.switchTab(tabKey))
+    .on('pointerover', () => {
+      if (this.currentTab !== tabKey) {
+        background.setFillStyle(0x444444)
+      }
+    })
+    .on('pointerout', () => {
+      if (this.currentTab !== tabKey) {
+        background.setFillStyle(0x333333)
+      }
+    })
+    
+    container.setData('background', background)
+    container.setData('tabKey', tabKey)
+    
+    return container
+  }
+  
+  /**
+   * タブを切り替え
+   */
+  private switchTab(tabKey: typeof this.currentTab): void {
+    this.currentTab = tabKey
+    this.updateTabAppearance()
+    this.refreshContent()
+  }
+  
+  /**
+   * タブの外観を更新
+   */
+  private updateTabAppearance(): void {
+    this.list.forEach(child => {
+      if (child instanceof Phaser.GameObjects.Container) {
+        const tabKey = child.getData('tabKey')
+        const background = child.getData('background')
+        
+        if (tabKey && background) {
+          const isActive = tabKey === this.currentTab
+          background.setFillStyle(isActive ? 0x4c6ef5 : 0x333333)
+        }
+      }
+    })
+  }
+  
+  /**
+   * コンテンツを更新
+   */
+  private refreshContent(): void {
+    // 既存のコンテンツをクリア
+    this.scrollContainer.removeAll(true)
+    this.scrollY = 0
+    
+    const stats = this.stateManager.getEnhancedStats()
+    
+    switch (this.currentTab) {
+      case 'overview':
+        this.createOverviewContent(stats)
+        break
+      case 'detailed':
+        this.createDetailedContent(stats)
+        break
+      case 'patterns':
+        this.createPatternsContent()
+        break
+      case 'achievements':
+        this.createAchievementsContent(stats)
+        break
+    }
+    
+    this.updateScrollBounds()
+  }
+  
+  /**
+   * 概要コンテンツを作成
+   */
+  private createOverviewContent(stats: EnhancedPlayerStats): void {
+    let yOffset = 20
+    
+    // 基本統計
+    const basicStats = [
+      { label: 'ゲーム完了数', value: stats.gamesCompleted.toString() },
+      { label: 'プレイセッション', value: stats.sessionsPlayed.toString() },
+      { label: '総プレイ時間', value: SaveLoadUtils.formatPlaytime(stats.totalPlaytime) },
+      { label: 'ベストスコア', value: stats.bestScore.toString() },
+      { label: '平均ターン数', value: stats.averageTurnsPerGame.toFixed(1) }
+    ]
+    
+    basicStats.forEach(stat => {
+      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)
+      this.scrollContainer.add(container)
+      yOffset += 35
+    })
+    
+    yOffset += 20
+    
+    // チャレンジ統計
+    const challengeSuccessRate = stats.totalChallenges > 0 
+      ? (stats.successfulChallenges / stats.totalChallenges * 100).toFixed(1)
+      : '0'
+    
+    const challengeStats = [
+      { label: '総チャレンジ数', value: stats.totalChallenges.toString() },
+      { label: '成功数', value: stats.successfulChallenges.toString() },
+      { label: '成功率', value: `${challengeSuccessRate}%` },
+      { label: '失敗数', value: stats.failedChallenges.toString() }
+    ]
+    
+    // セクションヘッダー
+    const challengeHeader = this.scene.add.text(
+      0, yOffset,
+      '🎯 チャレンジ統計',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(challengeHeader)
+    yOffset += 30
+    
+    challengeStats.forEach(stat => {
+      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)
+      this.scrollContainer.add(container)
+      yOffset += 35
+    })
+    
+    yOffset += 20
+    
+    // 保険統計
+    const insuranceHeader = this.scene.add.text(
+      0, yOffset,
+      '🛡️ 保険統計',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(insuranceHeader)
+    yOffset += 30
+    
+    const insuranceTypes = stats.insuranceUsagePatterns.length
+    const totalInsuranceUsage = stats.insuranceUsagePatterns.reduce(
+      (sum, pattern) => sum + pattern.usageCount, 0
+    )
+    
+    const insuranceStats = [
+      { label: '利用した保険種類', value: `${insuranceTypes}種類` },
+      { label: '保険購入回数', value: totalInsuranceUsage.toString() },
+      { label: '現在の連続記録', value: `${stats.streaks.current}日` },
+      { label: '最長連続記録', value: `${stats.streaks.best}日` }
+    ]
+    
+    insuranceStats.forEach(stat => {
+      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)
+      this.scrollContainer.add(container)
+      yOffset += 35
+    })
+  }
+  
+  /**
+   * 詳細コンテンツを作成
+   */
+  private createDetailedContent(stats: EnhancedPlayerStats): void {
+    let yOffset = 20
+    
+    // 効率性指標
+    const efficiency = this.analytics.getEfficiencyMetrics()
+    
+    const efficiencyHeader = this.scene.add.text(
+      0, yOffset,
+      '⚡ 効率性指標',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(efficiencyHeader)
+    yOffset += 30
+    
+    const efficiencyStats = [
+      { label: '平均決定時間', value: `${efficiency.decisionSpeed.toFixed(1)}秒` },
+      { label: '最適プレイ率', value: `${efficiency.optimalPlayRate.toFixed(1)}%` },
+      { label: 'リソース効率性', value: `${efficiency.resourceEfficiency.toFixed(1)}%` },
+      { label: '適応性スコア', value: `${efficiency.adaptabilityScore.toFixed(1)}点` }
+    ]
+    
+    efficiencyStats.forEach(stat => {
+      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)
+      this.scrollContainer.add(container)
+      yOffset += 35
+    })
+    
+    yOffset += 20
+    
+    // ステージ別成功率
+    const stageHeader = this.scene.add.text(
+      0, yOffset,
+      '📊 ステージ別成功率',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(stageHeader)
+    yOffset += 30
+    
+    const stageNames = { youth: '青年期', middle: '中年期', fulfillment: '充実期' }
+    Object.entries(stats.challengeSuccessRates).forEach(([stage, rate]) => {
+      const stageName = stageNames[stage as keyof typeof stageNames] || stage
+      const container = this.createStatRow(
+        stageName, 
+        `${(rate * 100).toFixed(1)}%`,
+        0, yOffset
+      )
+      this.scrollContainer.add(container)
+      yOffset += 35
+    })
+    
+    yOffset += 20
+    
+    // 学習進度
+    const learning = this.analytics.getLearningProgress()
+    
+    const learningHeader = this.scene.add.text(
+      0, yOffset,
+      '🎓 学習進度',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(learningHeader)
+    yOffset += 30
+    
+    const skillLevelNames = {
+      beginner: '初心者',
+      intermediate: '中級者',
+      advanced: '上級者',
+      expert: 'エキスパート'
+    }
+    
+    const learningStats = [
+      { label: 'スキルレベル', value: skillLevelNames[learning.skillLevel] },
+      { label: '改善率', value: `${learning.improvementRate.toFixed(1)}%` },
+      { label: '習得概念数', value: `${learning.masteredConcepts.length}個` },
+      { label: '次のマイルストーン', value: learning.nextMilestone }
+    ]
+    
+    learningStats.forEach(stat => {
+      const container = this.createStatRow(stat.label, stat.value, 0, yOffset)
+      this.scrollContainer.add(container)
+      yOffset += 35
+    })
+    
+    // パーソナライズされたアドバイス
+    yOffset += 20
+    const adviceHeader = this.scene.add.text(
+      0, yOffset,
+      '💡 アドバイス',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(adviceHeader)
+    yOffset += 30
+    
+    const advice = this.analytics.generatePersonalizedAdvice()
+    advice.forEach(tip => {
+      const adviceText = this.scene.add.text(
+        -this.config.width / 2 + 20, yOffset,
+        tip,
+        {
+          fontSize: '12px',
+          color: '#cccccc',
+          fontFamily: 'Arial',
+          wordWrap: { width: this.config.width - 40 }
+        }
+      )
+      this.scrollContainer.add(adviceText)
+      yOffset += 60
+    })
+  }
+  
+  /**
+   * 戦略パターンコンテンツを作成
+   */
+  private createPatternsContent(): void {
+    let yOffset = 20
+    
+    const patterns = this.analytics.getStrategyPatterns()
+    
+    if (patterns.length === 0) {
+      const noDataText = this.scene.add.text(
+        0, yOffset,
+        'まだ十分なデータがありません\\n数回プレイすると戦略パターンが表示されます',
+        {
+          fontSize: '14px',
+          color: '#888888',
+          fontFamily: 'Arial',
+          align: 'center'
+        }
+      ).setOrigin(0.5, 0)
+      this.scrollContainer.add(noDataText)
+      return
+    }
+    
+    patterns.forEach((pattern, index) => {
+      const patternContainer = this.createPatternCard(pattern, 0, yOffset)
+      this.scrollContainer.add(patternContainer)
+      yOffset += 150
+    })
+  }
+  
+  /**
+   * 実績コンテンツを作成
+   */
+  private createAchievementsContent(stats: EnhancedPlayerStats): void {
+    let yOffset = 20
+    
+    // 実績の進行状況
+    const achievementProgress = this.analytics.checkAchievementProgress()
+    
+    // 取得済み実績
+    const unlockedHeader = this.scene.add.text(
+      0, yOffset,
+      '🏆 取得済み実績',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(unlockedHeader)
+    yOffset += 30
+    
+    if (stats.achievements.length === 0) {
+      const noAchievements = this.scene.add.text(
+        0, yOffset,
+        'まだ実績を獲得していません',
+        {
+          fontSize: '12px',
+          color: '#888888',
+          fontFamily: 'Arial'
+        }
+      ).setOrigin(0.5, 0)
+      this.scrollContainer.add(noAchievements)
+      yOffset += 40
+    } else {
+      stats.achievements.forEach(achievement => {
+        const achievementCard = this.createAchievementCard(achievement, 0, yOffset, true)
+        this.scrollContainer.add(achievementCard)
+        yOffset += 80
+      })
+    }
+    
+    yOffset += 20
+    
+    // 進行中の実績
+    const progressHeader = this.scene.add.text(
+      0, yOffset,
+      '📈 進行中の実績',
+      {
+        fontSize: '16px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0.5, 0)
+    this.scrollContainer.add(progressHeader)
+    yOffset += 30
+    
+    Object.entries(achievementProgress.progress).forEach(([id, progress]) => {
+      const progressCard = this.createProgressCard(id, progress, 0, yOffset)
+      this.scrollContainer.add(progressCard)
+      yOffset += 60
+    })
+  }
+  
+  /**
+   * 統計行を作成
+   */
+  private createStatRow(label: string, value: string, x: number, y: number): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y)
+    
+    const labelText = this.scene.add.text(
+      -this.config.width / 2 + 20, 0,
+      label,
+      {
+        fontSize: '14px',
+        color: '#ffffff',
+        fontFamily: 'Arial'
+      }
+    )
+    
+    const valueText = this.scene.add.text(
+      this.config.width / 2 - 20, 0,
+      value,
+      {
+        fontSize: '14px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(1, 0)
+    
+    container.add([labelText, valueText])
+    return container
+  }
+  
+  /**
+   * 戦略パターンカードを作成
+   */
+  private createPatternCard(pattern: StrategyPattern, x: number, y: number): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y)
+    const cardWidth = this.config.width - 40
+    const cardHeight = 130
+    
+    // 背景
+    const background = this.scene.add.rectangle(0, 0, cardWidth, cardHeight, 0x2a2a2a)
+    container.add(background)
+    
+    // タイトル
+    const title = this.scene.add.text(
+      -cardWidth / 2 + 15, -cardHeight / 2 + 15,
+      pattern.name,
+      {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontFamily: 'Arial'
+      }
+    )
+    container.add(title)
+    
+    // 説明
+    const description = this.scene.add.text(
+      -cardWidth / 2 + 15, -cardHeight / 2 + 40,
+      pattern.description,
+      {
+        fontSize: '12px',
+        color: '#cccccc',
+        fontFamily: 'Arial',
+        wordWrap: { width: cardWidth - 30 }
+      }
+    )
+    container.add(description)
+    
+    // 統計
+    const stats = [
+      `使用頻度: ${(pattern.frequency * 100).toFixed(1)}%`,
+      `成功率: ${(pattern.successRate * 100).toFixed(1)}%`,
+      `平均活力: ${pattern.averageVitality.toFixed(0)}`
+    ]
+    
+    stats.forEach((stat, index) => {
+      const statText = this.scene.add.text(
+        -cardWidth / 2 + 15, -cardHeight / 2 + 80 + index * 15,
+        stat,
+        {
+          fontSize: '11px',
+          color: '#aaaaaa',
+          fontFamily: 'Arial'
+        }
+      )
+      container.add(statText)
+    })
+    
+    return container
+  }
+  
+  /**
+   * 実績カードを作成
+   */
+  private createAchievementCard(
+    achievement: any, x: number, y: number, unlocked: boolean
+  ): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y)
+    const cardWidth = this.config.width - 40
+    const cardHeight = 60
+    
+    // 背景
+    const bgColor = unlocked ? 0x2a4a2a : 0x2a2a2a
+    const background = this.scene.add.rectangle(0, 0, cardWidth, cardHeight, bgColor)
+    container.add(background)
+    
+    // アイコン
+    const icon = this.scene.add.text(
+      -cardWidth / 2 + 25, 0,
+      achievement.icon || '🏆',
+      {
+        fontSize: '24px'
+      }
+    ).setOrigin(0.5, 0.5)
+    container.add(icon)
+    
+    // 名前
+    const name = this.scene.add.text(
+      -cardWidth / 2 + 60, -10,
+      achievement.name,
+      {
+        fontSize: '14px',
+        color: unlocked ? '#4caf50' : '#888888',
+        fontFamily: 'Arial'
+      }
+    )
+    container.add(name)
+    
+    // 説明
+    const description = this.scene.add.text(
+      -cardWidth / 2 + 60, 10,
+      achievement.description,
+      {
+        fontSize: '11px',
+        color: '#cccccc',
+        fontFamily: 'Arial'
+      }
+    )
+    container.add(description)
+    
+    return container
+  }
+  
+  /**
+   * 進行度カードを作成
+   */
+  private createProgressCard(id: string, progress: number, x: number, y: number): Phaser.GameObjects.Container {
+    const container = this.scene.add.container(x, y)
+    const cardWidth = this.config.width - 40
+    
+    // プログレスバー
+    const barWidth = cardWidth - 100
+    const barHeight = 20
+    
+    const barBackground = this.scene.add.rectangle(
+      50, 0, barWidth, barHeight, 0x333333
+    )
+    container.add(barBackground)
+    
+    const barFill = this.scene.add.rectangle(
+      50 - barWidth / 2 + (barWidth * progress / 100) / 2, 0,
+      barWidth * progress / 100, barHeight, 0x4c6ef5
+    )
+    container.add(barFill)
+    
+    // ラベル
+    const label = this.scene.add.text(
+      -cardWidth / 2 + 10, 0,
+      id.replace('_', ' '),
+      {
+        fontSize: '12px',
+        color: '#ffffff',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(0, 0.5)
+    container.add(label)
+    
+    // 進行度テキスト
+    const progressText = this.scene.add.text(
+      cardWidth / 2 - 10, 0,
+      `${progress.toFixed(0)}%`,
+      {
+        fontSize: '12px',
+        color: '#4c6ef5',
+        fontFamily: 'Arial'
+      }
+    ).setOrigin(1, 0.5)
+    container.add(progressText)
+    
+    return container
+  }
+  
+  /**
+   * スクロール機能を設定
+   */
+  private setupScrolling(): void {
+    const scrollZone = this.scene.add.zone(
+      0, 0, this.config.width, this.config.height - 120
+    ).setInteractive()
+    
+    this.add(scrollZone)
+    
+    scrollZone.on('wheel', (pointer: Phaser.Input.Pointer, deltaX: number, deltaY: number) => {
+      this.scroll(deltaY > 0 ? 50 : -50)
+    })
+  }
+  
+  /**
+   * スクロール実行
+   */
+  private scroll(deltaY: number): void {
+    this.scrollY = Phaser.Math.Clamp(this.scrollY + deltaY, -this.maxScrollY, 0)
+    this.scrollContainer.setY(-50 + this.scrollY)
+  }
+  
+  /**
+   * スクロール範囲を更新
+   */
+  private updateScrollBounds(): void {
+    const contentHeight = this.getContentHeight()
+    const visibleHeight = this.config.height - 120
+    this.maxScrollY = Math.max(0, contentHeight - visibleHeight)
+  }
+  
+  /**
+   * コンテンツの高さを取得
+   */
+  private getContentHeight(): number {
+    let maxY = 0
+    this.scrollContainer.each((child) => {
+      if (child instanceof Phaser.GameObjects.GameObject) {
+        const bounds = child.getBounds()
+        maxY = Math.max(maxY, bounds.bottom)
+      }
+    })
+    return maxY + 50
+  }
+  
+  /**
+   * パネルを閉じる
+   */
+  close(): void {
+    this.scene.events.emit('statisticsPanelClosed')
+    this.destroy()
+  }
+  
+  /**
+   * パネルを表示
+   */
+  show(): void {
+    this.setVisible(true)
+    this.refreshContent()
+  }
+  
+  /**
+   * パネルを非表示
+   */
+  hide(): void {
+    this.setVisible(false)
+  }
+}
