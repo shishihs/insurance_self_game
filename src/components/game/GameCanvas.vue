@@ -11,6 +11,10 @@ const isLoading = ref(true)
 const errorMessage = ref<string>('')
 const isDev = import.meta.env.DEV
 
+// ローディング表示の最小時間（ミリ秒）
+const MIN_LOADING_TIME = 1000
+let loadingStartTime = 0
+
 // コンポーネントがマウントされているか追跡
 let isMounted = false
 
@@ -19,6 +23,9 @@ const animationManager = getUnifiedAnimationManager()
 
 onMounted(async () => {
   isMounted = true
+  
+  // ローディング開始時間を記録
+  loadingStartTime = Date.now()
   
   // requestAnimationFrameでDOMが完全に準備されるまで待機
   await new Promise(resolve => requestAnimationFrame(resolve))
@@ -67,6 +74,12 @@ onMounted(async () => {
           const currentScene = gameManager.value.getCurrentScene()
           console.log('🎬 Current scene:', currentScene)
         }
+      }
+      
+      // 最小ローディング時間を保証
+      const elapsedTime = Date.now() - loadingStartTime
+      if (elapsedTime < MIN_LOADING_TIME) {
+        await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME - elapsedTime))
       }
       
       isLoading.value = false
@@ -118,6 +131,12 @@ onMounted(async () => {
         errorMessage.value = 'WebGLの初期化に失敗しました。ブラウザでWebGLが有効になっているか確認してください。'
       } else {
         errorMessage.value = `ゲーム初期化エラー: ${errorMsg}`
+      }
+      
+      // エラー時でも最小ローディング時間を保証
+      const elapsedTime = Date.now() - loadingStartTime
+      if (elapsedTime < MIN_LOADING_TIME) {
+        await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME - elapsedTime))
       }
       
       isLoading.value = false
