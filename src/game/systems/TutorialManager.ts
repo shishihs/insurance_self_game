@@ -150,7 +150,7 @@ export class TutorialManager {
       })
 
       // オーバーレイを作成
-      this.createOverlay()
+      await this.createOverlay()
 
       // 最初のステップまたは中断されたステップから開始
       await this.goToStep(this.progress.currentStepIndex)
@@ -295,10 +295,10 @@ export class TutorialManager {
   /**
    * 要素をハイライト
    */
-  public highlightElement(
+  public async highlightElement(
     elementName: string, 
     options: HighlightOptions = {}
-  ): void {
+  ): Promise<void> {
     try {
       // 既存のハイライトをクリア
       this.clearHighlight()
@@ -317,7 +317,7 @@ export class TutorialManager {
       }
 
       // ハイライトグラフィックスを作成
-      this.createHighlight(element, highlightOptions)
+      await this.createHighlight(element, highlightOptions)
 
     } catch (error) {
       this.handleError('Failed to highlight element', error as Error)
@@ -453,7 +453,7 @@ export class TutorialManager {
 
       // 要素ハイライト
       if (step.targetElement) {
-        this.highlightElement(step.targetElement, step.highlightOptions)
+        await this.highlightElement(step.targetElement, step.highlightOptions)
       }
 
       // 自動進行の場合
@@ -641,66 +641,76 @@ export class TutorialManager {
   /**
    * オーバーレイを作成
    */
-  private createOverlay(): void {
+  private async createOverlay(): Promise<void> {
     if (!this.currentConfig) return
 
-    const overlayOptions = {
-      ...this.options.defaultOverlayOptions,
-      ...this.currentConfig.overlayOptions
-    }
+    try {
+      const Phaser = await loadPhaser()
+      const overlayOptions = {
+        ...this.options.defaultOverlayOptions,
+        ...this.currentConfig.overlayOptions
+      }
 
-    this.overlayGraphics = this.scene.add.graphics()
-    this.overlayGraphics.setDepth(1000)
-    
-    this.overlayGraphics.fillStyle(
-      Phaser.Display.Color.HexStringToColor(overlayOptions.backgroundColor!).color,
-      overlayOptions.opacity
-    )
-    this.overlayGraphics.fillRect(
-      0, 0, 
-      this.scene.cameras.main.width, 
-      this.scene.cameras.main.height
-    )
-
-    if (!overlayOptions.allowClickThrough) {
-      this.overlayGraphics.setInteractive(
-        new Phaser.Geom.Rectangle(0, 0, this.scene.cameras.main.width, this.scene.cameras.main.height),
-        Phaser.Geom.Rectangle.Contains
+      this.overlayGraphics = this.scene.add.graphics()
+      this.overlayGraphics.setDepth(1000)
+      
+      this.overlayGraphics.fillStyle(
+        Phaser.Display.Color.HexStringToColor(overlayOptions.backgroundColor!).color,
+        overlayOptions.opacity
       )
+      this.overlayGraphics.fillRect(
+        0, 0, 
+        this.scene.cameras.main.width, 
+        this.scene.cameras.main.height
+      )
+
+      if (!overlayOptions.allowClickThrough) {
+        this.overlayGraphics.setInteractive(
+          new Phaser.Geom.Rectangle(0, 0, this.scene.cameras.main.width, this.scene.cameras.main.height),
+          Phaser.Geom.Rectangle.Contains
+        )
+      }
+    } catch (error) {
+      console.warn('[TutorialManager] Failed to create overlay:', error)
     }
   }
 
   /**
    * ハイライトを作成
    */
-  private createHighlight(element: Phaser.GameObjects.GameObject, options: HighlightOptions): void {
+  private async createHighlight(element: any, options: HighlightOptions): Promise<void> {
     if (!element.getBounds) return
 
-    const bounds = element.getBounds()
-    this.highlightGraphics = this.scene.add.graphics()
-    this.highlightGraphics.setDepth(1001)
+    try {
+      const Phaser = await loadPhaser()
+      const bounds = element.getBounds()
+      this.highlightGraphics = this.scene.add.graphics()
+      this.highlightGraphics.setDepth(1001)
 
-    // ハイライト描画
-    if (options.color) {
-      this.highlightGraphics.fillStyle(
-        Phaser.Display.Color.HexStringToColor(options.color).color,
-        options.opacity || 0.3
-      )
-      this.highlightGraphics.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
-    }
+      // ハイライト描画
+      if (options.color) {
+        this.highlightGraphics.fillStyle(
+          Phaser.Display.Color.HexStringToColor(options.color).color,
+          options.opacity || 0.3
+        )
+        this.highlightGraphics.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
+      }
 
-    // ボーダー描画
-    if (options.borderColor && options.borderWidth) {
-      this.highlightGraphics.lineStyle(
-        options.borderWidth,
-        Phaser.Display.Color.HexStringToColor(options.borderColor).color
-      )
-      this.highlightGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
-    }
+      // ボーダー描画
+      if (options.borderColor && options.borderWidth) {
+        this.highlightGraphics.lineStyle(
+          options.borderWidth,
+          Phaser.Display.Color.HexStringToColor(options.borderColor).color
+        )
+        this.highlightGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
+      }
 
-    // アニメーション
-    if (options.animationType && options.animationType !== 'none') {
-      this.createHighlightAnimation(options)
+      // アニメーション
+      if (options.animationType && options.animationType !== 'none') {
+        this.createHighlightAnimation(options)
+      }
+    } catch (error) {
+      console.warn('[TutorialManager] Failed to create highlight:', error)
     }
   }
 

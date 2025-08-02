@@ -8,6 +8,27 @@ export class PreloadScene extends BaseScene {
     super(config)
   }
 
+  create(): void {
+    // ベースクラスのcreateを呼び出し
+    super.create()
+    
+    // preloadが完了したら自動的にメインメニューへ遷移
+    this.time.delayedCall(500, () => {
+      try {
+        console.log('[PreloadScene] Starting MainMenuScene...')
+        this.scene.start('MainMenuScene')
+      } catch (error) {
+        console.error('[PreloadScene] Failed to start MainMenuScene:', error)
+        // フォールバック: 直接GameSceneへ
+        try {
+          this.scene.start('GameScene')
+        } catch (fallbackError) {
+          console.error('[PreloadScene] Failed to start any scene:', fallbackError)
+        }
+      }
+    })
+  }
+
   preload(): void {
     // パフォーマンス計測開始
     performance.mark('preload-start')
@@ -66,8 +87,22 @@ export class PreloadScene extends BaseScene {
       console.log(`✅ Asset loading completed in ${measure.duration.toFixed(2)}ms`)
     })
 
-    // アセットのロード（非同期処理で最適化）
-    this.loadAssetsAsync()
+    // アセットのロード（即座に実行）
+    try {
+      // 重要なアセットを同期的にロード
+      this.createCardBack()
+      this.createBasicUIAssets()
+      
+      // 二次的なアセットを少し遅延してロード
+      this.time.delayedCall(100, () => {
+        this.createCardFaces()
+        this.createAdditionalUIAssets()
+      })
+    } catch (error) {
+      console.error('[PreloadScene] Error loading assets:', error)
+      // エラーが発生してもシーン遷移を続行
+      this.scene.start('MainMenuScene')
+    }
   }
   
   /**

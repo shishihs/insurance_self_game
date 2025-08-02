@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="./favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <title>人生充実ゲーム - Life Fulfillment</title>
     <meta name="description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム。アクセシブルで多言語対応、すべての人が楽しめる教育的ゲーム体験。">
     
@@ -18,7 +19,7 @@
     
     <!-- セキュリティヘッダー - 強化版 -->
     <!-- CSP: frame-ancestorsディレクティブを削除（metaタグでは無効） -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-PLACEHOLDER_NONCE' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https:; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-PLACEHOLDER_NONCE' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https:; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <!-- X-Frame-Options: HTTPヘッダーでのみ有効なため削除 -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
@@ -40,14 +41,15 @@
     <link rel="manifest" href="./manifest.json">
     
     <!-- アイコン設定 -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="./favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon.ico">
     
     <!-- スプラッシュスクリーン（iOS） -->
     <meta name="apple-mobile-web-app-title" content="人生充実">
-    <link rel="apple-touch-startup-image" href="/favicon.ico">
+    <link rel="apple-touch-startup-image" href="./favicon.ico">
     
     <!-- SEO最適化 -->
     <meta name="keywords" content="保険,ゲーム,人生,シミュレーション,一人用,ボードゲーム,デッキ構築,戦略,教育,PWA,アクセシビリティ">
@@ -211,15 +213,11 @@
     </script>
     
     <!-- パフォーマンス最適化 -->
-    <link rel="preload" href="/src/style.css" as="style">
-    <link rel="preload" href="/src/main.ts" as="script">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     
     <!-- Resource Hints でパフォーマンス向上 -->
     <link rel="prefetch" href="/manifest.json">
-    <link rel="prefetch" href="/service-worker.js">
     
     <!-- コアWeb Vitals最適化 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -269,8 +267,8 @@
     <!-- メインスクリプト -->
     <script type="module" src="/src/main.ts"></script>
     
-    <!-- パフォーマンス監視 -->
-    <script>
+    <!-- パフォーマンス監視はmain.tsで実行されます -->
+    <!-- <script>
       // Core Web Vitals 計測
       if ('performance' in window && 'PerformanceObserver' in window) {
         // First Contentful Paint
@@ -325,6 +323,6 @@
           }
         }
       });
-    </script>
+    </script> -->
   </body>
 </html>

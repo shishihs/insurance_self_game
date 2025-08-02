@@ -4,10 +4,11 @@ import { GAME_CONSTANTS } from '../config/gameConfig'
 
 /**
  * すべてのシーンの基底クラス
- * 注意: このクラスはGameManagerで動的に継承され、Phaserシーンとして動作する
+ * 注意: このクラスは実際にはPhaserのSceneクラスとして実行時に解釈される
+ * GameManagerでPhaserのシーンとして登録される
  */
 export abstract class BaseScene {
-  // Phaserシーンのプロパティ（実行時に動的継承により設定される）
+  // Phaserシーンのプロパティ（実行時に自動的に設定される）
   declare add: PhaserTypes['Scene']['add']
   declare cameras: PhaserTypes['Scene']['cameras']
   declare tweens: PhaserTypes['Scene']['tweens']
@@ -22,10 +23,9 @@ export abstract class BaseScene {
   protected gameWidth!: number
   protected gameHeight!: number
 
-  // コンストラクター（動的継承時に無視される）
-  constructor(config?: any) {
-    // このコンストラクターは動的継承時には呼ばれない
-    // 実際のPhaserシーンコンストラクターが使用される
+  // コンストラクター - Phaserシーンの設定
+  constructor(config: any) {
+    // 注意: このコンストラクターは実際にはPhaserのSceneコンストラクターとして実行される
   }
 
   create(): void {
@@ -424,7 +424,7 @@ export abstract class BaseScene {
             targets: notification,
             alpha: 0,
             duration: 300,
-            onComplete: () => notification.destroy()
+            onComplete: () => { notification.destroy(); }
           })
         })
       }

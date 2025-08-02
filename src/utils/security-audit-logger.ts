@@ -680,7 +680,7 @@ if (typeof window !== 'undefined') {
     console.error = function(...args) {
       // 開発環境ではレート制限を緩和
       if (import.meta.env.DEV) {
-        return originalConsoleError.apply(this, args)
+        originalConsoleError.apply(this, args); return;
       }
       
       // Reset counter every minute
