@@ -95,7 +95,7 @@ class PerformanceMonitor {
           });
         });
         inputObserver.observe({ 
-          entryTypes: ['event'], 
+          type: 'event', 
           buffered: true 
         });
         this.observers.push(inputObserver);

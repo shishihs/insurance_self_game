@@ -485,6 +485,16 @@ self.addEventListener('message', (event) => {
       updatePerformanceSettings(data.mode);
       break;
       
+    case 'CACHE_ACCESSIBILITY_STATE':
+      console.log('[Service Worker] Caching accessibility state');
+      // アクセシビリティ設定のキャッシュ（今後の実装用）
+      break;
+      
+    case 'CLEAR_DNS_CACHE':
+      console.log('[Service Worker] DNS cache clear requested (no-op)');
+      // DNSキャッシュはService Workerでは制御不可
+      break;
+      
     default:
       console.log('[Service Worker] Unknown message type:', data.type);
   }

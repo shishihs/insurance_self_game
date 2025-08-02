@@ -9,13 +9,13 @@
   "theme_color": "#667eea",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "./favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.ico",
+      "src": "./favicon.ico",
       "sizes": "48x48 32x32 16x16",
       "type": "image/x-icon",
       "purpose": "any"
@@ -57,7 +57,7 @@
       "url": "./?action=new-game",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "./favicon.ico",
           "sizes": "96x96"
         }
       ]
@@ -69,7 +69,7 @@
       "url": "./?action=stats",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "./favicon.ico",
           "sizes": "96x96"
         }
       ]
