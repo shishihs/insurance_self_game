@@ -1,0 +1,146 @@
+/* ====================================
+   Critical CSS - Above-the-fold styles
+   インライン化される重要なスタイル
+   ==================================== */
+
+/* CSS Variables - Core only */
+:root {
+  /* Performance optimized color scheme */
+  --primary-600: #4F46E5;
+  --primary-700: #4338CA;
+  --bg-primary: #1F2937;
+  --bg-secondary: #111827;
+  --text-primary: #F9FAFB;
+  --text-secondary: #D1D5DB;
+  
+  /* Critical font settings */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-display: swap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Essential animations only */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  
+  /* Layout variables */
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+}
+
+/* Critical reset for layout shift prevention */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* App container - Critical for LCP */
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Loading skeleton styles */
+.loading-skeleton {
+  background: linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 2s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Critical image optimization */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Performance optimized visibility control */
+.fade-in {
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.fade-in.loaded {
+  opacity: 1;
+}
+
+/* Critical button styles for interaction */
+button, .btn {
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--transition-fast);
+}
+
+button:active, .btn:active {
+  transform: scale(0.98);
+}
+
+/* Essential responsive breakpoints */
+@media (max-width: 768px) {
+  :root {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+  
+  #app {
+    padding: var(--space-sm);
+  }
+}
+
+/* Dark mode optimization */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .loading-skeleton {
+    animation: none;
+    background: #374151;
+  }
+}
+
+/* Critical safe area support */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}

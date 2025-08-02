@@ -44,8 +44,8 @@ interface DragState {
  * 効率的なドロップゾーン管理システム
  */
 export class DropZoneManager {
-  private zones: Map<string, DropZone> = new Map()
-  private scene: Phaser.Scene
+  private readonly zones: Map<string, DropZone> = new Map()
+  private readonly scene: Phaser.Scene
   private dragState: DragState = {
     isDragging: false,
     validZones: []
@@ -260,7 +260,7 @@ export class DropZoneManager {
           targets: highlight,
           alpha: 0,
           duration: 200,
-          onComplete: () => highlight.destroy()
+          onComplete: () => { highlight.destroy(); }
         })
       }
       

@@ -6,7 +6,7 @@
  */
 
 export class ProcessEventCleanup {
-  private static originalListeners = new Map<string, Function[]>()
+  private static readonly originalListeners = new Map<string, Function[]>()
   private static isInitialized = false
 
   /**

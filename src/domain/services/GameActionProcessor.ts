@@ -1,5 +1,5 @@
 import type { Card } from '../entities/Card'
-import type { ChallengeResult, TurnResult, InsuranceTypeSelectionResult } from '../types/game.types'
+import type { ChallengeResult, InsuranceTypeSelectionResult, TurnResult } from '../types/game.types'
 import type { Game } from '../entities/Game'
 
 /**
@@ -219,7 +219,7 @@ export class SelectInsuranceProcessor extends BaseActionProcessor<
  * アクション処理管理クラス
  */
 export class GameActionProcessor {
-  private processors: Map<string, BaseActionProcessor<any, any>> = new Map()
+  private readonly processors: Map<string, BaseActionProcessor<any, any>> = new Map()
 
   constructor() {
     // 標準プロセッサを登録

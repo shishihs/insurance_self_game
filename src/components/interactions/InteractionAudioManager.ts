@@ -21,12 +21,12 @@ export interface SpatialAudioConfig {
 }
 
 export class InteractionAudioManager {
-  private audioGenerator: WebAudioSoundGenerator
+  private readonly audioGenerator: WebAudioSoundGenerator
   private isEnabled: boolean = true
   private masterVolume: number = 0.5
   private spatialEnabled: boolean = true
   private audioQueue: Array<{ config: AudioFeedbackConfig; timestamp: number }> = []
-  private isProcessingQueue: boolean = false
+  private readonly isProcessingQueue: boolean = false
 
   // 音響効果の設定
   private readonly audioMappings = {
@@ -449,7 +449,7 @@ export class InteractionAudioManager {
       })
     }, 80)
 
-    setTimeout(() => clearInterval(interval), duration)
+    setTimeout(() => { clearInterval(interval); }, duration)
   }
 
   private async playLoadingSound(duration: number): Promise<void> {
@@ -472,7 +472,7 @@ export class InteractionAudioManager {
       })
     }, 200)
 
-    setTimeout(() => clearInterval(interval), duration)
+    setTimeout(() => { clearInterval(interval); }, duration)
   }
 
   private async playProcessingSound(duration: number): Promise<void> {
@@ -492,7 +492,7 @@ export class InteractionAudioManager {
       })
     }, 300)
 
-    setTimeout(() => clearInterval(interval), duration)
+    setTimeout(() => { clearInterval(interval); }, duration)
   }
 
   private async playCompletionSound(): Promise<void> {
@@ -513,8 +513,8 @@ export class InteractionAudioManager {
     const centerY = window.innerHeight / 2
     
     const distance = Math.sqrt(
-      Math.pow(spatial.x - centerX, 2) + 
-      Math.pow(spatial.y - centerY, 2)
+      (spatial.x - centerX)**2 + 
+      (spatial.y - centerY)**2
     ) / Math.max(centerX, centerY)
     
     return {
@@ -530,7 +530,7 @@ export class InteractionAudioManager {
     return baseValue * (1 + variation)
   }
 
-  private delay(ms: number): Promise<void> {
+  private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 

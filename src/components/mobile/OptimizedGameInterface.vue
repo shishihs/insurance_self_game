@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { getDeviceInfo, vibrate } from '@/game/input/TouchGestureManager'
 import MobileBottomNav from './MobileBottomNav.vue'
 import SwipeNavigation from './SwipeNavigation.vue'
@@ -57,12 +57,12 @@ const shouldRenderSection = (sectionId: string) => {
   if (performanceMode.value === 'low') {
     // 低性能モードでは現在のセクションのみレンダリング
     return sectionId === currentSection.value
-  } else {
+  } 
     // 高性能モードでは隣接セクションも事前レンダリング
     const currentIndex = currentSectionIndex.value
     const sectionIndex = props.sections.findIndex(s => s.id === sectionId)
     return Math.abs(sectionIndex - currentIndex) <= 1
-  }
+  
 }
 
 // セクション切り替え

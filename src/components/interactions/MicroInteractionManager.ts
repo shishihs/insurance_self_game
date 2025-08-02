@@ -28,13 +28,13 @@ export interface VisualFeedback {
 }
 
 export class MicroInteractionManager {
-  private activeInteractions: Map<HTMLElement, AbortController> = new Map()
+  private readonly activeInteractions: Map<HTMLElement, AbortController> = new Map()
   private hapticEnabled: boolean = true
   private soundEnabled: boolean = true
   private reducedMotion: boolean = false
   private interactionQueue: InteractionConfig[] = []
-  private isProcessingQueue: boolean = false
-  private audioManager: InteractionAudioManager
+  private readonly isProcessingQueue: boolean = false
+  private readonly audioManager: InteractionAudioManager
 
   constructor() {
     this.detectReducedMotion()
@@ -301,8 +301,8 @@ export class MicroInteractionManager {
     })
 
     if (this.hapticEnabled) {
-      setTimeout(() => this.vibrate('light'), 0)
-      setTimeout(() => this.vibrate('light'), 200)
+      setTimeout(async () => this.vibrate('light'), 0)
+      setTimeout(async () => this.vibrate('light'), 200)
     }
 
     return animation.finished
@@ -691,7 +691,7 @@ export class MicroInteractionManager {
     document.head.appendChild(style)
   }
 
-  private delay(ms: number): Promise<void> {
+  private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 
@@ -699,7 +699,7 @@ export class MicroInteractionManager {
    * クリーンアップ
    */
   destroy(): void {
-    this.activeInteractions.forEach(controller => controller.abort())
+    this.activeInteractions.forEach(controller => { controller.abort(); })
     this.activeInteractions.clear()
     this.interactionQueue = []
     this.audioManager.destroy()

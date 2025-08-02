@@ -15,12 +15,12 @@ import type { InsurancePremium } from '../../domain/valueObjects/InsurancePremiu
  */
 export class GameApplicationService {
   private currentChallenge?: Challenge
-  private activeInsurances: Map<string, Insurance> = new Map()
+  private readonly activeInsurances: Map<string, Insurance> = new Map()
   private domainEvents: DomainEvent[] = []
 
   constructor(
-    private game: Game,
-    private eventPublisher?: (event: DomainEvent) => void
+    private readonly game: Game,
+    private readonly eventPublisher?: (event: DomainEvent) => void
   ) {}
 
   /**

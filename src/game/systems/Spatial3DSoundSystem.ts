@@ -9,10 +9,10 @@
  * - リスナー位置の動的更新
  */
 export class Spatial3DSoundSystem {
-  private audioContext: AudioContext
-  private listener: AudioListener
-  private panners: Map<string, PannerNode> = new Map()
-  private gains: Map<string, GainNode> = new Map()
+  private readonly audioContext: AudioContext
+  private readonly listener: AudioListener
+  private readonly panners: Map<string, PannerNode> = new Map()
+  private readonly gains: Map<string, GainNode> = new Map()
   
   /** 3Dサウンド設定 */
   private readonly config = {
@@ -257,7 +257,7 @@ export class Spatial3DSoundSystem {
       const channelData = impulse.getChannelData(channel)
       for (let i = 0; i < length; i++) {
         // 指数減衰するホワイトノイズ
-        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2)
+        channelData[i] = (Math.random() * 2 - 1) * (1 - i / length)**2
       }
     }
     

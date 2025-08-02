@@ -3,8 +3,8 @@
  * ゲームアクションに対するフィードバック通知の統合
  */
 
-import { ref, onMounted, onUnmounted } from 'vue'
-import { FeedbackNotificationSystem, type NotificationConfig, type GameFeedback } from './FeedbackNotificationSystem'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { FeedbackNotificationSystem, type GameFeedback, type NotificationConfig } from './FeedbackNotificationSystem'
 
 export function useFeedbackNotifications() {
   const system = new FeedbackNotificationSystem()

@@ -368,7 +368,7 @@ export interface GameStateSnapshot {
  */
 export class GameStateSnapshotManager {
   private snapshots: GameStateSnapshot[] = []
-  private maxSnapshots = 10
+  private readonly maxSnapshots = 10
 
   /**
    * 現在の状態のスナップショットを作成

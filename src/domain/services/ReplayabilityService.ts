@@ -1,6 +1,6 @@
 import { Card } from '../entities/Card'
 import { CardFactory } from './CardFactory'
-import type { GameStage, Difficulty, SkillRarity } from '../types/card.types'
+import type { Difficulty, GameStage, SkillRarity } from '../types/card.types'
 import type { PlayerProgression } from './PlayerProgressionService'
 import type { PlayerAchievements } from './AchievementSystemService'
 import type { DynamicDifficulty } from './DifficultyBalanceService'
@@ -341,10 +341,10 @@ export class ReplayabilityService {
     const completedAchievements = achievements.achievements.filter(a => a.isUnlocked).length
 
     // 最近のプレイ履歴を分析
-    const modeCounts = recentPlayHistory.reduce((counts, mode) => {
+    const modeCounts = recentPlayHistory.reduce<Record<string, number>>((counts, mode) => {
       counts[mode] = (counts[mode] || 0) + 1
       return counts
-    }, {} as Record<string, number>)
+    }, {})
 
     const mostPlayedMode = Object.entries(modeCounts)
       .sort(([,a], [,b]) => b - a)[0]?.[0] as PlayMode

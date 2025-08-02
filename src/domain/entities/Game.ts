@@ -13,18 +13,18 @@ import { GameStateManager } from '../services/GameStateManager'
 import { GameActionProcessor } from '../services/GameActionProcessor'
 import { IdGenerator } from '../../common/IdGenerator'
 import type {
-  IGameState,
-  GameStatus,
-  GamePhase,
-  GameConfig,
-  PlayerStats,
   ChallengeResult,
-  TurnResult,
+  GameConfig,
+  GamePhase,
+  GameStatus,
+  IGameState,
   InsuranceExpirationNotice,
   InsuranceTypeChoice,
-  InsuranceTypeSelectionResult
+  InsuranceTypeSelectionResult,
+  PlayerStats,
+  TurnResult
 } from '../types/game.types'
-import { DREAM_AGE_ADJUSTMENTS, AGE_PARAMETERS } from '../types/game.types'
+import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -63,17 +63,17 @@ export class Game implements IGameState {
   public cardManager: ICardManager
   
   // ドメインサービス
-  private premiumCalculationService: InsurancePremiumCalculationService
-  private stageManager: GameStageManager
-  private expirationManager: InsuranceExpirationManager
-  private challengeResolutionService: ChallengeResolutionService
-  private turnManager: GameTurnManager
-  private challengeService: GameChallengeService
-  private insuranceService: GameInsuranceService
+  private readonly premiumCalculationService: InsurancePremiumCalculationService
+  private readonly stageManager: GameStageManager
+  private readonly expirationManager: InsuranceExpirationManager
+  private readonly challengeResolutionService: ChallengeResolutionService
+  private readonly turnManager: GameTurnManager
+  private readonly challengeService: GameChallengeService
+  private readonly insuranceService: GameInsuranceService
   
   // 新しいアーキテクチャ
-  private stateManager: GameStateManager
-  private actionProcessor: GameActionProcessor
+  private readonly stateManager: GameStateManager
+  private readonly actionProcessor: GameActionProcessor
   
   currentChallenge?: Card
   
@@ -81,21 +81,21 @@ export class Game implements IGameState {
   config: GameConfig
   
   // Phase 5: リスクプロファイルとプレイヤー履歴
-  private _riskProfile: RiskProfile
-  private _playerHistory: PlayerHistory
+  private readonly _riskProfile: RiskProfile
+  private readonly _playerHistory: PlayerHistory
   
   // Phase 2-4: 保険カード管理
   insuranceCards: Card[]
   expiredInsurances: Card[]
   
   // Phase 3: 保険料負担
-  private _insuranceBurden: InsurancePremium
+  private readonly _insuranceBurden: InsurancePremium
   
   // 保険種類選択
   insuranceTypeChoices?: InsuranceTypeChoice[]
   
   // 経験学習システム（GAME_DESIGN.mdより）
-  private _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
+  private readonly _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
   
   // パフォーマンス最適化: オブジェクトプール
   private static readonly OBJECT_POOLS = {
@@ -105,7 +105,7 @@ export class Game implements IGameState {
   }
 
   // ダーティフラグシステムの導入
-  private _dirtyFlags = {
+  private readonly _dirtyFlags = {
     vitality: false,
     insurance: false,
     burden: false,
@@ -114,7 +114,7 @@ export class Game implements IGameState {
   }
 
   // キャッシュシステム
-  private _cachedValues = {
+  private readonly _cachedValues = {
     insuranceBurden: 0,
     availableVitality: 0,
     totalInsuranceCount: 0,
@@ -169,11 +169,11 @@ export class Game implements IGameState {
     
     // 初期デッキを作成
     const initialCards = CardFactory.createStarterLifeCards()
-    initialCards.forEach(card => playerDeck.addCard(card))
+    initialCards.forEach(card => { playerDeck.addCard(card); })
     
     // チャレンジデッキを作成
     const challengeCards = CardFactory.createChallengeCards(this.stage)
-    challengeCards.forEach(card => challengeDeck.addCard(card))
+    challengeCards.forEach(card => { challengeDeck.addCard(card); })
     
     this.cardManager.initialize(playerDeck, challengeDeck, config)
     

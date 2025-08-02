@@ -1,11 +1,16 @@
-import { Scene } from 'phaser'
+import type { PhaserTypes } from '../loaders/PhaserLoader'
 import type { Card } from '@/domain/entities/Card'
 import { GAME_CONSTANTS } from '../config/gameConfig'
 
 /**
  * すべてのシーンの基底クラス
+ * 実際のPhaserシーンクラスの継承は動的に行う
  */
-export abstract class BaseScene extends Scene {
+export abstract class BaseScene {
+  protected scene!: PhaserTypes['Scene']
+  protected add!: PhaserTypes['Scene']['add']
+  protected cameras!: PhaserTypes['Scene']['cameras']
+  protected tweens!: PhaserTypes['Scene']['tweens']
   protected centerX!: number
   protected centerY!: number
   protected gameWidth!: number

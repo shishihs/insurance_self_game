@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" 
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- メインページ -->
+  <url>
+    <loc>https://shishihs.github.io/insurance_self_game/</loc>
+    <lastmod>2024-12-01T12:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <mobile:mobile/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://shishihs.github.io/insurance_self_game/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://shishihs.github.io/insurance_self_game/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://shishihs.github.io/insurance_self_game/"/>
+    <image:image>
+      <image:loc>https://shishihs.github.io/insurance_self_game/favicon.ico</image:loc>
+      <image:title>人生充実ゲーム アイコン</image:title>
+      <image:caption>人生充実ゲームのメインアイコン</image:caption>
+    </image:image>
+  </url>
+  
+  <!-- ゲーム画面 -->
+  <url>
+    <loc>https://shishihs.github.io/insurance_self_game/#game</loc>
+    <lastmod>2024-12-01T12:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <mobile:mobile/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://shishihs.github.io/insurance_self_game/#game"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://shishihs.github.io/insurance_self_game/?lang=en#game"/>
+  </url>
+  
+  <!-- 統計画面 -->
+  <url>
+    <loc>https://shishihs.github.io/insurance_self_game/#stats</loc>
+    <lastmod>2024-12-01T12:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <mobile:mobile/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://shishihs.github.io/insurance_self_game/#stats"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://shishihs.github.io/insurance_self_game/?lang=en#stats"/>
+  </url>
+  
+  <!-- マニフェスト -->
+  <url>
+    <loc>https://shishihs.github.io/insurance_self_game/manifest.json</loc>
+    <lastmod>2024-12-01T12:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- Service Worker -->
+  <url>
+    <loc>https://shishihs.github.io/insurance_self_game/service-worker.js</loc>
+    <lastmod>2024-12-01T12:00:00+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+
+</urlset>

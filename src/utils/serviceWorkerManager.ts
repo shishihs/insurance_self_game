@@ -27,7 +27,7 @@ class ServiceWorkerManager {
   private registration: ServiceWorkerRegistration | null = null
   private updateCallback: (() => void) | null = null
   private stateChangeCallback: ((state: ServiceWorkerState) => void) | null = null
-  private state: ServiceWorkerState = {
+  private readonly state: ServiceWorkerState = {
     supported: 'serviceWorker' in navigator,
     registered: false,
     updateAvailable: false,
@@ -117,7 +117,7 @@ class ServiceWorkerManager {
       }, [messageChannel.port2])
 
       // タイムアウト処理
-      setTimeout(() => resolve({}), 5000)
+      setTimeout(() => { resolve({}); }, 5000)
     })
   }
 
@@ -290,16 +290,16 @@ export const serviceWorkerManager = new ServiceWorkerManager()
 
 // Vue.js向けのコンポーザブル関数
 export function useServiceWorker() {
-  const register = () => serviceWorkerManager.register()
-  const checkForUpdate = () => serviceWorkerManager.checkForUpdate()
-  const applyUpdate = () => serviceWorkerManager.applyUpdate()
-  const getCacheInfo = () => serviceWorkerManager.getCacheInfo()
-  const clearCache = (type?: 'static' | 'dynamic' | 'images' | 'api') => 
+  const register = async () => serviceWorkerManager.register()
+  const checkForUpdate = async () => serviceWorkerManager.checkForUpdate()
+  const applyUpdate = async () => serviceWorkerManager.applyUpdate()
+  const getCacheInfo = async () => serviceWorkerManager.getCacheInfo()
+  const clearCache = async (type?: 'static' | 'dynamic' | 'images' | 'api') => 
     serviceWorkerManager.clearCache(type)
-  const preloadResources = (resources: string[]) => 
+  const preloadResources = async (resources: string[]) => 
     serviceWorkerManager.preloadResources(resources)
   const setPerformanceMode = (mode: 'low' | 'high') => 
-    serviceWorkerManager.setPerformanceMode(mode)
+    { serviceWorkerManager.setPerformanceMode(mode); }
   const isOffline = () => serviceWorkerManager.isOffline()
   const getState = () => serviceWorkerManager.getState()
 
@@ -314,9 +314,9 @@ export function useServiceWorker() {
     isOffline,
     getState,
     onUpdateAvailable: (callback: () => void) => 
-      serviceWorkerManager.onUpdateAvailable(callback),
+      { serviceWorkerManager.onUpdateAvailable(callback); },
     onStateChange: (callback: (state: ServiceWorkerState) => void) => 
-      serviceWorkerManager.onStateChange(callback)
+      { serviceWorkerManager.onStateChange(callback); }
   }
 }
 

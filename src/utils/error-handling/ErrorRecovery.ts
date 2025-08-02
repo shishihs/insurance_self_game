@@ -26,14 +26,14 @@ export interface RecoveryResult {
 }
 
 export class ErrorRecovery {
-  private strategies: RecoveryStrategy[] = []
-  private recoveryAttempts = new Map<string, number>()
+  private readonly strategies: RecoveryStrategy[] = []
+  private readonly recoveryAttempts = new Map<string, number>()
   private recoveryHistory: Array<{
     timestamp: number
     errorInfo: ErrorInfo
     result: RecoveryResult
   }> = []
-  private maxHistorySize = 100
+  private readonly maxHistorySize = 100
 
   private gameStateBackup: any = null
   private performanceBaseline: { memory: number; timing: number } | null = null
@@ -91,7 +91,7 @@ export class ErrorRecovery {
       maxRetries: 3,
       retryDelay: 2000,
       priority: 8,
-      healthCheck: () => this.checkNetworkHealth()
+      healthCheck: async () => this.checkNetworkHealth()
     })
 
     // メモリ不足エラーのリカバリー
@@ -121,7 +121,7 @@ export class ErrorRecovery {
       maxRetries: 2,
       retryDelay: 1000,
       priority: 7,
-      healthCheck: () => this.checkMemoryHealth()
+      healthCheck: async () => this.checkMemoryHealth()
     })
 
     // Vueコンポーネントエラーのリカバリー
@@ -233,7 +233,7 @@ export class ErrorRecovery {
         
         // 指数バックオフで再試行
         const attempt = this.getRecoveryAttempts('async-retry')
-        const delay = Math.min(1000 * Math.pow(2, attempt), 10000)
+        const delay = Math.min(1000 * 2**attempt, 10000)
         
         await new Promise(resolve => setTimeout(resolve, delay))
         
@@ -434,7 +434,7 @@ export class ErrorRecovery {
       }
       
       // 期限切れデータを削除
-      keysToRemove.forEach(key => localStorage.removeItem(key))
+      keysToRemove.forEach(key => { localStorage.removeItem(key); })
       
       // それでも容量が足りない場合は古いゲームデータを削除
       if (keysToRemove.length === 0) {
@@ -662,7 +662,7 @@ export class ErrorRecovery {
     const logElements = document.querySelectorAll('[data-log-entry]')
     if (logElements.length > 100) {
       const toRemove = Array.from(logElements).slice(0, logElements.length - 50)
-      toRemove.forEach(el => el.remove())
+      toRemove.forEach(el => { el.remove(); })
     }
   }
 
@@ -853,7 +853,7 @@ export class ErrorRecovery {
             console.log(`[Recovery] Successfully recovered using strategy: ${strategy.name}`)
             this.resetRecoveryAttempts(strategy.name)
             return result
-          } else if (strategy.rollback) {
+          } if (strategy.rollback) {
             // ロールバック実行
             console.log(`[Recovery] Rolling back strategy: ${strategy.name}`)
             await strategy.rollback()

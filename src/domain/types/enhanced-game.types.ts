@@ -5,24 +5,24 @@
  */
 
 import type { 
-  GameStatus, 
-  GamePhase, 
-  GameConfig,
+  ChallengeResult, 
+  GameConfig, 
+  GamePhase,
+  GameStatus,
+  InsuranceTypeChoice,
   PlayerStats,
-  ChallengeResult,
-  TurnResult,
-  InsuranceTypeChoice
+  TurnResult
 } from './game.types'
-import type { GameStage, CardType } from './card.types'
+import type { CardType, GameStage } from './card.types'
 import type { 
-  GameId, 
   CardId, 
-  TurnNumber, 
-  VitalityValue,
+  GameId, 
+  NonEmptyArray, 
+  Option,
   PowerValue,
-  NonEmptyArray,
   Result,
-  Option
+  TurnNumber,
+  VitalityValue
 } from './strict-types'
 
 /**
@@ -150,7 +150,7 @@ export interface GameMetadata {
  * 型安全なゲーム設定ビルダー
  */
 export class GameConfigBuilder {
-  private config: Partial<GameConfig> = {}
+  private readonly config: Partial<GameConfig> = {}
 
   setDifficulty(difficulty: GameConfig['difficulty']): this {
     this.config.difficulty = difficulty

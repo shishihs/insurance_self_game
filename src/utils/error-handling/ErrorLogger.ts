@@ -31,15 +31,15 @@ export interface WarningEntry {
 export class ErrorLogger {
   private logs: LogEntry[] = []
   private warnings: WarningEntry[] = []
-  private maxLogs = 1000
-  private logRotationSize = 100
-  private storageKey = 'game_error_logs'
-  private warningStorageKey = 'game_warning_logs'
+  private readonly maxLogs = 1000
+  private readonly logRotationSize = 100
+  private readonly storageKey = 'game_error_logs'
+  private readonly warningStorageKey = 'game_warning_logs'
   private analyticsBuffer: LogEntry[] = []
-  private realtimeListeners: Array<(entry: LogEntry) => void> = []
-  private sessionId: string
+  private readonly realtimeListeners: Array<(entry: LogEntry) => void> = []
+  private readonly sessionId: string
   private userId?: string
-  private buildVersion: string
+  private readonly buildVersion: string
   private isAnalyzing = false
 
   constructor() {

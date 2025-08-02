@@ -16,8 +16,8 @@ export interface FocusIndicatorOptions {
  */
 export class FocusIndicatorManager {
   private focusedElement: HTMLElement | null = null
-  private indicator: HTMLElement
-  private options: Required<FocusIndicatorOptions>
+  private readonly indicator: HTMLElement
+  private readonly options: Required<FocusIndicatorOptions>
 
   constructor(options: FocusIndicatorOptions = {}) {
     this.options = {

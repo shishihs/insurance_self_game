@@ -1,7 +1,7 @@
 import type { 
-  TutorialStep, 
-  HighlightOptions,
-  TutorialProgress
+  HighlightOptions, 
+  TutorialProgress,
+  TutorialStep
 } from '@/domain/types/tutorial.types'
 
 /**
@@ -9,14 +9,14 @@ import type {
  * スポットライト効果、吹き出し、進行制御UIを提供
  */
 export class TutorialOverlay {
-  private scene: Phaser.Scene
-  private container: Phaser.GameObjects.Container
-  private overlayGraphics: Phaser.GameObjects.Graphics
-  private spotlightMask: Phaser.GameObjects.Graphics
+  private readonly scene: Phaser.Scene
+  private readonly container: Phaser.GameObjects.Container
+  private readonly overlayGraphics: Phaser.GameObjects.Graphics
+  private readonly spotlightMask: Phaser.GameObjects.Graphics
   private speechBubble: Phaser.GameObjects.Container | null = null
   private progressBar: Phaser.GameObjects.Container | null = null
   private controlButtons: Phaser.GameObjects.Container | null = null
-  private highlightElements: Map<string, Phaser.GameObjects.Graphics> = new Map()
+  private readonly highlightElements: Map<string, Phaser.GameObjects.Graphics> = new Map()
   private arrows: Phaser.GameObjects.Image[] = []
   private pulseAnimations: Phaser.Tweens.Tween[] = []
   
@@ -547,20 +547,20 @@ export class TutorialOverlay {
       ease: 'Sine.easeInOut'
     })
     
-    this.arrows.push(arrow as Phaser.GameObjects.Graphics) // 型を明確に指定
+    this.arrows.push(arrow) // 型を明確に指定
   }
 
   /**
    * すべてのハイライトをクリア
    */
   public clearHighlights(): void {
-    this.highlightElements.forEach(highlight => highlight.destroy())
+    this.highlightElements.forEach(highlight => { highlight.destroy(); })
     this.highlightElements.clear()
     
-    this.pulseAnimations.forEach(animation => animation.destroy())
+    this.pulseAnimations.forEach(animation => { animation.destroy(); })
     this.pulseAnimations = []
     
-    this.arrows.forEach(arrow => arrow.destroy())
+    this.arrows.forEach(arrow => { arrow.destroy(); })
     this.arrows = []
   }
 
@@ -755,7 +755,7 @@ export class TutorialOverlay {
     // テキストの再配置（幅制限）
     const textElements = this.speechBubble.list.filter(child => 
       child instanceof Phaser.GameObjects.Text
-    ) as Phaser.GameObjects.Text[]
+    )
     
     textElements.forEach(text => {
       text.setWordWrapWidth(maxWidth - this.SPEECH_BUBBLE_PADDING * 2)

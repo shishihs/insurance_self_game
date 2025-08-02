@@ -8,8 +8,8 @@ import { GameAnalytics } from '../analytics/GameAnalytics'
  */
 export class AnalyticsIntegration {
   private static instance: AnalyticsIntegration | null = null
-  private stateManager: GameStateManager
-  private analytics: GameAnalytics
+  private readonly stateManager: GameStateManager
+  private readonly analytics: GameAnalytics
   private isInitialized = false
   
   private constructor() {

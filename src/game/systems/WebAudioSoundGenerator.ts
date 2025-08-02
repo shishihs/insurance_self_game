@@ -3,7 +3,7 @@
  * 高品質なゲームサウンドを動的に生成
  */
 export class WebAudioSoundGenerator {
-  private audioContext: AudioContext
+  private readonly audioContext: AudioContext
   
   constructor() {
     this.audioContext = new ((window as any).AudioContext || (window as any).webkitAudioContext)()

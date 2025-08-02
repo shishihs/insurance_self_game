@@ -1,3 +1,483 @@
 import type { Game } from '@/domain/entities/Game'
-import type { GameCommand, CommandCategory } from './GameCommand'
-import { NoOpCommand, CompositeCommand } from './GameCommand'\n\n/**\n * コマンド履歴の設定\n */\nexport interface CommandHistoryConfig {\n  maxHistorySize: number\n  enableMerging: boolean\n  mergeTimeWindow: number // ミリ秒\n  undoableTurnLimit: number // Undo可能なターン数の制限\n}\n\n/**\n * コマンド履歴の統計\n */\nexport interface CommandHistoryStats {\n  totalCommands: number\n  undoableCommands: number\n  commandsByCategory: Record<CommandCategory, number>\n  averageCommandsPerTurn: number\n  mergedCommands: number\n}\n\n/**\n * Undo/Redo操作の結果\n */\nexport interface UndoRedoResult {\n  success: boolean\n  message: string\n  commandDescription?: string\n  affectedCommands: number\n}\n\n/**\n * コマンド履歴管理クラス\n * Undo/Redo機能の中核を担う\n */\nexport class CommandHistory {\n  private history: GameCommand[] = []\n  private currentIndex = -1\n  private config: CommandHistoryConfig\n  private stats: CommandHistoryStats\n  \n  constructor(config?: Partial<CommandHistoryConfig>) {\n    this.config = {\n      maxHistorySize: 50,\n      enableMerging: true,\n      mergeTimeWindow: 1000, // 1秒\n      undoableTurnLimit: 3,\n      ...config\n    }\n    \n    this.stats = {\n      totalCommands: 0,\n      undoableCommands: 0,\n      commandsByCategory: {\n        card_selection: 0,\n        challenge: 0,\n        insurance: 0,\n        turn_progression: 0,\n        system: 0\n      },\n      averageCommandsPerTurn: 0,\n      mergedCommands: 0\n    }\n  }\n  \n  /**\n   * コマンドを実行して履歴に追加\n   */\n  async executeCommand(command: GameCommand, game: Game): Promise<UndoRedoResult> {\n    try {\n      // コマンドの妥当性をチェック\n      if (!command.isValid(game)) {\n        return {\n          success: false,\n          message: 'コマンドが無効です',\n          affectedCommands: 0\n        }\n      }\n      \n      // コマンドを実行\n      await command.execute(game)\n      \n      // 履歴に追加\n      this.addToHistory(command)\n      \n      // 統計を更新\n      this.updateStats(command)\n      \n      return {\n        success: true,\n        message: 'コマンドを実行しました',\n        commandDescription: command.description,\n        affectedCommands: 1\n      }\n      \n    } catch (error) {\n      return {\n        success: false,\n        message: `コマンド実行エラー: ${error instanceof Error ? error.message : String(error)}`,\n        affectedCommands: 0\n      }\n    }\n  }\n  \n  /**\n   * 一つ前のコマンドを取り消し\n   */\n  async undo(game: Game): Promise<UndoRedoResult> {\n    if (!this.canUndo()) {\n      return {\n        success: false,\n        message: 'Undo可能なコマンドがありません',\n        affectedCommands: 0\n      }\n    }\n    \n    const command = this.history[this.currentIndex]\n    \n    if (!command.canUndo) {\n      return {\n        success: false,\n        message: 'このコマンドはUndo不可です',\n        commandDescription: command.description,\n        affectedCommands: 0\n      }\n    }\n    \n    try {\n      await command.undo(game)\n      this.currentIndex--\n      \n      return {\n        success: true,\n        message: 'コマンドを取り消しました',\n        commandDescription: command.description,\n        affectedCommands: 1\n      }\n      \n    } catch (error) {\n      return {\n        success: false,\n        message: `Undoエラー: ${error instanceof Error ? error.message : String(error)}`,\n        commandDescription: command.description,\n        affectedCommands: 0\n      }\n    }\n  }\n  \n  /**\n   * 取り消したコマンドを再実行\n   */\n  async redo(game: Game): Promise<UndoRedoResult> {\n    if (!this.canRedo()) {\n      return {\n        success: false,\n        message: 'Redo可能なコマンドがありません',\n        affectedCommands: 0\n      }\n    }\n    \n    const command = this.history[this.currentIndex + 1]\n    \n    try {\n      await command.execute(game)\n      this.currentIndex++\n      \n      return {\n        success: true,\n        message: 'コマンドを再実行しました',\n        commandDescription: command.description,\n        affectedCommands: 1\n      }\n      \n    } catch (error) {\n      return {\n        success: false,\n        message: `Redoエラー: ${error instanceof Error ? error.message : String(error)}`,\n        commandDescription: command.description,\n        affectedCommands: 0\n      }\n    }\n  }\n  \n  /**\n   * 複数のコマンドを一括でUndo\n   */\n  async undoMultiple(count: number, game: Game): Promise<UndoRedoResult> {\n    let undoneCount = 0\n    let lastCommand: GameCommand | undefined\n    \n    for (let i = 0; i < count && this.canUndo(); i++) {\n      const result = await this.undo(game)\n      if (result.success) {\n        undoneCount++\n        lastCommand = this.history[this.currentIndex + 1]\n      } else {\n        break\n      }\n    }\n    \n    return {\n      success: undoneCount > 0,\n      message: undoneCount > 0 \n        ? `${undoneCount}個のコマンドを取り消しました`\n        : 'Undo可能なコマンドがありません',\n      commandDescription: lastCommand?.description,\n      affectedCommands: undoneCount\n    }\n  }\n  \n  /**\n   * 特定のカテゴリのコマンドのみをUndo\n   */\n  async undoByCategory(category: CommandCategory, game: Game): Promise<UndoRedoResult> {\n    const commandsToUndo: GameCommand[] = []\n    \n    // 現在位置から逆向きに検索\n    for (let i = this.currentIndex; i >= 0; i--) {\n      const command = this.history[i]\n      if (command.category === category && command.canUndo) {\n        commandsToUndo.push(command)\n        break // 最初に見つかったもののみ\n      }\n    }\n    \n    if (commandsToUndo.length === 0) {\n      return {\n        success: false,\n        message: `カテゴリ「${category}」のUndo可能なコマンドがありません`,\n        affectedCommands: 0\n      }\n    }\n    \n    // Undoを実行\n    const targetCommand = commandsToUndo[0]\n    const targetIndex = this.history.indexOf(targetCommand)\n    \n    let undoneCount = 0\n    while (this.currentIndex >= targetIndex) {\n      const result = await this.undo(game)\n      if (result.success) {\n        undoneCount++\n      } else {\n        break\n      }\n    }\n    \n    return {\n      success: undoneCount > 0,\n      message: `カテゴリ「${category}」のコマンドを含む${undoneCount}個のコマンドを取り消しました`,\n      commandDescription: targetCommand.description,\n      affectedCommands: undoneCount\n    }\n  }\n  \n  /**\n   * Undo可能かチェック\n   */\n  canUndo(): boolean {\n    return this.currentIndex >= 0 && \n           this.currentIndex < this.history.length &&\n           this.history[this.currentIndex].canUndo\n  }\n  \n  /**\n   * Redo可能かチェック\n   */\n  canRedo(): boolean {\n    return this.currentIndex + 1 < this.history.length\n  }\n  \n  /**\n   * Undo可能なコマンド数を取得\n   */\n  getUndoableCount(): number {\n    let count = 0\n    for (let i = this.currentIndex; i >= 0; i--) {\n      if (this.history[i].canUndo) {\n        count++\n      } else {\n        break\n      }\n    }\n    return count\n  }\n  \n  /**\n   * Redo可能なコマンド数を取得\n   */\n  getRedoableCount(): number {\n    return this.history.length - 1 - this.currentIndex\n  }\n  \n  /**\n   * 履歴をクリア\n   */\n  clear(): void {\n    this.history = []\n    this.currentIndex = -1\n    this.resetStats()\n  }\n  \n  /**\n   * 現在の履歴状態を取得\n   */\n  getHistoryState(): {\n    canUndo: boolean\n    canRedo: boolean\n    undoableCount: number\n    redoableCount: number\n    currentCommand?: string\n    nextCommand?: string\n  } {\n    return {\n      canUndo: this.canUndo(),\n      canRedo: this.canRedo(),\n      undoableCount: this.getUndoableCount(),\n      redoableCount: this.getRedoableCount(),\n      currentCommand: this.currentIndex >= 0 \n        ? this.history[this.currentIndex].description \n        : undefined,\n      nextCommand: this.canRedo() \n        ? this.history[this.currentIndex + 1].description \n        : undefined\n    }\n  }\n  \n  /**\n   * 履歴の統計を取得\n   */\n  getStats(): CommandHistoryStats {\n    return { ...this.stats }\n  }\n  \n  /**\n   * 履歴の詳細を取得（デバッグ用）\n   */\n  getHistoryDetails(): Array<{\n    index: number\n    command: string\n    category: CommandCategory\n    timestamp: Date\n    canUndo: boolean\n    isCurrent: boolean\n  }> {\n    return this.history.map((command, index) => ({\n      index,\n      command: command.description,\n      category: command.category,\n      timestamp: command.timestamp,\n      canUndo: command.canUndo,\n      isCurrent: index === this.currentIndex\n    }))\n  }\n  \n  /**\n   * 特定時点までの状態を復元\n   */\n  async restoreToPoint(targetIndex: number, game: Game): Promise<UndoRedoResult> {\n    if (targetIndex < -1 || targetIndex >= this.history.length) {\n      return {\n        success: false,\n        message: '無効な復元ポイントです',\n        affectedCommands: 0\n      }\n    }\n    \n    let affectedCommands = 0\n    \n    // 現在位置からターゲットまでUndo\n    while (this.currentIndex > targetIndex) {\n      const result = await this.undo(game)\n      if (result.success) {\n        affectedCommands++\n      } else {\n        break\n      }\n    }\n    \n    // ターゲットから現在位置までRedo\n    while (this.currentIndex < targetIndex) {\n      const result = await this.redo(game)\n      if (result.success) {\n        affectedCommands++\n      } else {\n        break\n      }\n    }\n    \n    return {\n      success: true,\n      message: `${affectedCommands}個のコマンドを処理して状態を復元しました`,\n      affectedCommands\n    }\n  }\n  \n  // === プライベートメソッド ===\n  \n  /**\n   * コマンドを履歴に追加\n   */\n  private addToHistory(command: GameCommand): void {\n    // Redoスタックをクリア\n    if (this.currentIndex < this.history.length - 1) {\n      this.history = this.history.slice(0, this.currentIndex + 1)\n    }\n    \n    // コマンドマージを試行\n    if (this.config.enableMerging && this.canMergeWithLast(command)) {\n      const lastCommand = this.history[this.currentIndex]\n      const mergedCommand = lastCommand.mergeWith(command)\n      \n      if (!(mergedCommand instanceof NoOpCommand)) {\n        this.history[this.currentIndex] = mergedCommand\n        this.stats.mergedCommands++\n      } else {\n        // 相殺の場合は前のコマンドを削除\n        this.history.pop()\n        this.currentIndex--\n      }\n    } else {\n      // 通常の追加\n      this.history.push(command)\n      this.currentIndex++\n    }\n    \n    // 履歴サイズの制限\n    if (this.history.length > this.config.maxHistorySize) {\n      const removeCount = this.history.length - this.config.maxHistorySize\n      this.history = this.history.slice(removeCount)\n      this.currentIndex -= removeCount\n    }\n  }\n  \n  /**\n   * 最後のコマンドとマージ可能かチェック\n   */\n  private canMergeWithLast(command: GameCommand): boolean {\n    if (this.currentIndex < 0) return false\n    \n    const lastCommand = this.history[this.currentIndex]\n    const timeDiff = command.timestamp.getTime() - lastCommand.timestamp.getTime()\n    \n    return timeDiff <= this.config.mergeTimeWindow && \n           lastCommand.canMergeWith(command)\n  }\n  \n  /**\n   * 統計を更新\n   */\n  private updateStats(command: GameCommand): void {\n    this.stats.totalCommands++\n    \n    if (command.canUndo) {\n      this.stats.undoableCommands++\n    }\n    \n    this.stats.commandsByCategory[command.category]++\n  }\n  \n  /**\n   * 統計をリセット\n   */\n  private resetStats(): void {\n    this.stats = {\n      totalCommands: 0,\n      undoableCommands: 0,\n      commandsByCategory: {\n        card_selection: 0,\n        challenge: 0,\n        insurance: 0,\n        turn_progression: 0,\n        system: 0\n      },\n      averageCommandsPerTurn: 0,\n      mergedCommands: 0\n    }\n  }\n}
+import type { CommandCategory, GameCommand } from './GameCommand'
+import { CompositeCommand, NoOpCommand } from './GameCommand'
+
+/**
+ * コマンド履歴の設定
+ */
+export interface CommandHistoryConfig {
+  maxHistorySize: number
+  enableMerging: boolean
+  mergeTimeWindow: number // ミリ秒
+  undoableTurnLimit: number // Undo可能なターン数の制限
+}
+
+/**
+ * コマンド履歴の統計
+ */
+export interface CommandHistoryStats {
+  totalCommands: number
+  undoableCommands: number
+  commandsByCategory: Record<CommandCategory, number>
+  averageCommandsPerTurn: number
+  mergedCommands: number
+}
+
+/**
+ * Undo/Redo操作の結果
+ */
+export interface UndoRedoResult {
+  success: boolean
+  message: string
+  commandDescription?: string
+  affectedCommands: number
+}
+
+/**
+ * コマンド履歴管理クラス
+ * Undo/Redo機能の中核を担う
+ */
+export class CommandHistory {
+  private history: GameCommand[] = []
+  private currentIndex = -1
+  private readonly config: CommandHistoryConfig
+  private stats: CommandHistoryStats
+  
+  constructor(config?: Partial<CommandHistoryConfig>) {
+    this.config = {
+      maxHistorySize: 50,
+      enableMerging: true,
+      mergeTimeWindow: 1000, // 1秒
+      undoableTurnLimit: 3,
+      ...config
+    }
+    
+    this.stats = {
+      totalCommands: 0,
+      undoableCommands: 0,
+      commandsByCategory: {
+        card_selection: 0,
+        challenge: 0,
+        insurance: 0,
+        turn_progression: 0,
+        system: 0
+      },
+      averageCommandsPerTurn: 0,
+      mergedCommands: 0
+    }
+  }
+  
+  /**
+   * コマンドを実行して履歴に追加
+   */
+  async executeCommand(command: GameCommand, game: Game): Promise<UndoRedoResult> {
+    try {
+      // コマンドの妥当性をチェック
+      if (!command.isValid(game)) {
+        return {
+          success: false,
+          message: 'コマンドが無効です',
+          affectedCommands: 0
+        }
+      }
+      
+      // コマンドを実行
+      await command.execute(game)
+      
+      // 履歴に追加
+      this.addToHistory(command)
+      
+      // 統計を更新
+      this.updateStats(command)
+      
+      return {
+        success: true,
+        message: 'コマンドを実行しました',
+        commandDescription: command.description,
+        affectedCommands: 1
+      }
+      
+    } catch (error) {
+      return {
+        success: false,
+        message: `コマンド実行エラー: ${error instanceof Error ? error.message : String(error)}`,
+        affectedCommands: 0
+      }
+    }
+  }
+  
+  /**
+   * 一つ前のコマンドを取り消し
+   */
+  async undo(game: Game): Promise<UndoRedoResult> {
+    if (!this.canUndo()) {
+      return {
+        success: false,
+        message: 'Undo可能なコマンドがありません',
+        affectedCommands: 0
+      }
+    }
+    
+    const command = this.history[this.currentIndex]
+    
+    if (!command.canUndo) {
+      return {
+        success: false,
+        message: 'このコマンドはUndo不可です',
+        commandDescription: command.description,
+        affectedCommands: 0
+      }
+    }
+    
+    try {
+      await command.undo(game)
+      this.currentIndex--
+      
+      return {
+        success: true,
+        message: 'コマンドを取り消しました',
+        commandDescription: command.description,
+        affectedCommands: 1
+      }
+      
+    } catch (error) {
+      return {
+        success: false,
+        message: `Undoエラー: ${error instanceof Error ? error.message : String(error)}`,
+        commandDescription: command.description,
+        affectedCommands: 0
+      }
+    }
+  }
+  
+  /**
+   * 取り消したコマンドを再実行
+   */
+  async redo(game: Game): Promise<UndoRedoResult> {
+    if (!this.canRedo()) {
+      return {
+        success: false,
+        message: 'Redo可能なコマンドがありません',
+        affectedCommands: 0
+      }
+    }
+    
+    const command = this.history[this.currentIndex + 1]
+    
+    try {
+      await command.execute(game)
+      this.currentIndex++
+      
+      return {
+        success: true,
+        message: 'コマンドを再実行しました',
+        commandDescription: command.description,
+        affectedCommands: 1
+      }
+      
+    } catch (error) {
+      return {
+        success: false,
+        message: `Redoエラー: ${error instanceof Error ? error.message : String(error)}`,
+        commandDescription: command.description,
+        affectedCommands: 0
+      }
+    }
+  }
+  
+  /**
+   * 複数のコマンドを一括でUndo
+   */
+  async undoMultiple(count: number, game: Game): Promise<UndoRedoResult> {
+    let undoneCount = 0
+    let lastCommand: GameCommand | undefined
+    
+    for (let i = 0; i < count && this.canUndo(); i++) {
+      const result = await this.undo(game)
+      if (result.success) {
+        undoneCount++
+        lastCommand = this.history[this.currentIndex + 1]
+      } else {
+        break
+      }
+    }
+    
+    return {
+      success: undoneCount > 0,
+      message: undoneCount > 0 
+        ? `${undoneCount}個のコマンドを取り消しました`
+        : 'Undo可能なコマンドがありません',
+      commandDescription: lastCommand?.description,
+      affectedCommands: undoneCount
+    }
+  }
+  
+  /**
+   * 特定のカテゴリのコマンドのみをUndo
+   */
+  async undoByCategory(category: CommandCategory, game: Game): Promise<UndoRedoResult> {
+    const commandsToUndo: GameCommand[] = []
+    
+    // 現在位置から逆向きに検索
+    for (let i = this.currentIndex; i >= 0; i--) {
+      const command = this.history[i]
+      if (command.category === category && command.canUndo) {
+        commandsToUndo.push(command)
+        break // 最初に見つかったもののみ
+      }
+    }
+    
+    if (commandsToUndo.length === 0) {
+      return {
+        success: false,
+        message: `カテゴリ「${category}」のUndo可能なコマンドがありません`,
+        affectedCommands: 0
+      }
+    }
+    
+    // Undoを実行
+    const targetCommand = commandsToUndo[0]
+    const targetIndex = this.history.indexOf(targetCommand)
+    
+    let undoneCount = 0
+    while (this.currentIndex >= targetIndex) {
+      const result = await this.undo(game)
+      if (result.success) {
+        undoneCount++
+      } else {
+        break
+      }
+    }
+    
+    return {
+      success: undoneCount > 0,
+      message: `カテゴリ「${category}」のコマンドを含む${undoneCount}個のコマンドを取り消しました`,
+      commandDescription: targetCommand.description,
+      affectedCommands: undoneCount
+    }
+  }
+  
+  /**
+   * Undo可能かチェック
+   */
+  canUndo(): boolean {
+    return this.currentIndex >= 0 && 
+           this.currentIndex < this.history.length &&
+           this.history[this.currentIndex].canUndo
+  }
+  
+  /**
+   * Redo可能かチェック
+   */
+  canRedo(): boolean {
+    return this.currentIndex + 1 < this.history.length
+  }
+  
+  /**
+   * Undo可能なコマンド数を取得
+   */
+  getUndoableCount(): number {
+    let count = 0
+    for (let i = this.currentIndex; i >= 0; i--) {
+      if (this.history[i].canUndo) {
+        count++
+      } else {
+        break
+      }
+    }
+    return count
+  }
+  
+  /**
+   * Redo可能なコマンド数を取得
+   */
+  getRedoableCount(): number {
+    return this.history.length - 1 - this.currentIndex
+  }
+  
+  /**
+   * 履歴をクリア
+   */
+  clear(): void {
+    this.history = []
+    this.currentIndex = -1
+    this.resetStats()
+  }
+  
+  /**
+   * 現在の履歴状態を取得
+   */
+  getHistoryState(): {
+    canUndo: boolean
+    canRedo: boolean
+    undoableCount: number
+    redoableCount: number
+    currentCommand?: string
+    nextCommand?: string
+  } {
+    return {
+      canUndo: this.canUndo(),
+      canRedo: this.canRedo(),
+      undoableCount: this.getUndoableCount(),
+      redoableCount: this.getRedoableCount(),
+      currentCommand: this.currentIndex >= 0 
+        ? this.history[this.currentIndex].description 
+        : undefined,
+      nextCommand: this.canRedo() 
+        ? this.history[this.currentIndex + 1].description 
+        : undefined
+    }
+  }
+  
+  /**
+   * 履歴の統計を取得
+   */
+  getStats(): CommandHistoryStats {
+    return { ...this.stats }
+  }
+  
+  /**
+   * 履歴の詳細を取得（デバッグ用）
+   */
+  getHistoryDetails(): Array<{
+    index: number
+    command: string
+    category: CommandCategory
+    timestamp: Date
+    canUndo: boolean
+    isCurrent: boolean
+  }> {
+    return this.history.map((command, index) => ({
+      index,
+      command: command.description,
+      category: command.category,
+      timestamp: command.timestamp,
+      canUndo: command.canUndo,
+      isCurrent: index === this.currentIndex
+    }))
+  }
+  
+  /**
+   * 特定時点までの状態を復元
+   */
+  async restoreToPoint(targetIndex: number, game: Game): Promise<UndoRedoResult> {
+    if (targetIndex < -1 || targetIndex >= this.history.length) {
+      return {
+        success: false,
+        message: '無効な復元ポイントです',
+        affectedCommands: 0
+      }
+    }
+    
+    let affectedCommands = 0
+    
+    // 現在位置からターゲットまでUndo
+    while (this.currentIndex > targetIndex) {
+      const result = await this.undo(game)
+      if (result.success) {
+        affectedCommands++
+      } else {
+        break
+      }
+    }
+    
+    // ターゲットから現在位置までRedo
+    while (this.currentIndex < targetIndex) {
+      const result = await this.redo(game)
+      if (result.success) {
+        affectedCommands++
+      } else {
+        break
+      }
+    }
+    
+    return {
+      success: true,
+      message: `${affectedCommands}個のコマンドを処理して状態を復元しました`,
+      affectedCommands
+    }
+  }
+  
+  // === プライベートメソッド ===
+  
+  /**
+   * コマンドを履歴に追加
+   */
+  private addToHistory(command: GameCommand): void {
+    // Redoスタックをクリア
+    if (this.currentIndex < this.history.length - 1) {
+      this.history = this.history.slice(0, this.currentIndex + 1)
+    }
+    
+    // コマンドマージを試行
+    if (this.config.enableMerging && this.canMergeWithLast(command)) {
+      const lastCommand = this.history[this.currentIndex]
+      const mergedCommand = lastCommand.mergeWith(command)
+      
+      if (!(mergedCommand instanceof NoOpCommand)) {
+        this.history[this.currentIndex] = mergedCommand
+        this.stats.mergedCommands++
+      } else {
+        // 相殺の場合は前のコマンドを削除
+        this.history.pop()
+        this.currentIndex--
+      }
+    } else {
+      // 通常の追加
+      this.history.push(command)
+      this.currentIndex++
+    }
+    
+    // 履歴サイズの制限
+    if (this.history.length > this.config.maxHistorySize) {
+      const removeCount = this.history.length - this.config.maxHistorySize
+      this.history = this.history.slice(removeCount)
+      this.currentIndex -= removeCount
+    }
+  }
+  
+  /**
+   * 最後のコマンドとマージ可能かチェック
+   */
+  private canMergeWithLast(command: GameCommand): boolean {
+    if (this.currentIndex < 0) return false
+    
+    const lastCommand = this.history[this.currentIndex]
+    const timeDiff = command.timestamp.getTime() - lastCommand.timestamp.getTime()
+    
+    return timeDiff <= this.config.mergeTimeWindow && 
+           lastCommand.canMergeWith(command)
+  }
+  
+  /**
+   * 統計を更新
+   */
+  private updateStats(command: GameCommand): void {
+    this.stats.totalCommands++
+    
+    if (command.canUndo) {
+      this.stats.undoableCommands++
+    }
+    
+    this.stats.commandsByCategory[command.category]++
+  }
+  
+  /**
+   * 統計をリセット
+   */
+  private resetStats(): void {
+    this.stats = {
+      totalCommands: 0,
+      undoableCommands: 0,
+      commandsByCategory: {
+        card_selection: 0,
+        challenge: 0,
+        insurance: 0,
+        turn_progression: 0,
+        system: 0
+      },
+      averageCommandsPerTurn: 0,
+      mergedCommands: 0
+    }
+  }
+}

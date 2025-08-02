@@ -43,15 +43,15 @@ export interface ErrorReport {
 }
 
 export class ErrorReporter {
-  private options: Required<ReportOptions>
+  private readonly options: Required<ReportOptions>
   private queue: ErrorReport[] = []
   private isReporting = false
-  private sessionId: string
-  private sessionStartTime: number
+  private readonly sessionId: string
+  private readonly sessionStartTime: number
   private pageViews = 0
   private reportInterval: number | null = null
-  private maxQueueSize = 50
-  private batchSize = 10
+  private readonly maxQueueSize = 50
+  private readonly batchSize = 10
 
   constructor(options: ReportOptions = {}) {
     this.options = {
@@ -236,7 +236,7 @@ export class ErrorReporter {
     const pushState = history.pushState
     history.pushState = (...args) => {
       this.pageViews++
-      return pushState.apply(history, args)
+      pushState.apply(history, args);
     }
   }
 

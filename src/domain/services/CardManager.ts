@@ -238,13 +238,13 @@ export class CardManager implements ICardManager {
       }
       this.invalidateCache()
       return false // 選択解除
-    } else {
+    } 
       // 選択
       CardManager.CARD_POOLS.selectedIds.add(cardId)
       this.selectedCards.push(card)
       this.invalidateCache()
       return true // 選択
-    }
+    
   }
 
   /**

@@ -57,8 +57,8 @@ interface ServiceRegistration {
  * DIコンテナの実装
  */
 export class ServiceContainer {
-  private services = new Map<ServiceIdentifier, ServiceRegistration>()
-  private scopeInstances = new Map<ServiceIdentifier, any>()
+  private readonly services = new Map<ServiceIdentifier, ServiceRegistration>()
+  private readonly scopeInstances = new Map<ServiceIdentifier, any>()
 
   /**
    * サービスを登録
@@ -131,7 +131,7 @@ export class ServiceContainer {
  * サービスファクトリーの実装
  */
 export class ServiceFactory {
-  private static container = new ServiceContainer()
+  private static readonly container = new ServiceContainer()
 
   /**
    * デフォルトサービスを初期化
@@ -254,7 +254,7 @@ export class ServiceFactory {
  * （ServiceFactory の代替実装）
  */
 export class ServiceLocator {
-  private static services = new Map<string, any>()
+  private static readonly services = new Map<string, any>()
 
   /**
    * サービスを設定
@@ -302,7 +302,7 @@ export interface ServiceModule {
  * モジュールローダー
  */
 export class ModuleLoader {
-  private static modules = new Map<string, ServiceModule>()
+  private static readonly modules = new Map<string, ServiceModule>()
   private static loadOrder: string[] = []
 
   /**

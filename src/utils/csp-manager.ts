@@ -167,8 +167,8 @@ export class CSPManager {
       this.directives[directive] = []
     }
     
-    if (!this.directives[directive]!.includes(value)) {
-      this.directives[directive]!.push(value)
+    if (!this.directives[directive].includes(value)) {
+      this.directives[directive].push(value)
       this.updateCSPMetaTag()
     }
   }
@@ -178,7 +178,7 @@ export class CSPManager {
    */
   removeFromDirective(directive: keyof CSPDirectives, value: string): void {
     if (this.directives[directive]) {
-      this.directives[directive] = this.directives[directive]!.filter(v => v !== value)
+      this.directives[directive] = this.directives[directive].filter(v => v !== value)
       this.updateCSPMetaTag()
     }
   }

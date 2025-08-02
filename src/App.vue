@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 // import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
 import transitionAnimations from './components/animations/TransitionAnimations.vue'
@@ -7,6 +7,7 @@ import accessibilitySettings from './components/accessibility/AccessibilitySetti
 import visualIndicators from './components/accessibility/VisualIndicators.vue'
 import errorBoundary from './components/error/ErrorBoundary.vue'
 import errorNotification from './components/error/ErrorNotification.vue'
+import mobileErrorHandler from './components/error/MobileErrorHandler.vue'
 // import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue' // 動的インポートに変更
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
@@ -20,14 +21,46 @@ import featureShowcase from './components/layout/FeatureShowcase.vue'
 // 国際化コンポーネント
 import languageSwitcher from './components/i18n/LanguageSwitcher.vue'
 
+// PWAコンポーネント
+import pwaInstallPrompt from './components/pwa/PWAInstallPrompt.vue'
+import pwaStatusIndicator from './components/pwa/PWAStatusIndicator.vue'
+
 // 国際化機能
 const { t } = useI18n()
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
 const showStatistics = ref(false)
-const StatisticsDashboard = defineAsyncComponent(() => import('./components/statistics/StatisticsDashboard.vue'))
-const FeedbackButton = defineAsyncComponent(() => import('./components/feedback/FeedbackButton.vue'))
-const GameCanvas = defineAsyncComponent(() => import('./components/game/GameCanvas.vue'))
+const isMobile = ref(false)
+// 動的インポートにエラーハンドリングを追加
+const StatisticsDashboard = defineAsyncComponent({
+  loader: async () => import('./components/statistics/StatisticsDashboard.vue'),
+  errorComponent: {
+    template: '<div></div>' // エラー時は空のコンポーネント
+  },
+  delay: 200,
+  timeout: 10000
+})
+
+const FeedbackButton = defineAsyncComponent({
+  loader: async () => import('./components/feedback/FeedbackButton.vue').catch(() => {
+    console.warn('FeedbackButton could not be loaded')
+    return { template: '<div></div>' } // フォールバック
+  }),
+  errorComponent: {
+    template: '<div></div>' // エラー時は空のコンポーネント
+  },
+  delay: 200,
+  timeout: 10000
+})
+
+const GameCanvas = defineAsyncComponent({
+  loader: async () => import('./components/game/GameCanvas.vue'),
+  errorComponent: {
+    template: '<div class="error-container"><p>ゲームの読み込みに失敗しました</p></div>'
+  },
+  delay: 200,
+  timeout: 30000
+})
 
 // コンポーネント参照
 const navigationRef = ref<InstanceType<typeof navigationActions>>()
@@ -91,7 +124,41 @@ const handleFeedbackSubmitted = (feedbackId: string, type: string): void => {
   // trackFeedbackEvent(type, feedbackId)
 }
 
+// エラータイプを判定
+const getErrorType = (error: Error): 'network' | 'dynamic-import' | 'runtime' | 'permission' | 'unknown' => {
+  const message = error.message.toLowerCase()
+  
+  if (message.includes('dynamically imported module') || message.includes('failed to fetch')) {
+    return 'dynamic-import'
+  }
+  if (message.includes('network') || message.includes('fetch')) {
+    return 'network'
+  }
+  if (message.includes('permission') || message.includes('cors')) {
+    return 'permission'
+  }
+  if (message.includes('cannot read') || message.includes('undefined')) {
+    return 'runtime'
+  }
+  
+  return 'unknown'
+}
+
+// ホーム画面のエラーハンドリング
+const handleHomeError = (error: Error, info: string) => {
+  console.error('Home screen error:', error, info)
+}
+
+// エラーレポート送信
+const reportError = (error: Error) => {
+  console.log('Error report:', error)
+  // 将来的にエラーレポートAPIに送信
+}
+
 onMounted(() => {
+  // モバイル判定
+  isMobile.value = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  
   // アクセシビリティマネージャーを初期化
   keyboardManager = new KeyboardManager()
   screenReaderManager = new ScreenReaderManager()
@@ -223,7 +290,11 @@ onUnmounted(() => {
 
       <!-- ホーム画面 -->
       <div v-else class="home-view" id="main-content" role="main" aria-label="ホーム画面">
-        <errorBoundary fallback="minimal">
+        <errorBoundary 
+          fallback="custom"
+          :can-recover="true"
+          @error="handleHomeError"
+        >
           <div class="home-container">
             <appHeader />
 
@@ -238,6 +309,26 @@ onUnmounted(() => {
               <featureShowcase />
             </section>
           </div>
+          
+          <!-- カスタムエラーフォールバック（モバイル対応） -->
+          <template #error="{ error, retry, reload }">
+            <MobileErrorHandler
+              v-if="isMobile"
+              :error="error"
+              :error-type="getErrorType(error)"
+              @retry="retry"
+              @go-home="reload"
+              @report-error="reportError"
+            />
+            <div v-else class="desktop-error">
+              <h2>エラーが発生しました</h2>
+              <p>{{ error.message }}</p>
+              <div class="desktop-error-actions">
+                <button @click="retry" class="error-btn">もう一度試す</button>
+                <button @click="reload" class="error-btn secondary">ページを再読み込み</button>
+              </div>
+            </div>
+          </template>
         </errorBoundary>
       </div>
     </transitionAnimations>
@@ -292,16 +383,71 @@ onUnmounted(() => {
     </Teleport>
 
     <!-- フィードバックボタン -->
-    <FeedbackButton
-      :game-state="gameState"
-      :show-stats="true"
-      :auto-survey="true"
-      @feedback-submitted="handleFeedbackSubmitted"
-    />
+    <Suspense>
+      <FeedbackButton
+        :game-state="gameState"
+        :show-stats="true"
+        :auto-survey="true"
+        @feedback-submitted="handleFeedbackSubmitted"
+      />
+      <template #fallback>
+        <!-- フィードバックボタンのフォールバック（非表示） -->
+      </template>
+    </Suspense>
+
+    <!-- PWA機能 -->
+    <pwaInstallPrompt />
+    <pwaStatusIndicator />
   </div>
 </template>
 
 <style scoped>
+/* デスクトップエラースタイル */
+.desktop-error {
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.desktop-error h2 {
+  color: #ef4444;
+  margin-bottom: var(--space-md);
+}
+
+.desktop-error p {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: var(--space-lg);
+}
+
+.desktop-error-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+.error-btn {
+  padding: var(--space-sm) var(--space-lg);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  background: #667eea;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.error-btn:hover {
+  background: #5a67d8;
+  transform: translateY(-1px);
+}
+
+.error-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.error-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
 /* =================================
    アプリケーション基本レイアウト
    ================================= */

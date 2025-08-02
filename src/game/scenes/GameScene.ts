@@ -27,19 +27,19 @@ import { MobilePerformanceManager } from '../systems/MobilePerformanceManager'
 export class GameScene extends BaseScene {
   private gameInstance!: Game
   private handCards: Phaser.GameObjects.Container[] = []
-  private selectedCards: Set<string> = new Set()
+  private readonly selectedCards: Set<string> = new Set()
   private cardSelectionUI?: Phaser.GameObjects.Container
   private insuranceTypeSelectionUI?: Phaser.GameObjects.Container
   private selectedInsuranceType?: 'whole_life' | 'term'
   private vitalityBarContainer?: Phaser.GameObjects.Container
   private vitalityBar?: Phaser.GameObjects.Rectangle
-  private vitalityBarMaxWidth: number = 300
+  private readonly vitalityBarMaxWidth: number = 300
   private insuranceListContainer?: Phaser.GameObjects.Container
   private burdenIndicatorContainer?: Phaser.GameObjects.Container
   private insuranceRenewalDialogUI?: Phaser.GameObjects.Container
   
   // ダーティフラグによるUI最適化
-  private dirtyFlags = {
+  private readonly dirtyFlags = {
     vitality: false,
     insurance: false,
     burden: false,
@@ -51,16 +51,16 @@ export class GameScene extends BaseScene {
   }
   
   // パフォーマンス最適化用のスロットリング
-  private updateThrottleTimers = {
+  private readonly updateThrottleTimers = {
     vitality: 0,
     insurance: 0,
     burden: 0
   }
   
   // パフォーマンス最適化用
-  private frameSkipCounter: number = 0
+  private readonly frameSkipCounter: number = 0
   private frameSkipThreshold: number = 2
-  private objectPools: Record<string, any[]> = {
+  private readonly objectPools: Record<string, any[]> = {
     effects: [],
     texts: [],
     graphics: []
@@ -76,17 +76,17 @@ export class GameScene extends BaseScene {
   private soundManager?: SoundManager
   
   // メモリリーク防止用
-  private eventCleanupManager: EventCleanupManager = new EventCleanupManager()
+  private readonly eventCleanupManager: EventCleanupManager = new EventCleanupManager()
   
   // チュートリアル関連
   private tutorialManager?: TutorialManager
   private tutorialOverlay?: TutorialOverlay
   private isTutorialMode: boolean = false
-  private tutorialStepElements: Map<string, Phaser.GameObjects.GameObject> = new Map()
+  private readonly tutorialStepElements: Map<string, Phaser.GameObjects.GameObject> = new Map()
   private shouldStartTutorial: boolean = false
   
   // アニメーション関連
-  private animationManager: UnifiedAnimationManager
+  private readonly animationManager: UnifiedAnimationManager
 
   constructor() {
     super({ key: 'GameScene' })
@@ -664,7 +664,7 @@ export class GameScene extends BaseScene {
       0,
       0,
       'カードを引く',
-      () => this.drawCards(1),
+      () => { this.drawCards(1); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '18px',
@@ -678,7 +678,7 @@ export class GameScene extends BaseScene {
       0,
       60,
       'チャレンジ',
-      () => this.startChallenge(),
+      () => { this.startChallenge(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '18px',
@@ -692,7 +692,7 @@ export class GameScene extends BaseScene {
       0,
       120,
       'ターン終了',
-      () => this.endTurn(),
+      () => { this.endTurn(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '18px',
@@ -770,9 +770,9 @@ export class GameScene extends BaseScene {
     // アクションボタンを登録
     const actionButtons = this.children.getByName('action-buttons') as Phaser.GameObjects.Container
     if (actionButtons) {
-      const drawButton = actionButtons.getByName('draw-button') as Phaser.GameObjects.Container
-      const challengeButton = actionButtons.getByName('challenge-button') as Phaser.GameObjects.Container
-      const endTurnButton = actionButtons.getByName('end-turn-button') as Phaser.GameObjects.Container
+      const drawButton = actionButtons.getByName('draw-button')
+      const challengeButton = actionButtons.getByName('challenge-button')
+      const endTurnButton = actionButtons.getByName('end-turn-button')
       
       if (drawButton) {
         this.keyboardController.registerFocusableElement(drawButton, () => {
@@ -1468,7 +1468,7 @@ export class GameScene extends BaseScene {
 
     // 既存のカードアイテムを削除（タイトル以外）
     const itemsToRemove = this.insuranceListContainer.list.filter((item, index) => index > 0)
-    itemsToRemove.forEach(item => item.destroy())
+    itemsToRemove.forEach(item => { item.destroy(); })
 
     const activeInsurances = this.gameInstance.getActiveInsurances()
     
@@ -1670,7 +1670,7 @@ export class GameScene extends BaseScene {
   private updateBurdenIndicator(): void {
     if (!this.burdenIndicatorContainer) return
 
-    const burdenText = this.burdenIndicatorContainer.getByName('burden-value') as Phaser.GameObjects.Text
+    const burdenText = this.burdenIndicatorContainer.getByName('burden-value')
     if (!burdenText) return
 
     const burden = this.gameInstance.insuranceBurden
@@ -1867,7 +1867,7 @@ export class GameScene extends BaseScene {
         ease: 'Power2',
         yoyo: true,
         repeat: 1,
-        onComplete: () => glow.destroy()
+        onComplete: () => { glow.destroy(); }
       })
     }
 
@@ -1893,10 +1893,10 @@ export class GameScene extends BaseScene {
     const textsToRemove = powerDisplay.list.filter(item => 
       item instanceof Phaser.GameObjects.Text && item.name !== 'power-text' && item.name !== 'count-text'
     )
-    textsToRemove.forEach(text => text.destroy())
+    textsToRemove.forEach(text => { text.destroy(); })
     
-    const powerText = powerDisplay.getByName('power-text') as Phaser.GameObjects.Text
-    const countText = powerDisplay.getByName('count-text') as Phaser.GameObjects.Text
+    const powerText = powerDisplay.getByName('power-text')
+    const countText = powerDisplay.getByName('count-text')
     
     if (powerText) {
       powerText.setText(`合計パワー: ${powerBreakdown.total}`)
@@ -2360,7 +2360,7 @@ export class GameScene extends BaseScene {
       this.gameWidth - 150,
       400,
       'チャレンジに挑む',
-      () => this.resolveChallenge(),
+      () => { this.resolveChallenge(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
@@ -2545,7 +2545,7 @@ export class GameScene extends BaseScene {
           targets: resultContainer,
           scale: 0,
           duration: 300,
-          onComplete: () => resultContainer.destroy()
+          onComplete: () => { resultContainer.destroy(); }
         })
       },
       {
@@ -2588,11 +2588,11 @@ export class GameScene extends BaseScene {
     
     if (this.gameInstance.stage === 'youth') {
       return turn
-    } else if (this.gameInstance.stage === 'middle') {
+    } if (this.gameInstance.stage === 'middle') {
       return turn - GAME_CONSTANTS.STAGE_TURNS.youth
-    } else {
+    } 
       return turn - GAME_CONSTANTS.STAGE_TURNS.youth - GAME_CONSTANTS.STAGE_TURNS.middle
-    }
+    
   }
 
   /**
@@ -2651,7 +2651,7 @@ export class GameScene extends BaseScene {
     ).setOrigin(0.5)
     
     // DOM要素としてアニメーションを適用
-    const textElement = text.canvas as HTMLCanvasElement
+    const textElement = text.canvas
     if (textElement && textElement.parentElement) {
       this.animationManager.animate(textElement.parentElement, 'scaleIn', {
         duration: 600,
@@ -2710,7 +2710,7 @@ export class GameScene extends BaseScene {
           targets: transitionContainer,
           alpha: 0,
           duration: 500,
-          onComplete: () => transitionContainer.destroy()
+          onComplete: () => { transitionContainer.destroy(); }
         })
       },
       {
@@ -2790,7 +2790,7 @@ export class GameScene extends BaseScene {
   private getInsuranceReviewRecommendation(stageName: string): string {
     if (stageName === '中年期') {
       return '📌 保険見直しの機会\n定期保険から終身保険への変更を検討しましょう'
-    } else if (stageName === '充実期') {
+    } if (stageName === '充実期') {
       return '📌 総合的な保険見直し\n終身保険の価値が大幅に上昇します！'
     }
     return ''
@@ -2810,7 +2810,7 @@ export class GameScene extends BaseScene {
    */
   private checkExpiringInsurances(): void {
     // 保険更新システムが削除されたため、この機能は無効化
-    return
+    
   }
 
   /**
@@ -2884,7 +2884,7 @@ export class GameScene extends BaseScene {
             alpha: 0,
             duration: 500,
             ease: 'Power2',
-            onComplete: () => warningContainer.destroy()
+            onComplete: () => { warningContainer.destroy(); }
           })
         })
       }
@@ -2986,7 +2986,7 @@ export class GameScene extends BaseScene {
             alpha: 0,
             duration: 500,
             ease: 'Power2',
-            onComplete: () => warningContainer.destroy()
+            onComplete: () => { warningContainer.destroy(); }
           })
         })
       }
@@ -3257,7 +3257,7 @@ export class GameScene extends BaseScene {
     const selectButton = this.createButton(
       0, 160,
       '選択する',
-      () => this.onInsuranceTypeSelected(insuranceType),
+      () => { this.onInsuranceTypeSelected(insuranceType); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
@@ -3741,7 +3741,7 @@ export class GameScene extends BaseScene {
     const selectButton = this.createButton(
       0, 120,
       '選択',
-      () => this.onCardSelected(card),
+      () => { this.onCardSelected(card); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '18px',
@@ -3916,7 +3916,7 @@ export class GameScene extends BaseScene {
                 alpha: 0,
                 duration: 500,
                 ease: 'Power2',
-                onComplete: () => warningContainer.destroy()
+                onComplete: () => { warningContainer.destroy(); }
               })
             })
           }
@@ -3939,7 +3939,7 @@ export class GameScene extends BaseScene {
       targets: flashOverlay,
       alpha: 0,
       duration: 200,
-      onComplete: () => flashOverlay.destroy()
+      onComplete: () => { flashOverlay.destroy(); }
     })
   }
 
@@ -4058,9 +4058,9 @@ export class GameScene extends BaseScene {
     const actionButtons = this.children.getByName('action-buttons') as Phaser.GameObjects.Container
     if (!actionButtons) return
 
-    const drawButton = actionButtons.getByName('draw-button') as Phaser.GameObjects.Container
-    const challengeButton = actionButtons.getByName('challenge-button') as Phaser.GameObjects.Container
-    const endTurnButton = actionButtons.getByName('end-turn-button') as Phaser.GameObjects.Container
+    const drawButton = actionButtons.getByName('draw-button')
+    const challengeButton = actionButtons.getByName('challenge-button')
+    const endTurnButton = actionButtons.getByName('end-turn-button')
 
     const phase = this.gameInstance.phase
     const isInProgress = this.gameInstance.isInProgress()
@@ -4342,7 +4342,7 @@ export class GameScene extends BaseScene {
             alpha: 0,
             duration: 300,
             ease: 'Power2',
-            onComplete: () => notificationContainer.destroy()
+            onComplete: () => { notificationContainer.destroy(); }
           })
         })
       }
@@ -4472,7 +4472,7 @@ export class GameScene extends BaseScene {
       '更新する',
       `コスト: ${renewalOption.renewalCost}`,
       canAffordRenewal ? 0x4CAF50 : 0x9E9E9E, // グリーンまたはグレー
-      () => this.onRenewalSelected(renewalOption, true),
+      () => { this.onRenewalSelected(renewalOption, true); },
       canAffordRenewal
     )
 
@@ -4482,7 +4482,7 @@ export class GameScene extends BaseScene {
       '失効させる',
       'リスクを受け入れる',
       0xF44336, // レッド
-      () => this.onRenewalSelected(renewalOption, false),
+      () => { this.onRenewalSelected(renewalOption, false); },
       true
     )
 
@@ -4641,7 +4641,7 @@ export class GameScene extends BaseScene {
    */
   private checkForAdditionalRenewals(): void {
     // 保険更新システムが削除されたため、この機能は無効化
-    return
+    
   }
 
   // ===================
@@ -4802,16 +4802,16 @@ export class GameScene extends BaseScene {
     this.tutorialOverlay.createControlButtons(
       canGoBack,
       canSkip,
-      () => this.tutorialManager?.nextStep(),
-      canGoBack ? () => this.tutorialManager?.previousStep() : undefined,
-      () => this.tutorialManager?.skipTutorial()
+      async () => this.tutorialManager?.nextStep(),
+      canGoBack ? async () => this.tutorialManager?.previousStep() : undefined,
+      async () => this.tutorialManager?.skipTutorial()
     )
 
     // キーボード操作の有効化
     this.tutorialOverlay.enableKeyboardControls(
-      () => this.tutorialManager?.nextStep(),
-      canGoBack ? () => this.tutorialManager?.previousStep() : undefined,
-      () => this.tutorialManager?.skipTutorial()
+      async () => this.tutorialManager?.nextStep(),
+      canGoBack ? async () => this.tutorialManager?.previousStep() : undefined,
+      async () => this.tutorialManager?.skipTutorial()
     )
 
     // アクション待機の場合の自動進行設定
@@ -4858,7 +4858,7 @@ export class GameScene extends BaseScene {
   /**
    * チュートリアル開始（外部から呼び出し用）
    */
-  public startTutorial(config: TutorialConfig): Promise<void> {
+  public async startTutorial(config: TutorialConfig): Promise<void> {
     if (!this.tutorialManager) {
       return Promise.reject(new Error('Tutorial manager not initialized'))
     }
@@ -5199,7 +5199,7 @@ export class GameScene extends BaseScene {
     }
     
     // 手札表示をクリア
-    this.handCards.forEach(card => card.destroy())
+    this.handCards.forEach(card => { card.destroy(); })
     this.handCards = []
   }
 

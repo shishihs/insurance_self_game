@@ -2,7 +2,7 @@ import type { GameRenderer } from '@/interfaces/GameRenderer'
 import { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
 import { CardFactory } from '@/domain/services/CardFactory'
-import type { GameConfig, ChallengeResult, PlayerStats } from '@/domain/types/game.types'
+import type { ChallengeResult, GameConfig, PlayerStats } from '@/domain/types/game.types'
 import type { GameStage } from '@/domain/types/card.types'
 
 /**
@@ -11,8 +11,8 @@ import type { GameStage } from '@/domain/types/card.types'
  * フレームワーク非依存の純粋なゲームフロー制御
  */
 export class GameController {
-  private game: Game
-  private renderer: GameRenderer
+  private readonly game: Game
+  private readonly renderer: GameRenderer
   private isGameRunning: boolean = false
   private debugMode: boolean = false
 

@@ -36,16 +36,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  BarElement,
   ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart,
+  Legend,
+  LinearScale,
   Title,
-  Tooltip,
-  Legend
+  Tooltip
 } from 'chart.js'
 
 // Chart.jsの登録
@@ -215,7 +215,7 @@ const getChartOptions = () => {
         }
       }
     }
-  } else {
+  } 
     return {
       ...baseOptions,
       scales: {
@@ -249,7 +249,7 @@ const getChartOptions = () => {
         }
       }
     }
-  }
+  
 }
 
 // チャートデータの更新

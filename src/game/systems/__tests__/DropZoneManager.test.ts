@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { DropZoneManager, type DropZone } from '../DropZoneManager'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { type DropZone, DropZoneManager } from '../DropZoneManager'
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
 
@@ -131,7 +131,7 @@ describe('DropZoneManager', () => {
         magneticDistance: 80
       }
 
-      expect(() => dropZoneManager.addZone(zone)).not.toThrow()
+      expect(() => { dropZoneManager.addZone(zone); }).not.toThrow()
     })
 
     it('should remove a drop zone', () => {
@@ -146,11 +146,11 @@ describe('DropZoneManager', () => {
       }
 
       dropZoneManager.addZone(zone)
-      expect(() => dropZoneManager.removeZone('removable-zone')).not.toThrow()
+      expect(() => { dropZoneManager.removeZone('removable-zone'); }).not.toThrow()
     })
 
     it('should handle removing non-existent zones gracefully', () => {
-      expect(() => dropZoneManager.removeZone('non-existent')).not.toThrow()
+      expect(() => { dropZoneManager.removeZone('non-existent'); }).not.toThrow()
     })
   })
 

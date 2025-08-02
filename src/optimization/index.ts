@@ -3,7 +3,64 @@
  * Exports all optimization utilities and systems
  */
 
-// Object Pooling
+// Unified Performance System (New Optimized System)
+export {
+  UnifiedPerformanceSystem,
+  memoize,
+  benchmark
+} from '../optimizations/UnifiedPerformanceSystem'
+
+export type {
+  OptimizationConfig,
+  PerformanceMetrics,
+  OptimizationResult
+} from '../optimizations/UnifiedPerformanceSystem'
+
+// Optimized Utilities
+export {
+  fastShuffle,
+  fastFilter,
+  batchProcess,
+  fastUnique,
+  OptimizedMath,
+  OptimizedString,
+  OptimizedObject,
+  OptimizedAlgorithms,
+  PerformanceUtils,
+  LazyEvaluation,
+  createOptimizedArray,
+  releaseOptimizedArray,
+  memoizeComputation
+} from '../utils/performance/OptimizedUtilities'
+
+// Optimized Game Components
+export {
+  OptimizedCardManager,
+  OptimizedGameStateManager,
+  OptimizedGameAlgorithms,
+  OptimizedGameFactory
+} from '../optimizations/OptimizedGameComponents'
+
+// Benchmark Suite
+export {
+  BenchmarkRunner,
+  GameOptimizationBenchmarks,
+  BenchmarkReporter
+} from '../utils/performance/BenchmarkSuite'
+
+export type {
+  BenchmarkResult,
+  BenchmarkSuite
+} from '../utils/performance/BenchmarkSuite'
+
+// Examples and Demonstrations
+export {
+  OptimizationUsageExamples,
+  BenchmarkExecutionExamples,
+  OptimizationDemonstration
+} from '../optimizations/OptimizationExamples'
+
+// Legacy Object Pooling (maintained for compatibility)
 export {
   ObjectPool,
   CardPool,
@@ -21,7 +78,7 @@ export type {
   PoolEfficiencyReport
 } from './ObjectPooling'
 
-// Cache System
+// Legacy Cache System (maintained for compatibility)
 export {
   LRUCache,
   ComputationCache,
@@ -35,7 +92,7 @@ export type {
   CacheStats
 } from './CacheSystem'
 
-// Batch Processing
+// Legacy Batch Processing (maintained for compatibility)
 export {
   BatchProcessor,
   BatchProcessorManager,

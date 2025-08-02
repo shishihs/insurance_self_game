@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { Insurance } from '../Insurance'
 import { InsuranceId } from '../InsuranceId'
 import { Card } from '../../../entities/Card'

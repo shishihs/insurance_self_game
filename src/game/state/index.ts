@@ -95,11 +95,11 @@ export { StatisticsPanel } from '../ui/StatisticsPanel'
  */
 export class IntegratedGameStateSystem {
   private stateManager: GameStateManager
-  private saveLoadService: SaveLoadService
-  private storageOptimizer: StorageOptimizer
-  private analytics: GameAnalytics
-  private undoRedoManager: UndoRedoManager
-  private analyticsIntegration: AnalyticsIntegration
+  private readonly saveLoadService: SaveLoadService
+  private readonly storageOptimizer: StorageOptimizer
+  private readonly analytics: GameAnalytics
+  private readonly undoRedoManager: UndoRedoManager
+  private readonly analyticsIntegration: AnalyticsIntegration
   
   constructor(config?: {
     storageConfig?: Partial<StorageOptimizerConfig>

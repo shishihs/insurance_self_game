@@ -1,6 +1,6 @@
 import type { GameScene } from './GameScene'
 import { GameManager } from '../GameManager'
-import type { TouchGestureManager, GestureEvent, SwipeDetail, DragDetail } from '../input/TouchGestureManager'
+import type { DragDetail, GestureEvent, SwipeDetail, TouchGestureManager } from '../input/TouchGestureManager'
 
 /**
  * ゲームシーンのレスポンシブ対応ミックスイン
@@ -349,7 +349,7 @@ export const ResponsiveGameSceneMixin = {
     const uiElements = this.children.list.filter(child => child.getData?.('isUI'))
     uiElements.forEach(element => {
       if ('setScale' in element) {
-        (element as any).setScale(scale)
+        (element).setScale(scale)
       }
     })
   },

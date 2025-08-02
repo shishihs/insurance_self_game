@@ -1,1 +1,369 @@
-import type { Game } from '@/domain/entities/Game'\nimport type { Card } from '@/domain/entities/Card'\nimport type { GamePhase } from '@/domain/types/game.types'\nimport { IdGenerator } from '../../common/IdGenerator'\n\n/**\n * ゲームコマンドの基底インターフェース\n * Command Patternの実装\n */\nexport interface GameCommand {\n  readonly id: string\n  readonly timestamp: Date\n  readonly description: string\n  readonly canUndo: boolean\n  readonly category: CommandCategory\n  \n  /**\n   * コマンドを実行\n   */\n  execute(game: Game): Promise<void>\n  \n  /**\n   * コマンドを元に戻す\n   */\n  undo(game: Game): Promise<void>\n  \n  /**\n   * コマンドの妥当性をチェック\n   */\n  isValid(game: Game): boolean\n  \n  /**\n   * コマンドが他のコマンドと結合可能かチェック\n   */\n  canMergeWith(other: GameCommand): boolean\n  \n  /**\n   * 他のコマンドと結合\n   */\n  mergeWith(other: GameCommand): GameCommand\n}\n\n/**\n * コマンドのカテゴリ\n */\nexport type CommandCategory = \n  | 'card_selection'    // カード選択関連\n  | 'challenge'         // チャレンジ関連\n  | 'insurance'         // 保険関連\n  | 'turn_progression'  // ターン進行\n  | 'system'           // システム関連\n\n/**\n * 基底コマンドクラス\n */\nexport abstract class BaseGameCommand implements GameCommand {\n  readonly id: string\n  readonly timestamp: Date\n  readonly canUndo: boolean = true\n  \n  constructor(\n    public readonly description: string,\n    public readonly category: CommandCategory,\n    canUndo: boolean = true\n  ) {\n    this.id = this.generateId()\n    this.timestamp = new Date()\n    this.canUndo = canUndo\n  }\n  \n  abstract execute(game: Game): Promise<void>\n  abstract undo(game: Game): Promise<void>\n  \n  isValid(game: Game): boolean {\n    return game.isInProgress()\n  }\n  \n  canMergeWith(other: GameCommand): boolean {\n    return false // デフォルトでは結合しない\n  }\n  \n  mergeWith(other: GameCommand): GameCommand {\n    throw new Error('このコマンドは結合をサポートしていません')\n  }\n  \n  private generateId(): string {\n    return IdGenerator.generateCommandId()\n  }\n}\n\n/**\n * カード選択コマンド\n */\nexport class CardSelectionCommand extends BaseGameCommand {\n  private previousSelection: Card[] = []\n  \n  constructor(\n    private readonly cardToToggle: Card,\n    private readonly selectAction: boolean // true: 選択, false: 選択解除\n  ) {\n    super(\n      `カード「${cardToToggle.name}」を${selectAction ? '選択' : '選択解除'}`,\n      'card_selection'\n    )\n  }\n  \n  async execute(game: Game): Promise<void> {\n    // 現在の選択状態を保存\n    this.previousSelection = [...game.selectedCards]\n    \n    // カードの選択状態を切り替え\n    game.toggleCardSelection(this.cardToToggle)\n  }\n  \n  async undo(game: Game): Promise<void> {\n    // 選択状態を元に戻す\n    // まず全選択を解除\n    game.selectedCards.forEach(card => {\n      game.toggleCardSelection(card)\n    })\n    \n    // 前の選択状態を復元\n    this.previousSelection.forEach(card => {\n      if (!game.selectedCards.includes(card)) {\n        game.toggleCardSelection(card)\n      }\n    })\n  }\n  \n  canMergeWith(other: GameCommand): boolean {\n    return other instanceof CardSelectionCommand &&\n           other.cardToToggle.id === this.cardToToggle.id &&\n           Math.abs(other.timestamp.getTime() - this.timestamp.getTime()) < 1000 // 1秒以内\n  }\n  \n  mergeWith(other: GameCommand): GameCommand {\n    if (!this.canMergeWith(other)) {\n      throw new Error('このコマンドとは結合できません')\n    }\n    \n    const otherCmd = other as CardSelectionCommand\n    \n    // 同じカードの連続した選択/選択解除は相殺\n    if (this.selectAction !== otherCmd.selectAction) {\n      return new NoOpCommand('カード選択の相殺')\n    }\n    \n    // 同じアクションの場合は後の方を使用\n    return otherCmd\n  }\n}\n\n/**\n * チャレンジ実行コマンド\n */\nexport class ChallengeCommand extends BaseGameCommand {\n  private previousState: {\n    phase: GamePhase\n    vitality: number\n    selectedCards: Card[]\n    currentChallenge?: Card\n    turn: number\n  } | null = null\n  \n  constructor(\n    private readonly challengeCard: Card\n  ) {\n    super(\n      `チャレンジ「${challengeCard.name}」を実行`,\n      'challenge',\n      false // チャレンジは通常Undo不可\n    )\n  }\n  \n  async execute(game: Game): Promise<void> {\n    // 状態を保存（デバッグ用）\n    this.previousState = {\n      phase: game.phase,\n      vitality: game.vitality,\n      selectedCards: [...game.selectedCards],\n      currentChallenge: game.currentChallenge,\n      turn: game.turn\n    }\n    \n    // チャレンジを開始\n    game.startChallenge(this.challengeCard)\n    \n    // チャレンジを解決\n    const result = game.resolveChallenge()\n    \n    console.log(`チャレンジ結果: ${result.success ? '成功' : '失敗'}`)\n  }\n  \n  async undo(game: Game): Promise<void> {\n    throw new Error('チャレンジコマンドはUndo不可です')\n  }\n  \n  isValid(game: Game): boolean {\n    return super.isValid(game) && \n           game.phase === 'draw' && \n           game.selectedCards.length > 0\n  }\n}\n\n/**\n * 保険購入コマンド\n */\nexport class InsurancePurchaseCommand extends BaseGameCommand {\n  private wasAdded = false\n  \n  constructor(\n    private readonly insuranceType: string,\n    private readonly durationType: 'term' | 'whole_life'\n  ) {\n    super(\n      `保険「${insuranceType}」(${durationType === 'term' ? '定期' : '終身'})を購入`,\n      'insurance'\n    )\n  }\n  \n  async execute(game: Game): Promise<void> {\n    const result = game.selectInsuranceType(this.insuranceType, this.durationType)\n    this.wasAdded = result.success\n    \n    if (!result.success) {\n      throw new Error(`保険購入に失敗: ${result.message}`)\n    }\n  }\n  \n  async undo(game: Game): Promise<void> {\n    if (!this.wasAdded) return\n    \n    // 最後に追加された保険を削除\n    const lastInsurance = game.insuranceCards[game.insuranceCards.length - 1]\n    if (lastInsurance && lastInsurance.insuranceType === this.insuranceType) {\n      game.insuranceCards.pop()\n      \n      // プレイヤーデッキからも削除\n      const playerDeck = game.playerDeck\n      const cards = playerDeck.cards\n      const cardIndex = cards.findIndex(card => card.id === lastInsurance.id)\n      if (cardIndex !== -1) {\n        cards.splice(cardIndex, 1)\n      }\n      \n      // 統計を調整\n      game.stats.cardsAcquired = Math.max(0, game.stats.cardsAcquired - 1)\n    }\n  }\n  \n  isValid(game: Game): boolean {\n    return super.isValid(game) && \n           game.phase === 'insurance_type_selection' &&\n           game.currentInsuranceTypeChoices !== undefined\n  }\n}\n\n/**\n * ターン進行コマンド\n */\nexport class NextTurnCommand extends BaseGameCommand {\n  private previousState: {\n    turn: number\n    phase: GamePhase\n    handSize: number\n    insuranceCount: number\n  } | null = null\n  \n  constructor() {\n    super('次のターンへ進行', 'turn_progression', false)\n  }\n  \n  async execute(game: Game): Promise<void> {\n    // 状態を保存\n    this.previousState = {\n      turn: game.turn,\n      phase: game.phase,\n      handSize: game.hand.length,\n      insuranceCount: game.insuranceCards.length\n    }\n    \n    // ターン進行\n    const result = game.nextTurn()\n    \n    console.log(`ターン ${game.turn} に進行。期限切れ保険: ${result.newExpiredCount}件`)\n  }\n  \n  async undo(game: Game): Promise<void> {\n    throw new Error('ターン進行コマンドはUndo不可です')\n  }\n  \n  isValid(game: Game): boolean {\n    return super.isValid(game) && game.phase === 'resolution'\n  }\n}\n\n/**\n * 何もしないコマンド（コマンド結合時の相殺用）\n */\nexport class NoOpCommand extends BaseGameCommand {\n  constructor(description: string) {\n    super(description, 'system')\n  }\n  \n  async execute(game: Game): Promise<void> {\n    // 何もしない\n  }\n  \n  async undo(game: Game): Promise<void> {\n    // 何もしない\n  }\n}\n\n/**\n * 複合コマンド（複数のコマンドをまとめて実行）\n */\nexport class CompositeCommand extends BaseGameCommand {\n  constructor(\n    private readonly commands: GameCommand[],\n    description?: string\n  ) {\n    super(\n      description || `${commands.length}個のコマンドを実行`,\n      'system'\n    )\n  }\n  \n  async execute(game: Game): Promise<void> {\n    for (const command of this.commands) {\n      await command.execute(game)\n    }\n  }\n  \n  async undo(game: Game): Promise<void> {\n    // 逆順でUndo実行\n    for (let i = this.commands.length - 1; i >= 0; i--) {\n      if (this.commands[i].canUndo) {\n        await this.commands[i].undo(game)\n      }\n    }\n  }\n  \n  isValid(game: Game): boolean {\n    return this.commands.every(cmd => cmd.isValid(game))\n  }\n}\n\n/**\n * スナップショットコマンド（特定時点の状態を保存）\n */\nexport class SnapshotCommand extends BaseGameCommand {\n  private snapshot: any = null\n  \n  constructor(description: string) {\n    super(description, 'system', false)\n  }\n  \n  async execute(game: Game): Promise<void> {\n    this.snapshot = game.getSnapshot()\n  }\n  \n  async undo(game: Game): Promise<void> {\n    throw new Error('スナップショットコマンドはUndo不可です')\n  }\n  \n  getSnapshot(): any {\n    return this.snapshot\n  }\n}
+import type { Game } from '@/domain/entities/Game'
+import type { Card } from '@/domain/entities/Card'
+import type { GamePhase } from '@/domain/types/game.types'
+import { IdGenerator } from '../../common/IdGenerator'
+
+/**
+ * ゲームコマンドの基底インターフェース
+ * Command Patternの実装
+ */
+export interface GameCommand {
+  readonly id: string
+  readonly timestamp: Date
+  readonly description: string
+  readonly canUndo: boolean
+  readonly category: CommandCategory
+  
+  /**
+   * コマンドを実行
+   */
+  execute(game: Game): Promise<void>
+  
+  /**
+   * コマンドを元に戻す
+   */
+  undo(game: Game): Promise<void>
+  
+  /**
+   * コマンドの妥当性をチェック
+   */
+  isValid(game: Game): boolean
+  
+  /**
+   * コマンドが他のコマンドと結合可能かチェック
+   */
+  canMergeWith(other: GameCommand): boolean
+  
+  /**
+   * 他のコマンドと結合
+   */
+  mergeWith(other: GameCommand): GameCommand
+}
+
+/**
+ * コマンドのカテゴリ
+ */
+export type CommandCategory = 
+  | 'card_selection'    // カード選択関連
+  | 'challenge'         // チャレンジ関連
+  | 'insurance'         // 保険関連
+  | 'turn_progression'  // ターン進行
+  | 'system'           // システム関連
+
+/**
+ * 基底コマンドクラス
+ */
+export abstract class BaseGameCommand implements GameCommand {
+  readonly id: string
+  readonly timestamp: Date
+  readonly canUndo: boolean = true
+  
+  constructor(
+    public readonly description: string,
+    public readonly category: CommandCategory,
+    canUndo: boolean = true
+  ) {
+    this.id = this.generateId()
+    this.timestamp = new Date()
+    this.canUndo = canUndo
+  }
+  
+  abstract execute(game: Game): Promise<void>
+  abstract undo(game: Game): Promise<void>
+  
+  isValid(game: Game): boolean {
+    return game.isInProgress()
+  }
+  
+  canMergeWith(other: GameCommand): boolean {
+    return false // デフォルトでは結合しない
+  }
+  
+  mergeWith(other: GameCommand): GameCommand {
+    throw new Error('このコマンドは結合をサポートしていません')
+  }
+  
+  private generateId(): string {
+    return IdGenerator.generateCommandId()
+  }
+}
+
+/**
+ * カード選択コマンド
+ */
+export class CardSelectionCommand extends BaseGameCommand {
+  private previousSelection: Card[] = []
+  
+  constructor(
+    private readonly cardToToggle: Card,
+    private readonly selectAction: boolean // true: 選択, false: 選択解除
+  ) {
+    super(
+      `カード「${cardToToggle.name}」を${selectAction ? '選択' : '選択解除'}`,
+      'card_selection'
+    )
+  }
+  
+  async execute(game: Game): Promise<void> {
+    // 現在の選択状態を保存
+    this.previousSelection = [...game.selectedCards]
+    
+    // カードの選択状態を切り替え
+    game.toggleCardSelection(this.cardToToggle)
+  }
+  
+  async undo(game: Game): Promise<void> {
+    // 選択状態を元に戻す
+    // まず全選択を解除
+    game.selectedCards.forEach(card => {
+      game.toggleCardSelection(card)
+    })
+    
+    // 前の選択状態を復元
+    this.previousSelection.forEach(card => {
+      if (!game.selectedCards.includes(card)) {
+        game.toggleCardSelection(card)
+      }
+    })
+  }
+  
+  canMergeWith(other: GameCommand): boolean {
+    return other instanceof CardSelectionCommand &&
+           other.cardToToggle.id === this.cardToToggle.id &&
+           Math.abs(other.timestamp.getTime() - this.timestamp.getTime()) < 1000 // 1秒以内
+  }
+  
+  mergeWith(other: GameCommand): GameCommand {
+    if (!this.canMergeWith(other)) {
+      throw new Error('このコマンドとは結合できません')
+    }
+    
+    const otherCmd = other as CardSelectionCommand
+    
+    // 同じカードの連続した選択/選択解除は相殺
+    if (this.selectAction !== otherCmd.selectAction) {
+      return new NoOpCommand('カード選択の相殺')
+    }
+    
+    // 同じアクションの場合は後の方を使用
+    return otherCmd
+  }
+}
+
+/**
+ * チャレンジ実行コマンド
+ */
+export class ChallengeCommand extends BaseGameCommand {
+  private previousState: {
+    phase: GamePhase
+    vitality: number
+    selectedCards: Card[]
+    currentChallenge?: Card
+    turn: number
+  } | null = null
+  
+  constructor(
+    private readonly challengeCard: Card
+  ) {
+    super(
+      `チャレンジ「${challengeCard.name}」を実行`,
+      'challenge',
+      false // チャレンジは通常Undo不可
+    )
+  }
+  
+  async execute(game: Game): Promise<void> {
+    // 状態を保存（デバッグ用）
+    this.previousState = {
+      phase: game.phase,
+      vitality: game.vitality,
+      selectedCards: [...game.selectedCards],
+      currentChallenge: game.currentChallenge,
+      turn: game.turn
+    }
+    
+    // チャレンジを開始
+    game.startChallenge(this.challengeCard)
+    
+    // チャレンジを解決
+    const result = game.resolveChallenge()
+    
+    console.log(`チャレンジ結果: ${result.success ? '成功' : '失敗'}`)
+  }
+  
+  async undo(game: Game): Promise<void> {
+    throw new Error('チャレンジコマンドはUndo不可です')
+  }
+  
+  isValid(game: Game): boolean {
+    return super.isValid(game) && 
+           game.phase === 'draw' && 
+           game.selectedCards.length > 0
+  }
+}
+
+/**
+ * 保険購入コマンド
+ */
+export class InsurancePurchaseCommand extends BaseGameCommand {
+  private wasAdded = false
+  
+  constructor(
+    private readonly insuranceType: string,
+    private readonly durationType: 'term' | 'whole_life'
+  ) {
+    super(
+      `保険「${insuranceType}」(${durationType === 'term' ? '定期' : '終身'})を購入`,
+      'insurance'
+    )
+  }
+  
+  async execute(game: Game): Promise<void> {
+    const result = game.selectInsuranceType(this.insuranceType, this.durationType)
+    this.wasAdded = result.success
+    
+    if (!result.success) {
+      throw new Error(`保険購入に失敗: ${result.message}`)
+    }
+  }
+  
+  async undo(game: Game): Promise<void> {
+    if (!this.wasAdded) return
+    
+    // 最後に追加された保険を削除
+    const lastInsurance = game.insuranceCards[game.insuranceCards.length - 1]
+    if (lastInsurance && lastInsurance.insuranceType === this.insuranceType) {
+      game.insuranceCards.pop()
+      
+      // プレイヤーデッキからも削除
+      const playerDeck = game.playerDeck
+      const cards = playerDeck.cards
+      const cardIndex = cards.findIndex(card => card.id === lastInsurance.id)
+      if (cardIndex !== -1) {
+        cards.splice(cardIndex, 1)
+      }
+      
+      // 統計を調整
+      game.stats.cardsAcquired = Math.max(0, game.stats.cardsAcquired - 1)
+    }
+  }
+  
+  isValid(game: Game): boolean {
+    return super.isValid(game) && 
+           game.phase === 'insurance_type_selection' &&
+           game.currentInsuranceTypeChoices !== undefined
+  }
+}
+
+/**
+ * ターン進行コマンド
+ */
+export class NextTurnCommand extends BaseGameCommand {
+  private previousState: {
+    turn: number
+    phase: GamePhase
+    handSize: number
+    insuranceCount: number
+  } | null = null
+  
+  constructor() {
+    super('次のターンへ進行', 'turn_progression', false)
+  }
+  
+  async execute(game: Game): Promise<void> {
+    // 状態を保存
+    this.previousState = {
+      turn: game.turn,
+      phase: game.phase,
+      handSize: game.hand.length,
+      insuranceCount: game.insuranceCards.length
+    }
+    
+    // ターン進行
+    const result = game.nextTurn()
+    
+    console.log(`ターン ${game.turn} に進行。期限切れ保険: ${result.newExpiredCount}件`)
+  }
+  
+  async undo(game: Game): Promise<void> {
+    throw new Error('ターン進行コマンドはUndo不可です')
+  }
+  
+  isValid(game: Game): boolean {
+    return super.isValid(game) && game.phase === 'resolution'
+  }
+}
+
+/**
+ * 何もしないコマンド（コマンド結合時の相殺用）
+ */
+export class NoOpCommand extends BaseGameCommand {
+  constructor(description: string) {
+    super(description, 'system')
+  }
+  
+  async execute(game: Game): Promise<void> {
+    // 何もしない
+  }
+  
+  async undo(game: Game): Promise<void> {
+    // 何もしない
+  }
+}
+
+/**
+ * 複合コマンド（複数のコマンドをまとめて実行）
+ */
+export class CompositeCommand extends BaseGameCommand {
+  constructor(
+    private readonly commands: GameCommand[],
+    description?: string
+  ) {
+    super(
+      description || `${commands.length}個のコマンドを実行`,
+      'system'
+    )
+  }
+  
+  async execute(game: Game): Promise<void> {
+    for (const command of this.commands) {
+      await command.execute(game)
+    }
+  }
+  
+  async undo(game: Game): Promise<void> {
+    // 逆順でUndo実行
+    for (let i = this.commands.length - 1; i >= 0; i--) {
+      if (this.commands[i].canUndo) {
+        await this.commands[i].undo(game)
+      }
+    }
+  }
+  
+  isValid(game: Game): boolean {
+    return this.commands.every(cmd => cmd.isValid(game))
+  }
+}
+
+/**
+ * スナップショットコマンド（特定時点の状態を保存）
+ */
+export class SnapshotCommand extends BaseGameCommand {
+  private snapshot: any = null
+  
+  constructor(description: string) {
+    super(description, 'system', false)
+  }
+  
+  async execute(game: Game): Promise<void> {
+    this.snapshot = game.getSnapshot()
+  }
+  
+  async undo(game: Game): Promise<void> {
+    throw new Error('スナップショットコマンドはUndo不可です')
+  }
+  
+  getSnapshot(): any {
+    return this.snapshot
+  }
+}

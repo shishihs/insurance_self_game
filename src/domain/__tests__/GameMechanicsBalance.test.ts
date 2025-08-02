@@ -1,9 +1,9 @@
-import { describe, test, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 import { Card } from '../entities/Card'
 import { CardFactory } from '../services/CardFactory'
 import { SkillSystemService } from '../services/SkillSystemService'
 import { AchievementSystemService, type PlayerAchievements } from '../services/AchievementSystemService'
-import { PlayerProgressionService, type PlayerProgression } from '../services/PlayerProgressionService'
+import { type PlayerProgression, PlayerProgressionService } from '../services/PlayerProgressionService'
 import { DifficultyBalanceService } from '../services/DifficultyBalanceService'
 import { ReplayabilityService } from '../services/ReplayabilityService'
 

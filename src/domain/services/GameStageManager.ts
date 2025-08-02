@@ -127,7 +127,7 @@ export class GameStageManager {
     const info = stageInfo[stage]
     const manager = new GameStageManager()
     
-    let nextTransition = undefined
+    let nextTransition
     if (stage === 'youth') {
       const turnsRemaining = GameStageManager.STAGE_TRANSITION_TURNS.YOUTH_TO_MIDDLE - turn
       if (turnsRemaining > 0) {

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { DropZoneManager, type DropZone } from '../DropZoneManager'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { type DropZone, DropZoneManager } from '../DropZoneManager'
 import { DropZoneIntegration } from '../DropZoneIntegration'
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
@@ -348,7 +348,7 @@ describe('DropZone Performance Tests', () => {
       expect(mockScene.add.graphics).toHaveBeenCalled()
       
       // クリーンアップが正常に実行される
-      expect(() => dropZoneManager.destroy()).not.toThrow()
+      expect(() => { dropZoneManager.destroy(); }).not.toThrow()
       
       // クリーンアップ後、ドラッグ状態がリセットされる
       const dragState = dropZoneManager.getDragState()

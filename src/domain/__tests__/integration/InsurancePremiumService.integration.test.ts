@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Game } from '../../entities/Game'
 import { Card } from '../../entities/Card'
 // import { InsurancePremium } from '../../valueObjects/InsurancePremium' // 未使用
@@ -50,7 +50,7 @@ describe('保険料計算サービス統合テスト', () => {
         createTestInsurance('accident-1', 'accident', 10)
       ]
 
-      cards.forEach(card => game.addInsurance(card))
+      cards.forEach(card => { game.addInsurance(card); })
 
       const burden = game.calculateInsuranceBurden()
 

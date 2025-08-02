@@ -17,9 +17,9 @@ interface TrackDefinition {
  * - ループ再生とシームレスな遷移
  */
 export class BackgroundMusicManager {
-  private audioContext: AudioContext
-  private masterGain: GainNode
-  private tracks: Map<string, BGMTrack> = new Map()
+  private readonly audioContext: AudioContext
+  private readonly masterGain: GainNode
+  private readonly tracks: Map<string, BGMTrack> = new Map()
   private currentTrack: string | null = null
   private volume: number = 0.3
   private enabled: boolean = true
@@ -196,7 +196,7 @@ export class BackgroundMusicManager {
    */
   destroy(): void {
     this.stop(0)
-    this.tracks.forEach(track => track.destroy())
+    this.tracks.forEach(track => { track.destroy(); })
     this.tracks.clear()
     
     if (this.audioContext.state !== 'closed') {
@@ -210,11 +210,11 @@ export class BackgroundMusicManager {
  * 複数のレイヤーで構成される音楽トラック
  */
 class BGMTrack {
-  private audioContext: AudioContext
-  private outputGain: GainNode
-  private layers: Map<string, BGMLayer> = new Map()
+  private readonly audioContext: AudioContext
+  private readonly outputGain: GainNode
+  private readonly layers: Map<string, BGMLayer> = new Map()
   private isPlaying: boolean = false
-  private definition: TrackDefinition
+  private readonly definition: TrackDefinition
   
   constructor(audioContext: AudioContext, definition: TrackDefinition) {
     this.audioContext = audioContext
@@ -249,7 +249,7 @@ class BGMTrack {
   play(): void {
     if (!this.isPlaying) {
       const startTime = this.audioContext.currentTime
-      this.layers.forEach(layer => layer.play(startTime))
+      this.layers.forEach(layer => { layer.play(startTime); })
       this.isPlaying = true
     }
   }
@@ -259,7 +259,7 @@ class BGMTrack {
    */
   stop(): void {
     if (this.isPlaying) {
-      this.layers.forEach(layer => layer.stop())
+      this.layers.forEach(layer => { layer.stop(); })
       this.isPlaying = false
     }
   }
@@ -273,7 +273,7 @@ class BGMTrack {
     this.outputGain.gain.linearRampToValueAtTime(1, currentTime + duration)
     
     return new Promise(resolve => {
-      setTimeout(() => resolve(), duration * 1000)
+      setTimeout(() => { resolve(); }, duration * 1000)
     })
   }
   
@@ -286,7 +286,7 @@ class BGMTrack {
     this.outputGain.gain.linearRampToValueAtTime(0, currentTime + duration)
     
     return new Promise(resolve => {
-      setTimeout(() => resolve(), duration * 1000)
+      setTimeout(() => { resolve(); }, duration * 1000)
     })
   }
   
@@ -305,7 +305,7 @@ class BGMTrack {
    */
   destroy(): void {
     this.stop()
-    this.layers.forEach(layer => layer.destroy())
+    this.layers.forEach(layer => { layer.destroy(); })
     this.layers.clear()
   }
 }
@@ -315,11 +315,11 @@ class BGMTrack {
  * 個別の楽器や音響要素を表現
  */
 class BGMLayer {
-  private audioContext: AudioContext
-  private gainNode: GainNode
+  private readonly audioContext: AudioContext
+  private readonly gainNode: GainNode
   private sources: OscillatorNode[] = []
-  private layerName: string
-  private definition: TrackDefinition
+  private readonly layerName: string
+  private readonly definition: TrackDefinition
   private enabled: boolean = true
   
   constructor(audioContext: AudioContext, layerName: string, definition: TrackDefinition) {

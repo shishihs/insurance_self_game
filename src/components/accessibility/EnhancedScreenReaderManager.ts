@@ -3,7 +3,7 @@
  * WCAG 2.1 AA準拠の包括的なスクリーンリーダー対応とゲーム特化型アナウンス
  */
 
-import { ScreenReaderManager, type AnnouncementOptions, type GameStateAnnouncement } from './ScreenReaderManager'
+import { type AnnouncementOptions, type GameStateAnnouncement, ScreenReaderManager } from './ScreenReaderManager'
 
 export interface ContextualAnnouncement {
   main: string

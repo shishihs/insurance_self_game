@@ -1,5 +1,5 @@
 import type { Card } from '../entities/Card'
-import type { SkillRarity, SkillCardProperties } from '../types/card.types'
+import type { SkillCardProperties, SkillRarity } from '../types/card.types'
 import type { GameStage } from '../types/card.types'
 
 /**

@@ -172,8 +172,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { StatisticsDataService, type StatisticsData, type StatisticsFilter, type RealtimeStatistics } from '../../domain/services/StatisticsDataService'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { type RealtimeStatistics, type StatisticsData, StatisticsDataService, type StatisticsFilter } from '../../domain/services/StatisticsDataService'
 
 // コンポーネントのインポート
 import StatsSummaryCard from './StatsSummaryCard.vue'
@@ -395,11 +395,11 @@ const formatDuration = (ms: number): string => {
   
   if (hours > 0) {
     return `${hours}時間${minutes % 60}分`
-  } else if (minutes > 0) {
+  } if (minutes > 0) {
     return `${minutes}分${seconds % 60}秒`
-  } else {
+  } 
     return `${seconds}秒`
-  }
+  
 }
 
 const formatTime = (date: Date): string => {

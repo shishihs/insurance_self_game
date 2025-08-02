@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onErrorCaptured, computed } from 'vue'
+import { computed, onErrorCaptured, ref } from 'vue'
 import type { ComponentPublicInstance } from 'vue'
 
 interface Props {
@@ -49,18 +49,24 @@ const userFriendlyMessage = computed(() => {
   
   const message = error.value.message
   
-  // 一般的なエラーパターンのマッピング
-  if (message.includes('Network')) {
+  // より詳細なエラーパターンのマッピング
+  if (message.includes('dynamically imported module') || message.includes('Failed to fetch')) {
+    return 'アプリの一部が読み込めませんでした。インターネット接続を確認してください'
+  }
+  if (message.includes('Network') || message.includes('fetch')) {
     return 'ネットワーク接続に問題が発生しました'
   }
-  if (message.includes('Cannot read')) {
+  if (message.includes('Cannot read') || message.includes('Cannot access')) {
     return '画面の表示中にエラーが発生しました'
   }
   if (message.includes('undefined') || message.includes('null')) {
     return 'データの読み込みに失敗しました'
   }
   if (message.includes('timeout')) {
-    return '処理がタイムアウトしました'
+    return '処理がタイムアウトしました。もう一度お試しください'
+  }
+  if (message.includes('Permission denied') || message.includes('CORS')) {
+    return 'アクセス権限がありません'
   }
   
   return '予期しないエラーが発生しました'
@@ -302,6 +308,7 @@ const sendErrorReport = () => {
   cursor: pointer;
   transition: all var(--transition-fast);
   min-width: 140px;
+  min-height: var(--touch-target-min, 44px); /* モバイルタッチターゲット */
 }
 
 .error-action-btn.primary {

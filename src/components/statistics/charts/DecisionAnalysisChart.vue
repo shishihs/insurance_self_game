@@ -51,18 +51,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
-  Title,
-  Tooltip,
+  CategoryScale,
+  Chart,
+  Filler,
   Legend,
-  Filler
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip
 } from 'chart.js'
 
 // Chart.jsの登録
@@ -131,13 +131,13 @@ const performanceAnalysis = computed(() => {
   
   if (avg < 3) {
     return '非常に迅速な決定を行っています。直感的なプレイスタイルです。'
-  } else if (avg < 8) {
+  } if (avg < 8) {
     return 'バランスの取れた決定時間です。適度に考えてプレイしています。'
-  } else if (avg < 15) {
+  } if (avg < 15) {
     return '慎重に考えてからプレイしています。戦略的なアプローチです。'
-  } else {
+  } 
     return '非常に慎重なプレイスタイルです。より素早い決定も検討してみてください。'
-  }
+  
 })
 
 // 分布データの生成

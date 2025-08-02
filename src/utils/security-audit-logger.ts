@@ -3,7 +3,7 @@
  * 包括的なセキュリティイベント追跡・分析・レポート機能
  */
 
-import { secureLocalStorage, generateSecureHash } from './security'
+import { generateSecureHash, secureLocalStorage } from './security'
 import { SecurityMonitor } from './security-extensions'
 
 export interface SecurityAuditEvent {
@@ -55,12 +55,12 @@ export interface SecurityAuditReport {
  */
 export class SecurityAuditLogger {
   private static instance: SecurityAuditLogger
-  private storage = secureLocalStorage()
+  private readonly storage = secureLocalStorage()
   private eventQueue: SecurityAuditEvent[] = []
   private isProcessingQueue = false
-  private maxEventsInMemory = 1000
-  private maxEventsInStorage = 5000
-  private sessionId: string
+  private readonly maxEventsInMemory = 1000
+  private readonly maxEventsInStorage = 5000
+  private readonly sessionId: string
   private config = {
     enableStackTrace: true,
     enableGeoLocation: false,
@@ -151,9 +151,12 @@ export class SecurityAuditLogger {
       })
 
     } catch (error) {
+      // エラーログの無限ループを防ぐため、オリジナルのconsole.errorを使用
+      const originalError = (console as any).originalError || console.error
+      
       // エラーが頻発しないよう、エラーログの出力を制限
       if (Math.random() < 0.1) { // 10%の確率でエラーをログ出力
-        console.error('セキュリティイベントのログ記録に失敗:', error)
+        originalError.call(console, 'セキュリティイベントのログ記録に失敗:', error)
       }
       // フォールバック: クリティカルなイベントのみコンソールに出力
       if (severity === 'critical' || severity === 'high') {
@@ -543,7 +546,7 @@ export class SecurityAuditLogger {
     
     if (format === 'json') {
       return JSON.stringify(events, null, 2)
-    } else {
+    } 
       // CSV形式
       const headers = ['ID', 'Timestamp', 'Event Type', 'Severity', 'Source', 'Message', 'User Agent', 'Session ID']
       const csvRows = [headers.join(',')]
@@ -563,7 +566,7 @@ export class SecurityAuditLogger {
       })
       
       return csvRows.join('\n')
-    }
+    
   }
 
   /**
@@ -664,16 +667,43 @@ if (typeof window !== 'undefined') {
     )
   })
 
-  // Console override for security monitoring
-  const originalConsoleError = console.error
-  console.error = function(...args) {
-    auditLogger.logSecurityEvent(
-      'console_error',
-      'low',
-      'console_override',
-      `Console Error: ${args.join(' ')}`,
-      { args }
-    )
-    return originalConsoleError.apply(console, args)
+  // Console override for security monitoring with rate limiting
+  if (typeof console !== 'undefined' && console.error) {
+    const originalConsoleError = console.error
+    // Store original console.error for internal use
+    ;(console as any).originalError = originalConsoleError
+  
+  let consoleErrorCount = 0
+  let lastResetTime = Date.now()
+  const MAX_CONSOLE_ERRORS_PER_MINUTE = 10
+  
+    console.error = function(...args) {
+      // Reset counter every minute
+      const now = Date.now()
+      if (now - lastResetTime > 60000) {
+        consoleErrorCount = 0
+        lastResetTime = now
+      }
+      
+      // Skip logging if rate limit exceeded to prevent infinite loop
+      const message = args.join(' ')
+      if (message.includes('Error rate limit exceeded') || 
+          consoleErrorCount >= MAX_CONSOLE_ERRORS_PER_MINUTE) {
+        originalConsoleError.apply(console, args); return;
+      }
+      
+      consoleErrorCount++
+      
+      // Log the error with low severity
+      auditLogger.logSecurityEvent(
+        'console_error',
+        'low',
+        'console_override',
+        `Console Error: ${message}`,
+        { args, count: consoleErrorCount }
+      )
+      
+      originalConsoleError.apply(console, args);
+    }
   }
 }

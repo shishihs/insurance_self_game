@@ -31,14 +31,14 @@ export interface PerformanceMetrics {
 export type PerformanceLevel = 'low' | 'medium' | 'high'
 
 class MobilePerformanceManager {
-  private capabilities: DeviceCapabilities
+  private readonly capabilities: DeviceCapabilities
   private performanceLevel: PerformanceLevel = 'medium'
   private metrics: PerformanceMetrics[] = []
-  private frameCounter = 0
-  private lastFrameTime = 0
+  private readonly frameCounter = 0
+  private readonly lastFrameTime = 0
   private animationFrame: number | null = null
   private metricsCallback: ((metrics: PerformanceMetrics) => void) | null = null
-  private resizeObserver: ResizeObserver | null = null
+  private readonly resizeObserver: ResizeObserver | null = null
 
   constructor() {
     this.capabilities = this.detectDeviceCapabilities()
@@ -410,14 +410,14 @@ export const performanceManager = new MobilePerformanceManager()
 export function useMobilePerformance() {
   return {
     getPerformanceLevel: () => performanceManager.getPerformanceLevel(),
-    setPerformanceLevel: (level: PerformanceLevel) => performanceManager.setPerformanceLevel(level),
+    setPerformanceLevel: (level: PerformanceLevel) => { performanceManager.setPerformanceLevel(level); },
     getDeviceCapabilities: () => performanceManager.getDeviceCapabilities(),
     getRecommendedSettings: () => performanceManager.getRecommendedSettings(),
     getLatestMetrics: () => performanceManager.getLatestMetrics(),
     getMetricsHistory: (count?: number) => performanceManager.getMetricsHistory(count),
     onMetricsUpdate: (callback: (metrics: PerformanceMetrics) => void) => 
-      performanceManager.onMetricsUpdate(callback),
-    applyCSSOptimizations: () => performanceManager.applyCSSOptimizations()
+      { performanceManager.onMetricsUpdate(callback); },
+    applyCSSOptimizations: () => { performanceManager.applyCSSOptimizations(); }
   }
 }
 

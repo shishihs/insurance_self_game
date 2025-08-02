@@ -82,15 +82,15 @@ interface GestureListener {
 }
 
 export class TouchGestureManager {
-  private element: HTMLElement
-  private touchPoints = new Map<number, TouchPoint>()
+  private readonly element: HTMLElement
+  private readonly touchPoints = new Map<number, TouchPoint>()
   private lastTap: { x: number; y: number; timestamp: number } | null = null
   private longPressTimer: number | null = null
   private isDragging = false
   private dragStartPoint: { x: number; y: number } | null = null
   private dragTotalDelta = { x: 0, y: 0 }
-  private listeners = new Map<string, Set<GestureListener>>()
-  private preventDefaultGestures = new Set<GestureEvent['type']>()
+  private readonly listeners = new Map<string, Set<GestureListener>>()
+  private readonly preventDefaultGestures = new Set<GestureEvent['type']>()
   
   // モーメンタムスクロール用
   private lastVelocity = { x: 0, y: 0 }
@@ -184,7 +184,7 @@ export class TouchGestureManager {
       }
     }
 
-    if (this.isDragging === true && this.shouldPreventDefault('drag')) {
+    if (this.isDragging && this.shouldPreventDefault('drag')) {
       event.preventDefault()
     }
   }
@@ -211,7 +211,7 @@ export class TouchGestureManager {
     }
 
     // ドラッグ終了
-    if (this.touchPoints.size === 0 && this.isDragging === true) {
+    if (this.touchPoints.size === 0 && this.isDragging) {
       this.endDrag(event.changedTouches[0])
     }
   }
@@ -219,7 +219,7 @@ export class TouchGestureManager {
   private handleTouchCancel(event: TouchEvent): void {
     this.cancelLongPress()
     this.touchPoints.clear()
-    if (this.isDragging === true) {
+    if (this.isDragging) {
       this.isDragging = false
       this.dragStartPoint = null
       this.dragTotalDelta = { x: 0, y: 0 }
@@ -277,7 +277,7 @@ export class TouchGestureManager {
       this.touchPoints.delete(-1)
     }
 
-    if (this.isDragging === true) {
+    if (this.isDragging) {
       this.endDrag({
         clientX: event.clientX,
         clientY: event.clientY
@@ -312,8 +312,8 @@ export class TouchGestureManager {
     if (this.lastTap !== null && this.lastTap !== undefined) {
       const timeDiff = now - this.lastTap.timestamp
       const distance = Math.sqrt(
-        Math.pow(x - this.lastTap.x, 2) + 
-        Math.pow(y - this.lastTap.y, 2)
+        (x - this.lastTap.x)**2 + 
+        (y - this.lastTap.y)**2
       )
       
       if (timeDiff < this.config.doubleTapThreshold && 
@@ -369,8 +369,8 @@ export class TouchGestureManager {
     const touch2 = event.touches[1]
     
     const currentDistance = Math.sqrt(
-      Math.pow(touch1.clientX - touch2.clientX, 2) +
-      Math.pow(touch1.clientY - touch2.clientY, 2)
+      (touch1.clientX - touch2.clientX)**2 +
+      (touch1.clientY - touch2.clientY)**2
     )
 
     const point1 = this.touchPoints.get(touch1.identifier)
@@ -378,8 +378,8 @@ export class TouchGestureManager {
     
     if (point1 !== null && point1 !== undefined && point2 !== null && point2 !== undefined) {
       const previousDistance = Math.sqrt(
-        Math.pow(point1.x - point2.x, 2) +
-        Math.pow(point1.y - point2.y, 2)
+        (point1.x - point2.x)**2 +
+        (point1.y - point2.y)**2
       )
 
       const scale = currentDistance / previousDistance
@@ -404,15 +404,15 @@ export class TouchGestureManager {
   private detectDrag(touch: Touch): void {
     const currentTime = Date.now()
     
-    if (this.isDragging === false) {
+    if (!this.isDragging) {
       if (this.dragStartPoint === null || this.dragStartPoint === undefined) {
         this.dragStartPoint = { x: touch.clientX, y: touch.clientY }
         this.moveHistory = [{ x: touch.clientX, y: touch.clientY, time: currentTime }]
       }
       
       const distance = Math.sqrt(
-        Math.pow(touch.clientX - this.dragStartPoint.x, 2) +
-        Math.pow(touch.clientY - this.dragStartPoint.y, 2)
+        (touch.clientX - this.dragStartPoint.x)**2 +
+        (touch.clientY - this.dragStartPoint.y)**2
       )
       
       if (distance > this.config.dragThreshold) {
@@ -420,7 +420,7 @@ export class TouchGestureManager {
       }
     }
 
-    if (this.isDragging === true && this.dragStartPoint !== null && this.dragStartPoint !== undefined) {
+    if (this.isDragging && this.dragStartPoint !== null && this.dragStartPoint !== undefined) {
       // 移動履歴を更新（速度計算用）
       this.moveHistory.push({ x: touch.clientX, y: touch.clientY, time: currentTime })
       
@@ -450,7 +450,7 @@ export class TouchGestureManager {
   }
 
   private endDrag(touch: Touch): void {
-    if (this.isDragging === true && this.dragStartPoint !== null && this.dragStartPoint !== undefined) {
+    if (this.isDragging && this.dragStartPoint !== null && this.dragStartPoint !== undefined) {
       // 速度を計算
       this.calculateVelocity()
       
@@ -642,7 +642,7 @@ export const getPointerPosition = (event: TouchEvent | MouseEvent): { x: number;
       x: event.touches[0].clientX,
       y: event.touches[0].clientY
     }
-  } else if ('clientX' in event) {
+  } if ('clientX' in event) {
     return {
       x: event.clientX,
       y: event.clientY
@@ -655,7 +655,7 @@ export const getPointerPosition = (event: TouchEvent | MouseEvent): { x: number;
 export const getDeviceInfo = () => {
   const userAgent = navigator.userAgent.toLowerCase()
   const isIOS = /iphone|ipad|ipod/.test(userAgent)
-  const isAndroid = /android/.test(userAgent)
+  const isAndroid = userAgent.includes('android')
   const isMobile = isIOS || isAndroid || isTouchDevice()
   
   // ハードウェア情報の取得（可能な場合）

@@ -5,7 +5,7 @@
  */
 export class CacheManager {
   private static instance: CacheManager
-  private cache: Map<string, { data: any; timestamp: number; ttl: number }>
+  private readonly cache: Map<string, { data: any; timestamp: number; ttl: number }>
 
   private constructor() {
     this.cache = new Map()

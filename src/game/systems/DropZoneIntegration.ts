@@ -1,4 +1,4 @@
-import { DropZoneManager, type DropZone, type DropResult } from './DropZoneManager'
+import { type DropResult, type DropZone, DropZoneManager } from './DropZoneManager'
 import { DropZonePresets } from './DropZoneValidators'
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
@@ -28,11 +28,11 @@ interface DragConfig {
  * 既存GameSceneとドロップゾーンシステムの統合クラス
  */
 export class DropZoneIntegration {
-  private dropZoneManager: DropZoneManager
-  private scene: Phaser.Scene
-  private game: Game
-  private deviceInfo: DeviceInfo
-  private dragConfig: DragConfig
+  private readonly dropZoneManager: DropZoneManager
+  private readonly scene: Phaser.Scene
+  private readonly game: Game
+  private readonly deviceInfo: DeviceInfo
+  private readonly dragConfig: DragConfig
   
   // ドラッグ関連
   private draggedCard?: Phaser.GameObjects.Container
@@ -42,8 +42,8 @@ export class DropZoneIntegration {
   // パフォーマンス最適化
   private lastUpdateTime = 0
   private readonly UPDATE_THROTTLE = 16 // 60fps相当
-  private particlePool: Phaser.GameObjects.Graphics[] = []
-  private trailPool: Phaser.GameObjects.Graphics[] = []
+  private readonly particlePool: Phaser.GameObjects.Graphics[] = []
+  private readonly trailPool: Phaser.GameObjects.Graphics[] = []
 
   constructor(scene: Phaser.Scene, game: Game) {
     this.scene = scene
@@ -388,7 +388,7 @@ export class DropZoneIntegration {
    * ドラッグトレイルの更新（最適化版）
    */
   private updateDragTrailOptimized(cardContainer: Phaser.GameObjects.Container): void {
-    const trail = cardContainer.getByName('drag-trail') as Phaser.GameObjects.Graphics
+    const trail = cardContainer.getByName('drag-trail')
     if (trail) {
       // より高速なフェードアウト（計算量削減）
       const newAlpha = trail.alpha - 0.05
@@ -405,7 +405,7 @@ export class DropZoneIntegration {
    * ドラッグトレイルの更新（従来版）
    */
   private updateDragTrail(cardContainer: Phaser.GameObjects.Container): void {
-    const trail = cardContainer.getByName('drag-trail') as Phaser.GameObjects.Graphics
+    const trail = cardContainer.getByName('drag-trail')
     if (trail) {
       // トレイルのフェードアウト
       trail.setAlpha(trail.alpha * 0.95)
@@ -429,7 +429,7 @@ export class DropZoneIntegration {
       alpha: 0,
       duration: 500,
       ease: 'Power2',
-      onComplete: () => feedback.destroy()
+      onComplete: () => { feedback.destroy(); }
     })
   }
 
@@ -462,7 +462,7 @@ export class DropZoneIntegration {
       scale: 2,
       duration: 1000,
       ease: 'Power2',
-      onComplete: () => x.destroy()
+      onComplete: () => { x.destroy(); }
     })
   }
 
@@ -499,7 +499,7 @@ export class DropZoneIntegration {
         ease: 'Power2',
         onComplete: () => {
           // パーティクルをプールに戻す
-          this.returnParticleToPool(particle!)
+          this.returnParticleToPool(particle)
         }
       })
     }
@@ -605,8 +605,8 @@ export class DropZoneIntegration {
    */
   destroy(): void {
     // プールの中身を全て破棄
-    this.particlePool.forEach(particle => particle.destroy())
-    this.trailPool.forEach(trail => trail.destroy())
+    this.particlePool.forEach(particle => { particle.destroy(); })
+    this.trailPool.forEach(trail => { trail.destroy(); })
     
     this.particlePool.length = 0
     this.trailPool.length = 0

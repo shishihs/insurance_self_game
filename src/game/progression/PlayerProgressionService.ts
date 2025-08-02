@@ -5,7 +5,7 @@
  */
 
 import { StorageAdapter } from '@/infrastructure/storage/StorageAdapter'
-import { IndexedDBManager, type Achievement } from '@/infrastructure/storage/IndexedDBManager'
+import { type Achievement, IndexedDBManager } from '@/infrastructure/storage/IndexedDBManager'
 import { EnhancedStatisticsService } from '@/domain/services/EnhancedStatisticsService'
 import type { Game } from '@/domain/entities/Game'
 
@@ -70,16 +70,16 @@ export interface SeasonChallenge {
 
 export class PlayerProgressionService {
   private static instance: PlayerProgressionService | null = null
-  private storage: StorageAdapter
-  private indexedDB: IndexedDBManager
-  private statsService: EnhancedStatisticsService
+  private readonly storage: StorageAdapter
+  private readonly indexedDB: IndexedDBManager
+  private readonly statsService: EnhancedStatisticsService
   private isInitialized = false
   
   // 経験値テーブル
   private readonly EXPERIENCE_TABLE = this.generateExperienceTable()
   
   // イベントリスナー
-  private progressionListeners: ((event: ProgressionEvent) => void)[] = []
+  private readonly progressionListeners: ((event: ProgressionEvent) => void)[] = []
   
   private constructor() {
     this.storage = StorageAdapter.getInstance()
@@ -138,7 +138,7 @@ export class PlayerProgressionService {
     events.push(...seasonEvents)
     
     // イベントを通知
-    events.forEach(event => this.notifyProgressionEvent(event))
+    events.forEach(event => { this.notifyProgressionEvent(event); })
     
     return events
   }
@@ -380,7 +380,7 @@ export class PlayerProgressionService {
     // レベル1〜100までの必要経験値を生成
     for (let level = 1; level <= 100; level++) {
       // 指数関数的に増加する経験値カーブ
-      const exp = Math.floor(100 * Math.pow(1.2, level - 1))
+      const exp = Math.floor(100 * 1.2**(level - 1))
       table.push(exp)
     }
     
@@ -447,7 +447,7 @@ export class PlayerProgressionService {
     const levelSystem = await this.getLevelSystem()
     
     for (const reward of levelSystem.levelUpRewards) {
-      if (reward.level >= fromLevel && reward.level <= toLevel && reward.claimed === false) {
+      if (reward.level >= fromLevel && reward.level <= toLevel && !reward.claimed) {
         // 報酬を適用
         await this.applyLevelReward(reward)
         reward.claimed = true
@@ -649,7 +649,7 @@ export class PlayerProgressionService {
       }
       
       // 完了チェック
-      if (progressMade === true && challenge.progress >= challenge.target && challenge.completed === false) {
+      if (progressMade && challenge.progress >= challenge.target && !challenge.completed) {
         challenge.completed = true
         pointsGained += challenge.points
         
@@ -697,7 +697,7 @@ export class PlayerProgressionService {
     const levelSystem = await this.getLevelSystem()
     const reward = levelSystem.levelUpRewards.find(r => r.level === level)
     
-    if (reward !== null && reward !== undefined && reward.claimed === false && levelSystem.currentLevel >= level) {
+    if (reward !== null && reward !== undefined && !reward.claimed && levelSystem.currentLevel >= level) {
       await this.applyLevelReward(reward)
       reward.claimed = true
       await this.storage.savePreference('level_system', levelSystem)
@@ -711,7 +711,7 @@ export class PlayerProgressionService {
     const seasonProgress = await this.getSeasonalProgress()
     const reward = seasonProgress.rewards.find(r => r.tier === tier)
     
-    if (reward !== null && reward !== undefined && reward.claimed === false && seasonProgress.currentTier >= tier) {
+    if (reward !== null && reward !== undefined && !reward.claimed && seasonProgress.currentTier >= tier) {
       // 報酬を適用
       console.log(`🎁 シーズン報酬獲得: ${reward.name}`)
       reward.claimed = true

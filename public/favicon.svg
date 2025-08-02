@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .icon-bg { fill: #667eea; }
+      .icon-fg { fill: #ffffff; }
+    </style>
+  </defs>
+  <rect class="icon-bg" width="32" height="32" rx="6"/>
+  <g class="icon-fg">
+    <!-- 人生充実ゲームのシンボル: 盾（保険）+ ハート（人生） -->
+    <path d="M16 4l-8 3v6c0 5 3.5 9.4 8 10.5c4.5-1.1 8-5.5 8-10.5V7l-8-3z" fill="none" stroke="currentColor" stroke-width="2"/>
+    <path d="M16 10c-2.2 0-4 1.8-4 4s1.8 4 4 4s4-1.8 4-4s-1.8-4-4-4z" fill="currentColor"/>
+  </g>
+</svg>

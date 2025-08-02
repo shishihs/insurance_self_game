@@ -286,11 +286,11 @@ export function isGameStage(value: any): value is GameStage {
  * 結果型の型ガード
  */
 export function isSuccess<T, E>(result: Result<T, E>): result is { success: true; data: T } {
-  return result.success === true
+  return result.success
 }
 
 export function isFailure<T, E>(result: Result<T, E>): result is { success: false; error: E } {
-  return result.success === false
+  return !result.success
 }
 
 // ===========================================

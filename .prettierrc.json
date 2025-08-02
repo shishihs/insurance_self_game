@@ -12,5 +12,15 @@
   "bracketSameLine": false,
   "proseWrap": "preserve",
   "htmlWhitespaceSensitivity": "strict",
-  "embeddedLanguageFormatting": "auto"
+  "embeddedLanguageFormatting": "auto",
+  "quoteProps": "consistent",
+  "jsxSingleQuote": true,
+  "experimentalTernaries": false,
+  "insertPragma": false,
+  "requirePragma": false,
+  "rangeStart": 0,
+  "rangeEnd": null,
+  "parser": null,
+  "filepath": null,
+  "editorconfig": true
 }

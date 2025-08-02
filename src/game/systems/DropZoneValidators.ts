@@ -72,7 +72,7 @@ export class DropZoneValidators {
    * チャレンジ中であることをチェック
    */
   static inChallenge(): DropZoneValidator {
-    return (card: Card, game: Game) => !!game.currentChallenge
+    return (card: Card, game: Game) => Boolean(game.currentChallenge)
   }
 
   /**
@@ -159,7 +159,7 @@ export class DropZoneValidators {
     return (card: Card, game: Game) => {
       if (condition(card, game)) {
         return thenValidator(card, game)
-      } else if (elseValidator) {
+      } if (elseValidator) {
         return elseValidator(card, game)
       }
       return true
@@ -298,7 +298,7 @@ export class DropZoneActions {
    */
   static sequence(...actions: DropZoneAction[]): DropZoneAction {
     return (card: Card, game: Game) => {
-      actions.forEach(action => action(card, game))
+      actions.forEach(action => { action(card, game); })
     }
   }
 

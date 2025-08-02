@@ -1,7 +1,7 @@
 import type { GameRenderer } from '@/interfaces/GameRenderer'
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
-import type { PlayerStats, ChallengeResult } from '@/domain/types/game.types'
+import type { ChallengeResult, PlayerStats } from '@/domain/types/game.types'
 import type { GameScene } from '../scenes/GameScene'
 
 /**
@@ -234,7 +234,7 @@ export class PhaserGameRenderer implements GameRenderer {
   async initialize(): Promise<void> {
     // GameSceneの初期化は外部で行われる
     // ここでは必要に応じて追加の初期化を行う
-    if (this.debugMode === true && this.gameScene !== null && this.gameScene !== undefined) {
+    if (this.debugMode && this.gameScene !== null && this.gameScene !== undefined) {
       this.gameScene.setDebugMode(true)
     }
   }

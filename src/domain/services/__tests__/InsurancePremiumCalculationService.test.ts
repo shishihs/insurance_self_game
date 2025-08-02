@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { InsurancePremiumCalculationService } from '../InsurancePremiumCalculationService'
 import { InsurancePremium } from '../../valueObjects/InsurancePremium'
 import { Card } from '../../entities/Card'

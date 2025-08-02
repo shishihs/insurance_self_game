@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
 import type { SatisfactionRating } from '../../domain/entities/Feedback'
 

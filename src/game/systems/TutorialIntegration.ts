@@ -11,8 +11,8 @@ import type { TutorialEventData } from '@/domain/types/tutorial.types'
  * GameSceneでのTutorialManager使用例
  */
 export class TutorialIntegration {
-  private tutorialManager: TutorialManager
-  private scene: Phaser.Scene
+  private readonly tutorialManager: TutorialManager
+  private readonly scene: Phaser.Scene
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene

@@ -45,10 +45,10 @@ export interface ARIAValidationResult {
 
 export class ARIAManager {
   private static instance: ARIAManager
-  private elements = new Map<string, HTMLElement>()
-  private relationships = new Map<string, ARIARelationship[]>()
-  private observers = new Map<string, MutationObserver>()
-  private validRoles = new Set([
+  private readonly elements = new Map<string, HTMLElement>()
+  private readonly relationships = new Map<string, ARIARelationship[]>()
+  private readonly observers = new Map<string, MutationObserver>()
+  private readonly validRoles = new Set([
     'alert', 'alertdialog', 'application', 'article', 'banner', 'button',
     'cell', 'checkbox', 'columnheader', 'combobox', 'complementary',
     'contentinfo', 'definition', 'dialog', 'directory', 'document',
@@ -628,7 +628,7 @@ export class ARIAManager {
    * クリーンアップ
    */
   public destroy(): void {
-    this.observers.forEach(observer => observer.disconnect())
+    this.observers.forEach(observer => { observer.disconnect(); })
     this.observers.clear()
     this.elements.clear()
     this.relationships.clear()

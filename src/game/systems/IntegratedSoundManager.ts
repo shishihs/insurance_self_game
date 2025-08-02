@@ -13,9 +13,9 @@ import { BackgroundMusicManager } from './BackgroundMusicManager'
  * - パフォーマンス最適化
  */
 export class IntegratedSoundManager {
-  private scene: Phaser.Scene
-  private soundManager: SoundManager
-  private bgmManager: BackgroundMusicManager
+  private readonly scene: Phaser.Scene
+  private readonly soundManager: SoundManager
+  private readonly bgmManager: BackgroundMusicManager
   private masterVolume: number = 0.7
   private sfxVolume: number = 0.5
   private bgmVolume: number = 0.3

@@ -22,8 +22,12 @@ export const GameSceneOptimizationMixin = {
     // レンダリング最適化
     this.cameras.main.setRoundPixels(true)
     
-    // バッチ処理の有効化
-    this.game.renderer.setMaxTextures(16)
+    // バッチ処理の最適化（Phaser 3.90.0互換）
+    // setMaxTexturesは削除されたため、代替の最適化を使用
+    if (this.game.renderer && typeof this.game.renderer.config === 'object') {
+      // レンダラー設定の確認のみ
+      console.log('[GameScene] Renderer config:', this.game.renderer.config)
+    }
   },
 
   /**

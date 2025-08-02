@@ -1,19 +1,19 @@
 import type { 
-  ICard, 
-  IAdvancedCard,
+  CardEffect, 
+  CardEffectType,
   CardType, 
-  CardEffect,
-  CardEffectType, 
-  LifeCardCategory, 
-  InsuranceType,
+  ComboCardProperties,
+  DreamCategory, 
+  EventCardProperties, 
+  IAdvancedCard,
+  ICard,
   InsuranceDurationType,
   InsuranceEffectType,
-  DreamCategory,
+  InsuranceType,
+  LifeCardCategory,
+  RewardType,
   SkillCardProperties,
-  ComboCardProperties,
-  EventCardProperties,
-  SkillRarity,
-  RewardType
+  SkillRarity
 } from '../types/card.types'
 import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'

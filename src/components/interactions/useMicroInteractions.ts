@@ -3,8 +3,8 @@
  * プレイヤー体験を向上させるマイクロインタラクションの統合
  */
 
-import { ref, onMounted, onUnmounted, nextTick, type Ref } from 'vue'
-import { MicroInteractionManager, type InteractionConfig } from './MicroInteractionManager'
+import { nextTick, onMounted, onUnmounted, type Ref, ref } from 'vue'
+import { type InteractionConfig, MicroInteractionManager } from './MicroInteractionManager'
 
 interface UseInteractionsOptions {
   haptic?: boolean
@@ -243,7 +243,7 @@ export function useMicroInteractions(options: UseInteractionsOptions = {}) {
 
     return {
       tooltip,
-      hide: () => tooltip.remove()
+      hide: () => { tooltip.remove(); }
     }
   }
 

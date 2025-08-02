@@ -51,12 +51,12 @@ interface PerformanceConfig {
 }
 
 export class UnifiedAnimationManager {
-  private animations: Map<string, AnimationState> = new Map()
+  private readonly animations: Map<string, AnimationState> = new Map()
   private animationFrame: number | null = null
-  private performanceConfig: PerformanceConfig
-  private animationSpeed: Ref<number> = ref(1)
-  private isPaused: Ref<boolean> = ref(false)
-  private activeAnimationCount: Ref<number> = ref(0)
+  private readonly performanceConfig: PerformanceConfig
+  private readonly animationSpeed: Ref<number> = ref(1)
+  private readonly isPaused: Ref<boolean> = ref(false)
+  private readonly activeAnimationCount: Ref<number> = ref(0)
 
   constructor(config?: Partial<PerformanceConfig>) {
     this.performanceConfig = {
@@ -166,7 +166,7 @@ export class UnifiedAnimationManager {
   /**
    * シーン遷移アニメーション
    */
-  transitionScene(
+  async transitionScene(
     fromElement: HTMLElement | null,
     toElement: HTMLElement,
     type: 'fade' | 'slide' | 'zoom' | 'flip' = 'fade',
@@ -272,11 +272,11 @@ export class UnifiedAnimationManager {
     setTimeout(() => {
       this.animate(message, 'scaleOut', { 
         duration: 300,
-        onComplete: () => message.remove()
+        onComplete: () => { message.remove(); }
       })
       this.animate(overlay, 'fadeOut', { 
         duration: 300,
-        onComplete: () => overlay.remove()
+        onComplete: () => { overlay.remove(); }
       })
     }, 3000)
   }
@@ -319,11 +319,11 @@ export class UnifiedAnimationManager {
     setTimeout(() => {
       this.animate(message, 'fadeOut', { 
         duration: 300,
-        onComplete: () => message.remove()
+        onComplete: () => { message.remove(); }
       })
       this.animate(overlay, 'fadeOut', { 
         duration: 300,
-        onComplete: () => overlay.remove()
+        onComplete: () => { overlay.remove(); }
       })
     }, 3000)
   }

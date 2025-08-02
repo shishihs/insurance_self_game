@@ -118,7 +118,7 @@ export class Feedback {
   
   private _status: FeedbackStatus
   private _updatedAt: Date
-  private _tags: string[]
+  private readonly _tags: string[]
   private _adminNotes: string[]
   
   // カテゴリ別の詳細データ
@@ -248,7 +248,7 @@ export class Feedback {
     if (params.category === FeedbackCategory.GENERAL && params.reviewData) {
       if (params.reviewData.overallRating <= 2) {
         return FeedbackPriority.HIGH // 低評価は優先度高
-      } else if (params.reviewData.overallRating >= 4) {
+      } if (params.reviewData.overallRating >= 4) {
         return FeedbackPriority.MEDIUM // 高評価は中程度
       }
     }
@@ -294,14 +294,14 @@ export class Feedback {
    * バグレポートかどうか判定
    */
   isBugReport(): boolean {
-    return this.category === FeedbackCategory.BUG_REPORT && !!this.bugReportData
+    return this.category === FeedbackCategory.BUG_REPORT && Boolean(this.bugReportData)
   }
 
   /**
    * レビューかどうか判定
    */
   isReview(): boolean {
-    return !!this.reviewData
+    return Boolean(this.reviewData)
   }
 
   /**

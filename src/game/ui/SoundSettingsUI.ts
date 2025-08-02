@@ -5,9 +5,9 @@ import type { IntegratedSoundManager } from '../systems/IntegratedSoundManager'
  * 音量調整、サウンドON/OFF、詳細設定を提供
  */
 export class SoundSettingsUI {
-  private scene: Phaser.Scene
-  private soundManager: IntegratedSoundManager
-  private container: Phaser.GameObjects.Container
+  private readonly scene: Phaser.Scene
+  private readonly soundManager: IntegratedSoundManager
+  private readonly container: Phaser.GameObjects.Container
   private isVisible: boolean = false
   
   private background!: Phaser.GameObjects.Rectangle
@@ -234,13 +234,13 @@ export class SoundSettingsUI {
  */
 class VolumeSlider {
   container: Phaser.GameObjects.Container
-  private scene: Phaser.Scene
-  private label: Phaser.GameObjects.Text
-  private track: Phaser.GameObjects.Rectangle
-  private thumb: Phaser.GameObjects.Circle
-  private valueText: Phaser.GameObjects.Text
+  private readonly scene: Phaser.Scene
+  private readonly label: Phaser.GameObjects.Text
+  private readonly track: Phaser.GameObjects.Rectangle
+  private readonly thumb: Phaser.GameObjects.Circle
+  private readonly valueText: Phaser.GameObjects.Text
   private value: number
-  private onChange: (value: number) => void
+  private readonly onChange: (value: number) => void
   private enabled: boolean = true
   
   constructor(
@@ -334,12 +334,12 @@ class VolumeSlider {
  */
 class ToggleButton {
   container: Phaser.GameObjects.Container
-  private scene: Phaser.Scene
-  private label: Phaser.GameObjects.Text
-  private switchBg: Phaser.GameObjects.Rectangle
-  private switchThumb: Phaser.GameObjects.Circle
+  private readonly scene: Phaser.Scene
+  private readonly label: Phaser.GameObjects.Text
+  private readonly switchBg: Phaser.GameObjects.Rectangle
+  private readonly switchThumb: Phaser.GameObjects.Circle
   private value: boolean
-  private onChange: (value: boolean) => void
+  private readonly onChange: (value: boolean) => void
   
   constructor(
     scene: Phaser.Scene,

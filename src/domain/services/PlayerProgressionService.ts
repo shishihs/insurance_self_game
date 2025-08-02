@@ -211,17 +211,17 @@ export class PlayerProgressionService {
   static getRecommendedStrategy(level: number, stage: GameStage): string {
     if (level <= 5) {
       return 'basic_survival'
-    } else if (level <= 10) {
+    } if (level <= 10) {
       return 'insurance_focused'
-    } else if (level <= 15) {
+    } if (level <= 15) {
       return 'skill_development' 
-    } else if (level <= 20) {
+    } if (level <= 20) {
       return 'combo_mastery'
-    } else if (level <= 25) {
+    } if (level <= 25) {
       return 'advanced_tactics'
-    } else {
+    } 
       return 'perfect_harmony'
-    }
+    
   }
 
   /**

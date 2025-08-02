@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DropZoneIntegration } from '../DropZoneIntegration'
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
@@ -803,7 +803,7 @@ describe('DropZoneIntegration', () => {
       dropZoneIntegration.addCustomZone(customZone)
       
       // カスタムゾーンが追加されることを確認
-      expect(() => dropZoneIntegration.addCustomZone(customZone)).not.toThrow()
+      expect(() => { dropZoneIntegration.addCustomZone(customZone); }).not.toThrow()
     })
 
     it('should remove zones correctly', () => {
@@ -813,7 +813,7 @@ describe('DropZoneIntegration', () => {
       dropZoneIntegration.removeZone(zoneId)
       
       // エラーが発生しないことを確認
-      expect(() => dropZoneIntegration.removeZone(zoneId)).not.toThrow()
+      expect(() => { dropZoneIntegration.removeZone(zoneId); }).not.toThrow()
     })
   })
 
@@ -890,7 +890,7 @@ describe('DropZoneIntegration', () => {
       dropZoneIntegration.destroy()
       
       // クリーンアップが実行されることを確認
-      expect(() => dropZoneIntegration.destroy()).not.toThrow()
+      expect(() => { dropZoneIntegration.destroy(); }).not.toThrow()
     })
 
     it('should handle multiple card containers efficiently', () => {
@@ -926,7 +926,7 @@ describe('DropZoneIntegration', () => {
       }
       
       // メモリリークが発生しないことを確認（破棄時にエラーが発生しない）
-      expect(() => dropZoneIntegration.destroy()).not.toThrow()
+      expect(() => { dropZoneIntegration.destroy(); }).not.toThrow()
     })
   })
 

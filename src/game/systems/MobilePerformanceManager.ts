@@ -28,14 +28,14 @@ interface PerformanceThresholds {
 }
 
 export class MobilePerformanceManager {
-  private scene: Phaser.Scene
-  private metrics: PerformanceMetrics
-  private thresholds: PerformanceThresholds
+  private readonly scene: Phaser.Scene
+  private readonly metrics: PerformanceMetrics
+  private readonly thresholds: PerformanceThresholds
   private optimizationLevel: 'low' | 'medium' | 'high' = 'medium'
   private monitoringInterval: number | null = null
   private frameCounter: number = 0
   private lastFrameTime: number = 0
-  private fpsHistory: number[] = []
+  private readonly fpsHistory: number[] = []
   private isLowPowerMode: boolean = false
   
   constructor(scene: Phaser.Scene, thresholds?: Partial<PerformanceThresholds>) {

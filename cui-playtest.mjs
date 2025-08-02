@@ -503,10 +503,10 @@ class PlaytestGameController {
     if (success) {
       // 成功時は余剰パワーの半分を活力回復
       return Math.floor((totalPower - requiredPower) / 2)
-    } else {
+    } 
       // 失敗時は不足分だけ活力減少
       return -(requiredPower - totalPower)
-    }
+    
   }
 
   /**

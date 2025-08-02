@@ -37,12 +37,12 @@ export interface GameFeedback {
 
 export class FeedbackNotificationSystem {
   private container: HTMLElement
-  private notifications: Map<string, HTMLElement> = new Map()
-  private notificationQueue: NotificationConfig[] = []
-  private isProcessingQueue: boolean = false
-  private maxNotifications: number = 5
-  private defaultDuration: number = 4000
-  private audioManager: InteractionAudioManager
+  private readonly notifications: Map<string, HTMLElement> = new Map()
+  private readonly notificationQueue: NotificationConfig[] = []
+  private readonly isProcessingQueue: boolean = false
+  private readonly maxNotifications: number = 5
+  private readonly defaultDuration: number = 4000
+  private readonly audioManager: InteractionAudioManager
 
   constructor() {
     this.createContainer()
@@ -108,7 +108,7 @@ export class FeedbackNotificationSystem {
    * 全ての通知をクリア
    */
   async clear(): Promise<void> {
-    const promises = Array.from(this.notifications.keys()).map(id => this.hide(id))
+    const promises = Array.from(this.notifications.keys()).map(async id => this.hide(id))
     await Promise.all(promises)
   }
 
@@ -231,7 +231,7 @@ export class FeedbackNotificationSystem {
       actions: [
         {
           label: 'リスタート',
-          action: () => window.location.reload(),
+          action: () => { window.location.reload(); },
           style: 'primary'
         },
         {
@@ -303,7 +303,7 @@ export class FeedbackNotificationSystem {
       icon: '⚠️',
       position: 'top-right',
       duration: 6000,
-      persistent: !!actions,
+      persistent: Boolean(actions),
       haptic: true,
       actions
     })

@@ -5,7 +5,7 @@
  * より高度なデータ分析と永続化機能を提供
  */
 
-import { StatisticsDataService, type StatisticsData, type StatisticsFilter, type StatisticsSort } from './StatisticsDataService'
+import { type StatisticsData, StatisticsDataService, type StatisticsFilter, type StatisticsSort } from './StatisticsDataService'
 import { IndexedDBManager } from '@/infrastructure/storage/IndexedDBManager'
 import { StorageAdapter } from '@/infrastructure/storage/StorageAdapter'
 import type { Game } from '../entities/Game'
@@ -55,9 +55,9 @@ export interface DailyChallenge {
 
 export class EnhancedStatisticsService {
   private static instance: EnhancedStatisticsService | null = null
-  private baseService: StatisticsDataService
-  private indexedDB: IndexedDBManager
-  private storage: StorageAdapter
+  private readonly baseService: StatisticsDataService
+  private readonly indexedDB: IndexedDBManager
+  private readonly storage: StorageAdapter
   private isInitialized = false
   
   private constructor() {
@@ -310,9 +310,9 @@ export class EnhancedStatisticsService {
     
     if (format === 'json') {
       return JSON.stringify(exportData, null, 2)
-    } else {
+    } 
       return this.convertToCSV(exportData)
-    }
+    
   }
   
   /**

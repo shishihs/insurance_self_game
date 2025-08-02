@@ -34,18 +34,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
   BarElement,
-  Title,
-  Tooltip,
+  CategoryScale,
+  Chart,
+  Filler,
   Legend,
-  Filler
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip
 } from 'chart.js'
 
 // Chart.jsの登録
@@ -196,11 +196,11 @@ const initChart = () => {
                 
                 if (Math.abs(diff) < 1) {
                   return '🎯 理想的な決定時間です'
-                } else if (diff > 0) {
+                } if (diff > 0) {
                   return `⏳ 目標より${diff.toFixed(1)}秒長いです`
-                } else {
+                } 
                   return `⚡ 目標より${Math.abs(diff).toFixed(1)}秒速いです`
-                }
+                
               }
               return ''
             }

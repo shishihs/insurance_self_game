@@ -13,8 +13,8 @@ export interface MemoryStats {
 export class MemoryOptimizer {
   private static instance: MemoryOptimizer
   private weakRefs: WeakRef<any>[] = []
-  private cleanupTasks: (() => void)[] = []
-  private memoryPressureCallbacks: ((pressure: 'low' | 'medium' | 'high') => void)[] = []
+  private readonly cleanupTasks: (() => void)[] = []
+  private readonly memoryPressureCallbacks: ((pressure: 'low' | 'medium' | 'high') => void)[] = []
   private monitoringInterval?: number
 
   private constructor() {
@@ -192,8 +192,8 @@ export const VueMemoryOptimizer = {
  * Phaser用メモリ最適化
  */
 export class PhaserMemoryOptimizer {
-  private scene: Phaser.Scene
-  private optimizer: MemoryOptimizer
+  private readonly scene: Phaser.Scene
+  private readonly optimizer: MemoryOptimizer
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene

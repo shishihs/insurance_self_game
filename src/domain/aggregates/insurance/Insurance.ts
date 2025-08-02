@@ -6,8 +6,8 @@ import type {
   DomainEvent} from './events';
 import {
   InsuranceActivatedEvent,
-  InsuranceUsedEvent,
   InsuranceExpiredEvent,
+  InsuranceUsedEvent,
 } from './events'
 import type { GameStage } from '../../types/card.types'
 

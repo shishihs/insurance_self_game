@@ -12,8 +12,8 @@ import { generateSecureRandomString, RateLimiter, sanitizeInput } from './securi
 export class SecurityMonitor {
   private static instance: SecurityMonitor
   private suspiciousActivities: SuspiciousActivity[] = []
-  private rateLimiters = new Map<string, RateLimiter>()
-  private securityMetrics = {
+  private readonly rateLimiters = new Map<string, RateLimiter>()
+  private readonly securityMetrics = {
     totalThreatsBlocked: 0,
     totalInputValidations: 0,
     totalRateLimitViolations: 0,
@@ -483,7 +483,7 @@ export function setupNetworkMonitoring(): void {
   if (typeof window !== 'undefined') {
     // fetch の監視
     const originalFetch = window.fetch
-    window.fetch = function(...args) {
+    window.fetch = async function(...args) {
       const url = args[0]
       const options = args[1] || {}
       
@@ -518,7 +518,7 @@ export function setupNetworkMonitoring(): void {
           })
         }
         
-        return originalOpen.apply(this, [method, url, ...args])
+        originalOpen.apply(this, [method, url, ...args]);
       }
       
       return xhr
@@ -775,11 +775,11 @@ function setupMemoryLeakDetection(): void {
 function performInitialSecurityCheck(): void {
   // ブラウザのセキュリティ機能チェック
   const securityFeatures = {
-    crypto: !!window.crypto,
-    subtle: !!(window.crypto && window.crypto.subtle),
-    csp: !!document.querySelector('meta[http-equiv="Content-Security-Policy"]'),
+    crypto: Boolean(window.crypto),
+    subtle: Boolean(window.crypto && window.crypto.subtle),
+    csp: Boolean(document.querySelector('meta[http-equiv="Content-Security-Policy"]')),
     https: window.location.protocol === 'https:',
-    referrerPolicy: !!document.querySelector('meta[name="referrer"]')
+    referrerPolicy: Boolean(document.querySelector('meta[name="referrer"]'))
   }
   
   const missingFeatures = Object.entries(securityFeatures)

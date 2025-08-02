@@ -52,9 +52,9 @@ export class HighContrastManager {
     simplifyUI: false
   }
 
-  private themes: Map<string, ContrastTheme> = new Map()
+  private readonly themes: Map<string, ContrastTheme> = new Map()
   private observers: MutationObserver[] = []
-  private contrastAnalyzer: ContrastAnalyzer
+  private readonly contrastAnalyzer: ContrastAnalyzer
 
   private constructor() {
     this.contrastAnalyzer = new ContrastAnalyzer()
@@ -569,7 +569,7 @@ export class HighContrastManager {
    * クリーンアップ
    */
   public destroy(): void {
-    this.observers.forEach(observer => observer.disconnect())
+    this.observers.forEach(observer => { observer.disconnect(); })
     this.observers = []
     
     if (this.currentSettings.enabled) {
@@ -670,7 +670,7 @@ class ContrastAnalyzer {
   private getLuminance([r, g, b]: [number, number, number]): number {
     const [rs, gs, bs] = [r, g, b].map(c => {
       const sRGB = c / 255
-      return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4)
+      return sRGB <= 0.03928 ? sRGB / 12.92 : ((sRGB + 0.055) / 1.055)**2.4
     })
     
     return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs

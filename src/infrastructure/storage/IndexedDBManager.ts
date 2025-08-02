@@ -106,7 +106,7 @@ export class IndexedDBManager {
   /**
    * データベースを開く
    */
-  private openDatabase(): Promise<IDBDatabase> {
+  private async openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.DB_NAME, this.DB_VERSION)
       
@@ -550,13 +550,13 @@ export class IndexedDBManager {
     const storeNames = ['saves', 'statistics', 'gameHistory', 'achievements', 'preferences']
     const transaction = this.db.transaction(storeNames, 'readwrite')
     
-    const promises = storeNames.map(storeName => {
+    const promises = storeNames.map(async storeName => {
       return new Promise<void>((resolve, reject) => {
         const store = transaction.objectStore(storeName)
         const request = store.clear()
         
-        request.onsuccess = () => resolve()
-        request.onerror = () => reject(new Error(`${storeName}のクリアに失敗しました`))
+        request.onsuccess = () => { resolve(); }
+        request.onerror = () => { reject(new Error(`${storeName}のクリアに失敗しました`)); }
       })
     })
     
@@ -650,8 +650,8 @@ export class IndexedDBManager {
       for (const game of data.gameHistory) {
         promises.push(new Promise((resolve, reject) => {
           const request = store.put(game)
-          request.onsuccess = () => resolve()
-          request.onerror = () => reject(new Error('ゲーム履歴のインポートに失敗しました'))
+          request.onsuccess = () => { resolve(); }
+          request.onerror = () => { reject(new Error('ゲーム履歴のインポートに失敗しました')); }
         }))
       }
     }

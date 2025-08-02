@@ -248,6 +248,11 @@ export class TestDataGenerator {
       cardsAcquired: 10,
       highestVitality: 100,
       turnsPlayed: 20,
+      challengesCompleted: 6,
+      challengesFailed: 2,
+      finalVitality: 80,
+      finalInsuranceBurden: 20,
+      score: 500,
       ...overrides
     }
   }

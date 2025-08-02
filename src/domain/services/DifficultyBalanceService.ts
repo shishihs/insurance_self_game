@@ -1,5 +1,5 @@
 import { Card } from '../entities/Card'
-import type { GameStage, Difficulty } from '../types/card.types'
+import type { Difficulty, GameStage } from '../types/card.types'
 import type { PlayerProgression } from './PlayerProgressionService'
 import type { PlayerAchievements } from './AchievementSystemService'
 
@@ -168,13 +168,13 @@ export class DifficultyBalanceService {
   private static getRecommendedStrategy(difficulty: DynamicDifficulty, playerLevel: number): string {
     if (difficulty.adjustmentFactor < -0.2) {
       return '基本的な生存戦略：確実に勝てるチャレンジを選択し、リスクを避けてください'
-    } else if (difficulty.adjustmentFactor > 0.2) {
+    } if (difficulty.adjustmentFactor > 0.2) {
       return '積極的戦略：高難易度チャレンジで大きな報酬を狙い、コンボを活用してください'
-    } else if (playerLevel >= 15) {
+    } if (playerLevel >= 15) {
       return 'バランス戦略：スキルとコンボを組み合わせて効率的にプレイしてください'
-    } else {
+    } 
       return '成長戦略：新しいカードを積極的に獲得し、スキルを向上させてください'
-    }
+    
   }
 
   /**

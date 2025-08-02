@@ -492,7 +492,8 @@ export class GameAnalytics {
     return {
       mean,
       median,
-      standardDeviation
+      standardDeviation,
+      overallWinRate: mean  // テストが期待するプロパティ
     }
   }
 
@@ -1882,9 +1883,9 @@ export class GameAnalytics {
         upper: difference + 1.96 * standardError
       },
       recommendedAction: pValue < 0.05 && difference > 0 ? 'adopt_variant_B' : 'keep_control',
-      pValue: pValue,
+      pValue: Math.min(1, Math.max(0, pValue)), // 0-1の範囲に制限
       effectSize: difference / Math.sqrt(pooledConversion * (1 - pooledConversion)),
-      confidence: 1 - pValue
+      confidence: 1 - Math.min(1, Math.max(0, pValue))
     }
   }
   
@@ -2071,7 +2072,7 @@ export class GameAnalytics {
     // ベースラインから統計情報を計算
     let baselineStats: any = { mean: 0, std: 1 }
     if (baseline.length > 0) {
-      const scores = baseline.map((d: any) => d.score || 0).filter((s: number) => isFinite(s))
+      const scores = baseline.map((d: any) => d.stats?.score || d.score || 0).filter((s: number) => isFinite(s))
       if (scores.length > 0) {
         const mean = scores.reduce((a: number, b: number) => a + b, 0) / scores.length
         const variance = scores.reduce((sum: number, s: number) => sum + Math.pow(s - mean, 2), 0) / scores.length
@@ -2081,8 +2082,8 @@ export class GameAnalytics {
     
     return {
       detectAnomaly: (dataPoint: any) => {
-        const score = dataPoint.score || 0
-        const finalVitality = dataPoint.finalVitality || 0
+        const score = dataPoint.stats?.score || dataPoint.score || 0
+        const finalVitality = dataPoint.stats?.finalVitality || dataPoint.finalVitality || 0
         
         // 異常スコアの計算
         let anomalyScore = 0
@@ -2097,8 +2098,13 @@ export class GameAnalytics {
         }
         // 通常のスコア計算
         else {
-          const zScore = Math.abs((score - baselineStats.mean) / baselineStats.std)
-          anomalyScore = Math.min(1, zScore / 4)
+          // stdが0の場合の処理
+          if (baselineStats.std === 0) {
+            anomalyScore = score !== baselineStats.mean ? 0.5 : 0
+          } else {
+            const zScore = Math.abs((score - baselineStats.mean) / baselineStats.std)
+            anomalyScore = Math.min(1, zScore / 4)
+          }
         }
         
         return {

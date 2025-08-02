@@ -33,11 +33,11 @@ import { WebAudioSoundGenerator } from './WebAudioSoundGenerator'
  * - のこぎり波と不協和音による失敗、挙折感の表現
  */
 export class SoundManager {
-  private scene: Phaser.Scene
+  private readonly scene: Phaser.Scene
   private enabled: boolean = true
   private volume: number = 0.5
-  private sounds: Map<string, Phaser.Sound.BaseSound> = new Map()
-  private webAudioGenerator: WebAudioSoundGenerator
+  private readonly sounds: Map<string, Phaser.Sound.BaseSound> = new Map()
+  private readonly webAudioGenerator: WebAudioSoundGenerator
   
   /**
    * サウンドエフェクトマッピングテーブル

@@ -1,0 +1,107 @@
+# Robots.txt for 人生充実ゲーム (Life Fulfillment Game)
+# https://shishihs.github.io/insurance_self_game/
+
+User-agent: *
+Allow: /
+
+# 主要ページ
+Allow: /
+Allow: /manifest.json
+Allow: /service-worker.js
+Allow: /favicon.ico
+Allow: /favicon.svg
+
+# 静的アセット
+Allow: /assets/
+Allow: /src/
+Allow: /public/
+
+# 開発・テスト関連ファイルは除外
+Disallow: /node_modules/
+Disallow: /dist/
+Disallow: /.git/
+Disallow: /.github/
+Disallow: /.vscode/
+Disallow: /coverage/
+Disallow: /test-results/
+Disallow: /monitoring-data/
+Disallow: *.log
+Disallow: *.map
+Disallow: /dev-dist/
+Disallow: /temp/
+Disallow: /.cache/
+
+# 設定ファイル
+Disallow: /vite.config.ts
+Disallow: /tsconfig.json
+Disallow: /package.json
+Disallow: /package-lock.json
+Disallow: /.env*
+Disallow: /vitest.config.ts
+Disallow: /uno.config.ts
+
+# サイトマップの場所
+Sitemap: https://shishihs.github.io/insurance_self_game/sitemap.xml
+
+# クローリング設定
+Crawl-delay: 1
+
+# 特定のボット向け設定
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot  
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+# ソーシャルメディアボット
+User-agent: facebookexternalhit/1.1
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# パフォーマンスツール
+User-agent: GTmetrix
+Allow: /
+
+User-agent: lighthouse
+Allow: /
+
+User-agent: PageSpeed
+Allow: /
+
+# アーカイブボット
+User-agent: ia_archiver
+Allow: /
+
+# SEOツール
+User-agent: AhrefsBot
+Crawl-delay: 5
+
+User-agent: MJ12bot
+Crawl-delay: 10
+
+# 悪意のあるボットをブロック
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot  
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /

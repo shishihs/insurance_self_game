@@ -96,9 +96,9 @@ export interface CollectionOptions {
 }
 
 export class DebugInfoCollector {
-  private sessionId: string
-  private buildVersion: string
-  private environment: string
+  private readonly sessionId: string
+  private readonly buildVersion: string
+  private readonly environment: string
   private gameStateProvider?: () => string
   private componentProvider?: () => string
   private featureProvider?: () => string[]
@@ -380,7 +380,7 @@ export class DebugInfoCollector {
   private hasWebGL(): boolean {
     try {
       const canvas = document.createElement('canvas')
-      return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      return Boolean(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
     } catch {
       return false
     }

@@ -1,6 +1,6 @@
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
-import type { PlayerStats, ChallengeResult } from '@/domain/types/game.types'
+import type { ChallengeResult, PlayerStats } from '@/domain/types/game.types'
 
 /**
  * ゲーム表示・操作の抽象化インターフェース

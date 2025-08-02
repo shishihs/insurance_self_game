@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { GameApplicationService } from '../services/GameApplicationService'
 import { Game } from '../../domain/entities/Game'
 import { Card } from '../../domain/entities/Card'
@@ -69,7 +69,10 @@ describe('エンドツーエンドシナリオテスト', () => {
       game.phase = 'draw'
       
       // 4. 最初のチャレンジ
-      const firstChallenge = challengeDeck.drawCard()!
+      const firstChallenge = challengeDeck.drawCard()
+      if (!firstChallenge) {
+        throw new Error('No challenge card available')
+      }
       const challenge = gameService.startChallenge(firstChallenge)
       expect(game.phase).toBe('challenge')
       expect(challenge.getRequiredPower().getValue()).toBe(25)
@@ -86,7 +89,10 @@ describe('エンドツーエンドシナリオテスト', () => {
       expect(game.challengesCompleted).toBe(1)
 
       // 6. 保険の購入
-      const insuranceCard = insuranceDeck.drawCard()!
+      const insuranceCard = insuranceDeck.drawCard()
+      if (!insuranceCard) {
+        throw new Error('No insurance card available')
+      }
       const insurance = gameService.activateInsurance(insuranceCard)
       expect(insurance.isActive()).toBe(true)
       expect(gameService.getActiveInsurances()).toHaveLength(1)

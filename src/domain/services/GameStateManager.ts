@@ -1,4 +1,4 @@
-import type { GameStage, GamePhase, GameStatus } from '../types/game.types'
+import type { GamePhase, GameStage, GameStatus } from '../types/game.types'
 import type { Card } from '../entities/Card'
 
 /**
@@ -26,8 +26,8 @@ export interface GameStateHistory {
  * Open/Closed: 新しい状態タイプは拡張で対応
  */
 export class GameStateManager {
-  private listeners: Map<string, Array<(event: GameStateChangeEvent) => void>> = new Map()
-  private history: GameStateHistory = {
+  private readonly listeners: Map<string, Array<(event: GameStateChangeEvent) => void>> = new Map()
+  private readonly history: GameStateHistory = {
     events: [],
     maxEvents: 50 // パフォーマンス考慮で制限
   }

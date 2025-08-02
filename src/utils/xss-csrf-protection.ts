@@ -13,7 +13,7 @@ export class XSSProtection {
   private static instance: XSSProtection
   private trustedDomains: string[] = []
   private allowedTags: string[] = ['b', 'i', 'em', 'strong', 'br', 'p']
-  private allowedAttributes: string[] = ['class', 'data-*']
+  private readonly allowedAttributes: string[] = ['class', 'data-*']
 
   static getInstance(): XSSProtection {
     if (!XSSProtection.instance) {
@@ -174,7 +174,7 @@ export class XSSProtection {
 
     // 危険な属性の設定を制限
     if (operation === 'setAttribute' && value) {
-      const [attrName] = (value as string).split('=', 1)
+      const [attrName] = (value).split('=', 1)
       const dangerousAttributes = ['onload', 'onerror', 'onclick', 'onmouseover', 'style']
       
       if (dangerousAttributes.includes(attrName.toLowerCase())) {
@@ -198,7 +198,7 @@ export class XSSProtection {
  */
 export class CSRFProtection {
   private static instance: CSRFProtection
-  private tokenStore = new Map<string, { token: string; expires: number }>()
+  private readonly tokenStore = new Map<string, { token: string; expires: number }>()
   private validOrigins: string[] = []
 
   static getInstance(): CSRFProtection {
@@ -363,8 +363,8 @@ export class CSRFProtection {
  */
 export class CSPManager {
   private static instance: CSPManager
-  private nonces = new Set<string>()
-  private cspDirectives = new Map<string, string[]>()
+  private readonly nonces = new Set<string>()
+  private readonly cspDirectives = new Map<string, string[]>()
 
   static getInstance(): CSPManager {
     if (!CSPManager.instance) {
@@ -490,9 +490,9 @@ export class CSPManager {
  */
 export class SecurityInterceptor {
   private static instance: SecurityInterceptor
-  private xssProtection = XSSProtection.getInstance()
-  private csrfProtection = CSRFProtection.getInstance()
-  private cspManager = CSPManager.getInstance()
+  private readonly xssProtection = XSSProtection.getInstance()
+  private readonly csrfProtection = CSRFProtection.getInstance()
+  private readonly cspManager = CSPManager.getInstance()
 
   static getInstance(): SecurityInterceptor {
     if (!SecurityInterceptor.instance) {

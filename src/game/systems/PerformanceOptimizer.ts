@@ -6,10 +6,10 @@ import { BatchProcessor } from '../../optimization/BatchProcessor'
  * パフォーマンス最適化システム - 大幅強化版
  */
 export class PerformanceOptimizer {
-  private scene: Phaser.Scene
-  private updateQueue: (() => void)[] = []
+  private readonly scene: Phaser.Scene
+  private readonly updateQueue: (() => void)[] = []
   private frameSkipCounter: number = 0
-  private targetFPS: number = 60
+  private readonly targetFPS: number = 60
   private lastFrameTime: number = 0
   private frameTimeThreshold: number = 16.67 // 60fps target
   
@@ -70,7 +70,7 @@ export class PerformanceOptimizer {
       const batch = updates.slice(i, i + batchSize)
       
       this.scene.time.delayedCall(i * 16, () => {
-        batch.forEach(update => update())
+        batch.forEach(update => { update(); })
       })
     }
   }
@@ -116,7 +116,7 @@ export class PerformanceOptimizer {
       const targets = tween.targets
       targets.forEach(target => {
         if ('x' in target && 'y' in target) {
-          const isOnScreen = this.isOnScreen(target as any)
+          const isOnScreen = this.isOnScreen(target)
           if (!isOnScreen) {
             tween.pause()
           } else if (tween.isPaused()) {
@@ -158,7 +158,7 @@ export class PerformanceOptimizer {
     // バッチ処理の初期化
     this.renderBatchProcessor = new BatchProcessor<RenderTask, void>(
       async (tasks) => {
-        tasks.forEach(task => task.execute())
+        tasks.forEach(task => { task.execute(); })
         return new Array(tasks.length).fill(undefined)
       },
       {
@@ -531,9 +531,9 @@ interface RenderTask {
  * パフォーマンス監視クラス
  */
 class PerformanceMonitor {
-  private scene: Phaser.Scene
-  private frameTimeHistory: number[] = []
-  private memoryHistory: number[] = []
+  private readonly scene: Phaser.Scene
+  private readonly frameTimeHistory: number[] = []
+  private readonly memoryHistory: number[] = []
   private isRunning: boolean = false
   private intervalId: NodeJS.Timeout | null = null
   
@@ -598,7 +598,7 @@ class PerformanceMonitor {
     if (history.length < 2) return 1
     
     const mean = history.reduce((a, b) => a + b, 0) / history.length
-    const variance = history.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / history.length
+    const variance = history.reduce((acc, val) => acc + (val - mean)**2, 0) / history.length
     const standardDeviation = Math.sqrt(variance)
     
     // 安定性スコア (0-1, 1が最も安定)

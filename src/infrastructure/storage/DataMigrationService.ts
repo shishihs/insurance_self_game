@@ -29,8 +29,8 @@ export interface MigrationStrategy {
 
 export class DataMigrationService {
   private static instance: DataMigrationService | null = null
-  private indexedDBManager: IndexedDBManager
-  private storage = secureLocalStorage()
+  private readonly indexedDBManager: IndexedDBManager
+  private readonly storage = secureLocalStorage()
   private readonly MIGRATION_KEY = 'game_migration_status'
   
   private constructor() {

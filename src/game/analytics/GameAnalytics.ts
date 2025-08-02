@@ -1,8 +1,8 @@
 import type { Game } from '@/domain/entities/Game'
 import type { Card } from '@/domain/entities/Card'
 import type { GameStage } from '@/domain/types/card.types'
-import type { PlayerStats, ChallengeResult } from '@/domain/types/game.types'
-import { GameStateManager, type EnhancedPlayerStats, type Achievement } from '../state/GameStateManager'
+import type { ChallengeResult, PlayerStats } from '@/domain/types/game.types'
+import { type Achievement, type EnhancedPlayerStats, GameStateManager } from '../state/GameStateManager'
 
 /**
  * プレイヤーの行動データ
@@ -55,7 +55,7 @@ export interface LearningProgress {
  * プレイヤーの行動を詳細に分析し、統計とインサイトを提供
  */
 export class GameAnalytics {
-  private stateManager: GameStateManager
+  private readonly stateManager: GameStateManager
   private actionHistory: PlayerAction[] = []
   private sessionStartTime: Date = new Date()
   private currentSessionActions: PlayerAction[] = []

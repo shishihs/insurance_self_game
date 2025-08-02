@@ -31,8 +31,8 @@ export interface InteractionTiming {
 
 export class InteractionPerformanceMonitor {
   private isMonitoring: boolean = false
-  private metricsHistory: PerformanceMetrics[] = []
-  private interactionTimings: InteractionTiming[] = []
+  private readonly metricsHistory: PerformanceMetrics[] = []
+  private readonly interactionTimings: InteractionTiming[] = []
   private frameCount: number = 0
   private lastFrameTime: number = 0
   private animationFrameId: number = 0
@@ -46,9 +46,9 @@ export class InteractionPerformanceMonitor {
     warningMemoryUsage: 50 * 1024 * 1024 // 50MB
   }
 
-  private fpsBuffer: number[] = []
-  private frameTimeBuffer: number[] = []
-  private latencyBuffer: number[] = []
+  private readonly fpsBuffer: number[] = []
+  private readonly frameTimeBuffer: number[] = []
+  private readonly latencyBuffer: number[] = []
   
   constructor() {
     this.setupPerformanceObserver()
@@ -271,7 +271,7 @@ ${new Date().toLocaleString()}
     }
 
     this.lastFrameTime = currentTime
-    this.animationFrameId = requestAnimationFrame(() => this.measureFrame())
+    this.animationFrameId = requestAnimationFrame(() => { this.measureFrame(); })
   }
 
   private getCurrentFPS(): number {

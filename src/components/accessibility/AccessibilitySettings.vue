@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ScreenReaderManager } from './ScreenReaderManager'
 
 // アクセシビリティ設定の型定義
@@ -213,7 +213,7 @@ const setupKeyboardShortcuts = () => {
   }
   
   window.addEventListener('keydown', handleKeyDown)
-  return () => window.removeEventListener('keydown', handleKeyDown)
+  return () => { window.removeEventListener('keydown', handleKeyDown); }
 }
 
 onMounted(() => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { TouchGestureManager } from '@/game/input/TouchGestureManager'
-import type { SwipeDetail, DragDetail } from '@/game/input/TouchGestureManager'
+import type { DragDetail, SwipeDetail } from '@/game/input/TouchGestureManager'
 
 interface Card {
   id: string

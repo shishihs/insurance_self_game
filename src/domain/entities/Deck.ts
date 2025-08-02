@@ -6,7 +6,7 @@ import type { CardType } from '../types/card.types'
  */
 export class Deck {
   private cards: Card[]
-  private name: string
+  private readonly name: string
 
   constructor(name: string, cards: Card[] = []) {
     this.name = name

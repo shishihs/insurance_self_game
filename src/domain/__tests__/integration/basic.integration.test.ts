@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Game } from '../../entities/Game'
 import { Card } from '../../entities/Card'
 import { CardFactory } from '../../services/CardFactory'
@@ -238,7 +238,7 @@ describe('基本統合テスト', () => {
 
       // 重複開始
       game.start()
-      expect(() => game.start()).toThrow('Game has already started')
+      expect(() => { game.start(); }).toThrow('Game has already started')
     })
   })
 })

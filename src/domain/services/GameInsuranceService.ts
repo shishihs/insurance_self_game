@@ -156,9 +156,9 @@ export class GameInsuranceService {
   private createInsuranceCard(choice: any, durationType: 'term' | 'whole_life'): Card {
     if (durationType === 'term') {
       return CardFactory.createTermInsuranceCard(choice)
-    } else {
+    } 
       return CardFactory.createWholeLifeInsuranceCard(choice)
-    }
+    
   }
 
   /**

@@ -3,14 +3,14 @@
  * メモリリークを防ぐため、すべてのイベントリスナーを追跡し、適切に削除する
  */
 export class EventCleanupManager {
-  private eventListeners: Map<string, {
+  private readonly eventListeners: Map<string, {
     target: EventTarget
     type: string
     listener: EventListener
     options?: AddEventListenerOptions
   }[]> = new Map()
   
-  private phaserListeners: Map<string, {
+  private readonly phaserListeners: Map<string, {
     emitter: Phaser.Events.EventEmitter
     event: string | symbol
     fn: Function

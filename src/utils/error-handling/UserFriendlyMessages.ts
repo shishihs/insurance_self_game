@@ -29,8 +29,8 @@ export interface MessagePattern {
 }
 
 export class UserFriendlyMessages {
-  private patterns: MessagePattern[] = []
-  private fallbackMessages: Map<ErrorInfo['category'], UserMessage> = new Map()
+  private readonly patterns: MessagePattern[] = []
+  private readonly fallbackMessages: Map<ErrorInfo['category'], UserMessage> = new Map()
 
   constructor() {
     this.initializeDefaultPatterns()
@@ -425,7 +425,7 @@ export class UserFriendlyMessages {
       categoriesCount: this.fallbackMessages.size,
       patterns: this.patterns.map(p => ({
         id: p.id,
-        hasConditions: !!p.conditions
+        hasConditions: Boolean(p.conditions)
       }))
     }
   }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { TouchGestureManager, getOptimizedTouchConfig, vibrate } from '@/game/input/TouchGestureManager'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { getOptimizedTouchConfig, TouchGestureManager, vibrate } from '@/game/input/TouchGestureManager'
 import type { SwipeDetail } from '@/game/input/TouchGestureManager'
 
 interface NavigationItem {

@@ -57,10 +57,10 @@ export interface ErrorHandlerOptions {
 
 export class GlobalErrorHandler {
   private static instance: GlobalErrorHandler
-  private errorLogger: ErrorLogger
-  private errorReporter: ErrorReporter
-  private errorRecovery: ErrorRecovery
-  private options: Required<ErrorHandlerOptions>
+  private readonly errorLogger: ErrorLogger
+  private readonly errorReporter: ErrorReporter
+  private readonly errorRecovery: ErrorRecovery
+  private readonly options: Required<ErrorHandlerOptions>
   private errorCount = 0
   private errorTimestamps: number[] = []
   private isInitialized = false
@@ -494,7 +494,7 @@ export class GlobalErrorHandler {
   /**
    * 重複エラーのチェック
    */
-  private duplicateErrors = new Map<string, number>()
+  private readonly duplicateErrors = new Map<string, number>()
   private isDuplicateError(errorInfo: ErrorInfo): boolean {
     if (!errorInfo.fingerprint) return false
     

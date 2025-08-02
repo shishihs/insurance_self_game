@@ -3,10 +3,10 @@
  * メモリ使用量を最適化するため、オブジェクトの再利用を管理
  */
 export class ObjectPool<T> {
-  private pool: T[] = []
-  private createFn: () => T
-  private resetFn?: (obj: T) => void
-  private maxSize: number
+  private readonly pool: T[] = []
+  private readonly createFn: () => T
+  private readonly resetFn?: (obj: T) => void
+  private readonly maxSize: number
 
   constructor(
     createFn: () => T,
@@ -62,7 +62,7 @@ export class ObjectPool<T> {
  * パフォーマンス管理用のメモリプール
  */
 export class MemoryPoolManager {
-  private pools: Map<string, ObjectPool<any>> = new Map()
+  private readonly pools: Map<string, ObjectPool<any>> = new Map()
 
   /**
    * プールを登録
@@ -82,7 +82,7 @@ export class MemoryPoolManager {
    * 全プールをクリア
    */
   clearAll(): void {
-    this.pools.forEach(pool => pool.clear())
+    this.pools.forEach(pool => { pool.clear(); })
   }
 
   /**

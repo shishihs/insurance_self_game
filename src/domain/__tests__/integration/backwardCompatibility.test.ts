@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Game } from '../../entities/Game'
 import { Card } from '../../entities/Card'
 import { Deck } from '../../entities/Deck'
@@ -267,7 +267,7 @@ describe('後方互換性テスト', () => {
         baseCost: 5
       })
 
-      expect(() => game.startChallenge(invalidCard))
+      expect(() => { game.startChallenge(invalidCard); })
         .toThrow('Challenge card must be of type "challenge"')
     })
 

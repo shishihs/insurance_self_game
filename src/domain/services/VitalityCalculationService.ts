@@ -32,7 +32,7 @@ export class VitalityCalculationService {
         finalChange: rawChange,
         details: `成功時活力回復: +${rawChange}`
       }
-    } else {
+    } 
       // 失敗時は不足分だけ活力減少
       rawChange = -(requiredPower - totalPower)
       
@@ -50,7 +50,7 @@ export class VitalityCalculationService {
         finalChange,
         details
       }
-    }
+    
   }
 
   /**

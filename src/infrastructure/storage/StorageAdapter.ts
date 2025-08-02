@@ -22,9 +22,9 @@ export interface StorageCapabilities {
 
 export class StorageAdapter {
   private static instance: StorageAdapter | null = null
-  private indexedDBManager: IndexedDBManager
-  private migrationService: DataMigrationService
-  private localStorage = secureLocalStorage()
+  private readonly indexedDBManager: IndexedDBManager
+  private readonly migrationService: DataMigrationService
+  private readonly localStorage = secureLocalStorage()
   private primaryStorage: StorageType = 'indexeddb'
   private isInitialized = false
   

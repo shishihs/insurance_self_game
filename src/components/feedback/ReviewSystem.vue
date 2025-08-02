@@ -232,7 +232,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
 import type { SatisfactionRating } from '../../domain/entities/Feedback'
 

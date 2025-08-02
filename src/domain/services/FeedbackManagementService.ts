@@ -1,13 +1,13 @@
 import { 
+  type BugReportData, 
   Feedback, 
   FeedbackCategory, 
-  FeedbackStatus, 
   FeedbackPriority,
-  SatisfactionRating,
+  FeedbackStatus,
   type FeedbackSubmitter,
-  type SystemInfo,
-  type BugReportData,
-  type ReviewData
+  type ReviewData,
+  SatisfactionRating,
+  type SystemInfo
 } from '../entities/Feedback'
 
 /**
@@ -67,7 +67,7 @@ export interface CreateFeedbackParams {
  * フィードバックの作成、更新、検索、統計などを管理する
  */
 export class FeedbackManagementService {
-  private feedbacks: Map<string, Feedback> = new Map()
+  private readonly feedbacks: Map<string, Feedback> = new Map()
   private readonly STORAGE_KEY = 'game_feedback_data'
 
   constructor() {

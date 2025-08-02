@@ -3,7 +3,7 @@
  * WCAG 2.1 AA準拠の包括的キーボードナビゲーション実装
  */
 
-import { KeyboardManager, type FocusableElement, type KeyboardShortcut } from './KeyboardManager'
+import { type FocusableElement, KeyboardManager, type KeyboardShortcut } from './KeyboardManager'
 import { ariaManager } from './ARIAManager'
 
 export interface KeyboardNavigationGroup {
@@ -35,8 +35,8 @@ export interface KeyboardNavigationState {
 }
 
 export class EnhancedKeyboardManager extends KeyboardManager {
-  private navigationGroups = new Map<string, KeyboardNavigationGroup>()
-  private navigationStack: string[] = []
+  private readonly navigationGroups = new Map<string, KeyboardNavigationGroup>()
+  private readonly navigationStack: string[] = []
   private currentState: KeyboardNavigationState = {
     currentGroup: null,
     currentIndex: -1,
@@ -44,7 +44,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     rovingFocus: false,
     skipLinks: false
   }
-  private gameShortcuts: GameSpecificShortcuts = {
+  private readonly gameShortcuts: GameSpecificShortcuts = {
     playCard: 'Space',
     selectInsurance: 'i',
     skipTurn: 's',
@@ -54,7 +54,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     repeatLastAnnouncement: 'F4'
   }
   private lastAnnouncement = ''
-  private customKeyHandlers = new Map<string, (event: KeyboardEvent) => void>()
+  private readonly customKeyHandlers = new Map<string, (event: KeyboardEvent) => void>()
 
   constructor() {
     super()
@@ -101,8 +101,8 @@ export class EnhancedKeyboardManager extends KeyboardManager {
       this.registerFocusableElement(card, {
         priority: 100 - index,
         group: 'game-cards',
-        onFocus: () => this.announceCardFocus(card),
-        onActivate: () => this.handleCardActivation(card)
+        onFocus: () => { this.announceCardFocus(card); },
+        onActivate: () => { this.handleCardActivation(card); }
       })
     })
   }
@@ -125,8 +125,8 @@ export class EnhancedKeyboardManager extends KeyboardManager {
       this.registerFocusableElement(zone, {
         priority: 200 + index,
         group: 'drop-zones',
-        onFocus: () => this.announceDropZoneFocus(zone),
-        onActivate: () => this.handleDropZoneActivation(zone)
+        onFocus: () => { this.announceDropZoneFocus(zone); },
+        onActivate: () => { this.handleDropZoneActivation(zone); }
       })
     })
   }
@@ -283,7 +283,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.playCard,
       description: 'カードをプレイ',
-      action: () => this.handleCardPlay(),
+      action: () => { this.handleCardPlay(); },
       global: false
     })
 
@@ -291,7 +291,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.selectInsurance,
       description: '保険を選択',
-      action: () => this.handleInsuranceSelection(),
+      action: () => { this.handleInsuranceSelection(); },
       global: true
     })
 
@@ -299,7 +299,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.skipTurn,
       description: 'ターンをスキップ',
-      action: () => this.handleTurnSkip(),
+      action: () => { this.handleTurnSkip(); },
       global: true
     })
 
@@ -307,7 +307,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.showHelp,
       description: 'ヘルプを表示',
-      action: () => this.toggleHelp(),
+      action: () => { this.toggleHelp(); },
       global: true
     })
 
@@ -315,7 +315,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.toggleAccessibilityPanel,
       description: 'アクセシビリティパネル切り替え',
-      action: () => this.toggleAccessibilityPanel(),
+      action: () => { this.toggleAccessibilityPanel(); },
       global: true
     })
 
@@ -323,7 +323,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.announceGameState,
       description: 'ゲーム状態を読み上げ',
-      action: () => this.announceCurrentGameState(),
+      action: () => { this.announceCurrentGameState(); },
       global: true
     })
 
@@ -331,7 +331,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
     this.registerShortcut({
       key: this.gameShortcuts.repeatLastAnnouncement,
       description: '最後のアナウンスを繰り返し',
-      action: () => this.repeatLastAnnouncement(),
+      action: () => { this.repeatLastAnnouncement(); },
       global: true
     })
   }
@@ -429,7 +429,7 @@ export class EnhancedKeyboardManager extends KeyboardManager {
 
   private setupNavigationGroups(): void {
     // スキップリンクグループ
-    const skipLinks = document.querySelectorAll('.skip-link') as NodeListOf<HTMLElement>
+    const skipLinks = document.querySelectorAll('.skip-link')
     if (skipLinks.length > 0) {
       this.registerNavigationGroup({
         id: 'skip-links',

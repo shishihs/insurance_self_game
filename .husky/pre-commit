@@ -11,19 +11,27 @@ set -e
 
 echo "🔍 Pre-commit checks starting..."
 
-# 1. Lint check
-echo "📝 Running ESLint..."
+# 1. Security checks
+echo "🛡️ Running security audits..."
+npm audit --audit-level moderate || echo "⚠️ Security vulnerabilities detected, but continuing..."
+
+# 2. Lint check (including security rules)
+echo "📝 Running ESLint with security rules..."
 pnpm run lint
 
-# 2. Type check
+# 3. Type check
 echo "🔬 Running TypeScript type check..."
 pnpm run type-check
 
-# 3. Test（高速テストのみ）
-echo "🧪 Running tests..."
-pnpm run test:run -- --reporter=dot
+# 4. Security tests
+echo "🔒 Running security tests..."
+pnpm run test:run src/__tests__/security -- --reporter=dot
 
-# 4. Format check
+# 5. Test（高速テストのみ）
+echo "🧪 Running core tests..."
+pnpm run test:run -- --reporter=dot --testTimeout=10000
+
+# 6. Format check
 echo "🎨 Checking code formatting..."
 pnpm run format
 

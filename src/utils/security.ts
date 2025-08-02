@@ -74,7 +74,7 @@ export function validateArrayLength<T>(
  * レート制限クラス
  */
 export class RateLimiter {
-  private attempts = new Map<string, number[]>()
+  private readonly attempts = new Map<string, number[]>()
   
   /**
    * アクションが許可されているかチェック
@@ -152,7 +152,7 @@ export async function generateSecureHash(data: string): Promise<string> {
     const hashBuffer = await window.crypto.subtle.digest('SHA-256', dataBuffer)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-  } else {
+  } 
     // フォールバック: 簡易ハッシュ（セキュリティレベル低下）
     console.warn('⚠️ セキュリティ警告: crypto.subtle が利用できません。簡易ハッシュを使用します。')
     let hash = 0
@@ -162,7 +162,7 @@ export async function generateSecureHash(data: string): Promise<string> {
       hash = hash & hash // 32bit整数に変換
     }
     return Math.abs(hash).toString(16)
-  }
+  
 }
 
 /**
@@ -221,8 +221,13 @@ export function secureLocalStorage() {
           try {
             data = await this.simpleDecrypt(data, encryptionKey)
           } catch (decryptError) {
-            // 復号化に失敗した場合、データが破損している可能性があるため削除
-            console.warn('⚠️ 復号化失敗のためデータをクリアします:', sanitizedKey)
+            // 復号化に失敗した場合、初回アクセスか破損の可能性
+            // security_audit_logの場合は警告レベルを下げる
+            if (key === 'security_audit_log') {
+              console.debug('📝 初回アクセスまたは古い形式のログデータ:', sanitizedKey)
+            } else {
+              console.warn('⚠️ 復号化失敗のためデータをクリアします:', sanitizedKey)
+            }
             this.removeItem(sanitizedKey)
             return null
           }

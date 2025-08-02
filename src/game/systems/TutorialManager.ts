@@ -1,12 +1,12 @@
 import type {
-  TutorialStep,
-  TutorialProgress,
+  HighlightOptions,
   TutorialConfig,
   TutorialEvent,
   TutorialEventData,
-  TutorialState,
   TutorialManagerOptions,
-  HighlightOptions
+  TutorialProgress,
+  TutorialState,
+  TutorialStep
 } from '@/domain/types/tutorial.types'
 import { TUTORIAL_STORAGE_KEYS } from '@/domain/types/tutorial.types'
 
@@ -18,8 +18,8 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
   private currentConfig: TutorialConfig | null = null
   private progress: TutorialProgress | null = null
   private state: TutorialState = 'idle'
-  private options: TutorialManagerOptions
-  private scene: Phaser.Scene
+  private readonly options: TutorialManagerOptions
+  private readonly scene: Phaser.Scene
   private highlightGraphics: Phaser.GameObjects.Graphics | null = null
   private overlayGraphics: Phaser.GameObjects.Graphics | null = null
   private tutorialUI: Phaser.GameObjects.Container | null = null
@@ -259,7 +259,7 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
       }
 
       // ハイライトグラフィックスを作成
-      this.createHighlight(element as Phaser.GameObjects.GameObject, highlightOptions)
+      this.createHighlight(element, highlightOptions)
 
     } catch (error) {
       this.handleError('Failed to highlight element', error as Error)

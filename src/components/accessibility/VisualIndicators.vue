@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { FocusIndicatorManager, type FocusIndicatorOptions } from '@/utils/focus-indicator'
 
 // 開発環境フラグ

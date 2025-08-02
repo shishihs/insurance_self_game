@@ -9,6 +9,9 @@ export class PreloadScene extends BaseScene {
   }
 
   preload(): void {
+    // パフォーマンス計測開始
+    performance.mark('preload-start')
+    
     // ローディングバーの作成
     const progressBar = this.add.graphics()
     const progressBox = this.add.graphics()
@@ -39,10 +42,13 @@ export class PreloadScene extends BaseScene {
 
     // ローディング進捗の更新
     this.load.on('progress', (value: number) => {
-      percentText.setText(`${Math.round(value * 100)}%`)
-      progressBar.clear()
-      progressBar.fillStyle(0xffffff, 1)
-      progressBar.fillRect(250, 280, 300 * value, 30)
+      // フレームをスキップして軽量化
+      if (value % 0.1 < 0.01) { // 10%ごとに更新
+        percentText.setText(`${Math.round(value * 100)}%`)
+        progressBar.clear()
+        progressBar.fillStyle(0xffffff, 1)
+        progressBar.fillRect(250, 280, 300 * value, 30)
+      }
     })
 
     // ローディング完了
@@ -51,10 +57,52 @@ export class PreloadScene extends BaseScene {
       progressBox.destroy()
       loadingText.destroy()
       percentText.destroy()
+      
+      // パフォーマンス計測終了
+      performance.mark('preload-end')
+      performance.measure('asset-loading', 'preload-start', 'preload-end')
+      
+      const measure = performance.getEntriesByName('asset-loading')[0]
+      console.log(`✅ Asset loading completed in ${measure.duration.toFixed(2)}ms`)
     })
 
-    // アセットのロード
-    this.loadAssets()
+    // アセットのロード（非同期処理で最適化）
+    this.loadAssetsAsync()
+  }
+  
+  /**
+   * アセットを非同期でロード
+   */
+  private async loadAssetsAsync(): Promise<void> {
+    // 優先度の高いアセットを先に読み込む
+    await this.loadCriticalAssets()
+    
+    // その他のアセットを遅延読み込み
+    this.time.delayedCall(100, () => {
+      this.loadSecondaryAssets()
+    })
+  }
+  
+  /**
+   * 重要なアセットをロード
+   */
+  private async loadCriticalAssets(): Promise<void> {
+    // カード裏面（必須）
+    this.createCardBack()
+    
+    // 基本的なUIアセット
+    this.createBasicUIAssets()
+  }
+  
+  /**
+   * 二次的なアセットをロード
+   */
+  private loadSecondaryAssets(): void {
+    // カード表面
+    this.createCardFaces()
+    
+    // 追加のUI要素
+    this.createAdditionalUIAssets()
   }
 
   /**
@@ -132,16 +180,21 @@ export class PreloadScene extends BaseScene {
   }
 
   /**
-   * UI要素を作成
+   * 基本的なUI要素を作成
    */
-  private createUIAssets(): void {
-    // ボタン背景
+  private createBasicUIAssets(): void {
+    // ボタン背景（必須）
     const buttonGraphics = this.add.graphics()
     buttonGraphics.fillStyle(0x4C6EF5, 1)
     buttonGraphics.fillRoundedRect(0, 0, 200, 50, 25)
     buttonGraphics.generateTexture('button-bg', 200, 50)
     buttonGraphics.destroy()
-    
+  }
+  
+  /**
+   * 追加のUI要素を作成
+   */
+  private createAdditionalUIAssets(): void {
     // ハイライト
     const highlightGraphics = this.add.graphics()
     highlightGraphics.lineStyle(4, 0xFFD43B, 1)

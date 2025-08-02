@@ -59,7 +59,7 @@ export class InsuranceExpiredEvent implements GameEvent {
  */
 export class GameEventBus {
   private static instance: GameEventBus
-  private listeners: Map<string, GameEventListener[]> = new Map()
+  private readonly listeners: Map<string, GameEventListener[]> = new Map()
 
   private constructor() {}
 

@@ -1,8 +1,8 @@
 import type { 
   ConfigurationSystem, 
   DeepReadonly, 
-  EventHandler,
-  EnhancedGameConfig 
+  EnhancedGameConfig,
+  EventHandler 
 } from '../types/enhanced-types'
 
 /**
@@ -38,7 +38,7 @@ interface ConfigChangeEvent<T> {
  */
 export class ConfigurationManager implements ConfigurationSystem<EnhancedGameConfig> {
   private config: EnhancedGameConfig
-  private watchers: Map<keyof EnhancedGameConfig, Array<EventHandler<any>>> = new Map()
+  private readonly watchers: Map<keyof EnhancedGameConfig, Array<EventHandler<any>>> = new Map()
   private changeHistory: ConfigChangeEvent<any>[] = []
   private readonly maxHistorySize = 50
 

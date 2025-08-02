@@ -1,7 +1,7 @@
 import type { Card } from '../entities/Card'
 import type { ChallengeResult, GameStage } from '../types/game.types'
 import { CardPower } from '../valueObjects/CardPower'
-import { DREAM_CONSTANTS, BALANCE_CONSTANTS } from '../constants/GameConstants'
+import { BALANCE_CONSTANTS, DREAM_CONSTANTS } from '../constants/GameConstants'
 
 /**
  * チャレンジ解決戦略サービス
@@ -293,7 +293,7 @@ export class DifficultChallengeStrategy implements ChallengeResolutionStrategy {
  * チャレンジストラテジーファクトリー
  */
 export class ChallengeStrategyFactory {
-  private static strategies: ChallengeResolutionStrategy[] = [
+  private static readonly strategies: ChallengeResolutionStrategy[] = [
     new DreamChallengeStrategy(),      // 夢カードを最初にチェック
     new DifficultChallengeStrategy(),  // 困難チャレンジを次にチェック
     new BasicChallengeStrategy()       // 基本戦略を最後にフォールバック

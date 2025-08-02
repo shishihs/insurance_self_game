@@ -1,5 +1,5 @@
-import Phaser from 'phaser'
-import { gameConfig } from './config/gameConfig'
+import { loadPhaser, type PhaserTypes } from './loaders/PhaserLoader'
+import { createGameConfig } from './config/gameConfig'
 import { PreloadScene } from './scenes/PreloadScene'
 import { MainMenuScene } from './scenes/MainMenuScene'
 import { GameScene } from './scenes/GameScene'
@@ -9,10 +9,11 @@ import { TouchGestureManager } from './input/TouchGestureManager'
  * Phaserゲームを管理するクラス
  */
 export class GameManager {
-  private game: Phaser.Game | null = null
+  private game: PhaserTypes['Game'] | null = null
   private static instance: GameManager | null = null
   private touchGestureManager: TouchGestureManager | null = null
   private isMobile: boolean = false
+  private Phaser: typeof import('phaser') | null = null
 
   private constructor() {}
 
@@ -39,11 +40,15 @@ export class GameManager {
       // パフォーマンス計測開始
       performance.mark('game-init-start')
       
+      // Phaserライブラリを動的にロード
+      console.log('🔄 Loading Phaser library dynamically...')
+      this.Phaser = await loadPhaser()
+      
       // モバイル判定（非同期化）
       this.isMobile = await this.checkMobileDeviceAsync()
       
-      // 設定をコピー（元の設定を変更しないため）
-      const config = { ...gameConfig }
+      // Phaserがロードされた後に設定を作成
+      const config = await createGameConfig()
       config.parent = parent
       
       // モバイル最適化
@@ -65,7 +70,7 @@ export class GameManager {
       await new Promise(resolve => requestAnimationFrame(resolve))
       
       // ゲームインスタンスを作成
-      this.game = new Phaser.Game(config)
+      this.game = new this.Phaser.Game(config)
       
       // 次のフレームまで待機（メインスレッドのブロックを防ぐ）
       await new Promise(resolve => requestAnimationFrame(resolve))

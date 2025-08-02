@@ -11,7 +11,7 @@
  * - プッシュ通知対応
  */
 
-const CACHE_VERSION = '2.0';
+const CACHE_VERSION = '3.0';
 const CACHE_NAME = `life-fulfillment-v${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = `life-fulfillment-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE_NAME = `life-fulfillment-dynamic-v${CACHE_VERSION}`;
@@ -19,12 +19,18 @@ const IMAGES_CACHE_NAME = `life-fulfillment-images-v${CACHE_VERSION}`;
 const API_CACHE_NAME = `life-fulfillment-api-v${CACHE_VERSION}`;
 
 // 必須の静的ファイル（即座にキャッシュ）
+// GitHub Pagesのサブディレクトリに対応
+const BASE_PATH = '/insurance_self_game';
 const CRITICAL_STATIC_FILES = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.ico'
-];
+  `${BASE_PATH}/`,
+  `${BASE_PATH}/index.html`,
+  `${BASE_PATH}/manifest.json`,
+  `${BASE_PATH}/favicon.ico`,
+  `${BASE_PATH}/favicon.svg`
+].filter(url => {
+  // 存在しないファイルを除外するためのフィルタ
+  return !url.includes('undefined') && !url.includes('null');
+});
 
 // プリキャッシュするファイル（バックグラウンドでキャッシュ）
 const PRECACHE_FILES = [
@@ -42,25 +48,36 @@ const EXCLUDE_PATHS = [
   '__webpack',
 ];
 
-// キャッシュ期間設定（秒）
+// キャッシュ期間設定（秒） - パフォーマンス最適化
 const CACHE_EXPIRY = {
-  static: 24 * 60 * 60, // 24時間
-  dynamic: 4 * 60 * 60, // 4時間
-  images: 7 * 24 * 60 * 60, // 7日
-  api: 60 * 60, // 1時間
+  static: 7 * 24 * 60 * 60, // 7日（長めにキャッシュ）
+  dynamic: 24 * 60 * 60, // 24時間
+  images: 30 * 24 * 60 * 60, // 30日（画像は長期キャッシュ）
+  api: 5 * 60, // 5分（APIは短めに）
 };
 
-// デバイス性能の検出
+// デバイス性能の検出（拡張版）
 const getDeviceCapability = () => {
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const memory = navigator.deviceMemory || 4;
   const cores = navigator.hardwareConcurrency || 4;
   
+  // ネットワーク品質の評価
+  const effectiveType = connection?.effectiveType || '4g';
+  const downlink = connection?.downlink || 10;
+  const rtt = connection?.rtt || 100;
+  
   return {
     isLowEnd: memory <= 2 || cores <= 2,
-    isSlowConnection: connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g'),
+    isSlowConnection: effectiveType === 'slow-2g' || effectiveType === '2g' || downlink < 1.5,
+    isHighPerformance: memory >= 8 && cores >= 8 && downlink >= 10,
     memory,
-    cores
+    cores,
+    effectiveType,
+    downlink,
+    rtt,
+    // パフォーマンススコアの算出
+    performanceScore: Math.min(100, (memory * 10 + cores * 5 + Math.min(downlink * 5, 50)))
   };
 };
 
@@ -74,7 +91,23 @@ self.addEventListener('install', (event) => {
         // 重要な静的ファイルを即座にキャッシュ
         const staticCache = await caches.open(STATIC_CACHE_NAME);
         console.log('[Service Worker] Pre-caching critical static files');
-        await staticCache.addAll(CRITICAL_STATIC_FILES);
+        
+        // 個別にキャッシュを試みる（エラーを回避）
+        const cachePromises = CRITICAL_STATIC_FILES.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              await staticCache.put(url, response);
+              console.log(`[Service Worker] Cached: ${url}`);
+            } else {
+              console.warn(`[Service Worker] Failed to cache ${url}: ${response.status}`);
+            }
+          } catch (error) {
+            console.warn(`[Service Worker] Could not cache ${url}:`, error);
+          }
+        });
+        
+        await Promise.allSettled(cachePromises);
         
         // デバイス性能を評価
         const deviceInfo = getDeviceCapability();
@@ -95,19 +128,41 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// 追加アセットのプリキャッシュ
+// 追加アセットのプリキャッシュ（パフォーマンス最適化版）
 async function precacheAdditionalAssets() {
   try {
-    // 画像キャッシュの準備
-    await caches.open(IMAGES_CACHE_NAME);
+    const deviceInfo = getDeviceCapability();
     
-    // 動的キャッシュの準備
-    await caches.open(DYNAMIC_CACHE_NAME);
+    // キャッシュの準備
+    const cachePromises = [
+      caches.open(IMAGES_CACHE_NAME),
+      caches.open(DYNAMIC_CACHE_NAME),
+      caches.open(API_CACHE_NAME)
+    ];
     
-    // APIキャッシュの準備
-    await caches.open(API_CACHE_NAME);
+    await Promise.all(cachePromises);
     
-    console.log('[Service Worker] Additional caches prepared');
+    // 高性能デバイスの場合は重要なリソースをプリロード
+    if (deviceInfo.isHighPerformance) {
+      const criticalResources = [
+        '/favicon.svg',
+        // 他の重要なリソースを追加可能
+      ];
+      
+      await Promise.allSettled(
+        criticalResources.map(resource => 
+          fetch(resource).then(response => {
+            if (response.ok) {
+              const cache = caches.open(STATIC_CACHE_NAME);
+              cache.then(c => c.put(resource, response.clone()));
+            }
+            return response;
+          }).catch(() => {})
+        )
+      );
+    }
+    
+    console.log(`[Service Worker] Additional caches prepared (Performance Score: ${deviceInfo.performanceScore})`);
   } catch (error) {
     console.warn('[Service Worker] Failed to prepare additional caches:', error);
   }
@@ -592,7 +647,7 @@ async function backgroundPreload() {
   }
 }
 
-// プッシュ通知（改善版）
+// プッシュ通知（強化版）
 self.addEventListener('push', (event) => {
   console.log('[Service Worker] Push notification received');
   
@@ -607,7 +662,8 @@ self.addEventListener('push', (event) => {
     timestamp: Date.now(),
     data: {
       url: '/',
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      action: 'resume-game'
     },
     actions: [
       {
@@ -616,11 +672,21 @@ self.addEventListener('push', (event) => {
         icon: '/favicon.ico'
       },
       {
+        action: 'stats',
+        title: '統計',
+        icon: '/favicon.ico'
+      },
+      {
         action: 'close',
         title: '閉じる',
         icon: '/favicon.ico'
       }
-    ]
+    ],
+    // 通知の外観設定
+    silent: false,
+    vibrate: [200, 100, 200],
+    // 進歩的な機能
+    showTrigger: true
   };
   
   // プッシュデータがある場合は解析
@@ -658,17 +724,45 @@ self.addEventListener('notificationclick', (event) => {
   switch (event.action) {
     case 'play':
       event.waitUntil(
-        clients.matchAll({ type: 'window' }).then(clients => {
+        clients.matchAll({ type: 'window' }).then(clientList => {
           // 既存のウィンドウがある場合はフォーカス
-          for (const client of clients) {
+          for (const client of clientList) {
             if (client.url === targetUrl && 'focus' in client) {
+              // ゲーム開始メッセージを送信
+              client.postMessage({
+                type: 'NOTIFICATION_ACTION',
+                action: 'start-game',
+                timestamp: Date.now()
+              });
               return client.focus();
             }
           }
           
           // 新しいウィンドウを開く
           if (clients.openWindow) {
-            return clients.openWindow(targetUrl);
+            return clients.openWindow(`${targetUrl  }?action=start-game`);
+          }
+        })
+      );
+      break;
+      
+    case 'stats':
+      event.waitUntil(
+        clients.matchAll({ type: 'window' }).then(clientList => {
+          for (const client of clientList) {
+            if (client.url.includes(targetUrl) && 'focus' in client) {
+              // 統計画面表示メッセージを送信
+              client.postMessage({
+                type: 'NOTIFICATION_ACTION',
+                action: 'show-stats',
+                timestamp: Date.now()
+              });
+              return client.focus();
+            }
+          }
+          
+          if (clients.openWindow) {
+            return clients.openWindow(`${targetUrl  }?action=stats`);
           }
         })
       );

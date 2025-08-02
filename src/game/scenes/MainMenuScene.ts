@@ -65,7 +65,7 @@ export class MainMenuScene extends BaseScene {
       this.centerX,
       buttonY,
       'ゲームを始める',
-      () => this.startGame(),
+      () => { this.startGame(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',
@@ -78,7 +78,7 @@ export class MainMenuScene extends BaseScene {
       this.centerX,
       buttonY + buttonSpacing,
       'チュートリアル',
-      () => this.startTutorial(),
+      () => { this.startTutorial(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',
@@ -91,7 +91,7 @@ export class MainMenuScene extends BaseScene {
       this.centerX,
       buttonY + buttonSpacing * 2,
       '設定',
-      () => this.openSettings(),
+      () => { this.openSettings(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',
@@ -104,7 +104,7 @@ export class MainMenuScene extends BaseScene {
       this.centerX,
       buttonY + buttonSpacing * 3,
       'クレジット',
-      () => this.showCredits(),
+      () => { this.showCredits(); },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '24px',

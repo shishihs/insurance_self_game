@@ -1,5 +1,5 @@
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
-import { StatisticsDataService, type StatisticsData, type RealtimeStatistics, type StatisticsFilter } from '../domain/services/StatisticsDataService'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { type RealtimeStatistics, type StatisticsData, StatisticsDataService, type StatisticsFilter } from '../domain/services/StatisticsDataService'
 import type { Game } from '../domain/entities/Game'
 
 /**
@@ -339,7 +339,7 @@ export function useGameStatistics() {
     cancelDecisionTimer,
     
     // ターンデータ更新（決定時間なし）
-    updateTurnData: (game: Game) => updateTurnData(game)
+    updateTurnData: (game: Game) => { updateTurnData(game); }
   }
 }
 

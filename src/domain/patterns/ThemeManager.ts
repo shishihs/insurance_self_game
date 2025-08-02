@@ -1,8 +1,8 @@
 import type { 
-  Observable, 
-  Observer, 
-  ConfigurationSystem,
-  EventHandler 
+  ConfigurationSystem, 
+  EventHandler, 
+  Observable,
+  Observer 
 } from '../types/enhanced-types'
 
 /**
@@ -382,10 +382,10 @@ const HIGH_CONTRAST_THEME: Theme = {
  * Observer Pattern: テーマ変更の通知
  */
 export class ThemeManager implements Observable<ThemeChangeEvent> {
-  private themes: Map<string, Theme> = new Map()
+  private readonly themes: Map<string, Theme> = new Map()
   private currentThemeName: string
-  private observers: Set<Observer<ThemeChangeEvent>> = new Set()
-  private cssVariables: Map<string, string> = new Map()
+  private readonly observers: Set<Observer<ThemeChangeEvent>> = new Set()
+  private readonly cssVariables: Map<string, string> = new Map()
 
   constructor(defaultThemeName: string = 'default') {
     // デフォルトテーマを登録
@@ -641,7 +641,7 @@ export function useTheme() {
   return {
     currentTheme: themeManager.getCurrentThemeName(),
     availableThemes: themeManager.getAvailableThemes(),
-    applyTheme: (name: string) => themeManager.applyTheme(name),
+    applyTheme: (name: string) => { themeManager.applyTheme(name); },
     getCurrentTheme: () => themeManager.getCurrentTheme(),
     detectSystemTheme: () => themeManager.detectSystemTheme(),
     watchSystemTheme: (callback: (theme: 'light' | 'dark') => void) => 

@@ -137,11 +137,11 @@ export class GameStateManager {
   private currentGame: Game | null = null
   private snapshots: GameStateSnapshot[] = []
   private currentSnapshotIndex = -1
-  private storage: StorageAdapter
+  private readonly storage: StorageAdapter
   private autoSaveTimer: number | null = null
   private sessionStartTime: Date = new Date()
   private enhancedStats: EnhancedPlayerStats
-  private analyticsCallbacks: ((state: any, changeType: 'save' | 'load' | 'reset') => void)[] = []
+  private readonly analyticsCallbacks: ((state: any, changeType: 'save' | 'load' | 'reset') => void)[] = []
   private isStorageInitialized = false
   
   private constructor() {

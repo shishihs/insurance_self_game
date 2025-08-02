@@ -1,15 +1,16 @@
-import Phaser from 'phaser'
+import { loadPhaser } from '../loaders/PhaserLoader'
 
 /**
  * モバイル対応を含むPhaserゲームの基本設定
+ * Phaserが動的にロードされるため、実際の設定は createGameConfig() で取得
  */
-export const gameConfig: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
+export const gameConfig = {
+  type: 'AUTO' as const,
   parent: 'game-container',
   backgroundColor: '#f5f5f5',
   scale: {
-    mode: Phaser.Scale.FIT, // 画面に合わせてフィットするように変更
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: 'FIT' as const, // 画面に合わせてフィットするように変更
+    autoCenter: 'CENTER_BOTH' as const,
     width: 1280, // 固定幅
     height: 720, // 固定高さ（16:9のアスペクト比）
     min: {
@@ -25,7 +26,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     expandParent: false
   },
   physics: {
-    default: 'arcade',
+    default: 'arcade' as const,
     arcade: {
       gravity: { y: 0 },
       debug: false
@@ -61,6 +62,30 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     smoothStep: true
   },
   scene: [] // シーンは後で追加
+}
+
+/**
+ * Phaserがロードされた後に実際のGameConfigを作成
+ */
+export async function createGameConfig(): Promise<import('phaser').Types.Core.GameConfig> {
+  const Phaser = await loadPhaser()
+  
+  return {
+    ...gameConfig,
+    type: Phaser.AUTO,
+    scale: {
+      ...gameConfig.scale,
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: { y: 0 },
+        debug: false
+      }
+    }
+  } as import('phaser').Types.Core.GameConfig
 }
 
 /**

@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { StatisticsDataService } from '../domain/services/StatisticsDataService'
 import { Game } from '../domain/entities/Game'
 import StatisticsDashboard from '../components/statistics/StatisticsDashboard.vue'

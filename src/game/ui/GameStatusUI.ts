@@ -8,8 +8,8 @@ import { GAME_CONSTANTS } from '../config/gameConfig'
  * 活力、保険状態、ステージ情報などを見やすく表示
  */
 export class GameStatusUI {
-  private scene: Scene
-  private container: Phaser.GameObjects.Container
+  private readonly scene: Scene
+  private readonly container: Phaser.GameObjects.Container
   
   // 活力バー関連
   private vitalityContainer?: Phaser.GameObjects.Container
@@ -20,7 +20,7 @@ export class GameStatusUI {
   
   // 保険リスト関連
   private insuranceContainer?: Phaser.GameObjects.Container
-  private insuranceItems: Map<string, Phaser.GameObjects.Container> = new Map()
+  private readonly insuranceItems: Map<string, Phaser.GameObjects.Container> = new Map()
   
   // ステージ情報
   private stageContainer?: Phaser.GameObjects.Container
@@ -299,7 +299,7 @@ export class GameStatusUI {
     if (!this.insuranceContainer) return
     
     // 既存のアイテムをクリア
-    this.insuranceItems.forEach(item => item.destroy())
+    this.insuranceItems.forEach(item => { item.destroy(); })
     this.insuranceItems.clear()
     
     // 新しい保険アイテムを作成

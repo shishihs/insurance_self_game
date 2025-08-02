@@ -7,10 +7,10 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { 
-  SUPPORTED_LOCALES,
+  getCurrentLocale,
   LOCALE_NAMES,
   setLocale,
-  getCurrentLocale,
+  SUPPORTED_LOCALES,
   type SupportedLocale
 } from '@/i18n'
 

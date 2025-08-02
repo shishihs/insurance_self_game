@@ -46,7 +46,7 @@ export async function safeAsync<T>(
     ? Promise.race([
         promise,
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Operation timed out after ${timeout}ms`)), timeout)
+          setTimeout(() => { reject(new Error(`Operation timed out after ${timeout}ms`)); }, timeout)
         )
       ])
     : promise
@@ -104,18 +104,18 @@ export async function safeAsyncAll<T>(
   options: AsyncOptions = {}
 ): Promise<AsyncResult<T>[]> {
   const results = await Promise.allSettled(
-    promises.map(promise => safeAsync(promise, options))
+    promises.map(async promise => safeAsync(promise, options))
   )
 
   return results.map(result => {
     if (result.status === 'fulfilled') {
       return result.value
-    } else {
+    } 
       return {
         error: result.reason,
         data: options.fallbackValue
       }
-    }
+    
   })
 }
 
@@ -185,7 +185,7 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
   let timeoutId: number | null = null
   let pendingPromise: Promise<AsyncResult<Awaited<ReturnType<T>>>> | null = null
 
-  return (...args: Parameters<T>) => {
+  return async (...args: Parameters<T>) => {
     if (timeoutId !== null) {
       clearTimeout(timeoutId)
     }
@@ -234,7 +234,7 @@ export function throttleAsync<T extends (...args: any[]) => Promise<any>>(
 export class AsyncQueue<T> {
   private queue: Array<() => Promise<T>> = []
   private running = false
-  private concurrency: number
+  private readonly concurrency: number
   private results: AsyncResult<T>[] = []
 
   constructor(concurrency = 1) {
@@ -244,7 +244,7 @@ export class AsyncQueue<T> {
   /**
    * タスクをキューに追加
    */
-  add(task: () => Promise<T>, options: AsyncOptions = {}): Promise<AsyncResult<T>> {
+  async add(task: () => Promise<T>, options: AsyncOptions = {}): Promise<AsyncResult<T>> {
     return new Promise((resolve) => {
       this.queue.push(async () => {
         const result = await safeAsync(task(), options)
@@ -362,7 +362,7 @@ export async function conditionalAsync<T>(
 
     if (shouldExecute.data) {
       return await safeAsync(thenFn(), options)
-    } else if (elseFn) {
+    } if (elseFn) {
       return await safeAsync(elseFn(), options)
     }
 

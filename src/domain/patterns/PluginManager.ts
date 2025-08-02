@@ -1,8 +1,8 @@
 import type { 
-  Plugin, 
+  AsyncResult, 
   PluginManager as IPluginManager, 
+  Plugin,
   PluginMetadata,
-  AsyncResult,
   Result
 } from '../types/enhanced-types'
 
@@ -14,10 +14,10 @@ import type {
  * Factory Pattern: プラグインインスタンスの作成
  */
 export class PluginManager implements IPluginManager {
-  private plugins: Map<string, Plugin> = new Map()
-  private activePlugins: Set<string> = new Set()
-  private hooks: Map<string, Array<Function>> = new Map()
-  private eventListeners: Map<string, Array<Function>> = new Map()
+  private readonly plugins: Map<string, Plugin> = new Map()
+  private readonly activePlugins: Set<string> = new Set()
+  private readonly hooks: Map<string, Array<Function>> = new Map()
+  private readonly eventListeners: Map<string, Array<Function>> = new Map()
 
   /**
    * プラグインをインストール

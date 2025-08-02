@@ -1,12 +1,12 @@
 import { Card } from '../entities/Card'
 import type { 
-  LifeCardCategory, 
-  InsuranceType, 
+  CardEffect, 
+  DreamCategory, 
   GameStage,
-  DreamCategory,
-  SkillRarity,
-  CardEffect,
-  RewardType
+  InsuranceType,
+  LifeCardCategory,
+  RewardType,
+  SkillRarity
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -617,11 +617,11 @@ export class CardFactory {
     // パワーレベルに基づいて報酬を決定
     if (power <= 3) {
       return 'insurance' // 低難易度：保険獲得
-    } else if (power <= 6) {
+    } if (power <= 6) {
       return 'insurance' // 中難易度：保険獲得（基本）
-    } else {
+    } 
       return 'card' // 高難易度：追加カード獲得
-    }
+    
   }
 
   /**

@@ -30,17 +30,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  Chart,
   CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
+  Chart,
+  Filler,
   Legend,
-  Filler
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip
 } from 'chart.js'
 
 // Chart.jsの登録
@@ -265,11 +265,11 @@ const formatDuration = (ms: number): string => {
   
   if (hours > 0) {
     return `${hours}時間${minutes % 60}分`
-  } else if (minutes > 0) {
+  } if (minutes > 0) {
     return `${minutes}分`
-  } else {
+  } 
     return `${seconds}秒`
-  }
+  
 }
 
 // チャートの破棄

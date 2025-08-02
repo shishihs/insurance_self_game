@@ -18,7 +18,7 @@ export interface GameStateAnnouncement {
 }
 
 export class ScreenReaderManager {
-  private liveRegions: Map<string, HTMLElement> = new Map()
+  private readonly liveRegions: Map<string, HTMLElement> = new Map()
   private gameStatusElement: HTMLElement
   private cardDetailsElement: HTMLElement
   private announcementQueue: Array<{ message: string; options: AnnouncementOptions }> = []
@@ -397,7 +397,7 @@ export class ScreenReaderManager {
     })
   }
 
-  private delay(ms: number): Promise<void> {
+  private async delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 

@@ -30,7 +30,7 @@ export interface CardScaleConfig extends CardAnimationConfig {
 }
 
 export class CardAnimations {
-  private scene: Phaser.Scene
+  private readonly scene: Phaser.Scene
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -39,7 +39,7 @@ export class CardAnimations {
   /**
    * カードフリップアニメーション（3D効果付き）
    */
-  flipCard(card: Phaser.GameObjects.Container, config: CardFlipConfig): Promise<void> {
+  async flipCard(card: Phaser.GameObjects.Container, config: CardFlipConfig): Promise<void> {
     return new Promise((resolve) => {
       const { duration, ease, showBack, flipAxis } = config
       
@@ -74,7 +74,7 @@ export class CardAnimations {
   /**
    * カード移動アニメーション（カーブ軌道付き）
    */
-  moveCard(card: Phaser.GameObjects.Container, config: CardMoveConfig): Promise<void> {
+  async moveCard(card: Phaser.GameObjects.Container, config: CardMoveConfig): Promise<void> {
     return new Promise((resolve) => {
       const { from, to, duration, ease, curve, height = 50 } = config
 
@@ -121,7 +121,7 @@ export class CardAnimations {
   /**
    * カードスケールアニメーション（オーバーシュート効果付き）
    */
-  scaleCard(card: Phaser.GameObjects.Container, config: CardScaleConfig): Promise<void> {
+  async scaleCard(card: Phaser.GameObjects.Container, config: CardScaleConfig): Promise<void> {
     return new Promise((resolve) => {
       const { from, to, duration, ease, overshoot } = config
 
@@ -168,7 +168,7 @@ export class CardAnimations {
   /**
    * カードドロー演出（デッキから手札へ）
    */
-  drawCardAnimation(card: Phaser.GameObjects.Container, deckPosition: { x: number; y: number }, handPosition: { x: number; y: number }): Promise<void> {
+  async drawCardAnimation(card: Phaser.GameObjects.Container, deckPosition: { x: number; y: number }, handPosition: { x: number; y: number }): Promise<void> {
     return new Promise(async (resolve) => {
       // 1. カードをデッキ位置に配置
       card.setPosition(deckPosition.x, deckPosition.y)
@@ -225,7 +225,7 @@ export class CardAnimations {
   /**
    * ドロップ成功時のパルス効果
    */
-  dropSuccessEffect(card: Phaser.GameObjects.Container): Promise<void> {
+  async dropSuccessEffect(card: Phaser.GameObjects.Container): Promise<void> {
     return new Promise((resolve) => {
       // グリーンのグロウエフェクト
       const glowEffect = this.scene.add.circle(card.x, card.y, 80, 0x51CF66, 0.3)
@@ -250,7 +250,7 @@ export class CardAnimations {
         duration: 100,
         ease: 'Power2',
         yoyo: true,
-        onComplete: () => resolve()
+        onComplete: () => { resolve(); }
       })
     })
   }
@@ -258,7 +258,7 @@ export class CardAnimations {
   /**
    * ドロップ失敗時のバウンス効果
    */
-  dropFailEffect(card: Phaser.GameObjects.Container, originalPosition: { x: number; y: number }): Promise<void> {
+  async dropFailEffect(card: Phaser.GameObjects.Container, originalPosition: { x: number; y: number }): Promise<void> {
     return new Promise((resolve) => {
       // 赤いエラーエフェクト
       const errorEffect = this.scene.add.circle(card.x, card.y, 60, 0xFF6B6B, 0.4)
@@ -283,16 +283,16 @@ export class CardAnimations {
         ease: 'Bounce.easeOut',
         curve: 'bezier',
         height: 30
-      }).then(() => resolve())
+      }).then(() => { resolve(); })
     })
   }
 
   /**
    * 勝利時のカード展開アニメーション
    */
-  victoryCardSpread(cards: Phaser.GameObjects.Container[]): Promise<void> {
+  async victoryCardSpread(cards: Phaser.GameObjects.Container[]): Promise<void> {
     return new Promise((resolve) => {
-      const promises = cards.map((card, index) => {
+      const promises = cards.map(async (card, index) => {
         return new Promise<void>((cardResolve) => {
           // 各カードを扇形に配置
           const angle = (index - cards.length / 2) * 15
@@ -310,12 +310,12 @@ export class CardAnimations {
             duration: 800,
             ease: 'Back.easeOut',
             delay: index * 100,
-            onComplete: () => cardResolve()
+            onComplete: () => { cardResolve(); }
           })
         })
       })
 
-      Promise.all(promises).then(() => resolve())
+      Promise.all(promises).then(() => { resolve(); })
     })
   }
 

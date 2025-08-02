@@ -1,6 +1,6 @@
 import type { Game } from '../entities/Game'
 import type { Card } from '../entities/Card'
-import type { PlayerStats, GameStatus, GamePhase } from '../types/game.types'
+import type { GamePhase, GameStatus, PlayerStats } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 
 /**
@@ -114,9 +114,9 @@ export interface StatisticsSort {
  */
 export class StatisticsDataService {
   private static instance: StatisticsDataService
-  private gameHistory: Game[] = []
+  private readonly gameHistory: Game[] = []
   private currentGameData: RealtimeStatistics | null = null
-  private listeners: Set<(data: StatisticsData) => void> = new Set()
+  private readonly listeners: Set<(data: StatisticsData) => void> = new Set()
   
   private constructor() {}
   
@@ -288,9 +288,9 @@ export class StatisticsDataService {
     
     if (format === 'json') {
       return JSON.stringify(stats, null, 2)
-    } else {
+    } 
       return this.convertToCSV(stats)
-    }
+    
   }
   
   /**
@@ -603,6 +603,6 @@ export class StatisticsDataService {
   
   private notifyListeners(): void {
     const stats = this.generateStatistics()
-    this.listeners.forEach(listener => listener(stats))
+    this.listeners.forEach(listener => { listener(stats); })
   }
 }

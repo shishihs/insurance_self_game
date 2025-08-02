@@ -15,15 +15,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  Chart,
-  CategoryScale,
-  LinearScale,
   BarElement,
+  CategoryScale,
+  Chart,
+  Legend,
+  LinearScale,
   Title,
-  Tooltip,
-  Legend
+  Tooltip
 } from 'chart.js'
 
 // Chart.jsの登録

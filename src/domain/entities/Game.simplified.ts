@@ -3,12 +3,12 @@ import { Deck } from './Deck'
 import { CardFactory } from '../services/CardFactory'
 import { CardManager, type ICardManager } from '../services/CardManager'
 import type {
-  IGameState,
-  GameStatus,
-  GamePhase,
-  GameConfig,
-  PlayerStats,
   ChallengeResult,
+  GameConfig,
+  GamePhase,
+  GameStatus,
+  IGameState,
+  PlayerStats,
 } from '../types/game.types'
 import { AGE_PARAMETERS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
@@ -31,7 +31,7 @@ export class SimplifiedGame implements IGameState {
   private _vitality: Vitality
   
   // カード管理を移譲
-  private cardManager: ICardManager
+  private readonly cardManager: ICardManager
   
   currentChallenge?: Card
   
@@ -62,11 +62,11 @@ export class SimplifiedGame implements IGameState {
     
     // 初期デッキを作成
     const initialCards = CardFactory.createStarterLifeCards()
-    initialCards.forEach(card => playerDeck.addCard(card))
+    initialCards.forEach(card => { playerDeck.addCard(card); })
     
     // チャレンジデッキを作成
     const challengeCards = CardFactory.createChallengeCards(this.stage)
-    challengeCards.forEach(card => challengeDeck.addCard(card))
+    challengeCards.forEach(card => { challengeDeck.addCard(card); })
     
     this.cardManager.initialize(playerDeck, challengeDeck, config)
     

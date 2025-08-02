@@ -275,7 +275,7 @@ export class GameChallengeService {
   ): number {
     if (success) {
       return Math.floor((playerPower - challengePower) / 2)
-    } else {
+    } 
       // 失敗時のダメージ計算
       const baseDamage = challengePower - playerPower
       
@@ -292,7 +292,7 @@ export class GameChallengeService {
       const finalDamage = baseDamage - damageReduction
       // 保険で完全にカバーできる場合はダメージ0、そうでなければ最低1ダメージ
       return finalDamage <= 0 ? 0 : -Math.max(1, finalDamage)
-    }
+    
   }
 
   /**
@@ -314,8 +314,8 @@ export class GameChallengeService {
   private createResultMessage(success: boolean, vitalityChange: number): string {
     if (success) {
       return `チャレンジ成功！ +${vitalityChange} 活力`
-    } else {
+    } 
       return `チャレンジ失敗... ${vitalityChange} 活力`
-    }
+    
   }
 }

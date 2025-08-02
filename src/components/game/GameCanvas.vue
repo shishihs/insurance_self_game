@@ -34,7 +34,7 @@ onMounted(async () => {
       // タイムアウト付きでPhaserとゲームマネージャーを動的にインポート
       const importPromise = import('@/game/GameManager')
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('GameManager import timeout after 10 seconds')), 10000)
+        setTimeout(() => { reject(new Error('GameManager import timeout after 10 seconds')); }, 10000)
       )
       
       if (isDev) console.log('🎮 GameManagerをインポート中...')
@@ -50,7 +50,7 @@ onMounted(async () => {
       if (isDev) console.log('🎮 ゲームを初期化中...')
       const initPromise = gameManager.value.initialize(gameContainer.value)
       const initTimeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Game initialization timeout after 15 seconds')), 15000)
+        setTimeout(() => { reject(new Error('Game initialization timeout after 15 seconds')); }, 15000)
       )
       
       await Promise.race([initPromise, initTimeoutPromise])

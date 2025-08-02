@@ -45,9 +45,9 @@ export class ColorBlindnessManager {
     showColorNames: false
   }
 
-  private colorBlindnessTypes: Map<string, ColorBlindnessType> = new Map()
-  private patterns: Map<string, ColorPattern> = new Map()
-  private originalColors: Map<HTMLElement, string> = new Map()
+  private readonly colorBlindnessTypes: Map<string, ColorBlindnessType> = new Map()
+  private readonly patterns: Map<string, ColorPattern> = new Map()
+  private readonly originalColors: Map<HTMLElement, string> = new Map()
   private safePalette: string[] = []
   private observers: MutationObserver[] = []
 
@@ -869,7 +869,7 @@ export class ColorBlindnessManager {
 
   private removeColorNameLabels(): void {
     const labels = document.querySelectorAll('.cb-color-label, .cb-type-icon, .cb-zone-label')
-    labels.forEach(label => label.remove())
+    labels.forEach(label => { label.remove(); })
   }
 
   private announceSettingsChange(): void {
@@ -942,7 +942,7 @@ export class ColorBlindnessManager {
    * クリーンアップ
    */
   public destroy(): void {
-    this.observers.forEach(observer => observer.disconnect())
+    this.observers.forEach(observer => { observer.disconnect(); })
     this.observers = []
     
     if (this.currentSettings.enabled) {

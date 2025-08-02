@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { 
-  DropZoneValidators, 
+  type DropZoneAction, 
   DropZoneActions, 
   DropZonePresets,
   type DropZoneValidator,
-  type DropZoneAction 
+  DropZoneValidators 
 } from '../DropZoneValidators'
 import type { Card } from '@/domain/entities/Card'
 import type { Game } from '@/domain/entities/Game'
@@ -632,7 +632,7 @@ describe('DropZoneActions', () => {
         
         const action = DropZoneActions.discardCard()
         
-        expect(() => action(mockCard, mockGame)).not.toThrow()
+        expect(() => { action(mockCard, mockGame); }).not.toThrow()
       })
     })
 
@@ -818,7 +818,7 @@ describe('DropZoneActions', () => {
       it('should handle empty sequence', () => {
         const sequenceAction = DropZoneActions.sequence()
         
-        expect(() => sequenceAction(mockCard, mockGame)).not.toThrow()
+        expect(() => { sequenceAction(mockCard, mockGame); }).not.toThrow()
       })
 
       it('should stop on first error', () => {
@@ -832,7 +832,7 @@ describe('DropZoneActions', () => {
           DropZoneActions.custom(action3)
         )
         
-        expect(() => sequenceAction(mockCard, mockGame)).toThrow('Action 2 failed')
+        expect(() => { sequenceAction(mockCard, mockGame); }).toThrow('Action 2 failed')
         expect(action1).toHaveBeenCalled()
         expect(action2).toHaveBeenCalled()
         expect(action3).not.toHaveBeenCalled()
@@ -883,7 +883,7 @@ describe('DropZoneActions', () => {
           DropZoneActions.custom(thenAction)
         )
         
-        expect(() => conditionalAction(mockCard, mockGame)).not.toThrow()
+        expect(() => { conditionalAction(mockCard, mockGame); }).not.toThrow()
         expect(thenAction).not.toHaveBeenCalled()
       })
     })
@@ -892,14 +892,14 @@ describe('DropZoneActions', () => {
       it('should do nothing for noop action', () => {
         const action = DropZoneActions.noop()
         
-        expect(() => action(mockCard, mockGame)).not.toThrow()
+        expect(() => { action(mockCard, mockGame); }).not.toThrow()
         // No assertions needed - just ensure it doesn't crash
       })
 
       it('should throw error for throwError action', () => {
         const action = DropZoneActions.throwError('Test error message')
         
-        expect(() => action(mockCard, mockGame)).toThrow('Test error message')
+        expect(() => { action(mockCard, mockGame); }).toThrow('Test error message')
       })
     })
   })
@@ -908,8 +908,8 @@ describe('DropZoneActions', () => {
     it('should handle actions with null/undefined parameters', () => {
       const action = DropZoneActions.discardCard()
       
-      expect(() => action(null as unknown as Card, mockGame)).not.toThrow()
-      expect(() => action(mockCard, null as unknown as Game)).not.toThrow()
+      expect(() => { action(null as unknown as Card, mockGame); }).not.toThrow()
+      expect(() => { action(mockCard, null as unknown as Game); }).not.toThrow()
     })
 
     it('should handle actions with malformed game objects', () => {
@@ -917,7 +917,7 @@ describe('DropZoneActions', () => {
       
       const action = DropZoneActions.playCard()
       
-      expect(() => action(mockCard, malformedGame)).not.toThrow()
+      expect(() => { action(mockCard, malformedGame); }).not.toThrow()
     })
 
     it('should handle performance with many sequential actions', () => {
@@ -929,7 +929,7 @@ describe('DropZoneActions', () => {
       const massAction = DropZoneActions.sequence(...actions)
       
       // パフォーマンステスト：大量のアクションが効率的に実行される
-      expect(() => massAction(mockCard, mockGame)).not.toThrow()
+      expect(() => { massAction(mockCard, mockGame); }).not.toThrow()
       expect(massAction).toBeDefined() // アクションが正常に作成された
     })
   })
@@ -1153,7 +1153,7 @@ describe('DropZonePresets', () => {
       expect(dropZone.isValid(mockCard, mockGame)).toBe(true)
       
       // Test action
-      expect(() => dropZone.onDrop(mockCard, mockGame)).not.toThrow()
+      expect(() => { dropZone.onDrop(mockCard, mockGame); }).not.toThrow()
       expect(mockGame.startChallenge).toHaveBeenCalledWith(mockCard)
     })
 

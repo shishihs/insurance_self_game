@@ -3,7 +3,7 @@
  * アクセシビリティ向上のためのキーボードナビゲーション実装
  */
 export class KeyboardController {
-  private scene: Phaser.Scene
+  private readonly scene: Phaser.Scene
   private enabled: boolean = false
   
   // フォーカス管理
@@ -12,7 +12,7 @@ export class KeyboardController {
   private focusIndicator?: Phaser.GameObjects.Graphics
   
   // キーバインディング
-  private keyBindings = {
+  private readonly keyBindings = {
     // ナビゲーション
     TAB: 'next',
     SHIFT_TAB: 'previous',
@@ -42,7 +42,7 @@ export class KeyboardController {
   }
   
   // コールバック
-  private callbacks: Map<string, () => void> = new Map()
+  private readonly callbacks: Map<string, () => void> = new Map()
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -124,10 +124,10 @@ export class KeyboardController {
     })
     
     // 矢印キー
-    keyboard.on('keydown-LEFT', () => this.handleArrowKey('left'))
-    keyboard.on('keydown-RIGHT', () => this.handleArrowKey('right'))
-    keyboard.on('keydown-UP', () => this.handleArrowKey('up'))
-    keyboard.on('keydown-DOWN', () => this.handleArrowKey('down'))
+    keyboard.on('keydown-LEFT', () => { this.handleArrowKey('left'); })
+    keyboard.on('keydown-RIGHT', () => { this.handleArrowKey('right'); })
+    keyboard.on('keydown-UP', () => { this.handleArrowKey('up'); })
+    keyboard.on('keydown-DOWN', () => { this.handleArrowKey('down'); })
     
     // アクションキー
     keyboard.on('keydown-SPACE', (event: KeyboardEvent) => {
@@ -413,7 +413,7 @@ export class KeyboardController {
         targets: hintText,
         alpha: 0,
         duration: 500,
-        onComplete: () => hintText.destroy()
+        onComplete: () => { hintText.destroy(); }
       })
     })
   }

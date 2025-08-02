@@ -11,8 +11,8 @@ import { IndexedDBManager, type SerializedGame } from '../storage/IndexedDBManag
 import { Game as GameEntity } from '@/domain/entities/Game'
 
 export class IndexedDBGameRepository implements IGameRepository {
-  private indexedDB: IndexedDBManager
-  private cache: Map<string, Game> = new Map()
+  private readonly indexedDB: IndexedDBManager
+  private readonly cache: Map<string, Game> = new Map()
   private isInitialized = false
   
   constructor() {

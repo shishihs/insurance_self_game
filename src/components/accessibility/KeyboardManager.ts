@@ -25,7 +25,7 @@ export interface KeyboardShortcut {
 export class KeyboardManager {
   private focusableElements: FocusableElement[] = []
   private currentFocusIndex: number = -1
-  private shortcuts: Map<string, KeyboardShortcut> = new Map()
+  private readonly shortcuts: Map<string, KeyboardShortcut> = new Map()
   private isActive: boolean = true
   private focusVisibleEnabled: boolean = true
 
@@ -513,7 +513,7 @@ export class KeyboardManager {
     const closeButton = document.createElement('button')
     closeButton.type = 'button'
     closeButton.textContent = '閉じる (Esc)'
-    closeButton.onclick = () => panel.remove()
+    closeButton.onclick = () => { panel.remove(); }
     
     helpContent.appendChild(title)
     helpContent.appendChild(shortcutsList)

@@ -411,9 +411,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { FeedbackManagementService, type FeedbackFilter, type FeedbackStatistics } from '../../domain/services/FeedbackManagementService'
-import { FeedbackCategory, FeedbackStatus, FeedbackPriority, type Feedback } from '../../domain/entities/Feedback'
+import { computed, onMounted, ref, watch } from 'vue'
+import { type FeedbackFilter, FeedbackManagementService, type FeedbackStatistics } from '../../domain/services/FeedbackManagementService'
+import { type Feedback, FeedbackCategory, FeedbackPriority, FeedbackStatus } from '../../domain/entities/Feedback'
 
 // Services
 const feedbackService = new FeedbackManagementService()
@@ -493,9 +493,9 @@ const filteredFeedbacks = computed(() => {
     
     if (sortOrder.value === 'desc') {
       return bValue - aValue
-    } else {
+    } 
       return aValue - bValue
-    }
+    
   })
   
   return feedbacks

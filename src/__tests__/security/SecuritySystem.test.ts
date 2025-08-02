@@ -3,7 +3,7 @@
  * 全セキュリティ機能の動作確認とセキュリティテストケース
  */
 
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { 
   sanitizeInput, 
   validateNumber, 
@@ -42,14 +42,14 @@ const mockLocalStorage = (() => {
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage })
 Object.defineProperty(window, 'crypto', {
   value: {
-    getRandomValues: jest.fn((arr: Uint8Array) => {
+    getRandomValues: vi.fn((arr: Uint8Array) => {
       for (let i = 0; i < arr.length; i++) {
         arr[i] = Math.floor(Math.random() * 256)
       }
       return arr
     }),
     subtle: {
-      digest: jest.fn(async (algorithm: string, data: ArrayBuffer) => {
+      digest: vi.fn(async (algorithm: string, data: ArrayBuffer) => {
         // 簡易ハッシュシミュレーション
         const view = new Uint8Array(data)
         const hash = new ArrayBuffer(32)
@@ -59,8 +59,8 @@ Object.defineProperty(window, 'crypto', {
         }
         return hash
       }),
-      importKey: jest.fn(async () => ({})),
-      sign: jest.fn(async () => new ArrayBuffer(32))
+      importKey: vi.fn(async () => ({})),
+      sign: vi.fn(async () => new ArrayBuffer(32))
     }
   }
 })
@@ -68,7 +68,7 @@ Object.defineProperty(window, 'crypto', {
 describe('Security System Tests', () => {
   beforeEach(() => {
     mockLocalStorage.clear()
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   afterEach(() => {
@@ -336,7 +336,7 @@ describe('Security System Tests', () => {
   describe('Security Monitor Tests', () => {
     test('不審な活動のログ記録', () => {
       const monitor = SecurityMonitor.getInstance()
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       
       monitor.logSuspiciousActivity({
         type: 'test_threat',
@@ -439,7 +439,7 @@ describe('Security System Tests', () => {
 
   describe('Integration Tests', () => {
     test('セキュリティシステムの初期化', () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
       
       // セキュリティシステムの初期化
       expect(() => initializeSecurity()).not.toThrow()
@@ -639,7 +639,7 @@ describe('Security System Tests', () => {
       const storage = secureLocalStorage()
       
       // 保存時のエラー処理
-      const mockError = jest.spyOn(mockLocalStorage, 'setItem').mockImplementation(() => {
+      const mockError = vi.spyOn(mockLocalStorage, 'setItem').mockImplementation(() => {
         throw new Error('Storage full')
       })
       
@@ -653,7 +653,7 @@ describe('Security System Tests', () => {
       const originalCrypto = window.crypto
       delete (window as any).crypto
       
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       
       // フォールバック実装が動作することを確認
       const randomString = generateSecureRandomString(16)

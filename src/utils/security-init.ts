@@ -447,10 +447,10 @@ export async function getSecuritySystemStatus(): Promise<{
   // 各機能の状態確認
   const features = {
     https: window.location.protocol === 'https:' || window.location.hostname === 'localhost',
-    cryptoApi: !!(window.crypto && window.crypto.subtle),
-    csp: !!document.querySelector('meta[http-equiv="Content-Security-Policy"]'),
-    xFrameOptions: !!document.querySelector('meta[http-equiv="X-Frame-Options"]'),
-    contentTypeOptions: !!document.querySelector('meta[http-equiv="X-Content-Type-Options"]'),
+    cryptoApi: Boolean(window.crypto && window.crypto.subtle),
+    csp: Boolean(document.querySelector('meta[http-equiv="Content-Security-Policy"]')),
+    xFrameOptions: Boolean(document.querySelector('meta[http-equiv="X-Frame-Options"]')),
+    contentTypeOptions: Boolean(document.querySelector('meta[http-equiv="X-Content-Type-Options"]')),
     secureStorage: true, // secureLocalStorage() の存在確認
     auditLogging: true,  // SecurityAuditLogger の存在確認
     xssProtection: true, // XSSProtection の存在確認

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Game } from '../entities/Game'
 import { Card } from '../entities/Card'
 import { CardFactory } from '../services/CardFactory'
@@ -57,7 +57,7 @@ describe('Game Entity', () => {
     it('既に開始されたゲームは再開始できない', () => {
       game.start()
       
-      expect(() => game.start()).toThrow('Game has already started')
+      expect(() => { game.start(); }).toThrow('Game has already started')
     })
   })
 
@@ -67,7 +67,7 @@ describe('Game Entity', () => {
       game = new Game(defaultConfig)
       // テスト用カードを追加
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -81,7 +81,7 @@ describe('Game Entity', () => {
     it('手札上限を超えた場合、古いカードが捨て札になる', async () => {
       // デッキに追加のカードを加える
       const extraCards = CardFactory.createStarterLifeCards()
-      extraCards.forEach(card => game.addCardToPlayerDeck(card))
+      extraCards.forEach(card => { game.addCardToPlayerDeck(card); })
       
       // 手札を上限まで引く
       await game.drawCards(7)
@@ -106,7 +106,7 @@ describe('Game Entity', () => {
       
       // 手札をクリアして捨て札に移動
       freshGame.clearHand()
-      drawnCards.forEach(card => freshGame.addCardToDiscardPile(card))
+      drawnCards.forEach(card => { freshGame.addCardToDiscardPile(card); })
       
       // デッキが空であることを確認
       expect(freshGame.playerDeck.isEmpty()).toBe(true)
@@ -132,7 +132,7 @@ describe('Game Entity', () => {
 
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
       game.drawCards(5)
       
@@ -161,7 +161,7 @@ describe('Game Entity', () => {
       const testGame = game as unknown as { phase: string }
       testGame.phase = 'resolution'
       
-      expect(() => game.startChallenge(challengeCard)).toThrow('Can only start challenge during draw phase')
+      expect(() => { game.startChallenge(challengeCard); }).toThrow('Can only start challenge during draw phase')
     })
 
     it('カードを選択/選択解除できる', () => {
@@ -322,7 +322,7 @@ describe('Game Entity', () => {
   describe('ターン進行', () => {
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -418,7 +418,7 @@ describe('Game Entity', () => {
   describe('境界値テスト - 手札管理', () => {
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -475,7 +475,7 @@ describe('Game Entity', () => {
         effects: []
       })
       
-      expect(() => game.startChallenge(challengeCard))
+      expect(() => { game.startChallenge(challengeCard); })
         .toThrow('Can only start challenge during draw phase')
     })
 
@@ -501,8 +501,8 @@ describe('Game Entity', () => {
     it('負の値での操作', () => {
       game.start()
       
-      expect(() => game.applyDamage(-10)).not.toThrow()
-      expect(() => game.heal(-10)).not.toThrow()
+      expect(() => { game.applyDamage(-10); }).not.toThrow()
+      expect(() => { game.heal(-10); }).not.toThrow()
       
       // 活力が異常値にならないことを確認
       expect(game.vitality).toBeGreaterThanOrEqual(0)
@@ -525,7 +525,7 @@ describe('Game Entity', () => {
         effects: []
       })
       
-      expect(() => game.startChallenge(challengeCard)).toThrow()
+      expect(() => { game.startChallenge(challengeCard); }).toThrow()
     })
 
     it('ゲーム終了後の操作', () => {
@@ -541,7 +541,7 @@ describe('Game Entity', () => {
   describe('並行性テスト - 非同期操作', () => {
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -620,7 +620,7 @@ describe('Game Entity', () => {
       ]
       
       const results = await Promise.all(
-        operations.map(op => Promise.resolve(op()))
+        operations.map(async op => Promise.resolve(op()))
       )
       
       expect(results).toHaveLength(4)
@@ -662,7 +662,7 @@ describe('Game Entity', () => {
 
     it('長時間ゲームセッションの安定性', () => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
       
       const startTime = performance.now()
@@ -730,7 +730,7 @@ describe('Game Entity', () => {
   describe('データ整合性テスト', () => {
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -858,7 +858,7 @@ describe('Game Entity', () => {
       // 文字列入力のテスト（型安全性確保）
       maliciousStringInputs.forEach(input => {
         // 文字列入力は型チェックでエラーになるべき
-        expect(() => game.applyDamage(input as any)).toThrow('Change amount must be a number')
+        expect(() => { game.applyDamage(input as any); }).toThrow('Change amount must be a number')
       })
       
       // 有効な数値入力の正常動作確認
@@ -884,9 +884,9 @@ describe('Game Entity', () => {
         
         // 無効な入力ではエラーが発生する
         if (input === null || input === undefined) {
-          expect(() => testGame.applyDamage(input as any)).toThrow('Change amount must not be null or undefined')
+          expect(() => { testGame.applyDamage(input as any); }).toThrow('Change amount must not be null or undefined')
         } else {
-          expect(() => testGame.applyDamage(input as any)).toThrow('Change amount must be a finite number')
+          expect(() => { testGame.applyDamage(input as any); }).toThrow('Change amount must be a finite number')
         }
       })
     })
@@ -920,7 +920,7 @@ describe('Game Entity', () => {
       // 大きな数値での操作
       const largeNumber = Number.MAX_SAFE_INTEGER
       
-      expect(() => game.applyDamage(largeNumber)).not.toThrow()
+      expect(() => { game.applyDamage(largeNumber); }).not.toThrow()
       expect(game.vitality).toBe(0) // 適切に0になる
       expect(game.status).toBe('game_over')
     })
@@ -932,7 +932,7 @@ describe('Game Entity', () => {
       game.heal(0.1 + 0.2) // JavaScript精度問題 (0.30000000000000004)
       
       // 値が適切に処理されることを確認
-      expect(game.vitality).toBeGreaterThan(game.config.startingVitality!)
+      expect(game.vitality).toBeGreaterThan(game.config.startingVitality)
       expect(typeof game.vitality).toBe('number')
       expect(isFinite(game.vitality)).toBe(true)
     })
@@ -951,7 +951,7 @@ describe('Game Entity', () => {
         effects: []
       })
       
-      expect(() => game.addInsurance(insuranceCard)).not.toThrow()
+      expect(() => { game.addInsurance(insuranceCard); }).not.toThrow()
       const burden = game.calculateInsuranceBurden()
       // -0 と 0 の区別を避けるため、数値として0であることを確認
       expect(burden === 0).toBe(true)
@@ -984,7 +984,7 @@ describe('Game Entity', () => {
       expect(afterCreationPerformance.poolStats).toBeDefined()
       
       // クリーンアップ
-      snapshots.forEach(snapshot => Game.releaseSnapshot(snapshot))
+      snapshots.forEach(snapshot => { Game.releaseSnapshot(snapshot); })
     })
 
     it('キャッシュシステムの効率性', () => {
@@ -1013,7 +1013,7 @@ describe('Game Entity', () => {
   describe('完全なゲームフロー統合テスト', () => {
     it('完全なゲームサイクルの実行', async () => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       
       // ゲーム開始
       game.start()

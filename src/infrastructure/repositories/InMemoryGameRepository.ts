@@ -8,7 +8,7 @@ import type { Game } from '../../domain/entities/Game'
  * データはメモリ上にのみ保持され、アプリケーション終了時に失われます。
  */
 export class InMemoryGameRepository implements IGameRepository {
-  private games: Map<string, Game> = new Map()
+  private readonly games: Map<string, Game> = new Map()
 
   async findById(id: string): Promise<Game | null> {
     const game = this.games.get(id)

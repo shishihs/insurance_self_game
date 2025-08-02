@@ -36,16 +36,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import {
-  Chart,
   CategoryScale,
+  Chart,
+  Legend,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
-  Tooltip,
-  Legend
+  Tooltip
 } from 'chart.js'
 
 // Chart.jsの登録
@@ -115,13 +115,13 @@ const formatChoice = (choice: string): string => {
 const getRecommendation = (pattern: DecisionPattern): string => {
   if (pattern.successRate >= 0.8) {
     return '👍 優秀な戦略です'
-  } else if (pattern.successRate >= 0.6) {
+  } if (pattern.successRate >= 0.6) {
     return '😊 良好な戦略です'
-  } else if (pattern.successRate >= 0.4) {
+  } if (pattern.successRate >= 0.4) {
     return '😐 改善の余地があります'
-  } else {
+  } 
     return '🤔 戦略の見直しを検討'
-  }
+  
 }
 
 // チャートの初期化

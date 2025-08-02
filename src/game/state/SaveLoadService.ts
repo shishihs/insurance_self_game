@@ -30,7 +30,7 @@ export interface LoadOptions {
  * GameStateManagerの高レベルAPIを提供
  */
 export class SaveLoadService {
-  private stateManager: GameStateManager
+  private readonly stateManager: GameStateManager
   
   constructor() {
     this.stateManager = GameStateManager.getInstance()
@@ -302,9 +302,9 @@ export class SaveLoadUtils {
     
     if (hours > 0) {
       return `${hours}時間${minutes}分`
-    } else {
+    } 
       return `${minutes}分`
-    }
+    
   }
   
   /**

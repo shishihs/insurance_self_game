@@ -6,8 +6,8 @@ import { ChallengeResult } from './types'
 import type { 
   DomainEvent} from './events';
 import {
-  CardSelectedForChallengeEvent,
   CardDeselectedFromChallengeEvent,
+  CardSelectedForChallengeEvent,
   ChallengeResolvedEvent
 } from './events'
 
@@ -18,7 +18,7 @@ import {
  * この集約はイベントソーシングパターンを採用し、全ての状態変更はイベントとして記録されます。
  */
 export class Challenge {
-  private selectedCards: Card[] = []
+  private readonly selectedCards: Card[] = []
   private status: ChallengeStatus = 'in_progress'
   private uncommittedEvents: DomainEvent[] = []
 

@@ -20,16 +20,16 @@ export interface UIAnimationEvent {
 }
 
 export class AnimationManager {
-  private scene: Phaser.Scene
-  private cardAnimations: CardAnimations
-  private soundManager?: SoundManager
+  private readonly scene: Phaser.Scene
+  private readonly cardAnimations: CardAnimations
+  private readonly soundManager?: SoundManager
   private config: GameAnimationConfig
 
   // アニメーション状態管理
   private isAnimating: boolean = false
   private animationQueue: (() => Promise<void>)[] = []
   private vitalityBarElement?: HTMLElement
-  private statusElements: Map<string, HTMLElement> = new Map()
+  private readonly statusElements: Map<string, HTMLElement> = new Map()
 
   constructor(scene: Phaser.Scene, soundManager?: SoundManager) {
     this.scene = scene

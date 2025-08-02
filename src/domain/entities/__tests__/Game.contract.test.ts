@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Game } from '../Game'
 import { Card } from '../Card'
 import { Vitality } from '../../valueObjects/Vitality'
@@ -112,7 +112,7 @@ describe('Game Entity - 契約による設計テスト', () => {
       game.start()
       
       // Act & Assert: 事前条件違反
-      expect(() => game.start()).toThrow('Game has already started')
+      expect(() => { game.start(); }).toThrow('Game has already started')
       
       // 不変条件: 状態が変わらない
       expect(game.status).toBe('in_progress')
@@ -127,7 +127,7 @@ describe('Game Entity - 契約による設計テスト', () => {
       testGame.status = 'game_over'
       
       // Act & Assert
-      expect(() => game.start()).toThrow('Game has already started')
+      expect(() => { game.start(); }).toThrow('Game has already started')
     })
   })
 
@@ -209,10 +209,10 @@ describe('Game Entity - 契約による設計テスト', () => {
 
     it('非数値の入力で事前条件違反エラー', () => {
       // Act & Assert
-      expect(() => game.applyDamage(NaN)).toThrow('Change amount must be a finite number')
-      expect(() => game.applyDamage(Infinity)).toThrow('Change amount must be a finite number')
-      expect(() => game.heal(NaN)).toThrow('Change amount must be a finite number')
-      expect(() => game.heal(-Infinity)).toThrow('Change amount must be a finite number')
+      expect(() => { game.applyDamage(NaN); }).toThrow('Change amount must be a finite number')
+      expect(() => { game.applyDamage(Infinity); }).toThrow('Change amount must be a finite number')
+      expect(() => { game.heal(NaN); }).toThrow('Change amount must be a finite number')
+      expect(() => { game.heal(-Infinity); }).toThrow('Change amount must be a finite number')
     })
 
     it('変更量0では状態が変わらない', () => {
@@ -329,7 +329,7 @@ describe('Game Entity - 契約による設計テスト', () => {
     beforeEach(() => {
       // カードを追加してゲーム開始
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -400,22 +400,22 @@ describe('Game Entity - 契約による設計テスト', () => {
     describe('型安全性テスト', () => {
       it('nullやundefinedパラメータで適切にエラー', () => {
         game.start()
-        expect(() => game.applyDamage(null as any)).toThrow('Change amount must not be null or undefined')
-        expect(() => game.applyDamage(undefined as any)).toThrow('Change amount must not be null or undefined')
-        expect(() => game.heal(null as any)).toThrow('Change amount must not be null or undefined')
-        expect(() => game.heal(undefined as any)).toThrow('Change amount must not be null or undefined')
+        expect(() => { game.applyDamage(null as any); }).toThrow('Change amount must not be null or undefined')
+        expect(() => { game.applyDamage(undefined as any); }).toThrow('Change amount must not be null or undefined')
+        expect(() => { game.heal(null as any); }).toThrow('Change amount must not be null or undefined')
+        expect(() => { game.heal(undefined as any); }).toThrow('Change amount must not be null or undefined')
       })
 
       it('文字列パラメータで適切にエラー', () => {
         game.start()
-        expect(() => game.applyDamage('10' as any)).toThrow('Change amount must be a number')
-        expect(() => game.heal('invalid' as any)).toThrow('Change amount must be a number')
+        expect(() => { game.applyDamage('10' as any); }).toThrow('Change amount must be a number')
+        expect(() => { game.heal('invalid' as any); }).toThrow('Change amount must be a number')
       })
 
       it('オブジェクトパラメータで適切にエラー', () => {
         game.start()
-        expect(() => game.applyDamage({} as any)).toThrow('Change amount must be a number')
-        expect(() => game.applyDamage([] as any)).toThrow('Change amount must be a number')
+        expect(() => { game.applyDamage({} as any); }).toThrow('Change amount must be a number')
+        expect(() => { game.applyDamage([] as any); }).toThrow('Change amount must be a number')
       })
     })
 
@@ -436,7 +436,7 @@ describe('Game Entity - 契約による設計テスト', () => {
           cost: 0,
           effects: []
         })
-        expect(() => game.startChallenge(challengeCard)).toThrow()
+        expect(() => { game.startChallenge(challengeCard); }).toThrow()
       })
 
       it('ゲーム終了後の操作制限', () => {
@@ -487,7 +487,7 @@ describe('Game Entity - 契約による設計テスト', () => {
   describe('並行性とパフォーマンステスト', () => {
     beforeEach(() => {
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       game.start()
     })
 
@@ -533,7 +533,7 @@ describe('Game Entity - 契約による設計テスト', () => {
     it('どの操作後もゲーム状態の整合性が保たれる', () => {
       // Arrange
       const cards = CardFactory.createStarterLifeCards()
-      cards.forEach(card => game.addCardToPlayerDeck(card))
+      cards.forEach(card => { game.addCardToPlayerDeck(card); })
       
       // Act: 様々な操作を実行
       game.start()

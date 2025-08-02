@@ -295,7 +295,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
 import type { SatisfactionRating } from '../../domain/entities/Feedback';
 import { FeedbackCategory } from '../../domain/entities/Feedback'
