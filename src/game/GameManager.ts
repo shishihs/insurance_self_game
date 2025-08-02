@@ -255,6 +255,54 @@ export class GameManager {
       
     } catch (error) {
       console.error('❌ GameManager: ゲーム初期化エラー:', error)
+      
+      // エラーメッセージの生成
+      let userMessage = 'ゲームの初期化に失敗しました。'
+      let technicalMessage = error instanceof Error ? error.message : String(error)
+      
+      if (technicalMessage.includes('WebGL')) {
+        userMessage = 'お使いのブラウザはWebGLに対応していません。最新のブラウザをお使いください。'
+      } else if (technicalMessage.includes('Canvas')) {
+        userMessage = 'グラフィックの初期化に失敗しました。ブラウザを更新してください。'
+      } else if (technicalMessage.includes('network') || technicalMessage.includes('fetch')) {
+        userMessage = 'ゲームの読み込みに失敗しました。インターネット接続を確認してください。'
+      }
+      
+      // エラー表示用のコンテナを作成
+      const parentElement = typeof parent === 'string' ? document.getElementById(parent) : parent
+      if (parentElement) {
+        parentElement.innerHTML = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: #1a1a2e;
+            color: white;
+            font-family: 'Noto Sans JP', sans-serif;
+          ">
+            <h2 style="margin-bottom: 20px; color: #ff6b6b;">エラーが発生しました</h2>
+            <p style="margin-bottom: 20px; font-size: 18px;">${userMessage}</p>
+            <button onclick="location.reload()" style="
+              padding: 10px 20px;
+              font-size: 16px;
+              background-color: #4C6EF5;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+            ">再読み込み</button>
+            <details style="margin-top: 20px; font-size: 14px; color: #888;">
+              <summary style="cursor: pointer;">技術的な詳細</summary>
+              <pre style="margin-top: 10px; text-align: left;">${technicalMessage}</pre>
+            </details>
+          </div>
+        `
+      }
+      
       throw error
     }
   }
