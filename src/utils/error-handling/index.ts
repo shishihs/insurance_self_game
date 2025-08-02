@@ -309,15 +309,35 @@ class ErrorHandlingSystem {
     // 長時間のタスクの検出
     if ('PerformanceObserver' in window) {
       try {
+        let lastReportTime = 0
+        const REPORT_INTERVAL = 60000 // 1分間隔
+        const LONG_TASK_THRESHOLD = 100 // 100ms以上のタスクのみ報告
+        
         const observer = new PerformanceObserver((list) => {
-          for (const entry of list.getEntries()) {
-            if (entry.duration > 50) { // 50ms以上のタスク
-              this.reportError('Long task detected', {
-                duration: entry.duration,
-                startTime: entry.startTime,
-                name: entry.name
-              }, 'performance')
-            }
+          const now = Date.now()
+          
+          // レポート間隔を確認
+          if (now - lastReportTime < REPORT_INTERVAL) {
+            return
+          }
+          
+          const longTasks = list.getEntries().filter(entry => entry.duration > LONG_TASK_THRESHOLD)
+          
+          if (longTasks.length > 0) {
+            // 最も長いタスクのみ報告
+            const longestTask = longTasks.reduce((prev, current) => 
+              current.duration > prev.duration ? current : prev
+            )
+            
+            this.reportError('Long task detected', {
+              duration: Math.round(longestTask.duration),
+              startTime: Math.round(longestTask.startTime),
+              name: longestTask.name,
+              taskCount: longTasks.length,
+              totalDuration: Math.round(longTasks.reduce((sum, task) => sum + task.duration, 0))
+            }, 'performance')
+            
+            lastReportTime = now
           }
         })
         

@@ -37,6 +37,9 @@ export class ErrorRecovery {
 
   private gameStateBackup: any = null
   private performanceBaseline: { memory: number; timing: number } | null = null
+  private lastCleanupTime = 0
+  private readonly CLEANUP_INTERVAL = 60000 // 1分間隔
+  private isCleaningUp = false
   
   constructor() {
     this.registerDefaultStrategies()
@@ -103,20 +106,34 @@ export class ErrorRecovery {
         error.message.includes('Maximum call stack') ||
         error.category === 'performance',
       recover: async (error) => {
-        console.log('[Recovery] Attempting memory cleanup...')
+        // クリーンアップが進行中または最近実行された場合はスキップ
+        const now = Date.now()
+        if (this.isCleaningUp || now - this.lastCleanupTime < this.CLEANUP_INTERVAL) {
+          console.log('[Recovery] Memory cleanup already in progress or recently completed')
+          return false
+        }
         
-        const initialMemory = this.getCurrentMemoryUsage()
+        this.isCleaningUp = true
+        this.lastCleanupTime = now
         
-        // 段階的なメモリクリーンアップを実行
-        await this.performMemoryCleanup()
-        
-        const finalMemory = this.getCurrentMemoryUsage()
-        const memoryReduced = initialMemory - finalMemory
-        
-        console.log(`[Recovery] Memory cleanup completed. Reduced: ${(memoryReduced / 1024 / 1024).toFixed(1)}MB`)
-        
-        // 十分なメモリが解放されたかチェック
-        return memoryReduced > 10 * 1024 * 1024 // 10MB以上で成功
+        try {
+          console.log('[Recovery] Attempting memory cleanup...')
+          
+          const initialMemory = this.getCurrentMemoryUsage()
+          
+          // 段階的なメモリクリーンアップを実行
+          await this.performMemoryCleanup()
+          
+          const finalMemory = this.getCurrentMemoryUsage()
+          const memoryReduced = initialMemory - finalMemory
+          
+          console.log(`[Recovery] Memory cleanup completed. Reduced: ${(memoryReduced / 1024 / 1024).toFixed(1)}MB`)
+          
+          // 十分なメモリが解放されたかチェック
+          return memoryReduced > 5 * 1024 * 1024 // 5MB以上で成功（闾値を下げる）
+        } finally {
+          this.isCleaningUp = false
+        }
       },
       maxRetries: 2,
       retryDelay: 1000,
@@ -626,24 +643,33 @@ export class ErrorRecovery {
    * 段階的なメモリクリーンアップを実行
    */
   private async performMemoryCleanup(): Promise<void> {
+    // requestIdleCallbackのpolyfill
+    const scheduleTask = (callback: () => void, options?: { timeout?: number }) => {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(callback, options)
+      } else {
+        setTimeout(callback, options?.timeout || 0)
+      }
+    }
+    
     // 段階1: 軽量なクリーンアップ
     this.clearCaches()
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 10)) // 待機時間を短縮
     
     // 段階2: イベントリスナーのクリーンアップ
     this.cleanupEventListeners()
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 10)) // 待機時間を短縮
     
-    // 段階3: DOM要素の削除
-    await this.cleanupDOMElements()
+    // 段階3: DOM要素の削除（非同期実行）
+    scheduleTask(() => this.cleanupDOMElements(), { timeout: 1000 })
     
     // 段階4: 強制ガベージコレクション
     if ('gc' in window) {
-      (window as any).gc()
+      scheduleTask(() => (window as any).gc(), { timeout: 500 })
     }
     
-    // 段階5: メモリリークの検出と修正
-    await this.detectAndFixMemoryLeaks()
+    // 段階5: メモリリークの検出と修正（低優先度）
+    scheduleTask(() => this.detectAndFixMemoryLeaks(), { timeout: 2000 })
   }
 
   /**
@@ -797,7 +823,12 @@ export class ErrorRecovery {
    * 高度なリカバリー実行（前提条件とヘルスチェック付き）
    */
   async tryAdvancedRecover(errorInfo: ErrorInfo): Promise<RecoveryResult> {
-    console.log('[Recovery] Starting advanced recovery for error:', errorInfo.message)
+    // パフォーマンス関連エラーはログレベルを下げる
+    if (errorInfo.category === 'performance') {
+      console.debug('[Recovery] Starting advanced recovery for performance error')
+    } else {
+      console.log('[Recovery] Starting advanced recovery for error:', errorInfo.message)
+    }
     
     // 優先度順にソートされた戦略を取得
     const sortedStrategies = [...this.strategies].sort((a, b) => 
