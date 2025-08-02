@@ -28,7 +28,7 @@ export function sanitizeInput(input: string): string {
       }
       return htmlEntities[match] || match
     })
-    .replace(/\x00-\x1f\x7f-\x9f/g, '') // 制御文字を除去
+    .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // 制御文字を除去
     .trim()
     .slice(0, 1000) // 長さ制限
 }

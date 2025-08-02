@@ -309,7 +309,7 @@ export class SecureErrorHandler {
     }
 
     // 開発環境でない場合は行数を制限
-    if (process.env.NODE_ENV !== 'development') {
+    if (import.meta.env.PROD) {
       const lines = sanitized.split('\n')
       if (lines.length > 10) {
         sanitized = `${lines.slice(0, 10).join('\n')  }\n... (truncated)`

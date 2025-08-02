@@ -18,7 +18,7 @@ export class TutorialIntegration {
     this.scene = scene
     this.tutorialManager = new TutorialManager(scene, {
       autoSaveProgress: true,
-      debugMode: process.env.NODE_ENV === 'development',
+      debugMode: import.meta.env.DEV,
       stepChangeDelay: 500,
       defaultHighlightOptions: {
         color: '#FFD700',
