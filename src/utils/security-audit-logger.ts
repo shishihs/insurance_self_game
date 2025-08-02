@@ -61,6 +61,9 @@ export class SecurityAuditLogger {
   private readonly maxEventsInMemory = 1000
   private readonly maxEventsInStorage = 5000
   private readonly sessionId: string
+  private logErrorCount = 0
+  private lastLogErrorReset = Date.now()
+  private readonly MAX_LOG_ERRORS_PER_MINUTE = 50
   private config = {
     enableStackTrace: true,
     enableGeoLocation: false,
@@ -151,15 +154,29 @@ export class SecurityAuditLogger {
       })
 
     } catch (error) {
+      // レート制限チェック
+      const now = Date.now()
+      if (now - this.lastLogErrorReset > 60000) {
+        this.logErrorCount = 0
+        this.lastLogErrorReset = now
+      }
+      
+      // エラーログの無限ループを防ぐ
+      if (this.logErrorCount >= this.MAX_LOG_ERRORS_PER_MINUTE) {
+        return // 完全にスキップ
+      }
+      
+      this.logErrorCount++
+      
       // エラーログの無限ループを防ぐため、オリジナルのconsole.errorを使用
       const originalError = (console as any).originalError || console.error
       
       // エラーが頻発しないよう、エラーログの出力を制限
-      if (Math.random() < 0.1) { // 10%の確率でエラーをログ出力
+      if (this.logErrorCount <= 5) { // 最初の5個のエラーのみログ出力
         originalError.call(console, 'セキュリティイベントのログ記録に失敗:', error)
       }
       // フォールバック: クリティカルなイベントのみコンソールに出力
-      if (severity === 'critical' || severity === 'high') {
+      if (severity === 'critical' && this.logErrorCount <= 10) {
         console.warn(`🚨 Security Event: ${eventType} [${severity.toUpperCase()}] ${message}`)
       }
     }
@@ -675,7 +692,7 @@ if (typeof window !== 'undefined') {
   
   let consoleErrorCount = 0
   let lastResetTime = Date.now()
-  const MAX_CONSOLE_ERRORS_PER_MINUTE = 10
+  const MAX_CONSOLE_ERRORS_PER_MINUTE = 30 // 制限を緩和
   
     console.error = function(...args) {
       // 開発環境ではレート制限を緩和
@@ -692,7 +709,10 @@ if (typeof window !== 'undefined') {
       
       // Skip logging if rate limit exceeded to prevent infinite loop
       const message = args.join(' ')
+      // セキュリティ監査ログ自体のエラーは記録しない
       if (message.includes('Error rate limit exceeded') || 
+          message.includes('セキュリティイベントのログ記録に失敗') ||
+          message.includes('セキュリティログのフラッシュに失敗') ||
           consoleErrorCount >= MAX_CONSOLE_ERRORS_PER_MINUTE) {
         originalConsoleError.apply(console, args); return;
       }
@@ -700,13 +720,16 @@ if (typeof window !== 'undefined') {
       consoleErrorCount++
       
       // Log the error with low severity
-      auditLogger.logSecurityEvent(
-        'console_error',
-        'low',
-        'console_override',
-        `Console Error: ${message}`,
-        { args, count: consoleErrorCount }
-      )
+      // 非同期で実行して、エラーがブロッキングしないようにする
+      setTimeout(() => {
+        auditLogger.logSecurityEvent(
+          'console_error',
+          'low',
+          'console_override',
+          `Console Error: ${message.substring(0, 200)}`, // メッセージを短縮
+          { args: args.slice(0, 3), count: consoleErrorCount } // 引数も制限
+        )
+      }, 0)
       
       originalConsoleError.apply(console, args);
     }
