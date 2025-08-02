@@ -215,10 +215,10 @@ describe('基本統合テスト', () => {
         name: '不正カード',
         description: 'エラーテスト',
         type: 'life',
-        power: -10,
+        power: -100,
         cost: 5,
         effects: []
-      })).toThrow('CardPower must be non-negative')
+      })).toThrow('CardPower must be at least -99')
 
       // 負のコスト
       expect(() => new Card({

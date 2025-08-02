@@ -42,7 +42,7 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    chunkSizeWarningLimit: 500, // より厳しくして警告を早期発見
+    chunkSizeWarningLimit: 600, // Phaserチャンクを考慮して調整
     // アセット最適化
     assetsInlineLimit: 4096, // 最適なインライン制限
     cssCodeSplit: true,
@@ -90,7 +90,16 @@ export default defineConfig(({ command, mode }) => ({
               return 'vue-vendor'
             }
             if (id.includes('phaser')) {
-              // Phaserを最適化してcore機能のみ
+              // Phaserを複数のチャンクに分割
+              if (id.includes('phaser/src/physics')) {
+                return 'phaser-physics'
+              }
+              if (id.includes('phaser/src/sound')) {
+                return 'phaser-sound'
+              }
+              if (id.includes('phaser/src/loader')) {
+                return 'phaser-loader'
+              }
               return 'phaser-core'
             }
             if (id.includes('@unocss') || id.includes('unocss')) {

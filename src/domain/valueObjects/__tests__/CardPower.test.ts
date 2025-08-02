@@ -15,11 +15,11 @@ describe('CardPower値オブジェクト', () => {
     })
 
     it('負の値では生成できない', () => {
-      expect(() => CardPower.create(-1)).toThrow('Card power cannot be negative')
+      expect(() => CardPower.create(-100)).toThrow('CardPower must be at least -99')
     })
 
     it('最大値を超える値では生成できない', () => {
-      expect(() => CardPower.create(1000)).toThrow('Card power cannot exceed maximum')
+      expect(() => CardPower.create(1000)).toThrow('CardPower cannot exceed maximum')
     })
   })
 
