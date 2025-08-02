@@ -108,16 +108,31 @@ export class MainMenuScene extends BaseScene {
       console.error('Stack trace:', error.stack)
       // エラーを表示
       if (this.add) {
+        // エラーメッセージを詳細に表示
+        const errorMessage = error instanceof Error ? error.message : String(error)
         this.add.text(
           this.centerX || 400,
           this.centerY || 300,
-          'Menu initialization failed',
+          `Menu initialization failed\n${errorMessage}`,
           {
             fontFamily: 'Arial',
             fontSize: '20px',
-            color: '#ff0000'
+            color: '#ff0000',
+            align: 'center'
           }
         ).setOrigin(0.5)
+        
+        // デバッグ情報も画面に表示
+        this.add.text(
+          10,
+          50,
+          `Debug: createButton=${typeof this.createButton}\nfadeIn=${typeof this.fadeIn}`,
+          {
+            fontFamily: 'Arial',
+            fontSize: '14px',
+            color: '#ffff00'
+          }
+        )
       }
     }
   }

@@ -94,14 +94,17 @@ export class GameManager {
               }
               
               // BaseSceneのメソッドをバインド
+              // BaseSceneを正しくインポートしているか確認
+              const BaseSceneProto = SceneClass.prototype.__proto__ || Object.getPrototypeOf(SceneClass.prototype)
+              
               const baseSceneMethods = {
-                fadeIn: SceneClass.prototype.fadeIn,
-                fadeOut: SceneClass.prototype.fadeOut,
-                getTextStyle: SceneClass.prototype.getTextStyle,
-                createButton: SceneClass.prototype.createButton,
-                createContainerButton: SceneClass.prototype.createContainerButton,
-                createCardContainer: SceneClass.prototype.createCardContainer,
-                showNotification: SceneClass.prototype.showNotification
+                fadeIn: BaseSceneProto.fadeIn || SceneClass.prototype.fadeIn,
+                fadeOut: BaseSceneProto.fadeOut || SceneClass.prototype.fadeOut,
+                getTextStyle: BaseSceneProto.getTextStyle || SceneClass.prototype.getTextStyle,
+                createButton: BaseSceneProto.createButton || SceneClass.prototype.createButton,
+                createContainerButton: BaseSceneProto.createContainerButton || SceneClass.prototype.createContainerButton,
+                createCardContainer: BaseSceneProto.createCardContainer || SceneClass.prototype.createCardContainer,
+                showNotification: BaseSceneProto.showNotification || SceneClass.prototype.showNotification
               }
               
               // メソッドをthisにバインド
