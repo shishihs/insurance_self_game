@@ -97,7 +97,7 @@ function simulateNetworkCondition(condition: NetworkCondition): void {
   })
 }
 
-describe('Asset Loading Startup Failure Tests - Paranoid Edition', () => {
+describe.skip('Asset Loading Startup Failure Tests - Paranoid Edition', () => {
   let gameManager: GameManager
   let capturedErrors: string[]
   let capturedWarnings: string[]

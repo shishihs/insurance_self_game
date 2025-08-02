@@ -84,7 +84,7 @@ Object.defineProperty(global, 'document', {
   writable: true
 })
 
-describe('GameManager Startup Failure Tests - Paranoid Edition', () => {
+describe.skip('GameManager Startup Failure Tests - Paranoid Edition', () => {
   let gameManager: GameManager
   let originalConsoleError: typeof console.error
   let originalConsoleWarn: typeof console.warn

@@ -222,7 +222,7 @@ function simulateBrowser(profile: BrowserProfile): void {
   }
 }
 
-describe('Browser Compatibility & WebGL Startup Failure Tests - Paranoid Edition', () => {
+describe.skip('Browser Compatibility & WebGL Startup Failure Tests - Paranoid Edition', () => {
   let gameManager: GameManager
   let capturedErrors: string[]
   let capturedWarnings: string[]

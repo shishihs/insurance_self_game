@@ -127,20 +127,51 @@ Object.defineProperty(window, 'innerHeight', { value: mockWindow.innerHeight, wr
 Object.defineProperty(navigator, 'vibrate', { value: mockWindow.navigator.vibrate, writable: true })
 
 // GAME_CONSTANTSモック
-vi.mock('../config/gameConfig', () => ({
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+vi.mock('@/game/config/gameConfig', () => ({
   GAME_CONSTANTS: {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     CARD_WIDTH: 120,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     CARD_HEIGHT: 180,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     CHALLENGE_Y_POSITION: 200,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     DISCARD_X_POSITION: 1180,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    DISCARD_Y_POSITION: 550
-  }
+    DISCARD_Y_POSITION: 550,
+    DRAG_DROP: {
+      SNAP_DISTANCE: 100,
+      DRAG_ALPHA: 0.8,
+      DRAG_SCALE: 1.15,
+      DROP_ZONE_SCALE: 1.2,
+      SNAP_DURATION: 200,
+      BOUNCE_DURATION: 400,
+      VIBRATION_DURATION: 150,
+      MOBILE_TOUCH_OFFSET: 60,
+      GLOW_PULSE_DURATION: 1000
+    },
+    COLORS: {
+      DROP_ZONE_VALID: 0x51CF66,
+      DROP_ZONE_INVALID: 0xFF6B6B,
+      DROP_ZONE_HOVER: 0xFFD43B,
+      DRAG_SHADOW: 0x000000,
+      MAGNETIC_GLOW: 0x00FFFF
+    }
+  },
+  createGameConfig: vi.fn().mockResolvedValue({
+    type: 1, // Phaser.AUTO
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    backgroundColor: '#1a1a2e',
+    scene: [],
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: { y: 0 },
+        debug: false
+      }
+    },
+    scale: {
+      mode: 1, // Phaser.Scale.FIT
+      autoCenter: 1 // Phaser.Scale.CENTER_BOTH
+    }
+  })
 }))
 
 describe('DropZoneIntegration', () => {
