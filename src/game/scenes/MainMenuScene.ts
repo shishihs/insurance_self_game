@@ -10,6 +10,16 @@ export class MainMenuScene extends BaseScene {
 
   protected initialize(): void {
     try {
+      // デバッグ：利用可能なメソッドを確認
+      console.log('MainMenuScene - Available methods:', {
+        createButton: typeof this.createButton,
+        createContainerButton: typeof this.createContainerButton,
+        fadeIn: typeof this.fadeIn,
+        fadeOut: typeof this.fadeOut,
+        add: typeof this.add,
+        cameras: typeof this.cameras
+      })
+      
       // 必要なプロパティの確認
       if (!this.add || !this.cameras || !this.centerX || !this.centerY) {
         console.error('MainMenuScene: Required properties not initialized')
@@ -104,13 +114,23 @@ export class MainMenuScene extends BaseScene {
     // createButtonメソッドが存在しない場合のフォールバック
     if (typeof this.createButton !== 'function') {
       console.error('createButton method not available')
-      // シンプルなボタンを直接作成
-      this.createSimpleButton(
+      // テキストボタンを直接作成
+      const startButton = this.add.text(
         this.centerX,
         buttonY,
         'ゲームを始める',
-        () => { this.startGame(); }
+        {
+          fontFamily: 'Arial',
+          fontSize: '24px',
+          color: '#ffffff',
+          backgroundColor: '#4C6EF5',
+          padding: { x: 20, y: 10 }
+        }
       )
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      
+      startButton.on('pointerup', () => { this.startGame(); })
       return
     }
 
