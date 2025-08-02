@@ -120,7 +120,7 @@ export interface PerformanceConfig {
 export class GamePerformanceAnalyzer {
   private metrics: PerformanceMetrics[]
   private config: PerformanceConfig
-  private samplingTimer: ReturnType<typeof setTimeout>Timeout | null = null
+  private samplingTimer: ReturnType<typeof setTimeout> | null = null
   private gameStartTime: number = 0
   private initialMemory: number = 0
   private gcStats: { count: number; totalTime: number } = { count: 0, totalTime: 0 }

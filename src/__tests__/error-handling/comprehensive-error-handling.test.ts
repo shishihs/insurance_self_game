@@ -8,8 +8,8 @@ import { Game } from '../../domain/entities/Game'
 import { Card } from '../../domain/entities/Card'
 import { Challenge } from '../../domain/aggregates/challenge/Challenge'
 import { Insurance } from '../../domain/aggregates/insurance/Insurance'
-import { GamePhase } from '../../domain/valueObjects/GamePhase'
-import { CardType } from '../../domain/valueObjects/CardType'
+import { GamePhase } from '../../domain/types/game.types'
+import { CardType } from '../../domain/types/game.types'
 
 class ErrorConditionGenerator {
   static createInvalidCard(): Card {
