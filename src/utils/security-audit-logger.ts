@@ -540,21 +540,29 @@ export class SecurityAuditLogger {
       // 同期的にフラッシュ（制限あり）
       if (this.eventQueue.length > 0) {
         try {
-          // 緊急時のためのsendBeacon API使用（利用可能な場合）
-          if (navigator.sendBeacon && typeof window !== 'undefined' && window.location.origin.includes('github.io')) {
-            // GitHub Pages環境では独自APIエンドポイントがないため、
-            // ローカルストレージへの保存のみ実行
-            this.flushQueue()
-          } else if (navigator.sendBeacon && !window.location.origin.includes('github.io')) {
-            // 本格的なAPIサーバーがある環境でのみBeaconを使用
-            const data = JSON.stringify(this.eventQueue)
-            navigator.sendBeacon('/api/security-events', data)
-          } else {
-            // フォールバック: 同期XHR（非推奨だが緊急時）
-            this.flushQueue()
-          }
+          // GitHub Pages環境では同期的にローカルストレージに保存
+          // beforeunloadイベント内ではawaitが使えないため同期処理
+          const existingEvents = JSON.parse(localStorage.getItem('security_audit_log') || '[]')
+          const allEvents = [...existingEvents, ...this.eventQueue]
+          const trimmedEvents = allEvents.slice(-this.maxEventsInStorage)
+          
+          localStorage.setItem('security_audit_log', JSON.stringify(trimmedEvents))
+          console.log('📝 ページアンロード時のセキュリティログを保存しました')
         } catch (error) {
           console.warn('ページアンロード時のログフラッシュに失敗:', error)
+          // 緊急時のフォールバック: より単純な保存
+          try {
+            const data = this.eventQueue.map(e => ({
+              id: e.id,
+              timestamp: e.timestamp,
+              eventType: e.eventType,
+              severity: e.severity,
+              message: e.message
+            }))
+            localStorage.setItem('security_audit_emergency', JSON.stringify(data))
+          } catch (emergencyError) {
+            console.error('緊急時のログ保存も失敗:', emergencyError)
+          }
         }
       }
     })

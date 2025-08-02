@@ -430,12 +430,25 @@
         </div>
       </div>
     </div>
+
+    <!-- トースト通知 -->
+    <div v-if="showToast" class="toast-notification" :class="`toast-${toastType}`">
+      <div class="toast-icon">
+        {{ toastType === 'success' ? '✅' : '❌' }}
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">{{ toastTitle }}</div>
+        <div class="toast-message">{{ toastMessage }}</div>
+      </div>
+      <button @click="showToast = false" class="toast-close">×</button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { FeedbackManagementService } from '../../domain/services/FeedbackManagementService'
+import { githubIssues, type BugReportData } from '../../utils/github-issues'
 
 // Props & Emits
 interface Props {
@@ -740,25 +753,42 @@ const submitBugReport = async () => {
   try {
     // システム情報を収集
     const systemInfo = {
-      userAgent: navigator.userAgent,
+      browserName: getBrowserName(),
+      browserVersion: navigator.userAgent,
+      os: navigator.platform,
       screenResolution: `${screen.width}x${screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       gameVersion: '0.2.7',
       timestamp: new Date(),
-      gameState: props.gameState
+      gameState: props.gameState ? 
+        `${props.gameState.stage} - Turn ${props.gameState.turn} - Vitality ${props.gameState.vitality}` :
+        'Unknown'
     }
 
-    // 送信者情報
-    const submitter = {
-      name: provideContact.value ? formData.contactName || undefined : undefined,
-      email: provideContact.value ? formData.contactEmail || undefined : undefined,
-      isAnonymous: !provideContact.value,
-      userAgent: navigator.userAgent,
-      sessionId: generateSessionId()
+    // GitHub Issues用データを準備
+    const bugReportForGitHub: BugReportData = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      severity: formData.severity as 'low' | 'medium' | 'high' | 'critical',
+      category: selectedCategory.value?.title || 'その他',
+      stepsToReproduce: formData.stepsToReproduce,
+      expectedBehavior: formData.expectedBehavior || undefined,
+      actualBehavior: formData.actualBehavior || undefined,
+      reproductionRate: getReproductionRateLabel(formData.reproductionRate),
+      errorMessage: formData.errorMessage || undefined,
+      systemInfo: includeSystemInfo.value ? systemInfo : undefined,
+      contactInfo: provideContact.value ? {
+        name: formData.contactName || undefined,
+        email: formData.contactEmail || undefined
+      } : undefined,
+      screenshots: screenshots.value.map(s => s.data)
     }
 
-    // バグレポートデータ
-    const bugReportData = {
+    // GitHub Issuesに送信を試行
+    const githubResult = await githubIssues.createBugReport(bugReportForGitHub)
+    
+    // ローカルにも保存（バックアップ用）
+    const localData = {
       stepsToReproduce: formData.stepsToReproduce.split('\n').filter(step => step.trim()),
       expectedBehavior: formData.expectedBehavior,
       actualBehavior: formData.actualBehavior,
@@ -768,7 +798,14 @@ const submitBugReport = async () => {
       screenshot: screenshots.value.length > 0 ? screenshots.value[0].data : undefined
     }
 
-    // タグを生成
+    const submitter = {
+      name: provideContact.value ? formData.contactName || undefined : undefined,
+      email: provideContact.value ? formData.contactEmail || undefined : undefined,
+      isAnonymous: !provideContact.value,
+      userAgent: navigator.userAgent,
+      sessionId: generateSessionId()
+    }
+
     const tags = [
       'bug-report',
       selectedCategory.value?.id || 'uncategorized',
@@ -777,7 +814,7 @@ const submitBugReport = async () => {
       screenshots.value.length > 0 ? 'with-screenshot' : 'no-screenshot'
     ]
 
-    // フィードバックを作成
+    // ローカルストレージにバックアップ保存
     const feedback = feedbackService.createBugReport({
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -789,17 +826,38 @@ const submitBugReport = async () => {
         gameVersion: '0.2.7',
         timestamp: new Date()
       },
-      bugReportData,
+      bugReportData: localData,
       tags
     })
 
     submittedReportId.value = feedback.id
+    
+    // GitHub Issuesの結果に基づいて成功メッセージを調整
+    if (githubResult.success) {
+      console.log('✅ バグレポートをGitHub Issuesに送信しました:', githubResult.issueUrl)
+      showSuccessToast('GitHub Issuesに送信されました', 'バグレポートが正常に送信されました')
+    } else if (githubResult.fallbackMethod === 'email') {
+      // メール送信のフォールバック
+      const subject = `[バグレポート] ${formData.title}`
+      const emailUrl = githubIssues.createEmailUrl(subject, githubResult.issueBody || '', 'feedback@example.com')
+      window.open(emailUrl, '_self')
+      showSuccessToast('メーラーを起動しました', 'バグレポートをメールで送信してください')
+    } else if (githubResult.fallbackMethod === 'copy') {
+      // クリップボードコピーのフォールバック
+      const copied = await githubIssues.copyToClipboard(githubResult.issueBody || '')
+      if (copied) {
+        showSuccessToast('クリップボードにコピーしました', 'GitHub Issuesに手動で貼り付けてください')
+      } else {
+        showErrorToast('送信に失敗しました', 'ローカルにのみ保存されました')
+      }
+    }
+    
     showSuccessMessage.value = true
     emit('bugReported', feedback.id)
 
   } catch (error) {
     console.error('Failed to submit bug report:', error)
-    alert('バグレポートの送信に失敗しました。しばらく後にもう一度お試しください。')
+    showErrorToast('バグレポートの送信に失敗しました', 'しばらく後にもう一度お試しください')
   } finally {
     isSubmitting.value = false
   }
@@ -839,6 +897,42 @@ const closeReporter = () => {
 
 const generateSessionId = (): string => {
   return `bugreport_${  Date.now()  }_${  Math.random().toString(36).substr(2, 9)}`
+}
+
+const getReproductionRateLabel = (rate: string): string => {
+  const labels: Record<string, string> = {
+    always: '毎回発生 (100%)',
+    often: '頻繁に発生 (50%以上)',
+    sometimes: '時々発生 (50%未満)',
+    rarely: '稀に発生 (一度のみまたは非常に稀)'
+  }
+  return labels[rate] || rate
+}
+
+// トースト通知用の状態
+const showToast = ref(false)
+const toastType = ref<'success' | 'error'>('success')  
+const toastTitle = ref('')
+const toastMessage = ref('')
+
+const showSuccessToast = (title: string, message: string) => {
+  toastType.value = 'success'
+  toastTitle.value = title
+  toastMessage.value = message
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 5000)
+}
+
+const showErrorToast = (title: string, message: string) => {
+  toastType.value = 'error'
+  toastTitle.value = title
+  toastMessage.value = message
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 7000)
 }
 
 // Lifecycle
@@ -1647,5 +1741,81 @@ onMounted(() => {
 .form-select:invalid:focus {
   border-color: #EF4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* =================================
+   トースト通知
+   ================================= */
+
+.toast-notification {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);  
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border-left: 4px solid;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast-success {
+  border-left-color: #10B981;
+}
+
+.toast-error {
+  border-left-color: #EF4444;
+}
+
+.toast-icon {
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: var(--space-xs);
+}
+
+.toast-message {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: var(--space-xs);
+  font-size: var(--text-lg);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  color: rgba(255, 255, 255, 0.9);
 }
 </style>

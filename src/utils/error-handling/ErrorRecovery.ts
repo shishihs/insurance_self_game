@@ -614,11 +614,14 @@ export class ErrorRecovery {
 
   /**
    * ネットワーク健全性チェック
+   * GitHub Pages環境ではAPIエンドポイントが利用できないため、
+   * より軽量なファイルでの接続確認に変更
    */
   private async checkNetworkHealth(): Promise<boolean> {
     try {
-      const response = await fetch('/api/health', { 
-        method: 'GET',
+      // GitHub Pages環境では favicon.ico で接続確認
+      const response = await fetch('/favicon.ico', { 
+        method: 'HEAD',
         cache: 'no-cache',
         signal: AbortSignal.timeout(5000)
       })
