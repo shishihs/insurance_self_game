@@ -13,6 +13,7 @@ import i18n from './i18n'
 
 // セキュリティシステムの初期化（最適化版を使用）
 import { initializeSecuritySystemOptimized as initializeSecuritySystem } from '@/utils/security-init-optimized'
+import '@/utils/security/frame-detector' // iframe検出を初期化
 
 // エラーハンドリングシステムの初期化
 import { ErrorHandlingPlugin, errorHandlingSystem } from '@/utils/error-handling'
