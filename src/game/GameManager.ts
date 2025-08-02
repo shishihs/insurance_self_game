@@ -59,11 +59,42 @@ export class GameManager {
         // モバイルでもFITモードを使用（設定変更なし）
       }
       
-      // シーンを追加（遅延読み込み可能）
+      // Phaserのシーンクラスを作成（動的継承）
+      const createPhaserScene = (SceneClass: any, key: string) => {
+        return class extends this.Phaser.Scene {
+          constructor() {
+            super({ key })
+          }
+          
+          // 元のシーンクラスのメソッドをコピー
+          preload() {
+            if (SceneClass.prototype.preload) {
+              SceneClass.prototype.preload.call(this)
+            }
+          }
+          
+          create() {
+            if (SceneClass.prototype.create) {
+              SceneClass.prototype.create.call(this)
+            }
+            if (SceneClass.prototype.initialize) {
+              SceneClass.prototype.initialize.call(this)
+            }
+          }
+          
+          update(time: number, delta: number) {
+            if (SceneClass.prototype.update) {
+              SceneClass.prototype.update.call(this, time, delta)
+            }
+          }
+        }
+      }
+      
+      // シーンを追加（Phaserの正しいシーンクラスとして）
       config.scene = [
-        PreloadScene,
-        MainMenuScene,
-        GameScene
+        createPhaserScene(PreloadScene, 'PreloadScene'),
+        createPhaserScene(MainMenuScene, 'MainMenuScene'),
+        createPhaserScene(GameScene, 'GameScene')
       ]
 
       // レンダラーを別スレッドで初期化（フレームを分割）
@@ -77,9 +108,24 @@ export class GameManager {
       
       // 初期化直後に一度リサイズを実行（サイズ問題の対策）
       if (this.game && this.game.scale) {
+        // サイズが0の場合は強制的に最小サイズを設定
+        const container = typeof parent === 'string' ? document.getElementById(parent) : parent
+        if (container instanceof HTMLElement) {
+          const rect = container.getBoundingClientRect()
+          if (rect.width === 0 || rect.height === 0) {
+            console.warn('⚠️ Container has zero size, setting minimum dimensions')
+            container.style.width = '800px'
+            container.style.height = '600px'
+          }
+        }
+        
         this.game.scale.refresh()
         // 強制的にリサイズイベントを発火
         window.dispatchEvent(new Event('resize'))
+        
+        // 追加の確認
+        const actualSize = this.game.scale.gameSize
+        console.log(`🎮 Game size after initialization: ${actualSize.width}x${actualSize.height}`)
       }
       
       // タッチジェスチャーマネージャーを初期化

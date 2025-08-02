@@ -569,6 +569,11 @@ export function setupDevToolsDetection(): void {
     }
     
     setInterval(() => {
+      // 開発環境では開発者ツール検出を無効化
+      if (import.meta.env.DEV) {
+        return
+      }
+      
       const now = Date.now()
       
       // 選択的に検出手法を実行（パフォーマンスへの影響を減らす）
@@ -616,6 +621,11 @@ export function setupDevToolsDetection(): void {
  * 開発者ツール検出時の処理
  */
 function handleDevToolsDetection(): void {
+  // 開発環境では警告を表示しない
+  if (import.meta.env.DEV) {
+    return
+  }
+  
   // コンソールに警告メッセージを表示
   console.warn(
     '%c🚨 セキュリティ警告',

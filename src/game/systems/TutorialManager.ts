@@ -9,26 +9,28 @@ import type {
   TutorialStep
 } from '@/domain/types/tutorial.types'
 import { TUTORIAL_STORAGE_KEYS } from '@/domain/types/tutorial.types'
+import { loadPhaser } from '../loaders/PhaserLoader'
 
 /**
  * チュートリアルシステムの中核管理クラス
  * ステップ進行、ハイライト、進捗保存を統括管理
  */
-export class TutorialManager extends Phaser.Events.EventEmitter {
+export class TutorialManager {
+  private phaserEventEmitter: any = null
   private currentConfig: TutorialConfig | null = null
   private progress: TutorialProgress | null = null
   private state: TutorialState = 'idle'
   private readonly options: TutorialManagerOptions
-  private readonly scene: Phaser.Scene
-  private highlightGraphics: Phaser.GameObjects.Graphics | null = null
-  private overlayGraphics: Phaser.GameObjects.Graphics | null = null
-  private tutorialUI: Phaser.GameObjects.Container | null = null
+  private readonly scene: any
+  private highlightGraphics: any = null
+  private overlayGraphics: any = null
+  private tutorialUI: any = null
   private stepChangeTimeout: NodeJS.Timeout | null = null
-  private highlightTween: Phaser.Tweens.Tween | null = null
+  private highlightTween: any = null
 
-  constructor(scene: Phaser.Scene, options: TutorialManagerOptions = {}) {
-    super()
+  constructor(scene: any, options: TutorialManagerOptions = {}) {
     this.scene = scene
+    this.initializePhaserEventEmitter()
     this.options = {
       autoSaveProgress: true,
       debugMode: false,
@@ -52,6 +54,62 @@ export class TutorialManager extends Phaser.Events.EventEmitter {
     }
 
     this.setupEventListeners()
+  }
+
+  /**
+   * Phaserイベントエミッターの初期化
+   */
+  private async initializePhaserEventEmitter(): Promise<void> {
+    try {
+      const Phaser = await loadPhaser()
+      this.phaserEventEmitter = new Phaser.Events.EventEmitter()
+    } catch (error) {
+      console.warn('[TutorialManager] Phaser EventEmitter initialization failed:', error)
+      // フォールバック: 単純なEventEmitter互換オブジェクト
+      this.phaserEventEmitter = {
+        on: () => {},
+        off: () => {},
+        emit: () => {},
+        once: () => {},
+        removeAllListeners: () => {}
+      }
+    }
+  }
+
+  // EventEmitterのメソッドを委譲
+  on(event: string, listener: Function): this {
+    if (this.phaserEventEmitter) {
+      this.phaserEventEmitter.on(event, listener)
+    }
+    return this
+  }
+
+  off(event: string, listener?: Function): this {
+    if (this.phaserEventEmitter) {
+      this.phaserEventEmitter.off(event, listener)
+    }
+    return this
+  }
+
+  emit(event: string, ...args: any[]): boolean {
+    if (this.phaserEventEmitter) {
+      return this.phaserEventEmitter.emit(event, ...args)
+    }
+    return false
+  }
+
+  once(event: string, listener: Function): this {
+    if (this.phaserEventEmitter) {
+      this.phaserEventEmitter.once(event, listener)
+    }
+    return this
+  }
+
+  removeAllListeners(event?: string): this {
+    if (this.phaserEventEmitter) {
+      this.phaserEventEmitter.removeAllListeners(event)
+    }
+    return this
   }
 
   /**

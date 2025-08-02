@@ -678,6 +678,11 @@ if (typeof window !== 'undefined') {
   const MAX_CONSOLE_ERRORS_PER_MINUTE = 10
   
     console.error = function(...args) {
+      // 開発環境ではレート制限を緩和
+      if (import.meta.env.DEV) {
+        return originalConsoleError.apply(this, args)
+      }
+      
       // Reset counter every minute
       const now = Date.now()
       if (now - lastResetTime > 60000) {

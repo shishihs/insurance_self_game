@@ -133,8 +133,18 @@ export class GlobalErrorHandler {
 
     // window.onerrorハンドラー
     window.onerror = (message, source, lineno, colno, error) => {
+      const messageStr = typeof message === 'string' ? message : 'Unknown error'
+      
+      // Phaserの既知の問題をフィルタリング
+      if (messageStr.includes('setMaxTextures is not a function')) {
+        if (import.meta.env.DEV) {
+          console.warn('[ErrorHandler] Phaserの既知の問題 (setMaxTextures) - 無視します:', messageStr)
+        }
+        return true // エラーを無視
+      }
+      
       this.handleError({
-        message: typeof message === 'string' ? message : 'Unknown error',
+        message: messageStr,
         stack: error?.stack,
         url: source,
         line: lineno,
@@ -149,8 +159,19 @@ export class GlobalErrorHandler {
 
     // unhandledrejectionハンドラー
     window.addEventListener('unhandledrejection', (event) => {
+      const reason = String(event.reason)
+      
+      // Phaserの既知の問題をフィルタリング
+      if (reason.includes('setMaxTextures is not a function')) {
+        if (import.meta.env.DEV) {
+          console.warn('[ErrorHandler] Phaserの既知の問題 (Promise rejection) - 無視します:', reason)
+        }
+        event.preventDefault()
+        return
+      }
+      
       this.handleError({
-        message: `Unhandled Promise rejection: ${event.reason}`,
+        message: `Unhandled Promise rejection: ${reason}`,
         stack: event.reason?.stack,
         timestamp: Date.now(),
         userAgent: navigator.userAgent,
