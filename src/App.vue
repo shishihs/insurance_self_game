@@ -7,7 +7,7 @@ import accessibilitySettings from './components/accessibility/AccessibilitySetti
 import visualIndicators from './components/accessibility/VisualIndicators.vue'
 import errorBoundary from './components/error/ErrorBoundary.vue'
 import errorNotification from './components/error/ErrorNotification.vue'
-import mobileErrorHandler from './components/error/MobileErrorHandler.vue'
+// import mobileErrorHandler from './components/error/MobileErrorHandler.vue' // 動的インポートに変更
 // import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue' // 動的インポートに変更
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
@@ -121,7 +121,7 @@ const handleAccessibilitySettingsChanged = (settings: Record<string, boolean | s
   console.log('アクセシビリティ設定が更新されました:', settings)
   
   // スクリーンリーダーに通知
-  if (Boolean(settings.screenReaderEnabled)) {
+  if (settings.screenReaderEnabled) {
     screenReaderManager?.announce('スクリーンリーダー対応が有効になりました', { priority: 'assertive' })
   }
 }
