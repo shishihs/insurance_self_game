@@ -182,6 +182,7 @@ insurance_game/
 - **[開発原則](./docs/development/PRINCIPLES.md)** - プロジェクトの核となる開発思想
 - **[パッケージマネージャー選択ガイド](./docs/development/PACKAGE_MANAGER_CHOICE.md)** - なぜnpmを使用するのか
 - **[GUI/CUI使い分けガイド](./docs/development/GUI_AND_CUI_USAGE_GUIDE.md)** - 本番用GUIと開発用CUIの使い分け
+- **[Issue完了ガイドライン](./docs/development/ISSUE_COMPLETION_GUIDE.md)** - Issue対応後の必須手順
 - **[API ドキュメント](./docs/development/API_DOCUMENTATION.md)** - システムAPI詳細仕様書
 - [開発ガイド](./docs/development/DEVELOPMENT.md) - セットアップと開発手順
 - [技術仕様書](./docs/design/TECH_SPEC.md) - アーキテクチャと技術スタック

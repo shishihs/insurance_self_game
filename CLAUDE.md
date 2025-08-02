@@ -57,6 +57,7 @@ npm run lint
 - **[🔄 ゲーム改善プロセス](./docs/planning/GAME_IMPROVEMENT_PROCESS.md)** - **テストプレイ時は必ず参照**
 - **[🎮 GUI/CUI使い分けガイド](./docs/development/GUI_AND_CUI_USAGE_GUIDE.md)** - **本番用GUIと開発用CUIの使い分け**
 - **[📝 意思決定記録](./docs/planning/DECISION_RECORD.md)** - **実装しない機能とその理由**
+- **[✅ Issue完了ガイドライン](./docs/development/ISSUE_COMPLETION_GUIDE.md)** - **Issue対応後の必須手順**
 - [技術仕様書](./docs/design/TECH_SPEC.md) - 使用技術とアーキテクチャ
 - [ゲームデザイン](./docs/design/GAME_DESIGN.md) - ゲームルールと拡張計画
 - [開発ガイド](./docs/development/DEVELOPMENT.md) - Claude Codeでの開発手順

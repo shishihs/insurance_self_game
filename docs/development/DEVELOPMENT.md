@@ -586,6 +586,16 @@ ls -lh dist/assets/
 - Lighthouseスコア: 90以上
 - TypeScriptエラー: 0
 
+## 📚 関連ドキュメント
+
+- [開発原則](./PRINCIPLES.md) - プロジェクトの核となる開発思想
+- [技術仕様書](../design/TECH_SPEC.md) - アーキテクチャと技術スタック
+- [ゲームデザイン](../design/GAME_DESIGN.md) - ゲームルールと仕様
+- [MCP設定ガイド](./MCP_SETUP.md) - Model Context Protocol設定
+- [Issue完了ガイドライン](./ISSUE_COMPLETION_GUIDE.md) - Issue対応の完了手順
+- [パッケージマネージャー選択](./PACKAGE_MANAGER_CHOICE.md) - npmを使用する理由
+- [GUI/CUI使い分けガイド](./GUI_AND_CUI_USAGE_GUIDE.md) - 本番用GUIと開発用CUI
+
 ---
 
 **Tips**: Claude Codeは賢いので、具体的な実装内容を伝えれば適切にファイルを作成・編集してくれます。「○○を実装して」と伝えるだけでOK！
