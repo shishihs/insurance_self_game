@@ -570,7 +570,7 @@ export function setupDevToolsDetection(): void {
     
     setInterval(() => {
       // 開発環境では開発者ツール検出を無効化
-      if (import.meta.env.DEV) {
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
         return
       }
       
@@ -622,7 +622,7 @@ export function setupDevToolsDetection(): void {
  */
 function handleDevToolsDetection(): void {
   // 開発環境では警告を表示しない
-  if (import.meta.env.DEV) {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
     return
   }
   

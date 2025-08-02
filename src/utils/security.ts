@@ -108,6 +108,42 @@ export class RateLimiter {
   clear(): void {
     this.attempts.clear()
   }
+
+  /**
+   * 残り試行回数を取得
+   */
+  getRemainingAttempts(key: string, maxAttempts: number, windowMs: number): number {
+    const now = Date.now()
+    const userAttempts = this.attempts.get(key) || []
+    const validAttempts = userAttempts.filter(time => now - time < windowMs)
+    return Math.max(0, maxAttempts - validAttempts.length)
+  }
+
+  /**
+   * 次回試行可能時刻を取得
+   */
+  getNextAttemptTime(key: string, windowMs: number): number {
+    const userAttempts = this.attempts.get(key) || []
+    if (userAttempts.length === 0) return Date.now()
+    const oldestAttempt = Math.min(...userAttempts)
+    return oldestAttempt + windowMs
+  }
+
+  /**
+   * 古いエントリをクリーンアップ
+   */
+  cleanup(): void {
+    const now = Date.now()
+    for (const [key, attempts] of this.attempts.entries()) {
+      // 24時間以上古いエントリは削除
+      const validAttempts = attempts.filter(time => now - time < 24 * 60 * 60 * 1000)
+      if (validAttempts.length === 0) {
+        this.attempts.delete(key)
+      } else {
+        this.attempts.set(key, validAttempts)
+      }
+    }
+  }
 }
 
 /**

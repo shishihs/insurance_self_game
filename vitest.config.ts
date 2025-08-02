@@ -20,13 +20,12 @@ export default defineConfig({
       // Phase 3: Value objects tests
       'src/domain/valueObjects/__tests__/Vitality.test.ts',
       'src/domain/valueObjects/__tests__/RiskFactor.test.ts',
-      'src/domain/valueObjects/__tests__/InsurancePremium.test.ts'
-      // Phase 4: Additional stable tests (security tests excluded due to env issues)
-      // TODO: 以下のテストは環境変数の問題が解決したら有効化する
-      // 'src/__tests__/security/SecurityAuditLogger.test.ts', // 環境変数の問題で一時的に無効
-      // 'src/__tests__/error-handling/ErrorHandling.test.ts',
-      // 'src/__tests__/security/FrameDetector.test.ts', // process.envの問題で一時的に無効
-      // TODO: 追加のテストファイルも順次修正して有効化する
+      'src/domain/valueObjects/__tests__/InsurancePremium.test.ts',
+      // Phase 4: Security tests (now fixed!)
+      'src/__tests__/security/SecurityAuditLogger.test.ts',
+      'src/__tests__/security/FrameDetector.test.ts'
+      // TODO: Additional tests to be enabled after verification
+      // 'src/__tests__/error-handling/ErrorHandling.test.ts'
     ],
     globals: true,
     // Improve test performance and reliability

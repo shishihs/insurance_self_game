@@ -541,7 +541,12 @@ export class SecurityAuditLogger {
       if (this.eventQueue.length > 0) {
         try {
           // 緊急時のためのsendBeacon API使用（利用可能な場合）
-          if (navigator.sendBeacon) {
+          if (navigator.sendBeacon && typeof window !== 'undefined' && window.location.origin.includes('github.io')) {
+            // GitHub Pages環境では独自APIエンドポイントがないため、
+            // ローカルストレージへの保存のみ実行
+            this.flushQueue()
+          } else if (navigator.sendBeacon && !window.location.origin.includes('github.io')) {
+            // 本格的なAPIサーバーがある環境でのみBeaconを使用
             const data = JSON.stringify(this.eventQueue)
             navigator.sendBeacon('/api/security-events', data)
           } else {
@@ -696,7 +701,7 @@ if (typeof window !== 'undefined') {
   
     console.error = function(...args) {
       // 開発環境ではレート制限を緩和
-      if (import.meta.env.DEV) {
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
         originalConsoleError.apply(this, args); return;
       }
       

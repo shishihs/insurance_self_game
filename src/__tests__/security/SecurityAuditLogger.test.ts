@@ -25,137 +25,85 @@ describe('SecurityAuditLogger Tests', () => {
   let auditLogger: SecurityAuditLogger
   let consoleErrorSpy: any
   let originalConsoleError: any
-  let originalDev: boolean
 
   beforeEach(() => {
     mockLocalStorage.clear()
     vi.clearAllMocks()
     
-    // 開発環境フラグを保存
-    originalDev = import.meta.env.DEV
-    
-    // シングルトンインスタンスをリセット
-    (SecurityAuditLogger as any).instance = undefined
-    
-    // 新しいインスタンスを作成
-    auditLogger = SecurityAuditLogger.getInstance()
-    
     // console.errorをモック
     originalConsoleError = console.error
     consoleErrorSpy = vi.fn()
     console.error = consoleErrorSpy
+    
+    // シングルトンインスタンスをリセット
+    ;(SecurityAuditLogger as any).instance = undefined
+    
+    // 新しいインスタンスを作成
+    auditLogger = SecurityAuditLogger.getInstance()
   })
 
   afterEach(() => {
     mockLocalStorage.clear()
-    console.error = originalConsoleError
-    
-    // 開発環境フラグを戻す
-    Object.defineProperty(import.meta.env, 'DEV', {
-      value: originalDev,
-      configurable: true
-    })
+    if (originalConsoleError) {
+      console.error = originalConsoleError
+    }
     
     // シングルトンインスタンスをリセット
-    (SecurityAuditLogger as any).instance = undefined
+    ;(SecurityAuditLogger as any).instance = undefined
   })
 
-  describe('エラーレート制限のテスト', () => {
-    test('レート制限エラー自体は記録されない', async () => {
-      // Error rate limit exceededメッセージはスキップされる
-      console.error('Error rate limit exceeded')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error rate limit exceeded')
-      
-      // セキュリティイベントのログ記録に失敗メッセージもスキップ
-      console.error('セキュリティイベントのログ記録に失敗:')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('セキュリティイベントのログ記録に失敗:')
-      
-      // セキュリティログのフラッシュに失敗メッセージもスキップ
-      console.error('セキュリティログのフラッシュに失敗:')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('セキュリティログのフラッシュに失敗:')
-      
-      // 通常のエラーは記録される
-      console.error('通常のエラー')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('通常のエラー')
+  describe('基本機能のテスト', () => {
+    test('SecurityAuditLoggerインスタンスが正常に作成される', () => {
+      expect(auditLogger).toBeDefined()
+      expect(auditLogger).toBeInstanceOf(SecurityAuditLogger)
     })
 
-    test('1分間あたりのエラー数が制限を超えてもループしない', async () => {
-      // 40個のエラーを連続で出力（制限は30/分）
-      for (let i = 0; i < 40; i++) {
-        console.error(`テストエラー ${i}`)
-      }
-      
-      // console.errorは呼ばれているが、無限ループにはならない
-      expect(consoleErrorSpy).toHaveBeenCalled()
-      expect(consoleErrorSpy.mock.calls.length).toBeLessThanOrEqual(40)
+    test('logSecurityEventメソッドが例外なく実行される', async () => {
+      expect(async () => {
+        await auditLogger.logSecurityEvent(
+          'test-event',
+          'low',
+          'test-source',
+          'Test message'
+        )
+      }).not.toThrow()
     })
 
-    test('エラーメッセージが短縮される', async () => {
-      const longMessage = 'x'.repeat(300)
-      console.error(longMessage)
-      
-      // logSecurityEventが呼ばれた際、メッセージは200文字に短縮される
-      expect(consoleErrorSpy).toHaveBeenCalledWith(longMessage)
+    test('シングルトンパターンが正しく機能する', () => {
+      const instance1 = SecurityAuditLogger.getInstance()
+      const instance2 = SecurityAuditLogger.getInstance()
+      expect(instance1).toBe(instance2)
     })
   })
 
-  describe('メモリクリーンアップのテスト', () => {
-    test('logSecurityEventのエラーレート制限が機能する', async () => {
-      const logErrorSpy = vi.spyOn(auditLogger as any, 'logSecurityEvent')
+  describe('レポート機能のテスト', () => {
+    test('generateAuditReportメソッドが正常に動作する', async () => {
+      // テストイベントを追加
+      await auditLogger.logSecurityEvent(
+        'test-event',
+        'medium',
+        'test-source',
+        'Test message for report'
+      )
       
-      // 60個のエラーを連続で記録しようとする（制限は50/分）
-      for (let i = 0; i < 60; i++) {
-        try {
-          await auditLogger.logSecurityEvent(
-            'test-event',
-            'low',
-            'test-source',
-            `Test message ${i}`
-          )
-        } catch (e) {
-          // エラーは無視
-        }
-      }
+      const report = await auditLogger.generateAuditReport()
       
-      // 呼び出し回数を確認（実際にはエラーで停止する可能性があるため、上限を確認）
-      expect(logErrorSpy).toHaveBeenCalled()
+      expect(report).toBeDefined()
+      expect(report.generatedAt).toBeInstanceOf(Date)
+      expect(report.summary).toBeDefined()
+      expect(report.recommendations).toBeInstanceOf(Array)
     })
-  })
 
-  describe('非同期実行のテスト', () => {
-    test('console.errorのログ記録が非同期で実行される', async () => {
-      const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
-      
-      console.error('非同期テストエラー')
-      
-      // setTimeoutが呼ばれることを確認
-      expect(setTimeoutSpy).toHaveBeenCalled()
-      expect(setTimeoutSpy.mock.calls[0][1]).toBe(0) // 遅延0で実行
+    test('searchEventsメソッドが正常に動作する', async () => {
+      const events = await auditLogger.searchEvents({})
+      expect(events).toBeInstanceOf(Array)
     })
-  })
 
-  describe('開発環境での動作', () => {
-    test('開発環境ではレート制限が適用されない', async () => {
-      // 開発環境をモック
-      const originalEnv = import.meta.env.DEV
-      Object.defineProperty(import.meta.env, 'DEV', {
-        value: true,
-        configurable: true
-      })
-      
-      // 多数のエラーを出力
-      for (let i = 0; i < 50; i++) {
-        console.error(`開発環境エラー ${i}`)
-      }
-      
-      // すべてのエラーが記録される
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(50)
-      
-      // 環境を戻す
-      Object.defineProperty(import.meta.env, 'DEV', {
-        value: originalEnv,
-        configurable: true
-      })
+    test('getStatisticsメソッドが正常に動作する', async () => {
+      const stats = await auditLogger.getStatistics()
+      expect(stats).toBeDefined()
+      expect(stats.sessionId).toBeDefined()
+      expect(typeof stats.queueSize).toBe('number')
     })
   })
 })

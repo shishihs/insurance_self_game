@@ -40,7 +40,7 @@ export class FrameDetector {
       console.warn('[Security] サイトがiframe内で実行されています')
       
       // 開発環境では警告のみ
-      if (import.meta.env.DEV) {
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV) {
         console.warn('[Security] 開発環境のため、iframe実行を許可します')
         return
       }
@@ -124,7 +124,7 @@ export class FrameDetector {
     // 5秒ごとにチェック
     this.frameCheckInterval = window.setInterval(() => {
       this.detectFrame()
-      if (this.isInFrame && !import.meta.env.DEV) {
+      if (this.isInFrame && !(typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV)) {
         this.breakOutOfFrame()
       }
     }, 5000)
