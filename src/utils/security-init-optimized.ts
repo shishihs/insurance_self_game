@@ -12,7 +12,7 @@ import { integratedSecuritySystem } from './integrated-security-system'
 
 // パフォーマンス最適化のための設定
 const PERFORMANCE_CONFIG = {
-  enableDetailedChecks: process.env.NODE_ENV !== 'production',
+  enableDetailedChecks: !import.meta.env.PROD,
   lightCheckInterval: 5 * 60 * 1000, // 5分
   detailedCheckInterval: 15 * 60 * 1000, // 15分
   memoryWarningThreshold: 85, // 85%でワーニング
@@ -36,9 +36,9 @@ export async function initializeSecuritySystemOptimized(): Promise<void> {
       enableInputValidation: true,
       enableAuditLogging: true,
       enableRealTimeMonitoring: true,
-      securityLevel: process.env.NODE_ENV === 'production' ? 'high' : 'medium',
-      autoBlock: process.env.NODE_ENV === 'production',
-      alertThreshold: process.env.NODE_ENV === 'production' ? 10 : 50
+      securityLevel: import.meta.env.PROD ? 'high' : 'medium',
+      autoBlock: import.meta.env.PROD,
+      alertThreshold: import.meta.env.PROD ? 10 : 50
     })
 
     // レガシーサポート: 既存の個別初期化も実行
@@ -193,7 +193,7 @@ function setupOptimizedSecurityEventListeners(): void {
   document.addEventListener('visibilitychange', handleVisibilityChange)
 
   // 本番環境のみの監視
-  if (process.env.NODE_ENV === 'production') {
+  if (import.meta.env.PROD) {
     // 右クリック禁止（スロットル付き）
     const handleContextMenu = throttle(async (event: MouseEvent) => {
       event.preventDefault()
@@ -404,7 +404,7 @@ function setupFallbackSecurity(): void {
 }
 
 // 開発環境でのデバッグ支援
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).__SECURITY_DEBUG__ = {
     init: initializeSecuritySystemOptimized,
     integrated: {

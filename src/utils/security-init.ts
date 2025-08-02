@@ -511,7 +511,7 @@ export function debugSecuritySystem(): void {
 // 手動初期化が必要な場合は initializeSecuritySystem() を呼び出してください
 
 // 開発環境でのデバッグ支援
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).__SECURITY_DEBUG__ = {
     init: initializeSecuritySystem,
     status: getSecuritySystemStatus,

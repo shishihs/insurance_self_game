@@ -90,7 +90,15 @@ export class MainMenuScene extends BaseScene {
     ).setOrigin(0.5)
 
     // メニューボタン
-    this.createMenuButtons()
+    if (typeof this.createMenuButtons === 'function') {
+      this.createMenuButtons()
+    } else {
+      // createMenuButtonsが関数でない場合は直接実行
+      const createMenuButtonsFn = MainMenuScene.prototype.createMenuButtons
+      if (createMenuButtonsFn) {
+        createMenuButtonsFn.call(this)
+      }
+    }
 
     // バージョン情報
     this.add.text(
@@ -126,7 +134,7 @@ export class MainMenuScene extends BaseScene {
         this.add.text(
           10,
           50,
-          `Debug: createButton=${typeof this.createButton}\nfadeIn=${typeof this.fadeIn}`,
+          `Debug: createButton=${typeof this.createButton}\nfadeIn=${typeof this.fadeIn}\ncreateMenuButtons=${typeof this.createMenuButtons}`,
           {
             fontFamily: 'Arial',
             fontSize: '14px',

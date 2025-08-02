@@ -65,7 +65,7 @@ export class SecureErrorHandler {
 
   private constructor() {
     this.config = {
-      exposeStackTrace: process.env.NODE_ENV === 'development',
+      exposeStackTrace: import.meta.env.DEV,
       maxErrorMessageLength: 500,
       sensitiveDataPatterns: [],
       logIntegrityCheck: true,
