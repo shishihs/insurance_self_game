@@ -17,6 +17,10 @@ export default defineConfig({
       'src/domain/__tests__/Game.test.ts',
       'src/domain/__tests__/Card.test.ts',
       'src/domain/__tests__/Deck.test.ts',
+      // Phase 3: Value objects tests
+      'src/domain/valueObjects/__tests__/Vitality.test.ts',
+      'src/domain/valueObjects/__tests__/RiskFactor.test.ts',
+      'src/domain/valueObjects/__tests__/InsurancePremium.test.ts',
       // Add more working tests here as we fix them
     ],
     globals: true,

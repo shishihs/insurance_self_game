@@ -15,11 +15,11 @@ describe('InsurancePremium値オブジェクト', () => {
     })
 
     it('負の値では生成できない', () => {
-      expect(() => InsurancePremium.create(-1)).toThrow('Insurance premium cannot be negative')
+      expect(() => InsurancePremium.create(-1)).toThrow('InsurancePremium must be non-negative')
     })
 
     it('最大値を超える値では生成できない', () => {
-      expect(() => InsurancePremium.create(100)).toThrow('Insurance premium cannot exceed maximum')
+      expect(() => InsurancePremium.create(100)).toThrow('InsurancePremium cannot exceed maximum')
     })
   })
 
