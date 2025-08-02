@@ -412,7 +412,7 @@ function sanitizeAdvancedInput(input: string): string {
     // コマンドインジェクション対策
     .replace(/[;&|`$\\]/g, '')
     // 制御文字と特殊文字の除去
-    .replace(/[\u0001-\u001f\u007f-\u009f\ufeff]/g, '')
+    .replace(/[\u0002-\u001f\u007f-\u009f\ufeff]/g, '')
     .trim()
 }
 
