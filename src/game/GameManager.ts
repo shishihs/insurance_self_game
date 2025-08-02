@@ -105,10 +105,24 @@ export class GameManager {
               }
               
               // メソッドをthisにバインド
+              const bindingErrors = []
               Object.entries(baseSceneMethods).forEach(([methodName, method]) => {
                 if (typeof method === 'function') {
                   this[methodName] = method.bind(this)
+                } else {
+                  bindingErrors.push(`${methodName}: ${typeof method}`)
                 }
+              })
+              
+              if (bindingErrors.length > 0) {
+                console.error(`${key}: Method binding errors:`, bindingErrors)
+              }
+              
+              // バインディングの確認
+              console.log(`${key}: Methods bound:`, {
+                createButton: typeof this.createButton,
+                fadeIn: typeof this.fadeIn,
+                showNotification: typeof this.showNotification
               })
               
               // 各シーンの初期化を実行

@@ -11,14 +11,32 @@ export class MainMenuScene extends BaseScene {
   protected initialize(): void {
     try {
       // デバッグ：利用可能なメソッドを確認
-      console.log('MainMenuScene - Available methods:', {
+      const debugInfo = {
         createButton: typeof this.createButton,
         createContainerButton: typeof this.createContainerButton,
         fadeIn: typeof this.fadeIn,
         fadeOut: typeof this.fadeOut,
         add: typeof this.add,
-        cameras: typeof this.cameras
-      })
+        cameras: typeof this.cameras,
+        centerX: this.centerX,
+        centerY: this.centerY,
+        gameWidth: this.gameWidth,
+        gameHeight: this.gameHeight
+      }
+      
+      console.log('MainMenuScene - Available methods:', debugInfo)
+      
+      // 本番環境でのデバッグ用
+      if (!this.createButton || typeof this.createButton !== 'function') {
+        console.error('MainMenuScene: createButton method missing!', debugInfo)
+        // デバッグ情報を画面に表示
+        if (this.add && this.add.text) {
+          this.add.text(10, 10, `Debug: createButton=${typeof this.createButton}`, {
+            fontSize: '12px',
+            color: '#ff0000'
+          })
+        }
+      }
       
       // 必要なプロパティの確認
       if (!this.add || !this.cameras || !this.centerX || !this.centerY) {
