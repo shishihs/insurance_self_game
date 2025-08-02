@@ -278,7 +278,7 @@ export class SEOManager {
   /**
    * 言語別URLの生成
    */
-  private generateAlternateUrls(baseUrl: string, _currentLang: string): { [lang: string]: string } {
+  private generateAlternateUrls(baseUrl: string): { [lang: string]: string } {
     const supportedLanguages = ['ja', 'en']
     const alternateUrls: { [lang: string]: string } = {}
     

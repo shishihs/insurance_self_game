@@ -1,65 +1,0 @@
-
-> insurance-game@0.2.8 test:run
-> vitest --run --reporter=json
-
-(node:29288) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 21 exit listeners added to [process]. MaxListeners is 20. Use emitter.setMaxListeners() to increase limit
-(Use `node --trace-warnings ...` to show where the warning was created)
-テストエラー テストエラーHEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-Test error messageHEX( Test error message#8b5  Test error messagecf6 Test error message):ASTest error messageCII_Test error messageART: Test error messageLIFE  Test error message GA Test error messageME
-HTest error messageEX(Test error message#8b5 Test error messagecf6  Test error message):AS Test error messageCII_Test error messageART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE✨ Challenge Completed! ✨ GAME
-💀 GAME OVER 💀HEX(#8💀 GAME OVER 💀b5cf6)🎉 Challenge Completed! 🎉💀 GAME OVER 💀:ASCII💀 GAME OVER 💀_ART:L💀 GAME OVER 💀IFE G💀 GAME OVER 💀AME🎊 Challenge Completed! 🎊
-✨ 🎉 VICTORY! 🎉 ✨H💀 GAME OVER 💀
-EX(#8b5cf6):ASCI⭐ Challenge Completed! ⭐I_A🎉 🎉 VICTORY! 🎉 🎉RT:LIFE GAME
-🌱 Stage "youth" Cleared!HEX🌟 Challenge Completed! 🌟🎊 🎉 VICTORY! 🎉 🎊(🌱 Stage "youth" Cleared!#8b5c🌱 Stage "youth" Cleared!f6):AS🌱 Stage "youth" Cleared!CII_A🌱 Stage "youth" Cleared!R✨ Challenge Completed! ✨T:L⭐ 🎉 VICTORY! 🎉 ⭐IF🌱 Stage "youth" Cleared!E GAME🌱 Stage "youth" Cleared!
-
-HEX(#8🎉 Challenge Completed! 🎉b5c🌟 🎉 VICTORY! 🎉 🌟f6):ASCII_ART:LI🎊 Challenge Completed! 🎊FE✨ 🎉 VICTORY! 🎉 ✨ GAME
-HEX(#8b5cf6)⭐ Challenge Completed! ⭐:A🎉 🎉 VICTORY! 🎉 🎉SCII_ART:LIFE GA🌟 Challenge Completed! 🌟ME🎊 🎉 VICTORY! 🎉 🎊
-HEX(#8b5cf6):ASCI✨ Challenge Completed! ✨I⭐ 🎉 VICTORY! 🎉 ⭐_ART:LIFE GAME
-HEX(🎉 Challenge Completed! 🎉#🌟 🎉 VICTORY! 🎉 🌟8b5cf6):ASCII_ART:🎊 Challenge Completed! 🎊L✨ 🎉 VICTORY! 🎉 ✨IFE GAME
-HEX(#8b5c⭐ Challenge Completed! ⭐🎉 🎉 VICTORY! 🎉 🎉f6):ASCII_ART:LIFE 🌟 Challenge Completed! 🌟🎊 🎉 VICTORY! 🎉 🎊GAME
-HEX(#8b5cf6):A⭐ 🎉 VICTORY! 🎉 ⭐SCII_ART:LIFE GAME
-H🌟 🎉 VICTORY! 🎉 🌟EX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#000000):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-HEX(#8b5cf6):ASCII_ART:LIFE GAME
-✨ 🎉 VICTORY! 🎉 ✨HEX(#8b5cf6):ASCII_🎉 🎉 VICTORY! 🎉 🎉ART:LIFE GAME✨ Challenge Completed! ✨
-JSON report written to C:/Users/shish/Workspace/insurance_game/test-results/results.json

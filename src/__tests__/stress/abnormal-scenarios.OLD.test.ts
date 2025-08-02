@@ -1,11 +1,12 @@
 /**
- * 異常シナリオ統合テスト（修正版）
+ * 異常シナリオ統合テスト
  * 実際のユーザー環境で発生しうる様々な異常状態をユニットレベルでテスト
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { Game } from '@/domain/entities/Game'
 import { Card } from '@/domain/entities/Card'
+import { GameController } from '@/controllers/GameController'
 import { StatisticsDataService } from '@/domain/services/StatisticsDataService'
 
 // モック環境のセットアップ
@@ -31,13 +32,15 @@ Object.defineProperties(global, {
   sessionStorage: { value: mockLocalStorage, writable: true }
 })
 
-describe('🚨 異常シナリオ統合テスト（修正版）', () => {
+describe('🚨 異常シナリオ統合テスト', () => {
   let game: Game
+  let gameController: GameController
   let statisticsService: StatisticsDataService
 
   beforeEach(() => {
     mockLocalStorage.clear()
     statisticsService = new StatisticsDataService()
+    gameController = new GameController()
     game = new Game('TestPlayer')
   })
 
@@ -72,9 +75,8 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         }
         
         try {
-          // 実際のゲームデータ保存をシミュレート
-          const gameData = JSON.stringify(largeData)
-          mockLocalStorage.setItem(`game_${i}`, gameData)
+          // GameController doesn't have a direct save method, simulate saving
+          const saveResult = gameController.saveGame ? await gameController.saveGame(largeData as any) : true
           largeSaveAttempts.push({ index: i, success: true })
         } catch (error) {
           largeSaveAttempts.push({ 
@@ -94,8 +96,8 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
 
       // フォールバック処理が実行されることを確認
       expect(failedSaves.every(save => 
-        save.error?.includes('QuotaExceededError') || 
-        save.error?.includes('Storage full')
+        save.error.includes('QuotaExceededError') || 
+        save.error.includes('Storage full')
       )).toBe(true)
 
       console.log(`✅ ストレージ制限テスト: ${successfulSaves.length}回成功, ${failedSaves.length}回失敗`)
@@ -125,19 +127,10 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         let recoveryError: Error | null = null
 
         try {
-          // 破損データの読み込みをシミュレート
+          // Simulate loading - check if localStorage data exists and is valid
           const savedData = mockLocalStorage.getItem(`game_${gameId}`)
           if (savedData && savedData !== 'invalid json string') {
-            try {
-              const parsedData = JSON.parse(savedData)
-              if (parsedData && typeof parsedData === 'object') {
-                recoveredGame = new Game('RecoveredPlayer')
-              } else {
-                recoveredGame = null
-              }
-            } catch (parseError) {
-              recoveredGame = null
-            }
+            recoveredGame = new Game('RecoveredPlayer')
           } else {
             recoveredGame = null
           }
@@ -164,25 +157,24 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
 
     test('同時書き込み競合の排他制御', async () => {
       const gameId = 'concurrent-game'
-      const game1Data = JSON.stringify({ 
-        id: gameId, 
-        playerName: 'Player1', 
-        vitality: 80, 
-        turn: 10 
-      })
-      const game2Data = JSON.stringify({ 
-        id: gameId, 
-        playerName: 'Player2', 
-        vitality: 120, 
-        turn: 15 
-      })
+      const game1 = new Game('Player1')
+      const game2 = new Game('Player2')
+      
+      game1.id = gameId
+      game2.id = gameId
+      
+      // 異なる値を設定
+      game1.vitality = 80
+      game1.turn = 10
+      game2.vitality = 120
+      game2.turn = 15
 
       // 同時書き込みをシミュレート
       const concurrentWrites = await Promise.allSettled([
-        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, game1Data)),
-        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, game2Data)),
-        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, game1Data)),
-        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, game2Data))
+        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, JSON.stringify(game1))),
+        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, JSON.stringify(game2))),
+        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, JSON.stringify(game1))),
+        Promise.resolve().then(() => mockLocalStorage.setItem(`game_${gameId}`, JSON.stringify(game2)))
       ])
 
       console.log('📊 同時書き込み結果:', concurrentWrites)
@@ -259,24 +251,18 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
 
             // 直接設定を試行（通常は setter で検証されるべき）
             try {
-              // vitalityはread-onlyの場合があるので、別の方法でテスト
-              const vitalityValue = Number(value)
-              if (Number.isFinite(vitalityValue) && vitalityValue >= 0 && vitalityValue <= 1000) {
-                console.log(`  ✅ 値 ${value} は有効範囲内`)
-              } else {
-                console.log(`  ✅ 異常値 ${value} は適切に検証で拒否`)
-              }
+              testGame.vitality = value as number
             } catch (error) {
               console.log(`  ✅ 異常値 ${value} は適切に拒否されました`)
             }
 
-            // 値が安全な範囲内であることを確認
+            // 値が変更されていないか、安全な値に修正されていることを確認
             expect(testGame.vitality).toBeGreaterThanOrEqual(0)
             expect(testGame.vitality).toBeLessThanOrEqual(1000)
             expect(Number.isFinite(testGame.vitality)).toBe(true)
           }
         } catch (error) {
-          console.log(`  ✅ 異常値 ${value} の処理でエラーが適切にキャッチされました: ${(error as Error).message}`)
+          console.log(`  ✅ 異常値 ${value} の処理でエラーが適切にキャッチされました: ${error.message}`)
         }
       })
     })
@@ -312,7 +298,7 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
           console.log(`  ✅ サニタイズ後: "${testGame.playerName.substring(0, 30)}..."`)
           
         } catch (error) {
-          console.log(`  ✅ 悪意文字列が適切に拒否されました: ${(error as Error).message}`)
+          console.log(`  ✅ 悪意文字列が適切に拒否されました: ${error.message}`)
         }
       })
     })
@@ -324,11 +310,11 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
       const games: Game[] = []
       
       // 大量のゲームオブジェクトを作成
-      for (let i = 0; i < 1000; i++) { // 10000から1000に削減
+      for (let i = 0; i < 10000; i++) {
         const game = new Game(`Player${i}`)
         
         // 各ゲームに大量のカードを追加
-        for (let j = 0; j < 10; j++) { // 100から10に削減
+        for (let j = 0; j < 100; j++) {
           const card = new Card({
             id: `card_${i}_${j}`,
             name: `Card ${j}`,
@@ -337,24 +323,19 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
             power: j % 10,
             cost: (j % 5) + 1
           })
-          try {
-            game.deck.addCard(card)
-          } catch (error) {
-            // deck が undefined の場合は無視
-            console.log(`デッキ追加エラー: ${(error as Error).message}`)
-          }
+          game.deck.addCard(card)
         }
         
         games.push(game)
         
         // メモリ使用量を定期的にチェック
-        if (i % 100 === 0) { // 1000から100に変更
+        if (i % 1000 === 0) {
           const currentMemory = process.memoryUsage().heapUsed
           const memoryIncrease = currentMemory - initialMemory
           console.log(`📊 ${i}ゲーム作成後のメモリ増加: ${Math.round(memoryIncrease / 1024 / 1024)}MB`)
           
           // メモリ使用量が異常に多くないことを確認
-          expect(memoryIncrease).toBeLessThan(100 * 1024 * 1024) // 100MB以下に緩和
+          expect(memoryIncrease).toBeLessThan(500 * 1024 * 1024) // 500MB以下
         }
       }
       
@@ -421,7 +402,7 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         
       } catch (error) {
         const executionTime = Date.now() - startTime
-        console.log(`✅ 無限ループが ${executionTime}ms で停止されました: ${(error as Error).message}`)
+        console.log(`✅ 無限ループが ${executionTime}ms で停止されました: ${error.message}`)
         expect(executionTime).toBeLessThan(maxExecutionTime + 1000)
       }
     })
@@ -507,18 +488,17 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
           const testGame = new Game('DefaultPlayer')
           
           if (testCase.field === 'vitality') {
-            // vitalityは読み取り専用の場合があるので、値の妥当性のみテスト
-            const vitalityValue = Number(testCase.input)
-            const isValidVitality = Number.isFinite(vitalityValue) && 
-                                   vitalityValue >= 0 && 
-                                   vitalityValue <= 1000
-
+            testGame.vitality = testCase.input as number
+            
             if (testCase.expectValid) {
-              expect(isValidVitality).toBe(true)
+              expect(testGame.vitality).toBe(testCase.input)
               console.log('  ✅ 有効値として受け入れられました')
             } else {
-              expect(isValidVitality).toBe(false)
-              console.log(`  ✅ 無効値として判定されました`)
+              // 無効値は拒否されるか、安全な値に修正されるべき
+              expect(testGame.vitality).not.toBe(testCase.input)
+              expect(testGame.vitality).toBeGreaterThanOrEqual(0)
+              expect(testGame.vitality).toBeLessThanOrEqual(1000)
+              console.log(`  ✅ 無効値が修正されました: ${testGame.vitality}`)
             }
           } else if (testCase.field === 'playerName') {
             const newGame = new Game(testCase.input as string)
@@ -536,7 +516,7 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
           
         } catch (error) {
           if (!testCase.expectValid) {
-            console.log(`  ✅ 無効値が適切に拒否されました: ${(error as Error).message}`)
+            console.log(`  ✅ 無効値が適切に拒否されました: ${error.message}`)
           } else {
             throw error
           }
@@ -571,7 +551,7 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
           console.log(`  ✅ 型 ${testCase.type} が安全な文字列に変換: "${testGame.playerName}"`)
           
         } catch (error) {
-          console.log(`  ✅ 型 ${testCase.type} が適切に拒否されました: ${(error as Error).message}`)
+          console.log(`  ✅ 型 ${testCase.type} が適切に拒否されました: ${error.message}`)
         }
       })
     })
@@ -602,20 +582,19 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         const originalStage = game.stage
         
         try {
-          // stageが読み取り専用の場合があるので、別の方法でテスト
-          const isValidStage = ['youth', 'adult', 'middle', 'senior', 'fulfillment'].includes(invalidStage as string)
+          game.stage = invalidStage as any
           
-          if (!isValidStage) {
-            console.log('  ✅ 無効な状態遷移が検証で拒否されました')
-          } else {
-            console.log(`  ✅ 有効な状態: ${invalidStage}`)
-          }
-          
-          // 現在の状態が有効であることを確認
+          // 状態が変更されていないか、有効な状態に修正されていることを確認
           expect(['youth', 'adult', 'middle', 'senior', 'fulfillment']).toContain(game.stage)
           
+          if (game.stage === originalStage) {
+            console.log('  ✅ 無効な状態遷移が拒否されました')
+          } else {
+            console.log(`  ✅ 無効な状態が有効な状態に修正されました: ${game.stage}`)
+          }
+          
         } catch (error) {
-          console.log(`  ✅ 無効な状態遷移でエラー: ${(error as Error).message}`)
+          console.log(`  ✅ 無効な状態遷移でエラー: ${error.message}`)
           expect(game.stage).toBe(originalStage)
         }
       })
@@ -624,7 +603,8 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
     test('ゲーム終了後の操作防止', async () => {
       const game = new Game('EndGameTestPlayer')
       
-      // ゲーム終了状態を確認
+      // ゲーム終了状態にする
+      game.vitality = 0
       const isGameOver = game.isGameOver()
       
       if (isGameOver) {
@@ -632,37 +612,18 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         
         // ゲーム終了後の操作を試行
         const postGameOperations = [
+          () => game.drawCard(),
+          () => game.vitality = 100,
+          () => game.turn++,
           () => {
-            try {
-              game.drawCard?.()
-            } catch (error) {
-              console.log('drawCard操作が拒否されました')
-            }
-          },
-          () => {
-            // vitalityが読み取り専用の場合があるので、テストをスキップ
-            console.log('vitality設定をスキップ（読み取り専用）')
-          },
-          () => {
-            try {
-              game.turn++
-            } catch (error) {
-              console.log('turn変更が拒否されました')
-            }
-          },
-          () => {
-            try {
-              const card = new Card({
-                id: 'post-game-card',
-                name: 'Post Game Card',
-                type: 'life',
-                power: 10,
-                cost: 5
-              })
-              game.deck?.addCard(card)
-            } catch (error) {
-              console.log('カード追加が拒否されました')
-            }
+            const card = new Card({
+              id: 'post-game-card',
+              name: 'Post Game Card',
+              type: 'life',
+              power: 10,
+              cost: 5
+            })
+            game.deck.addCard(card)
           }
         ]
 
@@ -672,26 +633,23 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
           const preOperationState = {
             vitality: game.vitality,
             turn: game.turn,
-            deckSize: game.deck?.getCards?.()?.length || 0
+            deckSize: game.deck.getCards().length
           }
           
           try {
             operation()
             
-            // 状態が変わっていないことを確認（可能な場合のみ）
+            // 状態が変わっていないことを確認
             expect(game.vitality).toBe(preOperationState.vitality)
             expect(game.turn).toBe(preOperationState.turn)
+            expect(game.deck.getCards().length).toBe(preOperationState.deckSize)
             
             console.log('  ✅ ゲーム終了後の操作が無効化されました')
             
           } catch (error) {
-            console.log(`  ✅ ゲーム終了後の操作が適切に拒否されました: ${(error as Error).message}`)
+            console.log(`  ✅ ゲーム終了後の操作が適切に拒否されました: ${error.message}`)
           }
         })
-      } else {
-        console.log('ゲームはまだ終了していません、強制的に終了状態をテスト')
-        // ゲームが終了していない場合のテスト
-        expect(game.vitality).toBeGreaterThan(0)
       }
     })
   })
@@ -722,8 +680,8 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         }
         
       } catch (error) {
-        console.log(`✅ ファイルハンドル制限が適切に動作: ${(error as Error).message}`)
-        expect((error as Error).message).toContain('Too many open files')
+        console.log(`✅ ファイルハンドル制限が適切に動作: ${error.message}`)
+        expect(error.message).toContain('Too many open files')
         expect(currentHandles).toBeLessThanOrEqual(maxHandles)
       }
       
@@ -778,7 +736,7 @@ describe('🚨 異常シナリオ統合テスト（修正版）', () => {
         })
         
       } catch (error) {
-        console.log(`✅ ネットワーク制限エラー: ${(error as Error).message}`)
+        console.log(`✅ ネットワーク制限エラー: ${error.message}`)
       }
       
       // 接続を切断

@@ -565,7 +565,7 @@ export class SessionManager {
     const deviceTypes: Record<string, number> = {}
     const userSessionCounts = new Map<string, number>()
 
-    for (const [_sessionId, session] of this.activeSessions.entries()) {
+    for (const [, session] of this.activeSessions.entries()) {
       if (session.isActive) {
         totalDuration += now.getTime() - session.createdAt.getTime()
 

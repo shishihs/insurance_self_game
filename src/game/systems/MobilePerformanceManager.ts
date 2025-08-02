@@ -1,11 +1,13 @@
 /**
- * モバイルパフォーマンス最適化マネージャー
+ * モバイルパフォーマンス最適化マネージャー - 強化版
  * 
  * 主な機能:
  * - ハードウェアアクセラレーションの管理
  * - メモリ使用量の監視と最適化
  * - 描画パフォーマンスの調整
  * - バッテリー消費の最適化
+ * - デバイス固有の最適化
+ * - ネットワーク状態に応じた適応
  */
 
 interface PerformanceMetrics {
@@ -27,6 +29,17 @@ interface PerformanceThresholds {
   maxDrawCalls: number
 }
 
+interface DeviceCapabilities {
+  devicePixelRatio: number
+  hardwareConcurrency: number
+  maxTouchPoints: number
+  connectionType: string
+  memoryEstimate: number
+  isLowEndDevice: boolean
+  supportsWebGL2: boolean
+  maxTextureSize: number
+}
+
 export class MobilePerformanceManager {
   private readonly scene: Phaser.Scene
   private readonly metrics: PerformanceMetrics
@@ -37,6 +50,21 @@ export class MobilePerformanceManager {
   private lastFrameTime: number = 0
   private readonly fpsHistory: number[] = []
   private isLowPowerMode: boolean = false
+  
+  // デバイス能力検出
+  private deviceCapabilities: DeviceCapabilities
+  private isInitialized: boolean = false
+  
+  // ネットワーク監視
+  private connectionMonitor: {
+    effectiveType: string
+    downlink: number
+    rtt: number
+  } | null = null
+  
+  // 熱制御
+  private thermalState: 'nominal' | 'fair' | 'serious' | 'critical' = 'nominal'
+  private thermalThrottling: boolean = false
   
   constructor(scene: Phaser.Scene, thresholds?: Partial<PerformanceThresholds>) {
     this.scene = scene
@@ -57,10 +85,80 @@ export class MobilePerformanceManager {
       drawCalls: 0
     }
     
+    this.deviceCapabilities = this.detectDeviceCapabilities()
     this.initialize()
   }
 
+  /**
+   * デバイス能力の検出
+   */
+  private detectDeviceCapabilities(): DeviceCapabilities {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    const gl2 = canvas.getContext('webgl2')
+    
+    let maxTextureSize = 2048
+    if (gl) {
+      maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+    }
+    
+    // 接続タイプの検出
+    let connectionType = 'unknown'
+    if ('connection' in navigator) {
+      const conn = (navigator as any).connection
+      connectionType = conn.effectiveType || conn.type || 'unknown'
+    }
+    
+    // メモリ推定
+    let memoryEstimate = 1024 // デフォルト1GB
+    if ('deviceMemory' in navigator) {
+      memoryEstimate = (navigator as any).deviceMemory * 1024
+    } else if ('memory' in performance && (performance as any).memory) {
+      memoryEstimate = (performance as any).memory.jsHeapSizeLimit / 1024 / 1024
+    }
+    
+    // 低スペック端末の判定
+    const isLowEndDevice = this.detectLowEndDevice()
+    
+    return {
+      devicePixelRatio: window.devicePixelRatio || 1,
+      hardwareConcurrency: navigator.hardwareConcurrency || 4,
+      maxTouchPoints: navigator.maxTouchPoints || 1,
+      connectionType,
+      memoryEstimate,
+      isLowEndDevice,
+      supportsWebGL2: !!gl2,
+      maxTextureSize
+    }
+  }
+
+  /**
+   * 低スペック端末の検出
+   */
+  private detectLowEndDevice(): boolean {
+    // CPU コア数
+    const cores = navigator.hardwareConcurrency || 4
+    if (cores <= 2) return true
+    
+    // メモリ
+    if ('deviceMemory' in navigator && (navigator as any).deviceMemory <= 2) return true
+    
+    // 接続速度
+    if ('connection' in navigator) {
+      const conn = (navigator as any).connection
+      if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') return true
+    }
+    
+    // デバイスピクセル比（高解像度は負荷大）
+    if (window.devicePixelRatio > 2.5) return true
+    
+    return false
+  }
+
   private initialize(): void {
+    // デバイス固有の最適化設定
+    this.applyDeviceSpecificOptimizations()
+    
     // パフォーマンス監視の開始
     this.startMonitoring()
     
@@ -72,6 +170,187 @@ export class MobilePerformanceManager {
     
     // ビジビリティ変更の監視
     this.setupVisibilityHandling()
+    
+    // ネットワーク状態の監視
+    this.monitorNetworkStatus()
+    
+    // 熱状態の監視
+    this.monitorThermalState()
+    
+    this.isInitialized = true
+  }
+
+  /**
+   * デバイス固有の最適化設定
+   */
+  private applyDeviceSpecificOptimizations(): void {
+    if (this.deviceCapabilities.isLowEndDevice) {
+      // 低スペック端末の場合
+      this.setOptimizationLevel('low')
+      this.thresholds.minFPS = 24 // より低いFPSを許容
+      this.thresholds.maxMemoryUsage = 60 // より厳しいメモリ制限
+    } else if (this.deviceCapabilities.memoryEstimate > 4096) {
+      // 高スペック端末の場合
+      this.setOptimizationLevel('high')
+    }
+    
+    // 高解像度デバイスの場合
+    if (this.deviceCapabilities.devicePixelRatio > 2) {
+      console.log('高解像度端末検出 - レンダリング最適化を適用')
+    }
+  }
+
+  /**
+   * ネットワーク状態の監視
+   */
+  private monitorNetworkStatus(): void {
+    if ('connection' in navigator) {
+      const connection = (navigator as any).connection
+      
+      this.connectionMonitor = {
+        effectiveType: connection.effectiveType || 'unknown',
+        downlink: connection.downlink || 0,
+        rtt: connection.rtt || 0
+      }
+      
+      const updateConnection = () => {
+        this.connectionMonitor = {
+          effectiveType: connection.effectiveType || 'unknown',
+          downlink: connection.downlink || 0,
+          rtt: connection.rtt || 0
+        }
+        
+        // 接続が遅い場合は品質を下げる
+        if (this.connectionMonitor.effectiveType === 'slow-2g' || 
+            this.connectionMonitor.effectiveType === '2g') {
+          this.setOptimizationLevel('low')
+        }
+      }
+      
+      connection.addEventListener('change', updateConnection)
+    }
+  }
+
+  /**
+   * 熱状態の監視
+   */
+  private monitorThermalState(): void {
+    // 熱状態API（実験的）
+    if ('thermal' in navigator) {
+      const thermal = (navigator as any).thermal
+      
+      thermal.addEventListener('statechange', (event: any) => {
+        this.thermalState = event.state
+        
+        switch (this.thermalState) {
+          case 'serious':
+            this.enableThermalThrottling()
+            break
+          case 'critical':
+            this.setOptimizationLevel('low')
+            this.enableThermalThrottling()
+            break
+          default:
+            this.disableThermalThrottling()
+            break
+        }
+      })
+    }
+    
+    // フォールバック: FPS監視による熱制御
+    this.setupFallbackThermalMonitoring()
+  }
+
+  /**
+   * フォールバック熱監視
+   */
+  private setupFallbackThermalMonitoring(): void {
+    let consecutiveLowFPS = 0
+    
+    setInterval(() => {
+      if (this.metrics.fps < this.thresholds.minFPS) {
+        consecutiveLowFPS++
+        
+        // 連続してFPSが低い場合は熱制御を疑う
+        if (consecutiveLowFPS > 10) { // 10秒間連続
+          this.enableThermalThrottling()
+        }
+      } else {
+        consecutiveLowFPS = 0
+        if (this.thermalThrottling && this.thermalState === 'nominal') {
+          this.disableThermalThrottling()
+        }
+      }
+    }, 1000)
+  }
+
+  /**
+   * 熱制御の有効化
+   */
+  private enableThermalThrottling(): void {
+    if (this.thermalThrottling) return
+    
+    this.thermalThrottling = true
+    
+    // フレームレートを制限
+    this.scene.game.loop.targetFps = 30
+    
+    // アニメーションを減らす
+    this.reduceAnimations()
+    
+    console.log('熱制御有効化')
+  }
+
+  /**
+   * 熱制御の無効化
+   */
+  private disableThermalThrottling(): void {
+    if (!this.thermalThrottling) return
+    
+    this.thermalThrottling = false
+    
+    // フレームレートを復元
+    this.scene.game.loop.targetFps = 60
+    
+    console.log('熱制御無効化')
+  }
+
+  /**
+   * アニメーション削減
+   */
+  private reduceAnimations(): void {
+    // 実行中のTweenを停止
+    const tweens = this.scene.tweens.getAllTweens()
+    tweens.forEach(tween => {
+      if (!tween.hasTarget() || !this.isEssentialAnimation(tween)) {
+        tween.stop()
+      }
+    })
+    
+    // パーティクル効果を停止
+    const particles = this.scene.children.list.filter(child => 
+      child instanceof Phaser.GameObjects.Particles.ParticleEmitter
+    ) as Phaser.GameObjects.Particles.ParticleEmitter[]
+    
+    particles.forEach(emitter => emitter.stop())
+  }
+
+  /**
+   * 必須アニメーションかチェック
+   */
+  private isEssentialAnimation(tween: Phaser.Tweens.Tween): boolean {
+    // ゲームプレイに必要なアニメーションのみ継続
+    // 例: カードの移動、重要なUI要素など
+    const targets = tween.targets
+    
+    for (const target of targets) {
+      if ('getData' in target) {
+        const isEssential = (target as any).getData('essential')
+        if (isEssential) return true
+      }
+    }
+    
+    return false
   }
 
   /**
@@ -447,6 +726,29 @@ export class MobilePerformanceManager {
    */
   public getOptimizationLevel(): 'low' | 'medium' | 'high' {
     return this.optimizationLevel
+  }
+
+  /**
+   * デバイス能力を取得
+   */
+  public getDeviceCapabilities(): DeviceCapabilities {
+    return { ...this.deviceCapabilities }
+  }
+
+  /**
+   * 拡張パフォーマンス情報を取得
+   */
+  public getExtendedPerformanceInfo() {
+    return {
+      metrics: this.getMetrics(),
+      deviceCapabilities: this.getDeviceCapabilities(),
+      optimizationLevel: this.getOptimizationLevel(),
+      isLowPowerMode: this.isLowPowerMode,
+      thermalState: this.thermalState,
+      thermalThrottling: this.thermalThrottling,
+      connectionMonitor: this.connectionMonitor,
+      isInitialized: this.isInitialized
+    }
   }
 
   /**

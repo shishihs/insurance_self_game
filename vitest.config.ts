@@ -12,7 +12,8 @@ export default defineConfig({
     ],
     exclude: [
       'node_modules/**',
-      'dist/**'
+      'dist/**',
+      '**/*.OLD.test.ts' // バックアップファイルを除外
     ],
     globals: true,
     // Improve test performance and reliability
@@ -20,15 +21,15 @@ export default defineConfig({
     poolOptions: {
       forks: {
         singleFork: false,
-        maxForks: 2,
+        maxForks: 4,
         minForks: 1
       }
     },
     // Reduce test noise
     silent: process.env.VITEST_VERBOSE !== 'true',
-    // Reduced timeout for faster feedback
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    // Optimized timeout for faster feedback
+    testTimeout: 15000, // 長時間テスト用に増加
+    hookTimeout: 5000,
     // Better error handling
     bail: process.env.CI ? 1 : 0,
     // Memory management

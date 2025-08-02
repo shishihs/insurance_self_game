@@ -1,6 +1,7 @@
 import { ObjectPool, PooledCard, PooledGameState, PoolManager } from '../../optimization/ObjectPooling'
 import { GameCache } from '../../optimization/CacheSystem'
 import { BatchProcessor } from '../../optimization/BatchProcessor'
+import { WebGLOptimizer } from './WebGLOptimizer'
 
 /**
  * パフォーマンス最適化システム - 大幅強化版
@@ -31,6 +32,9 @@ export class PerformanceOptimizer {
   // GPU最適化設定
   private gpuOptimized: boolean = false
   private renderBounds: Phaser.Geom.Rectangle
+  
+  // WebGL最適化
+  private webglOptimizer: WebGLOptimizer
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -173,6 +177,17 @@ export class PerformanceOptimizer {
     
     // レンダリング境界の設定
     this.renderBounds = new Phaser.Geom.Rectangle(0, 0, this.scene.cameras.main.width, this.scene.cameras.main.height)
+    
+    // WebGL最適化の初期化
+    this.webglOptimizer = new WebGLOptimizer(this.scene, {
+      enableTextureAtlas: true,
+      enableShaderOptimization: true,
+      enableBatchRendering: true,
+      enableFrustumCulling: true,
+      maxTextureSize: 2048,
+      batchSize: 4096,
+      cullingMargin: 100
+    })
     
     // GPU最適化の有効化
     this.enableGPUOptimization()
@@ -390,6 +405,7 @@ export class PerformanceOptimizer {
     const poolStats = PoolManager.getInstance().getAllStats()
     const cacheStats = this.gameCache.getAllStats()
     const monitorStats = this.performanceMonitor.getDetailedStats()
+    const webglStats = this.webglOptimizer.getPerformanceStats()
     
     return {
       // 基本パフォーマンス
@@ -419,6 +435,18 @@ export class PerformanceOptimizer {
         hitRate: cacheStats.overall.totalHitRate,
         memoryUsage: cacheStats.overall.totalMemoryUsage,
         recommendations: cacheStats.overall.recommendations
+      },
+      
+      // WebGL/GPU統計
+      webgl: {
+        drawCalls: webglStats.drawCalls,
+        triangles: webglStats.triangles,
+        textureSwaps: webglStats.textureSwaps,
+        shaderSwaps: webglStats.shaderSwaps,
+        batchedObjects: webglStats.batchedObjects,
+        culledObjects: webglStats.culledObjects,
+        gpuUtilization: webglStats.gpuUtilization,
+        gpuMemoryUsage: webglStats.memoryUsage
       },
       
       // 詳細パフォーマンス
@@ -459,6 +487,8 @@ export class PerformanceOptimizer {
     // FPSが低い場合の対処
     if (stats.fps < 45) {
       this.frameTimeThreshold *= 1.2
+      // WebGL最適化レベルの調整
+      this.webglOptimizer.adjustOptimizationLevel(60)
       console.log('FPS低下検出 - 品質設定を下げます')
     } else if (stats.fps > 55) {
       this.frameTimeThreshold = Math.max(16.67, this.frameTimeThreshold * 0.95)
@@ -469,6 +499,12 @@ export class PerformanceOptimizer {
       this.cleanupUnusedTextures()
       PoolManager.getInstance().clearAllPools()
       console.log('メモリ使用量過多 - クリーンアップを実行')
+    }
+    
+    // GPU使用率が高い場合の対処
+    if (stats.webgl && stats.webgl.gpuUtilization > 90) {
+      console.log('GPU使用率過多 - レンダリング最適化を実行')
+      this.webglOptimizer.adjustOptimizationLevel(45) // より保守的な設定
     }
     
     // プール効率が低い場合のリサイズ
@@ -496,6 +532,13 @@ export class PerformanceOptimizer {
   }
   
   /**
+   * WebGL最適化システムの取得
+   */
+  getWebGLOptimizer(): WebGLOptimizer {
+    return this.webglOptimizer
+  }
+  
+  /**
    * リソースの完全クリーンアップ
    */
   cleanup(): void {
@@ -513,6 +556,9 @@ export class PerformanceOptimizer {
     
     // パフォーマンス監視の停止
     this.performanceMonitor.stop()
+    
+    // WebGL最適化のクリーンアップ
+    this.webglOptimizer.cleanup()
     
     // 未使用テクスチャの解放
     this.cleanupUnusedTextures()

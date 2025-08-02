@@ -114,11 +114,11 @@ export class XSSProtection {
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r')
       .replace(/\t/g, '\\t')
-      .replace(/[\u0009]/g, '\\t') // backspace -> tab
+      .replace(/[\u0009]/g, '\\t') // tab escape
       .replace(/\f/g, '\\f')
       .replace(/\v/g, '\\v')
-      .replace(/[\u0001]/g, '\\x01') // null -> safe char
-      .replace(/[\u0002-\u001f\u007f-\u009f]/g, (match) => {
+      .replace(/[\u0001]/g, '\\x01') // control char escape
+      .replace(/[\u0002-\u001F\u007F-\u009F]/g, (match) => {
         return `\\u${  (`0000${  match.charCodeAt(0).toString(16)}`).slice(-4)}`
       })
   }
@@ -634,7 +634,7 @@ export class SecurityInterceptor {
           })
           isValid = false
         }
-      } catch (error) {
+      } catch {
         isValid = false
       }
     }

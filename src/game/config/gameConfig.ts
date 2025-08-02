@@ -32,14 +32,29 @@ export const gameConfig = {
       debug: false
     }
   },
-  // モバイル最適化
+  // モバイル最適化 + WebGL/GPU最適化
   render: {
     pixelArt: false,
     antialias: true,
     powerPreference: 'high-performance', // ハードウェアアクセラレーション
     transparent: false,
     preserveDrawingBuffer: false, // メモリ節約
-    failIfMajorPerformanceCaveat: false
+    failIfMajorPerformanceCaveat: false,
+    // WebGL最適化設定
+    clearBeforeRender: true,
+    premultipliedAlpha: false,
+    depth: false,
+    stencil: false,
+    // バッチ処理最適化
+    mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+    desynchronized: true, // 非同期レンダリング（Chrome）
+    // テクスチャ最適化
+    maxTextures: 16,
+    maxTextureSize: 2048,
+    batchSize: 4096,
+    // パフォーマンス優先設定
+    autoResize: false,
+    roundPixels: true
   },
   // タッチ入力設定
   input: {
