@@ -281,16 +281,16 @@ onUnmounted(() => {
 
     <!-- ゲーム画面 -->
     <transitionAnimations type="slide" direction="left" :duration="400" intensity="normal">
-      <div v-if="showGame" class="game-view" id="main-content" role="main" aria-label="ゲーム画面">
+      <div v-if="showGame" id="main-content" class="game-view" role="main" aria-label="ゲーム画面">
         <errorBoundary fallback="detailed" :can-recover="true">
           <GameCanvas @back-to-home="backToHome" />
         </errorBoundary>
         <button
           ref="backToHomeButtonRef"
-          @click="backToHome"
           class="back-to-home-btn"
           aria-label="ホーム画面に戻る (Alt+H)"
           :aria-keyshortcuts="'Alt+H'"
+          @click="backToHome"
         >
           <span class="btn-icon" aria-hidden="true">←</span>
           <span class="btn-text">ホーム</span>
@@ -298,7 +298,7 @@ onUnmounted(() => {
       </div>
 
       <!-- ホーム画面 -->
-      <div v-else class="home-view" id="main-content" role="main" aria-label="ホーム画面">
+      <div v-else id="main-content" class="home-view" role="main" aria-label="ホーム画面">
         <errorBoundary 
           fallback="custom"
           :can-recover="true"
@@ -308,10 +308,10 @@ onUnmounted(() => {
             <appHeader />
 
             <navigationActions 
+              ref="navigationRef"
               @start-game="startGame"
               @start-tutorial="startTutorial"
               @open-statistics="openStatistics"
-              ref="navigationRef"
             />
 
             <section class="info-section">
@@ -333,8 +333,8 @@ onUnmounted(() => {
               <h2>エラーが発生しました</h2>
               <p>{{ error.message }}</p>
               <div class="desktop-error-actions">
-                <button @click="retry" class="error-btn">もう一度試す</button>
-                <button @click="reload" class="error-btn secondary">ページを再読み込み</button>
+                <button class="error-btn" @click="retry">もう一度試す</button>
+                <button class="error-btn secondary" @click="reload">ページを再読み込み</button>
               </div>
             </div>
           </template>
@@ -343,7 +343,7 @@ onUnmounted(() => {
     </transitionAnimations>
 
     <!-- フッター -->
-    <footer class="sr-only" id="footer" role="contentinfo">
+    <footer id="footer" class="sr-only" role="contentinfo">
       <p>人生充実ゲーム - アクセシブルなWebゲーム体験</p>
     </footer>
     
@@ -368,11 +368,11 @@ onUnmounted(() => {
 
     <!-- アクセシビリティ設定ボタン -->
     <button
-      @click="showAccessibilitySettings = true"
       class="accessibility-button"
       :aria-label="t('accessibility.keyboardShortcuts.openAccessibility', 'アクセシビリティ設定を開く (Alt+A)')"
       :aria-keyshortcuts="'Alt+A'"
       :title="t('accessibility.title', 'アクセシビリティ設定')"
+      @click="showAccessibilitySettings = true"
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15L13.5 7.5C13 7 12.5 6.5 11.9 6.5H12.1C11.5 6.5 11 7 10.5 7.5L7.91 10.09C7.66 10.34 7.66 10.76 7.91 11.01L10.5 13.6C11 14.1 11.5 14.6 12.1 14.6H11.9C12.5 14.6 13 14.1 13.5 13.6L15 12.1H21C21.6 12.1 22 11.7 22 11.1V10C22 9.4 21.6 9 21 9ZM8.5 12.5L12 16L15.5 12.5L12 22L8.5 12.5Z" fill="currentColor"/>

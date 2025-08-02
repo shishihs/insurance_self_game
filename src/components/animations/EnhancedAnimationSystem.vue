@@ -1,5 +1,5 @@
 <template>
-  <div class="enhanced-animation-system" ref="systemContainer">
+  <div ref="systemContainer" class="enhanced-animation-system">
     <!-- カードアニメーション -->
     <AdvancedCardAnimations
       ref="cardAnimations"
@@ -65,7 +65,7 @@
         <span class="monitor-title">Performance Monitor</span>
         <span class="monitor-toggle">{{ monitorCollapsed ? '▼' : '▲' }}</span>
       </div>
-      <div class="monitor-content" v-show="!monitorCollapsed">
+      <div v-show="!monitorCollapsed" class="monitor-content">
         <div class="metric">
           <span class="metric-label">FPS:</span>
           <span class="metric-value" :class="getFpsClass(performanceMetrics.fps)">

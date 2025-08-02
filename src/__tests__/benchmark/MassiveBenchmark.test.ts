@@ -478,7 +478,8 @@ describe('Massive Scale Benchmark Tests', () => {
 
   describe('Stress Testing', () => {
     it('should handle maximum system load', async () => {
-      const maxConcurrency = Math.min(16, require('os').cpus().length * 2)
+      // ブラウザ環境ではnavigator.hardwareConcurrencyを使用、Node.js環境では固定値
+      const maxConcurrency = Math.min(16, (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) ? navigator.hardwareConcurrency * 2 : 8)
       
       const config = {
         gameCount: maxConcurrency * 10,

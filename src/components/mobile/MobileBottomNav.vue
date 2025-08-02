@@ -54,12 +54,12 @@ const handleSelect = (id: string) => {
             'touching': touchingId === item.id
           }
         ]"
+        :aria-label="item.label"
+        :aria-current="activeId === item.id ? 'page' : undefined"
         @click="handleSelect(item.id)"
         @touchstart="handleTouchStart(item.id)"
         @touchend="handleTouchEnd"
         @touchcancel="handleTouchEnd"
-        :aria-label="item.label"
-        :aria-current="activeId === item.id ? 'page' : undefined"
       >
         <div class="nav-icon-wrapper">
           <span class="nav-icon" :aria-hidden="true">{{ item.icon }}</span>

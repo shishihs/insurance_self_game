@@ -11,9 +11,9 @@
           </p>
         </div>
         <button
-          @click="dismiss"
           class="survey-close"
           aria-label="調査を閉じる"
+          @click="dismiss"
         >
           ×
         </button>
@@ -28,10 +28,10 @@
             <button
               v-for="rating in emojiRatings"
               :key="rating.value"
-              @click="setOverallRating(rating.value)"
               class="emoji-btn"
               :class="{ selected: selectedRating === rating.value }"
               :aria-label="`${rating.value}点 - ${rating.label}`"
+              @click="setOverallRating(rating.value)"
             >
               <div class="emoji">{{ rating.emoji }}</div>
               <div class="emoji-label">{{ rating.label }}</div>
@@ -46,9 +46,9 @@
             <button
               v-for="issue in commonIssues"
               :key="issue.id"
-              @click="toggleIssue(issue.id)"
               class="issue-btn"
               :class="{ selected: selectedIssues.includes(issue.id) }"
+              @click="toggleIssue(issue.id)"
             >
               <div class="issue-icon">{{ issue.icon }}</div>
               <div class="issue-text">{{ issue.text }}</div>
@@ -62,9 +62,9 @@
             <button
               v-for="positive in positiveAspects"
               :key="positive.id"
-              @click="togglePositive(positive.id)"
               class="positive-btn"
               :class="{ selected: selectedPositives.includes(positive.id) }"
+              @click="togglePositive(positive.id)"
             >
               <div class="positive-icon">{{ positive.icon }}</div>
               <div class="positive-text">{{ positive.text }}</div>
@@ -77,17 +77,17 @@
           <h4 class="section-title">友人におすすめしますか？</h4>
           <div class="recommendation-buttons">
             <button
-              @click="setRecommendation(true)"
               class="recommend-btn"
               :class="{ selected: wouldRecommend === true }"
+              @click="setRecommendation(true)"
             >
               <div class="recommend-icon">👍</div>
               <div class="recommend-text">はい</div>
             </button>
             <button
-              @click="setRecommendation(false)"
               class="recommend-btn"
               :class="{ selected: wouldRecommend === false }"
+              @click="setRecommendation(false)"
             >
               <div class="recommend-icon">👎</div>
               <div class="recommend-text">いいえ</div>
@@ -111,15 +111,15 @@
         <!-- 送信ボタン -->
         <div class="survey-actions">
           <button
-            @click="dismiss"
             class="btn-skip"
+            @click="dismiss"
           >
             スキップ
           </button>
           <button
-            @click="submitSurvey"
             class="btn-submit"
             :disabled="!selectedRating || isSubmitting"
+            @click="submitSurvey"
           >
             <span v-if="isSubmitting">送信中...</span>
             <span v-else>送信</span>
@@ -134,7 +134,7 @@
         <p class="thank-you-message">
           いただいたフィードバックを参考に、より良いゲーム体験を提供できるよう改善を続けます。
         </p>
-        <button @click="closeCompletely" class="btn-close">
+        <button class="btn-close" @click="closeCompletely">
           閉じる
         </button>
       </div>

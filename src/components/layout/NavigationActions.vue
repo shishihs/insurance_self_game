@@ -1,13 +1,13 @@
 <template>
-  <section class="action-section" id="navigation" role="navigation" aria-label="メインナビゲーション">
+  <section id="navigation" class="action-section" role="navigation" aria-label="メインナビゲーション">
     <div class="button-group">
       <button
         ref="gameButtonRef"
-        @click="$emit('start-game')"
         class="btn btn-primary ripple-container glow-on-hover bounce-in"
         aria-label="ゲームを開始する (Alt+G)"
         :aria-keyshortcuts="'Alt+G'"
         aria-describedby="game-description"
+        @click="$emit('start-game')"
       >
         <span class="btn-bg-effect"></span>
         <span class="btn-icon" aria-hidden="true">🎮</span>
@@ -17,11 +17,11 @@
       
       <button
         ref="tutorialButtonRef"
-        @click="$emit('start-tutorial')"
         class="btn btn-secondary ripple-container"
         aria-label="チュートリアルを開始する (Alt+T)"
         :aria-keyshortcuts="'Alt+T'"
         aria-describedby="tutorial-description"
+        @click="$emit('start-tutorial')"
       >
         <span class="btn-bg-effect"></span>
         <span class="btn-icon" aria-hidden="true">📚</span>
@@ -29,11 +29,11 @@
       </button>
       
       <button
-        @click="$emit('open-statistics')"
         class="btn btn-secondary ripple-container"
         aria-label="統計ダッシュボードを開く (Alt+S)"
         :aria-keyshortcuts="'Alt+S'"
         aria-describedby="statistics-description"
+        @click="$emit('open-statistics')"
       >
         <span class="btn-bg-effect"></span>
         <span class="btn-icon" aria-hidden="true">📊</span>

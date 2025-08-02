@@ -278,7 +278,7 @@ export class SEOManager {
   /**
    * 言語別URLの生成
    */
-  private generateAlternateUrls(baseUrl: string, currentLang: string): { [lang: string]: string } {
+  private generateAlternateUrls(baseUrl: string, _currentLang: string): { [lang: string]: string } {
     const supportedLanguages = ['ja', 'en']
     const alternateUrls: { [lang: string]: string } = {}
     
@@ -303,8 +303,8 @@ export class SEOManager {
     console.log(`📊 Page view tracked: ${pageName}`)
     
     // 将来的に分析ツールのAPIを呼び出す
-    if (typeof gtag !== 'undefined') {
-      gtag('config', 'GA_MEASUREMENT_ID', {
+    if (typeof window.gtag !== 'undefined') {
+      window.gtag('config', 'GA_MEASUREMENT_ID', {
         page_title: this.currentConfig?.title,
         page_location: this.getCurrentUrl()
       })
@@ -318,8 +318,8 @@ export class SEOManager {
     console.log(`📊 Event tracked: ${eventName}`, parameters)
     
     // 将来的に分析ツールのAPIを呼び出す
-    if (typeof gtag !== 'undefined') {
-      gtag('event', eventName, parameters)
+    if (typeof window.gtag !== 'undefined') {
+      window.gtag('event', eventName, parameters)
     }
   }
 

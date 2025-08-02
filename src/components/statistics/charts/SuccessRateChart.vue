@@ -5,7 +5,7 @@
       <canvas ref="chartCanvas"></canvas>
     </div>
     <div class="chart-legend">
-      <div class="legend-item" v-for="(rate, stage) in data" :key="stage">
+      <div v-for="(rate, stage) in data" :key="stage" class="legend-item">
         <div class="legend-color" :style="{ backgroundColor: getStageColor(stage) }"></div>
         <span class="legend-label">{{ getStageLabel(stage) }}</span>
         <span class="legend-value">{{ (rate * 100).toFixed(1) }}%</span>

@@ -37,4 +37,4 @@ interface EventEmitter {
   eventNames(): Array<string | symbol>
 }
 
-declare var global: NodeJS.Global & typeof globalThis
+declare var global: ReturnType<typeof setTimeout>Global & typeof globalThis

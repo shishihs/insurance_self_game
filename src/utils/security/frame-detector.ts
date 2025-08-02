@@ -26,7 +26,7 @@ export class FrameDetector {
   private detectFrame(): void {
     try {
       this.isInFrame = window.self !== window.top
-    } catch (e) {
+    } catch {
       // Same-origin policyによりアクセスできない場合はiframe内と判断
       this.isInFrame = true
     }
@@ -62,7 +62,7 @@ export class FrameDetector {
       if (window.top) {
         window.top.location = window.self.location
       }
-    } catch (e) {
+    } catch {
       // クロスオリジンの場合はアクセスできないが、メッセージを表示
       this.showFrameWarning()
     }

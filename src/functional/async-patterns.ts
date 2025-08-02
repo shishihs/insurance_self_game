@@ -428,7 +428,7 @@ export class Observable<T> {
 
   debounce(ms: number): Observable<T> {
     return new Observable(observer => {
-      let timeoutId: NodeJS.Timeout | null = null
+      let timeoutId: ReturnType<typeof setTimeout>Timeout | null = null
       
       return this.subscribe({
         next: value => {

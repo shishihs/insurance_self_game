@@ -61,7 +61,7 @@ export class BatchProcessor<T, R> {
   private config: BatchConfig
   private pendingItems: T[] = []
   private processor: (items: T[]) => Promise<R[]>
-  private timeoutHandle: NodeJS.Timeout | null = null
+  private timeoutHandle: ReturnType<typeof setTimeout>Timeout | null = null
   private isProcessing: boolean = false
   private processingQueue: Array<{
     items: T[]

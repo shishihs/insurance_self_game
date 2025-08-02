@@ -641,9 +641,9 @@ export class AdvancedInputValidator {
     const warnings: string[] = []
 
     // プロトタイプ汚染チェック
-    if (value.hasOwnProperty('__proto__') || 
-        value.hasOwnProperty('constructor') || 
-        value.hasOwnProperty('prototype')) {
+    if (Object.prototype.hasOwnProperty.call(value, '__proto__') || 
+        Object.prototype.hasOwnProperty.call(value, 'constructor') || 
+        Object.prototype.hasOwnProperty.call(value, 'prototype')) {
       errors.push('Potential prototype pollution detected')
     }
 
@@ -844,7 +844,7 @@ export class AdvancedInputValidator {
 
     let maxDepth = depth
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const childDepth = this.calculateObjectDepth(obj[key], depth + 1)
         maxDepth = Math.max(maxDepth, childDepth)
       }

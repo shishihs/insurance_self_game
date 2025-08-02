@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <form @submit.prevent="submitBugReport" class="bug-report-form">
+    <form class="bug-report-form" @submit.prevent="submitBugReport">
       <!-- クイック分類 -->
       <div class="form-section">
         <h4 class="section-title">問題の種類</h4>
@@ -20,17 +20,17 @@
             v-for="category in bugCategories"
             :key="category.id"
             type="button"
-            @click="selectCategory(category)"
             class="category-btn"
             :class="{ selected: selectedCategory?.id === category.id }"
             :aria-describedby="`category-${category.id}-desc`"
+            @click="selectCategory(category)"
           >
             <div class="category-icon" :style="{ backgroundColor: category.color }">
               {{ category.icon }}
             </div>
             <div class="category-content">
               <div class="category-title">{{ category.title }}</div>
-              <div class="category-description" :id="`category-${category.id}-desc`">
+              <div :id="`category-${category.id}-desc`" class="category-description">
                 {{ category.description }}
               </div>
             </div>
@@ -104,17 +104,17 @@
           <div class="helper-tabs">
             <button
               type="button"
-              @click="stepsInputMode = 'manual'"
               class="helper-tab"
               :class="{ active: stepsInputMode === 'manual' }"
+              @click="stepsInputMode = 'manual'"
             >
               手動入力
             </button>
             <button
               type="button"
-              @click="stepsInputMode = 'guided'"
               class="helper-tab"
               :class="{ active: stepsInputMode === 'guided' }"
+              @click="stepsInputMode = 'guided'"
             >
               ステップ形式
             </button>
@@ -149,9 +149,9 @@
                 <button
                   v-if="guidedSteps.length > 1"
                   type="button"
-                  @click="removeStep(index)"
                   class="remove-step-btn"
                   aria-label="このステップを削除"
+                  @click="removeStep(index)"
                 >
                   ×
                 </button>
@@ -159,9 +159,9 @@
             </div>
             <button
               type="button"
-              @click="addStep"
               class="add-step-btn"
               :disabled="guidedSteps.length >= 10"
+              @click="addStep"
             >
               + ステップを追加
             </button>
@@ -205,8 +205,8 @@
             class="frequency-option"
           >
             <input
-              type="radio"
               v-model="formData.reproductionRate"
+              type="radio"
               :value="freq.value"
               class="frequency-radio"
               required
@@ -239,9 +239,9 @@
             <div class="screenshot-actions">
               <button
                 type="button"
-                @click="captureScreenshot"
                 class="capture-btn"
                 :disabled="isCapturing"
+                @click="captureScreenshot"
               >
                 <span v-if="isCapturing">撮影中...</span>
                 <span v-else>📸 画面を撮影</span>
@@ -250,14 +250,14 @@
                 ref="fileInput"
                 type="file"
                 accept="image/*"
-                @change="handleFileUpload"
                 class="file-input"
                 style="display: none"
+                @change="handleFileUpload"
               />
               <button
                 type="button"
-                @click="$refs.fileInput?.click()"
                 class="upload-btn"
+                @click="$refs.fileInput?.click()"
               >
                 📁 ファイルを選択
               </button>
@@ -282,9 +282,9 @@
               </div>
               <button
                 type="button"
-                @click="removeScreenshot(index)"
                 class="remove-screenshot-btn"
                 aria-label="スクリーンショットを削除"
+                @click="removeScreenshot(index)"
               >
                 ×
               </button>
@@ -307,8 +307,8 @@
           <div class="system-info-toggle">
             <label class="toggle-label">
               <input
-                type="checkbox"
                 v-model="includeSystemInfo"
+                type="checkbox"
                 class="toggle-checkbox"
               />
               <span class="toggle-slider"></span>
@@ -342,8 +342,8 @@
         <div class="contact-toggle">
           <label class="toggle-label">
             <input
-              type="checkbox"
               v-model="provideContact"
+              type="checkbox"
               class="toggle-checkbox"
             />
             <span class="toggle-slider"></span>
@@ -383,8 +383,8 @@
       <div class="form-actions">
         <button
           type="button"
-          @click="resetForm"
           class="btn-secondary"
+          @click="resetForm"
         >
           リセット
         </button>
@@ -403,7 +403,7 @@
     <div v-if="previewImageUrl" class="image-preview-modal" @click="closeImagePreview">
       <div class="preview-content" @click.stop>
         <img :src="previewImageUrl" alt="プレビュー画像" class="preview-image" />
-        <button @click="closeImagePreview" class="close-preview-btn">×</button>
+        <button class="close-preview-btn" @click="closeImagePreview">×</button>
       </div>
     </div>
 
@@ -421,10 +421,10 @@
           </p>
         </div>
         <div class="success-actions">
-          <button @click="createAnotherReport" class="btn-secondary">
+          <button class="btn-secondary" @click="createAnotherReport">
             別のバグを報告
           </button>
-          <button @click="closeReporter" class="btn-primary">
+          <button class="btn-primary" @click="closeReporter">
             閉じる
           </button>
         </div>
@@ -440,7 +440,7 @@
         <div class="toast-title">{{ toastTitle }}</div>
         <div class="toast-message">{{ toastMessage }}</div>
       </div>
-      <button @click="showToast = false" class="toast-close">×</button>
+      <button class="toast-close" @click="showToast = false">×</button>
     </div>
   </div>
 </template>

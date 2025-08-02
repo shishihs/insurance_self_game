@@ -16,7 +16,7 @@ import type { GameConfig } from '../../domain/types/game.types'
  * - イベントリスナーのメモリリーク
  */
 describe('パフォーマンス・メモリリークテスト', () => {
-  let initialMemory: NodeJS.MemoryUsage
+  let initialMemory: ReturnType<typeof setTimeout>MemoryUsage
   let games: Game[]
   let services: GameApplicationService[]
 

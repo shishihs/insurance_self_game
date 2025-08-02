@@ -3,11 +3,11 @@
     <!-- フローティングアクションボタン -->
     <button
       v-if="!isExpanded"
-      @click="expand"
       class="feedback-fab"
       :class="{ 'has-notifications': hasUnreadNotifications }"
       aria-label="フィードバックを送信"
       title="フィードバック・レビュー・バグ報告"
+      @click="expand"
     >
       <div class="fab-icon">💬</div>
       <div v-if="hasUnreadNotifications" class="notification-badge">
@@ -20,9 +20,9 @@
       <div class="menu-header">
         <h3 class="menu-title">フィードバック</h3>
         <button
-          @click="collapse"
           class="menu-close-btn"
           aria-label="メニューを閉じる"
+          @click="collapse"
         >
           ×
         </button>
@@ -34,9 +34,9 @@
           <button
             v-for="action in quickActions"
             :key="action.id"
-            @click="handleQuickAction(action)"
             class="quick-action-btn"
             :class="{ 'high-priority': action.priority === 'high' }"
+            @click="handleQuickAction(action)"
           >
             <div class="action-icon" :style="{ color: action.color }">
               {{ action.icon }}
@@ -127,9 +127,9 @@
       v-if="showReviewModal"
       :mode="reviewMode"
       :game-state="gameContext"
+      class="review-modal"
       @review-submitted="handleReviewSubmitted"
       @mode-changed="reviewMode = $event"
-      class="review-modal"
     />
 
     <div v-if="showBugReporter" class="bug-reporter-modal">
@@ -151,7 +151,7 @@
         <div class="toast-title">{{ toastTitle }}</div>
         <div class="toast-message">{{ toastMessage }}</div>
       </div>
-      <button @click="hideToast" class="toast-close">×</button>
+      <button class="toast-close" @click="hideToast">×</button>
     </div>
   </div>
 </template>

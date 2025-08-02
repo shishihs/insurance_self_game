@@ -252,9 +252,9 @@ watch(() => settings.value, () => {
         <div class="modal-header">
           <h2 id="accessibility-title">アクセシビリティ設定</h2>
           <button 
-            @click="emit('close')"
             class="close-button"
             aria-label="設定を閉じる"
+            @click="emit('close')"
           >
             <span aria-hidden="true">×</span>
           </button>
@@ -284,9 +284,9 @@ watch(() => settings.value, () => {
                 <option value="achromatopsia">全色覚異常</option>
               </select>
               <button 
-                @click="previewSettings('colorScheme', settings.colorScheme)"
                 class="preview-button"
                 aria-label="色覚設定をプレビュー"
+                @click="previewSettings('colorScheme', settings.colorScheme)"
               >
                 プレビュー
               </button>
@@ -296,8 +296,8 @@ watch(() => settings.value, () => {
               <label for="high-contrast">
                 <input 
                   id="high-contrast"
-                  type="checkbox"
                   v-model="settings.highContrast"
+                  type="checkbox"
                   @change="saveSettings"
                 >
                 ハイコントラストモード
@@ -330,8 +330,8 @@ watch(() => settings.value, () => {
               <label for="reduce-motion">
                 <input 
                   id="reduce-motion"
-                  type="checkbox"
                   v-model="settings.reduceMotion"
+                  type="checkbox"
                   @change="saveSettings"
                 >
                 モーションを削減
@@ -341,15 +341,15 @@ watch(() => settings.value, () => {
               </span>
             </div>
             
-            <div class="setting-item" v-if="!settings.reduceMotion">
+            <div v-if="!settings.reduceMotion" class="setting-item">
               <label for="animation-speed">アニメーション速度</label>
               <input 
                 id="animation-speed"
+                v-model.number="settings.animationSpeed"
                 type="range"
                 min="0.1"
                 max="2.0"
                 step="0.1"
-                v-model.number="settings.animationSpeed"
                 @change="saveSettings"
               >
               <span class="range-value">{{ settings.animationSpeed }}x</span>
@@ -364,8 +364,8 @@ watch(() => settings.value, () => {
               <label for="screen-reader">
                 <input 
                   id="screen-reader"
-                  type="checkbox"
                   v-model="settings.screenReaderEnabled"
+                  type="checkbox"
                   @change="saveSettings"
                 >
                 スクリーンリーダー対応を有効化
@@ -376,8 +376,8 @@ watch(() => settings.value, () => {
               <label for="audio-descriptions">
                 <input 
                   id="audio-descriptions"
-                  type="checkbox"
                   v-model="settings.audioDescriptions"
+                  type="checkbox"
                   @change="saveSettings"
                 >
                 音声説明を有効化
@@ -388,11 +388,11 @@ watch(() => settings.value, () => {
               <label for="sound-volume">効果音の音量</label>
               <input 
                 id="sound-volume"
+                v-model.number="settings.soundEffectsVolume"
                 type="range"
                 min="0"
                 max="100"
                 step="5"
-                v-model.number="settings.soundEffectsVolume"
                 @change="saveSettings"
               >
               <span class="range-value">{{ settings.soundEffectsVolume }}%</span>
@@ -407,8 +407,8 @@ watch(() => settings.value, () => {
               <label for="sticky-keys">
                 <input 
                   id="sticky-keys"
-                  type="checkbox"
                   v-model="settings.stickyKeys"
+                  type="checkbox"
                   @change="saveSettings"
                 >
                 スティッキーキー
@@ -435,16 +435,16 @@ watch(() => settings.value, () => {
         
         <div class="modal-footer">
           <button 
-            @click="resetSettings"
             class="reset-button"
             aria-label="すべての設定をリセット"
+            @click="resetSettings"
           >
             設定をリセット
           </button>
           <button 
-            @click="emit('close')"
             class="save-button"
             aria-label="設定を保存して閉じる"
+            @click="emit('close')"
           >
             保存して閉じる
           </button>

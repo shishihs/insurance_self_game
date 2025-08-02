@@ -1,18 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { GameAnalytics } from '@/analytics/GameAnalytics'
 import { TestDataGenerator, PerformanceTestHelper, StatisticalTestHelper } from '../utils/TestHelpers'
-import type { GameConfig, PlayerStats } from '@/domain/types/game.types'
+import type { GameConfig } from '@/domain/types/game.types'
 import type { GameResultSummary } from '@/benchmark/MassiveBenchmark'
 import type { GameStage } from '@/domain/types/card.types'
 
 describe('Game Analytics Deep Tests', () => {
   let gameAnalytics: GameAnalytics
-  let testConfig: GameConfig
+  let _testConfig: GameConfig
   let mockGameData: GameResultSummary[]
 
   beforeEach(() => {
     TestDataGenerator.setSeed(12345)
-    testConfig = TestDataGenerator.createTestGameConfig()
+    _testConfig = TestDataGenerator.createTestGameConfig()
     gameAnalytics = new GameAnalytics()
     
     // Generate mock game data for analysis

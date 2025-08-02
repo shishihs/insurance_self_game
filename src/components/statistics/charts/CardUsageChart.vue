@@ -2,7 +2,7 @@
   <div class="chart-wrapper">
     <h3 class="chart-title">🃏 カード使用統計</h3>
     <div class="chart-controls">
-      <select v-model="viewMode" @change="updateChart" class="mode-selector">
+      <select v-model="viewMode" class="mode-selector" @change="updateChart">
         <option value="type">カード種別</option>
         <option value="frequency">使用頻度</option>
         <option value="effectiveness">効果別</option>

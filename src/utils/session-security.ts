@@ -431,7 +431,7 @@ export class SessionManager {
         ctx.fillText('Device fingerprint', 2, 2)
         components.push(canvas.toDataURL())
       }
-    } catch (error) {
+    } catch {
       // Canvas 操作が失敗した場合はスキップ
     }
 
@@ -565,7 +565,7 @@ export class SessionManager {
     const deviceTypes: Record<string, number> = {}
     const userSessionCounts = new Map<string, number>()
 
-    for (const [sessionId, session] of this.activeSessions.entries()) {
+    for (const [_sessionId, session] of this.activeSessions.entries()) {
       if (session.isActive) {
         totalDuration += now.getTime() - session.createdAt.getTime()
 

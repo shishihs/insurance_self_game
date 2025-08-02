@@ -1,10 +1,10 @@
 <template>
-  <div class="game-state-transitions" ref="containerRef">
+  <div ref="containerRef" class="game-state-transitions">
     <!-- メイン状態コンテナ -->
     <div 
+      ref="stateContainer"
       class="state-container"
       :class="currentStateClass"
-      ref="stateContainer"
     >
       <Transition
         :name="transitionName"
@@ -22,12 +22,12 @@
     </div>
 
     <!-- オーバーレイエフェクト -->
-    <div class="overlay-effects" ref="overlayRef">
+    <div ref="overlayRef" class="overlay-effects">
       <!-- フェーズ変更時のオーバーレイ -->
       <div 
+        ref="phaseOverlayRef"
         class="phase-overlay"
         :class="{ active: showPhaseOverlay }"
-        ref="phaseOverlayRef"
       >
         <div class="phase-content">
           <h2 class="phase-title">{{ phaseTitle }}</h2>
@@ -37,9 +37,9 @@
 
       <!-- 勝利/敗北オーバーレイ -->
       <div 
+        ref="resultOverlayRef"
         class="result-overlay"
         :class="[{ active: showResultOverlay }, resultType]"
-        ref="resultOverlayRef"
       >
         <div class="result-content">
           <div class="result-icon">{{ resultIcon }}</div>
@@ -50,9 +50,9 @@
 
       <!-- レベル進行オーバーレイ -->
       <div 
+        ref="levelOverlayRef"
         class="level-overlay"
         :class="{ active: showLevelOverlay }"
-        ref="levelOverlayRef"
       >
         <div class="level-content">
           <div class="level-badge">
@@ -70,7 +70,7 @@
     </div>
 
     <!-- パーティクルシステム -->
-    <div class="particle-system" ref="particleSystemRef"></div>
+    <div ref="particleSystemRef" class="particle-system"></div>
   </div>
 </template>
 

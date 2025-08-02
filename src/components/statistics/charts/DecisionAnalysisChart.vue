@@ -2,7 +2,7 @@
   <div class="chart-wrapper">
     <h3 class="chart-title">⏱️ 決定時間分析</h3>
     <div class="chart-controls">
-      <select v-model="analysisMode" @change="updateChart" class="mode-selector">
+      <select v-model="analysisMode" class="mode-selector" @change="updateChart">
         <option value="timeline">時系列変化</option>
         <option value="distribution">分布分析</option>
         <option value="average">平均推移</option>

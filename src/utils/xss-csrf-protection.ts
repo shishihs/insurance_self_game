@@ -7,6 +7,39 @@ import { sanitizeInput } from './security'
 import { SecurityMonitor } from './security-extensions'
 
 /**
+ * セキュアなCSRFトークン生成関数
+ */
+function generateCSRFToken(): string {
+  // ブラウザ環境でのセキュアなランダム値生成
+  const array = new Uint8Array(32)
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(array)
+  } else {
+    // フォールバック：Math.randomを使用（テスト環境用）
+    for (let i = 0; i < array.length; i++) {
+      array[i] = Math.floor(Math.random() * 256)
+    }
+  }
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * CSRFトークンの検証関数
+ */
+function validateCSRFToken(token: string, expectedToken: string): boolean {
+  if (!token || !expectedToken || token.length !== expectedToken.length) {
+    return false
+  }
+  
+  // タイミング攻撃防止のための定数時間比較
+  let result = 0
+  for (let i = 0; i < token.length; i++) {
+    result |= token.charCodeAt(i) ^ expectedToken.charCodeAt(i)
+  }
+  return result === 0
+}
+
+/**
  * XSS攻撃防止のための包括的対策
  */
 export class XSSProtection {
@@ -81,11 +114,11 @@ export class XSSProtection {
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r')
       .replace(/\t/g, '\\t')
-      .replace(/\u0008/g, '\\b')
+      .replace(/[\u0008]/g, '\\b')
       .replace(/\f/g, '\\f')
       .replace(/\v/g, '\\v')
-      .replace(/\0/g, '\\0')
-      .replace(/[\u0000-\u001f\u007f-\u009f]/g, (match) => {
+      .replace(/[\u0000]/g, '\\0')
+      .replace(/[\u0001-\u001f\u007f-\u009f]/g, (match) => {
         return `\\u${  (`0000${  match.charCodeAt(0).toString(16)}`).slice(-4)}`
       })
   }

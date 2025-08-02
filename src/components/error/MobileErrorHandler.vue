@@ -142,8 +142,8 @@ const reloadPage = () => {
         <button
           v-for="action in errorConfig.actions"
           :key="action.label"
-          @click="handleAction(action.action)"
           :class="['action-btn', { 'action-btn--primary': action.primary }]"
+          @click="handleAction(action.action)"
         >
           {{ action.label }}
         </button>
@@ -164,7 +164,7 @@ const reloadPage = () => {
               {{ step }}
             </li>
           </ol>
-          <button @click="reloadPage" class="action-btn action-btn--text">
+          <button class="action-btn action-btn--text" @click="reloadPage">
             ページを強制的に再読み込み
           </button>
         </div>

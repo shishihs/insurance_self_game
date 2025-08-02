@@ -2,7 +2,7 @@
   <div class="chart-wrapper">
     <h3 class="chart-title">🎮 ゲーム進行履歴</h3>
     <div class="chart-controls">
-      <select v-model="chartPeriod" @change="updateChart" class="period-selector">
+      <select v-model="chartPeriod" class="period-selector" @change="updateChart">
         <option value="week">過去1週間</option>
         <option value="month">過去1ヶ月</option>
         <option value="quarter">過去3ヶ月</option>

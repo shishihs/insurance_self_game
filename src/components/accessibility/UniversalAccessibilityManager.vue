@@ -18,9 +18,9 @@
       <div class="voice-indicator-pulse"></div>
       <span>音声認識中...</span>
       <button 
-        @click="stopVoiceControl"
         class="voice-stop-btn"
         aria-label="音声認識を停止"
+        @click="stopVoiceControl"
       >
         停止
       </button>
@@ -42,60 +42,60 @@
     </div>
     
     <!-- フローティングアクセシビリティボタン -->
-    <div class="accessibility-fab" v-if="showFloatingButton">
+    <div v-if="showFloatingButton" class="accessibility-fab">
       <button
-        @click="toggleAccessibilityMenu"
         class="fab-trigger"
         :aria-expanded="showFabMenu"
         aria-label="アクセシビリティメニューを開く"
+        @click="toggleAccessibilityMenu"
       >
         <Icon name="accessibility" />
       </button>
       
       <div v-if="showFabMenu" class="fab-menu" role="menu">
         <button 
-          @click="toggleVoiceControl"
           class="fab-option"
           role="menuitem"
           :aria-pressed="voiceControlEnabled"
+          @click="toggleVoiceControl"
         >
           <Icon name="mic" />
           音声操作
         </button>
         
         <button 
-          @click="toggleHighContrast"
           class="fab-option"
           role="menuitem"
           :aria-pressed="highContrastMode"
+          @click="toggleHighContrast"
         >
           <Icon name="contrast" />
           ハイコントラスト
         </button>
         
         <button 
-          @click="toggleReducedMotion"
           class="fab-option"
           role="menuitem"
           :aria-pressed="reducedMotionMode"
+          @click="toggleReducedMotion"
         >
           <Icon name="motion" />
           モーション削減
         </button>
         
         <button 
-          @click="openSettings"
           class="fab-option"
           role="menuitem"
+          @click="openSettings"
         >
           <Icon name="settings" />
           詳細設定
         </button>
         
         <button 
-          @click="startAccessibilityTour"
           class="fab-option"
           role="menuitem"
+          @click="startAccessibilityTour"
         >
           <Icon name="help" />
           使い方ツアー
@@ -115,31 +115,31 @@
         <p>画面の内容が見づらい、または操作が困難な場合は、以下のオプションをお試しください。</p>
         
         <div class="emergency-options">
-          <button @click="activateMaximumAccessibility" class="emergency-btn">
+          <button class="emergency-btn" @click="activateMaximumAccessibility">
             <Icon name="accessibility-max" />
             最大アクセシビリティモード
           </button>
           
-          <button @click="activateSimpleMode" class="emergency-btn">
+          <button class="emergency-btn" @click="activateSimpleMode">
             <Icon name="simplify" />
             シンプルモード
           </button>
           
-          <button @click="activateVoiceOnlyMode" class="emergency-btn">
+          <button class="emergency-btn" @click="activateVoiceOnlyMode">
             <Icon name="volume-up" />
             音声専用モード
           </button>
           
-          <button @click="resetToDefault" class="emergency-btn">
+          <button class="emergency-btn" @click="resetToDefault">
             <Icon name="refresh" />
             デフォルトに戻す
           </button>
         </div>
         
         <button 
-          @click="exitEmergencyMode"
           class="emergency-close"
           aria-label="緊急モードを終了"
+          @click="exitEmergencyMode"
         >
           閉じる
         </button>
@@ -147,7 +147,7 @@
     </div>
     
     <!-- スクリーンリーダー用の追加情報 -->
-    <div class="sr-only" aria-live="polite" ref="announcements"></div>
+    <div ref="announcements" class="sr-only" aria-live="polite"></div>
     
     <!-- アクセシビリティツアーオーバーレイ -->
     <AccessibilityTour

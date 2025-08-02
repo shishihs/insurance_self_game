@@ -186,9 +186,9 @@ defineExpose({
         <div class="hints-header">
           <h3 class="hints-title">キーボードショートカット</h3>
           <button 
-            @click="hideKeyboardHints"
             class="hints-close"
             aria-label="ヒントを閉じる"
+            @click="hideKeyboardHints"
           >
             ×
           </button>

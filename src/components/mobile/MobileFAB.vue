@@ -88,8 +88,8 @@ const handleBackdropClick = () => {
       <div
         v-if="isExpanded"
         class="fab-backdrop"
-        @click="handleBackdropClick"
         :aria-hidden="true"
+        @click="handleBackdropClick"
       ></div>
     </Transition>
     
@@ -107,12 +107,12 @@ const handleBackdropClick = () => {
           v-show="isExpanded"
           :key="action.id"
           :class="['fab-action', `fab-action-${index}`]"
-          @click="handleActionClick(action.id)"
           :aria-label="action.label"
           :style="{
             transitionDelay: isExpanded ? `${index * 50}ms` : `${(actions.length - index - 1) * 50}ms`,
             '--action-color': action.color || 'var(--primary-light)'
           }"
+          @click="handleActionClick(action.id)"
         >
           <span class="fab-action-icon">{{ action.icon }}</span>
           <span class="fab-action-label">{{ action.label }}</span>
@@ -122,15 +122,15 @@ const handleBackdropClick = () => {
       <!-- メインボタン -->
       <button
         :class="['fab-main', { 'is-expanded': isExpanded }]"
-        @click="handleMainClick"
         :aria-label="mainLabel || 'アクション'"
         :aria-expanded="isExpanded"
+        @click="handleMainClick"
       >
         <Transition name="icon-rotate" mode="out-in">
-          <span v-if="!isExpanded" class="fab-main-icon" key="main">
+          <span v-if="!isExpanded" key="main" class="fab-main-icon">
             {{ mainIcon || '➕' }}
           </span>
-          <span v-else class="fab-main-icon" key="close">
+          <span v-else key="close" class="fab-main-icon">
             ✕
           </span>
         </Transition>

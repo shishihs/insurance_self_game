@@ -1,7 +1,7 @@
 <template>
   <div 
-    class="interactive-elements"
     ref="containerRef"
+    class="interactive-elements"
     :class="{ 
       'touch-enabled': touchEnabled,
       'performance-mode': performanceMode,
@@ -9,41 +9,41 @@
     }"
   >
     <!-- ドラッグ可能な要素のコンテナ -->
-    <div class="draggable-container" ref="draggableContainer">
+    <div ref="draggableContainer" class="draggable-container">
       <slot name="draggable" />
     </div>
 
     <!-- ドロップゾーンのコンテナ -->
-    <div class="drop-zones-container" ref="dropZonesContainer">
+    <div ref="dropZonesContainer" class="drop-zones-container">
       <slot name="drop-zones" />
     </div>
 
     <!-- ビジュアルフィードバック用のオーバーレイ -->
-    <div class="feedback-overlay" ref="feedbackOverlay">
+    <div ref="feedbackOverlay" class="feedback-overlay">
       <!-- ドラッグ中のゴーストイメージ -->
       <div 
-        class="drag-ghost"
-        ref="dragGhost"
-        :style="ghostStyle"
         v-show="isDragging"
+        ref="dragGhost"
+        class="drag-ghost"
+        :style="ghostStyle"
       >
-        <div class="ghost-content" ref="ghostContent"></div>
+        <div ref="ghostContent" class="ghost-content"></div>
       </div>
 
       <!-- ドロップ予測の表示 -->
       <div 
-        class="drop-preview"
         ref="dropPreview"
+        class="drop-preview"
         :class="{ active: showDropPreview, valid: isValidDrop }"
         :style="dropPreviewStyle"
       ></div>
 
       <!-- ホバーエフェクト -->
       <div 
-        class="hover-indicator"
-        ref="hoverIndicator"
-        :style="hoverStyle"
         v-show="showHoverIndicator"
+        ref="hoverIndicator"
+        class="hover-indicator"
+        :style="hoverStyle"
       ></div>
     </div>
   </div>

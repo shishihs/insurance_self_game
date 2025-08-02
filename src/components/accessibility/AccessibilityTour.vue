@@ -18,7 +18,7 @@
       </div>
 
       <!-- ツアーステップ -->
-      <div class="tour-step" :key="currentStep">
+      <div :key="currentStep" class="tour-step">
         <div class="step-content">
           <!-- ステップアイコン -->
           <div class="step-icon">
@@ -79,27 +79,27 @@
         <!-- ステップナビゲーション -->
         <div class="step-navigation">
           <button 
-            @click="previousStep"
             :disabled="currentStep === 1"
             class="nav-btn prev-btn"
             aria-label="前のステップ"
+            @click="previousStep"
           >
             <Icon name="arrow-left" />
             前へ
           </button>
           
           <button 
-            @click="skipTour"
             class="nav-btn skip-btn"
+            @click="skipTour"
           >
             スキップ
           </button>
           
           <button 
-            @click="nextStep"
             :disabled="!canProceed"
             class="nav-btn next-btn"
             :aria-label="isLastStep ? 'ツアーを完了' : '次のステップ'"
+            @click="nextStep"
           >
             {{ isLastStep ? '完了' : '次へ' }}
             <Icon :name="isLastStep ? 'check' : 'arrow-right'" />
@@ -110,15 +110,15 @@
 
     <!-- 閉じるボタン -->
     <button 
-      @click="closeTour"
       class="tour-close"
       aria-label="ツアーを閉じる"
+      @click="closeTour"
     >
       <Icon name="close" />
     </button>
 
     <!-- スクリーンリーダー用の追加情報 -->
-    <div class="sr-only" aria-live="polite" ref="announcements"></div>
+    <div ref="announcements" class="sr-only" aria-live="polite"></div>
   </div>
 </template>
 

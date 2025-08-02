@@ -278,9 +278,9 @@ defineExpose({
           'is-active': index === currentIndex,
           'is-disabled': item.disabled 
         }"
-        @click="handleIndicatorClick(index)"
         :aria-label="`${item.label}に移動`"
         :disabled="item.disabled"
+        @click="handleIndicatorClick(index)"
       >
         <span class="indicator-dot"></span>
       </button>
@@ -289,9 +289,9 @@ defineExpose({
     <!-- スワイプヒント（最初のアイテムでのみ表示） -->
     <div v-if="currentIndex === 0 && items.length > 1" class="swipe-hint">
       <div class="hint-arrows">
-        <span class="hint-arrow left" v-if="canSwipeLeft">←</span>
+        <span v-if="canSwipeLeft" class="hint-arrow left">←</span>
         <span class="hint-text">スワイプで切り替え</span>
-        <span class="hint-arrow right" v-if="canSwipeRight">→</span>
+        <span v-if="canSwipeRight" class="hint-arrow right">→</span>
       </div>
     </div>
   </div>

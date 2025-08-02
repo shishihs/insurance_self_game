@@ -5,7 +5,7 @@
       <canvas ref="chartCanvas"></canvas>
     </div>
     <div class="analysis-summary">
-      <div class="summary-item" v-for="(count, stage) in data" :key="stage">
+      <div v-for="(count, stage) in data" :key="stage" class="summary-item">
         <div class="stage-icon">{{ getStageIcon(stage) }}</div>
         <div class="stage-info">
           <div class="stage-name">{{ getStageLabel(stage) }}</div>

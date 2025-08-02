@@ -22,40 +22,40 @@
     <!-- Game Controls -->
     <div class="game-controls">
       <button 
-        @click="handleStartGame"
         :disabled="!canStartGame || isLoading"
         class="btn btn-primary"
+        @click="handleStartGame"
       >
         {{ canStartGame ? 'Start New Game' : 'Game In Progress' }}
       </button>
       
       <button 
-        @click="handlePauseGame"
         :disabled="!canPauseGame || isLoading"
         class="btn btn-secondary"
+        @click="handlePauseGame"
       >
         Pause Game
       </button>
       
       <button 
-        @click="handleResumeGame"
         :disabled="!canResumeGame || isLoading"
         class="btn btn-secondary"
+        @click="handleResumeGame"
       >
         Resume Game
       </button>
       
       <button 
-        @click="handleEndGame"
         :disabled="!state.isActive || isLoading"
         class="btn btn-danger"
+        @click="handleEndGame"
       >
         End Game
       </button>
     </div>
 
     <!-- Card Management -->
-    <div class="card-section" v-if="state.isActive">
+    <div v-if="state.isActive" class="card-section">
       <h3>Your Hand ({{ cardState.handSize }}/{{ maxHandSize }})</h3>
       
       <div class="hand">
@@ -87,60 +87,60 @@
 
       <div class="card-actions">
         <button 
-          @click="handleDrawCards"
           :disabled="!cardState.canDrawCards || isLoading"
           class="btn btn-primary"
+          @click="handleDrawCards"
         >
           Draw Cards
         </button>
         
         <button 
-          @click="handlePlaySelectedCards"
           :disabled="!cardState.canPlayCards || isLoading"
           class="btn btn-success"
+          @click="handlePlaySelectedCards"
         >
           Play Selected ({{ cardState.selectedCount }})
         </button>
         
         <button 
-          @click="cardActions.clearSelection"
           :disabled="cardState.selectedCount === 0"
           class="btn btn-secondary"
+          @click="cardActions.clearSelection"
         >
           Clear Selection
         </button>
       </div>
 
-      <div class="power-display" v-if="cardState.selectedCount > 0">
+      <div v-if="cardState.selectedCount > 0" class="power-display">
         <strong>Total Power: {{ cardState.totalCardPower }}</strong>
       </div>
     </div>
 
     <!-- Game Actions -->
-    <div class="game-actions" v-if="state.isActive">
+    <div v-if="state.isActive" class="game-actions">
       <h3>Game Actions</h3>
       
       <div class="action-buttons">
         <button 
-          @click="handleApplyDamage"
           :disabled="isLoading"
           class="btn btn-warning"
+          @click="handleApplyDamage"
         >
           Apply Damage (10)
         </button>
         
         <button 
-          @click="handleHeal"
           :disabled="isLoading"
           class="btn btn-success"
+          @click="handleHeal"
         >
           Heal (10)
         </button>
         
         <button 
-          @click="handleNextTurn"
           :disabled="isLoading"
           class="btn btn-primary"
+          @click="handleNextTurn"
         >
           Next Turn
         </button>
@@ -150,7 +150,7 @@
     <!-- Error Display -->
     <div v-if="error" class="error-message">
       <strong>Error:</strong> {{ error }}
-      <button @click="clearError" class="btn btn-small">×</button>
+      <button class="btn btn-small" @click="clearError">×</button>
     </div>
 
     <!-- Loading State -->
@@ -160,7 +160,7 @@
     </div>
 
     <!-- Game Events Log -->
-    <div class="events-log" v-if="events.length > 0">
+    <div v-if="events.length > 0" class="events-log">
       <h3>Game Events</h3>
       <div class="events-list">
         <div 

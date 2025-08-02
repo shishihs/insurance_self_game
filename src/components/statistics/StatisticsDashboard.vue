@@ -7,22 +7,22 @@
         プレイヤー統計ダッシュボード
       </h2>
       <div class="header-controls">
-        <button @click="refreshData" class="refresh-btn" :disabled="loading">
+        <button class="refresh-btn" :disabled="loading" @click="refreshData">
           <span class="icon">🔄</span>
           {{ loading ? '更新中...' : '更新' }}
         </button>
-        <button @click="exportData" class="export-btn">
+        <button class="export-btn" @click="exportData">
           <span class="icon">💾</span>
           エクスポート
         </button>
-        <button @click="$emit('close')" class="close-btn">
+        <button class="close-btn" @click="$emit('close')">
           <span class="icon">✕</span>
         </button>
       </div>
     </div>
 
     <!-- フィルターコントロール -->
-    <div class="filter-section" v-if="showFilters">
+    <div v-if="showFilters" class="filter-section">
       <div class="filter-row">
         <div class="filter-group">
           <label>期間</label>
@@ -59,8 +59,8 @@
       <button 
         v-for="tab in tabs" 
         :key="tab.key"
-        @click="activeTab = tab.key"
         :class="['tab-button', { active: activeTab === tab.key }]"
+        @click="activeTab = tab.key"
       >
         <span class="icon">{{ tab.icon }}</span>
         {{ tab.label }}
@@ -68,7 +68,7 @@
     </div>
 
     <!-- メインコンテンツ -->
-    <div class="dashboard-content" v-if="!loading">
+    <div v-if="!loading" class="dashboard-content">
       <!-- 概要タブ -->
       <div v-if="activeTab === 'overview'" class="tab-content">
         <div class="stats-grid">
@@ -134,7 +134,7 @@
 
       <!-- リアルタイムタブ -->
       <div v-if="activeTab === 'realtime'" class="tab-content">
-        <div class="realtime-section" v-if="realtimeData">
+        <div v-if="realtimeData" class="realtime-section">
           <div class="realtime-header">
             <h3>現在のセッション</h3>
             <div class="session-info">

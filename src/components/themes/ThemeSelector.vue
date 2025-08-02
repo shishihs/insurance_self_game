@@ -5,10 +5,10 @@
       ref="triggerRef"
       class="theme-trigger"
       :class="{ 'active': isExpanded }"
-      @click="toggleExpanded"
       :aria-label="$t('theme.selector.label', 'テーマを選択')"
       :aria-expanded="isExpanded"
       aria-haspopup="true"
+      @click="toggleExpanded"
     >
       <div class="current-theme-preview">
         <div class="theme-color-dots">
@@ -49,9 +49,9 @@
             :key="theme.id"
             class="theme-option"
             :class="{ 'active': theme.id === currentTheme.id }"
-            @click="selectTheme(theme.id)"
             role="menuitem"
             :aria-selected="theme.id === currentTheme.id"
+            @click="selectTheme(theme.id)"
           >
             <div class="theme-preview">
               <div class="preview-background" :style="getPreviewBackgroundStyle(theme)" />
@@ -91,8 +91,8 @@
                 :key="size.value"
                 class="font-size-button"
                 :class="{ 'active': userPreferences.fontSize === size.value }"
-                @click="updateFontSize(size.value)"
                 :aria-label="size.label"
+                @click="updateFontSize(size.value)"
               >
                 {{ size.icon }}
               </button>
@@ -146,7 +146,7 @@
         </div>
 
         <!-- カスタムカラー -->
-        <div class="custom-colors" v-if="showCustomColors">
+        <div v-if="showCustomColors" class="custom-colors">
           <h3 class="settings-title">{{ $t('theme.customColors.title', 'カスタムカラー') }}</h3>
           <div class="color-inputs">
             <div 
@@ -161,8 +161,8 @@
                 :id="`color-${colorKey}`"
                 type="color"
                 :value="getCustomColor(colorKey)"
-                @input="updateCustomColor(colorKey, $event.target.value)"
                 class="color-input"
+                @input="updateCustomColor(colorKey, $event.target.value)"
               />
             </div>
           </div>

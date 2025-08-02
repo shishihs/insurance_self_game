@@ -3,13 +3,13 @@
     <h1>統計機能デモ</h1>
     
     <div class="demo-controls">
-      <button @click="generateSampleData" class="btn btn-primary">
+      <button class="btn btn-primary" @click="generateSampleData">
         サンプルデータ生成
       </button>
-      <button @click="clearData" class="btn btn-secondary">
+      <button class="btn btn-secondary" @click="clearData">
         データクリア
       </button>
-      <button @click="showDashboard = !showDashboard" class="btn btn-secondary">
+      <button class="btn btn-secondary" @click="showDashboard = !showDashboard">
         {{ showDashboard ? 'ダッシュボードを閉じる' : 'ダッシュボードを開く' }}
       </button>
     </div>

@@ -120,7 +120,7 @@ export interface PerformanceConfig {
 export class GamePerformanceAnalyzer {
   private metrics: PerformanceMetrics[]
   private config: PerformanceConfig
-  private samplingTimer: NodeJS.Timeout | null = null
+  private samplingTimer: ReturnType<typeof setTimeout>Timeout | null = null
   private gameStartTime: number = 0
   private initialMemory: number = 0
   private gcStats: { count: number; totalTime: number } = { count: 0, totalTime: 0 }
@@ -522,7 +522,7 @@ export class GamePerformanceAnalyzer {
     }
   }
 
-  private lastCpuUsage: NodeJS.CpuUsage | null = null
+  private lastCpuUsage: ReturnType<typeof setTimeout>CpuUsage | null = null
   private lastCpuTime: number = 0
 
   private getCpuUsage(): number {

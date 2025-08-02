@@ -109,7 +109,7 @@ export class MemoryProfiler {
   private startTime: number = 0
   private snapshots: MemorySnapshot[] = []
   private samplingInterval: number = 1000 // 1 second
-  private samplingTimer: NodeJS.Timeout | null = null
+  private samplingTimer: ReturnType<typeof setTimeout>Timeout | null = null
   private leakDetectionThreshold: number = 1 // 1MB per minute
   private maxSnapshots: number = 1000
   private heapDumpPath: string = './heap-dumps'
@@ -221,7 +221,7 @@ export class MemoryProfiler {
     }
 
     try {
-      const v8 = require('v8')
+      import v8 from 'v8'
       const heapSnapshot = v8.getHeapSnapshot()
       
       const dumpFilename = filename || `heap-dump-${this.sessionId}-${Date.now()}.heapsnapshot`
@@ -379,7 +379,7 @@ export class MemoryProfiler {
     
     let heapStats: HeapStatistics = {} as HeapStatistics
     try {
-      const v8 = require('v8')
+      import v8 from 'v8'
       heapStats = v8.getHeapStatistics()
     } catch (error) {
       // V8 heap stats not available

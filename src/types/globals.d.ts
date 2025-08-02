@@ -7,17 +7,17 @@ declare global {
       [key: string]: string | undefined
     }
     setMaxListeners?: (n: number) => void
-    memoryUsage: () => NodeJS.MemoryUsage
+    memoryUsage: () => ReturnType<typeof setTimeout>MemoryUsage
     listenerCount: (event: string) => number
     on: (event: string, listener: (...args: any[]) => void) => void
   }
 
   interface Window {
-    gtag?: (...args: any[]) => void
+    window.gtag?: (...args: any[]) => void
     dataLayer?: any[]
   }
 
-  function gtag(...args: any[]): void
+  function window.gtag(...args: any[]): void
   
   function generateCSRFToken(): string
   function validateCSRFToken(token: string): boolean

@@ -625,7 +625,7 @@ export class BenchmarkReporter {
     // Node.js環境での出力
     if (typeof require !== 'undefined') {
       try {
-        const fs = require('fs')
+        import fs from 'fs'
         fs.writeFileSync(filename, json)
         console.log(`📄 Benchmark results exported to ${filename}`)
       } catch (error) {

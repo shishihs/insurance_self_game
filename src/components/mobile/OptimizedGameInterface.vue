@@ -245,7 +245,7 @@ defineExpose({
     <!-- メインコンテンツエリア -->
     <div class="interface-content">
       <!-- デスクトップ用ナビゲーション（タブレット以上） -->
-      <div class="desktop-nav" v-if="!deviceInfo.isMobile">
+      <div v-if="!deviceInfo.isMobile" class="desktop-nav">
         <nav class="nav-tabs">
           <button
             v-for="section in sections"
@@ -269,8 +269,8 @@ defineExpose({
         :active-index="currentSectionIndex"
         :show-indicators="true"
         :show-preview="performanceMode === 'high'"
-        @change="handleSwipeChange"
         class="mobile-swipe-nav"
+        @change="handleSwipeChange"
       >
         <template #item="{ item, index, isActive }">
           <!-- セクションコンテンツをここでレンダリング -->
@@ -313,8 +313,8 @@ defineExpose({
       v-if="deviceInfo.isMobile && sections.length > 1"
       :items="navItems"
       :active-id="currentSection"
-      @select="handleNavSelect"
       class="interface-bottom-nav"
+      @select="handleNavSelect"
     />
     
     <!-- パフォーマンスインジケーター（開発時のみ） -->

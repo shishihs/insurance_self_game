@@ -14,7 +14,7 @@
         </h1>
         
         <!-- ゲーム統計（コンパクト表示） -->
-        <div class="game-stats" v-if="showStats">
+        <div v-if="showStats" class="game-stats">
           <div class="stat-item">
             <Icon name="heart" />
             <span :style="statTextStyles">{{ vitality }}</span>
@@ -23,7 +23,7 @@
             <Icon name="clock" />
             <span :style="statTextStyles">{{ turn }}</span>
           </div>
-          <div class="stat-item" v-if="containerState?.width && containerState.width > 480">
+          <div v-if="containerState?.width && containerState.width > 480" class="stat-item">
             <Icon name="cards" />
             <span :style="statTextStyles">{{ cardsInHand }}</span>
           </div>

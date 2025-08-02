@@ -25,7 +25,7 @@ export class TutorialManager {
   private highlightGraphics: any = null
   private overlayGraphics: any = null
   private tutorialUI: any = null
-  private stepChangeTimeout: NodeJS.Timeout | null = null
+  private stepChangeTimeout: ReturnType<typeof setTimeout>Timeout | null = null
   private highlightTween: any = null
 
   constructor(scene: any, options: TutorialManagerOptions = {}) {

@@ -8,15 +8,15 @@
     }"
   >
     <!-- カードアニメーション用のコンテナ -->
-    <div class="animation-layer" ref="animationLayer">
+    <div ref="animationLayer" class="animation-layer">
       <slot />
     </div>
     
     <!-- パーティクルエフェクト用のコンテナ -->
-    <div class="particle-layer" ref="particleLayer" />
+    <div ref="particleLayer" class="particle-layer" />
     
     <!-- グロウエフェクト用のコンテナ -->
-    <div class="effect-layer" ref="effectLayer" />
+    <div ref="effectLayer" class="effect-layer" />
   </div>
 </template>
 

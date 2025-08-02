@@ -158,7 +158,7 @@ function setupOptimizedSecurityEventListeners(): void {
     func: T,
     wait: number
   ): ((...args: Parameters<T>) => void) => {
-    let timeout: NodeJS.Timeout | null = null
+    let timeout: ReturnType<typeof setTimeout> | null = null
     return (...args: Parameters<T>) => {
       if (timeout) clearTimeout(timeout)
       timeout = setTimeout(() => func(...args), wait)
@@ -322,7 +322,7 @@ function startOptimizedPeriodicSecurityChecks(): void {
       // LocalStorage のサイズチェック
       let localStorageSize = 0
       for (const key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           localStorageSize += localStorage.getItem(key)?.length || 0
         }
       }

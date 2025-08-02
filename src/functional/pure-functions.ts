@@ -251,7 +251,7 @@ export const debounce = <T extends unknown[]>(
   fn: (...args: T) => void,
   delay: number
 ): ((...args: T) => void) => {
-  let timeoutId: NodeJS.Timeout | null = null
+  let timeoutId: ReturnType<typeof setTimeout>Timeout | null = null
   return (...args: T) => {
     if (timeoutId) {
       clearTimeout(timeoutId)

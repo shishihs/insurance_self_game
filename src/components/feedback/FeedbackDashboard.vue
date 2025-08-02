@@ -9,12 +9,12 @@
         </p>
       </div>
       <div class="header-actions">
-        <button @click="refreshData" class="refresh-btn" :disabled="isLoading">
+        <button class="refresh-btn" :disabled="isLoading" @click="refreshData">
           <span v-if="isLoading">🔄</span>
           <span v-else>↻</span>
           更新
         </button>
-        <button @click="exportData" class="export-btn">
+        <button class="export-btn" @click="exportData">
           📊 エクスポート
         </button>
       </div>
@@ -59,7 +59,7 @@
     <div class="filters-section">
       <div class="filters-header">
         <h2 class="filters-title">フィルター</h2>
-        <button @click="clearFilters" class="clear-filters-btn">
+        <button class="clear-filters-btn" @click="clearFilters">
           クリア
         </button>
       </div>
@@ -138,7 +138,7 @@
             <option value="priority">優先度</option>
             <option value="status">ステータス</option>
           </select>
-          <button @click="toggleSortOrder" class="sort-order-btn">
+          <button class="sort-order-btn" @click="toggleSortOrder">
             {{ sortOrder === 'desc' ? '↓' : '↑' }}
           </button>
         </div>
@@ -209,10 +209,10 @@
               <span v-else class="feedback-anonymous">匿名</span>
             </div>
             <div class="feedback-actions">
-              <button @click.stop="updateStatus(feedback)" class="action-btn">
+              <button class="action-btn" @click.stop="updateStatus(feedback)">
                 ステータス変更
               </button>
-              <button @click.stop="addNote(feedback)" class="action-btn">
+              <button class="action-btn" @click.stop="addNote(feedback)">
                 メモ追加
               </button>
             </div>
@@ -223,9 +223,9 @@
       <!-- ページネーション -->
       <div v-if="totalPages > 1" class="pagination">
         <button
-          @click="currentPage = Math.max(1, currentPage - 1)"
           :disabled="currentPage === 1"
           class="pagination-btn"
+          @click="currentPage = Math.max(1, currentPage - 1)"
         >
           前へ
         </button>
@@ -235,9 +235,9 @@
         </div>
         
         <button
-          @click="currentPage = Math.min(totalPages, currentPage + 1)"
           :disabled="currentPage === totalPages"
           class="pagination-btn"
+          @click="currentPage = Math.min(totalPages, currentPage + 1)"
         >
           次へ
         </button>
@@ -249,7 +249,7 @@
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2 class="modal-title">{{ selectedFeedback.title }}</h2>
-          <button @click="closeFeedbackModal" class="modal-close">×</button>
+          <button class="modal-close" @click="closeFeedbackModal">×</button>
         </div>
         
         <div class="modal-body">
@@ -398,10 +398,10 @@
         </div>
         
         <div class="modal-footer">
-          <button @click="downloadFeedback" class="btn-secondary">
+          <button class="btn-secondary" @click="downloadFeedback">
             ダウンロード
           </button>
-          <button @click="closeFeedbackModal" class="btn-primary">
+          <button class="btn-primary" @click="closeFeedbackModal">
             閉じる
           </button>
         </div>

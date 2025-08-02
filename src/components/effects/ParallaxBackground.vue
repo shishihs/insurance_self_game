@@ -1,5 +1,5 @@
 <template>
-  <div class="parallax-container" ref="containerRef">
+  <div ref="containerRef" class="parallax-container">
     <!-- 背景レイヤー（最も遠い） -->
     <div 
       class="parallax-layer background-layer"

@@ -335,7 +335,7 @@ export class UnifiedPerformanceSystem {
   private static instance: UnifiedPerformanceSystem
   private config: OptimizationConfig
   private isRunning = false
-  private monitoringTimer: NodeJS.Timeout | null = null
+  private monitoringTimer: ReturnType<typeof setTimeout>Timeout | null = null
   
   // Optimization components
   private readonly objectPools = new Map<string, OptimizedObjectPool<any>>()

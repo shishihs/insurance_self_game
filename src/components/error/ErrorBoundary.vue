@@ -166,7 +166,7 @@ const sendErrorReport = () => {
     <!-- ミニマルフォールバック -->
     <div v-if="fallback === 'minimal'" class="error-minimal">
       <p class="error-message">エラーが発生しました</p>
-      <button @click="reloadPage" class="error-action-btn">
+      <button class="error-action-btn" @click="reloadPage">
         ページを再読み込み
       </button>
     </div>
@@ -187,16 +187,16 @@ const sendErrorReport = () => {
       <div class="error-actions">
         <button 
           v-if="canRecover && !isRecovering" 
-          @click="tryRecover"
           class="error-action-btn primary"
           :disabled="errorCount > 3"
+          @click="tryRecover"
         >
           {{ errorCount > 3 ? '回復できません' : '回復を試みる' }}
         </button>
         
         <button 
-          @click="reloadPage" 
-          class="error-action-btn secondary"
+          class="error-action-btn secondary" 
+          @click="reloadPage"
         >
           ページを再読み込み
         </button>
@@ -212,10 +212,10 @@ const sendErrorReport = () => {
           <pre v-if="error?.stack" class="error-stack">{{ error.stack }}</pre>
           
           <div class="error-dev-actions">
-            <button @click="copyErrorDetails" class="error-action-btn small">
+            <button class="error-action-btn small" @click="copyErrorDetails">
               詳細をコピー
             </button>
-            <button @click="sendErrorReport" class="error-action-btn small">
+            <button class="error-action-btn small" @click="sendErrorReport">
               レポート送信
             </button>
           </div>

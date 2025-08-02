@@ -60,8 +60,8 @@
         <!-- 閉じるボタン -->
         <button
           class="reward-close-button"
-          @click="closeReward"
           :aria-label="$t('common.close', '閉じる')"
+          @click="closeReward"
         >
           <CloseIcon />
         </button>

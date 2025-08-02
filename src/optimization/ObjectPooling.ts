@@ -397,7 +397,7 @@ export class PoolManager {
   private static instance: PoolManager
   private pools: Map<string, ObjectPool<any>> = new Map()
   private monitoringEnabled: boolean = false
-  private monitoringInterval: NodeJS.Timeout | null = null
+  private monitoringInterval: ReturnType<typeof setTimeout>Timeout | null = null
 
   private constructor() {}
 

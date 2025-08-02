@@ -1,16 +1,16 @@
 <template>
   <div v-if="isOpen" class="feedback-modal-overlay" @click="closeOnOverlay">
-    <div class="feedback-modal" @click.stop role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+    <div class="feedback-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-title" @click.stop>
       <!-- ヘッダー -->
       <header class="feedback-header">
         <h2 id="feedback-title" class="feedback-title">
           {{ currentStep === 'selection' ? 'フィードバックを送信' : getStepTitle() }}
         </h2>
         <button
-          @click="close"
           class="close-button"
           aria-label="フィードバックモーダルを閉じる"
           type="button"
+          @click="close"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -28,16 +28,16 @@
           <button
             v-for="option in feedbackOptions"
             :key="option.type"
-            @click="selectFeedbackType(option.type)"
             class="feedback-option-btn"
             :aria-describedby="`option-${option.type}-desc`"
+            @click="selectFeedbackType(option.type)"
           >
             <div class="option-icon" :style="{ backgroundColor: option.color }">
               {{ option.icon }}
             </div>
             <div class="option-content">
               <h3 class="option-title">{{ option.title }}</h3>
-              <p class="option-description" :id="`option-${option.type}-desc`">
+              <p :id="`option-${option.type}-desc`" class="option-description">
                 {{ option.description }}
               </p>
             </div>
@@ -46,7 +46,7 @@
       </div>
 
       <!-- フィードバックフォーム -->
-      <form v-else @submit.prevent="submitFeedback" class="feedback-form">
+      <form v-else class="feedback-form" @submit.prevent="submitFeedback">
         <!-- カテゴリ別の専用フィールド -->
         <div v-if="selectedType === 'bug'" class="bug-report-fields">
           <div class="form-group">
@@ -90,10 +90,10 @@
                 v-for="star in 5"
                 :key="star"
                 type="button"
-                @click="setRating('overall', star)"
                 class="star-button"
                 :class="{ active: formData.review.overallRating >= star }"
                 :aria-label="`総合評価 ${star} 星`"
+                @click="setRating('overall', star)"
               >
                 ★
               </button>
@@ -108,10 +108,10 @@
                   v-for="star in 5"
                   :key="star"
                   type="button"
-                  @click="setRating(aspect.key, star)"
                   class="star-button"
                   :class="{ active: formData.review.aspects[aspect.key] >= star }"
                   :aria-label="`${aspect.label} ${star} 星`"
+                  @click="setRating(aspect.key, star)"
                 >
                   ★
                 </button>
@@ -122,8 +122,8 @@
           <div class="form-group">
             <label class="form-label">
               <input
-                type="checkbox"
                 v-model="formData.review.wouldRecommend"
+                type="checkbox"
                 class="form-checkbox"
               />
               このゲームを他の人におすすめしますか？
@@ -205,8 +205,8 @@
           <div class="form-group">
             <label class="form-label">
               <input
-                type="checkbox"
                 v-model="includeScreenshot"
+                type="checkbox"
                 class="form-checkbox"
               />
               スクリーンショットを含める（推奨）
@@ -222,8 +222,8 @@
           <div class="form-group">
             <label class="form-label">
               <input
-                type="checkbox"
                 v-model="isAnonymous"
+                type="checkbox"
                 class="form-checkbox"
               />
               匿名で送信する
@@ -264,8 +264,8 @@
         <div class="form-actions">
           <button
             type="button"
-            @click="goBack"
             class="btn-secondary"
+            @click="goBack"
           >
             戻る
           </button>
@@ -288,7 +288,7 @@
           貴重なご意見をありがとうございます。
           {{isAnonymous ? 'いただいたフィードバックは今後の改善に活用させていただきます。' : 'ご連絡先をいただいている場合は、必要に応じて返信いたします。'}}
         </p>
-        <button @click="close" class="btn-primary">閉じる</button>
+        <button class="btn-primary" @click="close">閉じる</button>
       </div>
     </div>
   </div>

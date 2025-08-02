@@ -259,7 +259,7 @@ export class OptimizedObject {
     
     // Use for...in for better performance than Object.keys
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         result[key] = obj[key]
       }
     }
@@ -311,7 +311,7 @@ export class OptimizedObject {
       if (obj) {
         // Use for...in for better performance
         for (const key in obj) {
-          if (obj.hasOwnProperty(key)) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
             result[key as keyof T] = obj[key] as T[keyof T]
           }
         }
@@ -505,7 +505,7 @@ export class PerformanceUtils {
     func: T,
     wait: number
   ): (...args: Parameters<T>) => void {
-    let timeoutId: NodeJS.Timeout | null = null
+    let timeoutId: ReturnType<typeof setTimeout>Timeout | null = null
     
     return (...args: Parameters<T>) => {
       if (timeoutId !== null) {

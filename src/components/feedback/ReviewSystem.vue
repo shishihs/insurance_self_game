@@ -11,10 +11,10 @@
         <button
           v-for="rating in quickRatings"
           :key="rating.value"
-          @click="submitQuickRating(rating.value)"
           class="quick-rating-btn"
           :class="{ selected: selectedQuickRating === rating.value }"
           :aria-label="`${rating.label} - ${rating.description}`"
+          @click="submitQuickRating(rating.value)"
         >
           <div class="rating-emoji">{{ rating.emoji }}</div>
           <div class="rating-label">{{ rating.label }}</div>
@@ -22,9 +22,9 @@
       </div>
       
       <button 
-        @click="expandToFullReview" 
-        class="expand-btn"
+        class="expand-btn" 
         :disabled="!selectedQuickRating"
+        @click="expandToFullReview"
       >
         詳細な評価を書く
       </button>
@@ -37,7 +37,7 @@
         <p class="review-subtitle">あなたの体験をお聞かせください</p>
       </div>
 
-      <form @submit.prevent="submitDetailedReview" class="review-form">
+      <form class="review-form" @submit.prevent="submitDetailedReview">
         <!-- 総合評価 -->
         <div class="rating-section">
           <h4 class="section-title">総合評価</h4>
@@ -47,15 +47,15 @@
                 v-for="star in 5"
                 :key="star"
                 type="button"
-                @click="setOverallRating(star)"
-                @mouseover="hoverOverallRating = star"
-                @mouseleave="hoverOverallRating = 0"
                 class="star-button"
                 :class="{ 
                   active: overallRating >= star,
                   hover: hoverOverallRating >= star && hoverOverallRating > overallRating
                 }"
                 :aria-label="`${star} 星評価`"
+                @click="setOverallRating(star)"
+                @mouseover="hoverOverallRating = star"
+                @mouseleave="hoverOverallRating = 0"
               >
                 ★
               </button>
@@ -88,10 +88,10 @@
                     v-for="star in 5"
                     :key="star"
                     type="button"
-                    @click="setAspectRating(aspect.key, star)"
                     class="star-button"
                     :class="{ active: aspectRatingsData[aspect.key] >= star }"
                     :aria-label="`${aspect.title} ${star} 星評価`"
+                    @click="setAspectRating(aspect.key, star)"
                   >
                     ★
                   </button>
@@ -109,9 +109,9 @@
               v-for="prompt in commentPrompts"
               :key="prompt.id"
               type="button"
-              @click="selectCommentPrompt(prompt)"
               class="prompt-btn"
               :class="{ selected: selectedPrompt?.id === prompt.id }"
+              @click="selectCommentPrompt(prompt)"
             >
               {{ prompt.text }}
             </button>
@@ -137,8 +137,8 @@
             </div>
             <div class="scale-track">
               <input
-                type="range"
                 v-model="recommendationScore"
+                type="range"
                 min="0"
                 max="10"
                 step="1"
@@ -167,9 +167,9 @@
               v-for="tag in availableTags"
               :key="tag.id"
               type="button"
-              @click="toggleTag(tag.id)"
               class="tag-button"
               :class="{ selected: selectedTags.includes(tag.id) }"
+              @click="toggleTag(tag.id)"
             >
               <span class="tag-icon">{{ tag.icon }}</span>
               <span class="tag-label">{{ tag.label }}</span>
@@ -185,9 +185,9 @@
               v-for="option in playtimeOptions"
               :key="option.value"
               type="button"
-              @click="selectedPlaytime = option.value"
               class="playtime-btn"
               :class="{ selected: selectedPlaytime === option.value }"
+              @click="selectedPlaytime = option.value"
             >
               {{ option.label }}
             </button>
@@ -198,8 +198,8 @@
         <div class="form-actions">
           <button
             type="button"
-            @click="switchToQuickMode"
             class="btn-secondary"
+            @click="switchToQuickMode"
           >
             簡易モードに戻る
           </button>
@@ -223,7 +223,7 @@
         <p class="success-message">
           あなたの貴重な意見がゲームの改善に役立ちます。
         </p>
-        <button @click="closeSuccessMessage" class="btn-primary">
+        <button class="btn-primary" @click="closeSuccessMessage">
           閉じる
         </button>
       </div>

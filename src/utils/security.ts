@@ -28,7 +28,7 @@ export function sanitizeInput(input: string): string {
       }
       return htmlEntities[match] || match
     })
-    .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // 制御文字を除去
+    .replace(/[\u0001-\u001f\u007f-\u009f]/g, '') // 制御文字を除去
     .trim()
     .slice(0, 1000) // 長さ制限
 }
@@ -256,7 +256,7 @@ export function secureLocalStorage() {
           const encryptionKey = await this.getOrCreateEncryptionKey()
           try {
             data = await this.simpleDecrypt(data, encryptionKey)
-          } catch (decryptError) {
+          } catch {
             // 復号化に失敗した場合、初回アクセスか破損の可能性
             // security_audit_logの場合は警告レベルを下げる
             if (key === 'security_audit_log') {

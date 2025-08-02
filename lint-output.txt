@@ -1,0 +1,4 @@
+
+> insurance-game@0.2.8 lint
+> eslint src --ext .ts,.tsx,.vue 2
+

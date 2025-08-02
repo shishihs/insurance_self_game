@@ -535,7 +535,7 @@ class PerformanceMonitor {
   private readonly frameTimeHistory: number[] = []
   private readonly memoryHistory: number[] = []
   private isRunning: boolean = false
-  private intervalId: NodeJS.Timeout | null = null
+  private intervalId: ReturnType<typeof setTimeout>Timeout | null = null
   
   constructor(scene: Phaser.Scene) {
     this.scene = scene

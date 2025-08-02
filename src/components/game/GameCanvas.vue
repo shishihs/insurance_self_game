@@ -219,10 +219,10 @@ defineExpose({
       <h3 class="error-title">ゲームの読み込みに失敗しました</h3>
       <p class="error-message">{{ errorMessage }}</p>
       <div class="error-actions">
-        <button @click="$emit('back-to-home')" class="btn btn-primary">
+        <button class="btn btn-primary" @click="$emit('back-to-home')">
           <span>←</span> ホームに戻る
         </button>
-        <button @click="window.location.reload()" class="btn btn-secondary">
+        <button class="btn btn-secondary" @click="window.location.reload()">
           <span>↻</span> ページを再読み込み
         </button>
       </div>
@@ -243,8 +243,8 @@ defineExpose({
     
     <!-- Phaserゲームがここにマウントされる -->
     <div 
-      ref="gameContainer" 
       id="game-container" 
+      ref="gameContainer" 
       class="game-container" 
       :style="{ display: !isLoading && !errorMessage ? 'block' : 'none' }"
       :aria-hidden="isLoading || !!errorMessage"
@@ -252,10 +252,10 @@ defineExpose({
     
     <!-- デバッグ用コントロール（開発中のみ表示） -->
     <div v-if="isDev && !isLoading" class="debug-controls">
-      <button @click="resetGame" class="btn btn-warning text-sm">
+      <button class="btn btn-warning text-sm" @click="resetGame">
         ゲームリセット
       </button>
-      <button @click="returnToMenu" class="btn text-sm">
+      <button class="btn text-sm" @click="returnToMenu">
         メニューへ
       </button>
     </div>

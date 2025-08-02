@@ -100,7 +100,7 @@ async function validateSecurityConfiguration(): Promise<void> {
       issues.push('セキュアストレージが正常に動作していません')
     }
     storage.removeItem('__security_test__')
-  } catch (error) {
+  } catch {
     issues.push('セキュアストレージのテストに失敗しました')
   }
 
@@ -341,7 +341,7 @@ function startPeriodicSecurityChecks(): void {
       // LocalStorage のサイズチェック
       let totalSize = 0
       for (const key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           totalSize += localStorage[key].length + key.length
         }
       }

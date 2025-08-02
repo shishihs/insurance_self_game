@@ -67,7 +67,7 @@ export class CognitiveAccessibilityManager {
   private currentLoad: CognitiveLoad
   private readonly adaptations: Map<string, AccessibilityAdaptation> = new Map()
   private readonly interactionHistory: Array<{ timestamp: number, action: string, duration: number }> = []
-  private fatigueMonitor: NodeJS.Timeout | null = null
+  private fatigueMonitor: ReturnType<typeof setTimeout>Timeout | null = null
   private readonly focusManager: FocusManager
   private readonly memoryAids: MemoryAidManager
   private readonly progressTracker: ProgressTrackingManager

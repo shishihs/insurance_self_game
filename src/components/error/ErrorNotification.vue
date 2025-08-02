@@ -235,8 +235,8 @@ defineExpose({
               <!-- メインアクション -->
               <div v-if="notification.userMessage.actionLabel" class="notification-actions">
                 <button
-                  @click="executeAction(notification)"
                   class="notification-action-btn primary"
+                  @click="executeAction(notification)"
                 >
                   {{ notification.userMessage.actionLabel }}
                 </button>
@@ -244,8 +244,8 @@ defineExpose({
                 <!-- ヘルプリンク -->
                 <button
                   v-if="notification.userMessage.helpUrl"
-                  @click="openHelp(notification.userMessage.helpUrl!)"
                   class="notification-action-btn secondary small"
+                  @click="openHelp(notification.userMessage.helpUrl!)"
                 >
                   ヘルプ
                 </button>
@@ -253,8 +253,8 @@ defineExpose({
                 <!-- 詳細表示トグル -->
                 <button
                   v-if="notification.userMessage.showDetails"
-                  @click="toggleDetails(notification.id)"
                   class="notification-action-btn secondary small"
+                  @click="toggleDetails(notification.id)"
                 >
                   {{ notification.isExpanded ? '詳細を隠す' : '詳細を表示' }}
                 </button>
@@ -292,9 +292,9 @@ defineExpose({
             </div>
             
             <button
-              @click="removeNotification(notification.id)"
               class="notification-close"
               :aria-label="`通知を閉じる: ${notification.userMessage.title}`"
+              @click="removeNotification(notification.id)"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="18" y1="6" x2="6" y2="18" stroke-width="2"/>

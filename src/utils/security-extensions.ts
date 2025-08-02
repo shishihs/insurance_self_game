@@ -3,7 +3,7 @@
  * 監視、検知、防護システムの追加実装
  */
 
-import { generateSecureRandomString, RateLimiter, sanitizeInput } from './security'
+import { generateSecureRandomString, RateLimiter } from './security'
 
 /**
  * セキュリティ監視システム
@@ -408,11 +408,11 @@ function sanitizeAdvancedInput(input: string): string {
     // NoSQLインジェクション対策
     .replace(/[{}$]/g, '')
     // XPathインジェクション対策
-    .replace(/[\/\[\]@]/g, '')
+    .replace(/[/[\]@]/g, '')
     // コマンドインジェクション対策
     .replace(/[;&|`$\\]/g, '')
     // 制御文字と特殊文字の除去
-    .replace(/[\x00-\x1f\x7f-\x9f\ufeff]/g, '')
+    .replace(/[\u0001-\u001f\u007f-\u009f\ufeff]/g, '')
     .trim()
 }
 
@@ -557,7 +557,9 @@ export function setupDevToolsDetection(): void {
         try {
           // debuggerステートメントを動的に実行
           Function('debugger')() // DevToolsが開いていると停止する
-        } catch {}
+        } catch {
+          // DevToolsチェック失敗時は無視
+        }
         const end = performance.now()
         return (end - start) > 100
       },
