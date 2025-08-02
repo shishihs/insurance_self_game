@@ -136,18 +136,22 @@ describe('ErrorHandling System Tests', () => {
         enableReporting: true
       })
       
-      // 複数回Long taskを発生させる
-      const observer = new MockPerformanceObserver(() => {})
-      for (let i = 0; i < 5; i++) {
-        observer.callback({
-          getEntries: () => [
-            { duration: 150, startTime: 1000 + i * 100, name: `long-task-${i}` }
-          ]
-        })
-      }
+      // PerformanceObserverのコールバックが設定されるまで待つ
+      await vi.waitFor(() => {
+        return MockPerformanceObserver.callback !== undefined
+      }, { timeout: 1000 })
       
-      // タイマーを進める
-      vi.advanceTimersByTime(300)
+      // 複数回Long taskを発生させる
+      for (let i = 0; i < 5; i++) {
+        if (MockPerformanceObserver.callback) {
+          MockPerformanceObserver.callback({
+            getEntries: () => [
+              { duration: 150, startTime: 1000 + i * 100, name: `long-task-${i}` }
+            ]
+          })
+        }
+        vi.advanceTimersByTime(10)
+      }
       
       // 1回のみ報告されることを確認（レート制限のため）
       expect(reportErrorSpy).toHaveBeenCalledTimes(1)
@@ -161,8 +165,23 @@ describe('ErrorHandling System Tests', () => {
         enableReporting: true
       })
       
-      // タイマーを進める
-      vi.advanceTimersByTime(200)
+      // PerformanceObserverのコールバックが設定されるまで待つ
+      await vi.waitFor(() => {
+        return MockPerformanceObserver.callback !== undefined
+      }, { timeout: 1000 })
+      
+      // Long taskのコールバックを実行
+      if (MockPerformanceObserver.callback) {
+        MockPerformanceObserver.callback({
+          getEntries: () => [
+            { duration: 150, startTime: 1000, name: 'long-task-1' },
+            { duration: 80, startTime: 2000, name: 'short-task' },
+            { duration: 200, startTime: 3000, name: 'long-task-2' }
+          ]
+        })
+      }
+      
+      vi.advanceTimersByTime(100)
       
       const reportedData = reportErrorSpy.mock.calls[0][1]
       expect(reportedData.duration).toBe(200) // 最も長いタスク
