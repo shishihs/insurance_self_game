@@ -81,11 +81,11 @@ export class XSSProtection {
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r')
       .replace(/\t/g, '\\t')
-      .replace(/\x08/g, '\\b')
+      .replace(/\u0008/g, '\\b')
       .replace(/\f/g, '\\f')
       .replace(/\v/g, '\\v')
       .replace(/\0/g, '\\0')
-      .replace(/[\x00-\x1f\x7f-\x9f]/g, (match) => {
+      .replace(/[\u0000-\u001f\u007f-\u009f]/g, (match) => {
         return `\\u${  (`0000${  match.charCodeAt(0).toString(16)}`).slice(-4)}`
       })
   }

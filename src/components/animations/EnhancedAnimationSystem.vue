@@ -238,7 +238,7 @@ const qualityLevel = ref<QualityLevel>('high')
 
 // 計算プロパティ
 const isDevelopment = computed(() => {
-  return process.env.NODE_ENV === 'development' || props.developmentMode
+  return import.meta.env.DEV || props.developmentMode
 })
 
 // パフォーマンス設定

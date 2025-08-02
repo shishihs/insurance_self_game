@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { MassiveBenchmark } from '@/benchmark/MassiveBenchmark'
-import { GameController } from '@/controllers/GameController'
-import { MockRenderer, TestDataGenerator, PerformanceTestHelper, MemoryTestHelper, StatisticalTestHelper } from '../utils/TestHelpers'
+import { TestDataGenerator, PerformanceTestHelper, MemoryTestHelper, StatisticalTestHelper } from '../utils/TestHelpers'
 import type { GameConfig } from '@/domain/types/game.types'
 
 describe('Massive Scale Benchmark Tests', () => {

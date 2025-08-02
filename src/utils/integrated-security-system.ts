@@ -232,7 +232,7 @@ export class IntegratedSecuritySystem {
       initPromises.push(
         Promise.resolve().then(() => {
           secureErrorHandler.updateConfig({
-            exposeStackTrace: process.env.NODE_ENV === 'development',
+            exposeStackTrace: import.meta.env.DEV,
             errorSanitization: this.config.securityLevel !== 'low',
             clientErrorReporting: true
           })

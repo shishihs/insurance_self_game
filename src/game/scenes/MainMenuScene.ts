@@ -126,7 +126,7 @@ export class MainMenuScene extends BaseScene {
         this.add.text(
           10,
           50,
-          `Debug: createButton=${typeof this.createButton}\nfadeIn=${typeof this.fadeIn}`,
+          `Debug: createButton=${typeof this.createButton}\nfadeIn=${typeof this.fadeIn}\ncreateMenuButtons=${typeof this.createMenuButtons}`,
           {
             fontFamily: 'Arial',
             fontSize: '14px',

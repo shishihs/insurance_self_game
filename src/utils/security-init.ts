@@ -173,7 +173,7 @@ function setupSecurityEventListeners(): void {
   })
 
   // 右クリック禁止 (開発時は除く)
-  if (process.env.NODE_ENV === 'production') {
+  if (import.meta.env.PROD) {
     document.addEventListener('contextmenu', async (event) => {
       event.preventDefault()
       await auditLogger.logSecurityEvent(
@@ -205,7 +205,7 @@ function setupSecurityEventListeners(): void {
              (!shortcut.shiftKey || event.shiftKey)
     })
 
-    if (isDangerous && process.env.NODE_ENV === 'production') {
+    if (isDangerous && import.meta.env.PROD) {
       event.preventDefault()
       await auditLogger.logSecurityEvent(
         'dangerous_shortcut_blocked',
@@ -511,7 +511,7 @@ export function debugSecuritySystem(): void {
 // 手動初期化が必要な場合は initializeSecuritySystem() を呼び出してください
 
 // 開発環境でのデバッグ支援
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
   (window as any).__SECURITY_DEBUG__ = {
     init: initializeSecuritySystem,
     status: getSecuritySystemStatus,

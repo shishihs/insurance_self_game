@@ -203,7 +203,7 @@ export const EFFECT_COLORS = {
 
 // デバッグ用ユーティリティ
 export const enableDebugMode = () => {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     // CSS でアニメーション境界を表示
     const style = document.createElement('style')
     style.textContent = `
