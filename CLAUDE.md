@@ -531,6 +531,16 @@ node .claude/test-hooks.cjs
 
 ## 📁 ドキュメント管理ガイドライン
 
+### Issue管理の移行について（2025年1月更新）
+**重要**: プロジェクトのissue管理は`docs/issues/`ディレクトリからGitHub Issuesへ移行しました。
+
+- **旧方式**: `docs/issues/`ディレクトリにMarkdownファイルで記録
+- **新方式**: GitHub Issuesで一元管理（`gh`コマンドまたはWebインターフェース）
+- **移行時期**: 2025年1月31日以降
+- **理由**: より効率的な追跡、コラボレーション、自動化のため
+
+既存の`docs/issues/`内のファイルは参考資料として残されていますが、新しいissueはすべてGitHub Issuesで作成してください。
+
 ### ディレクトリ構造
 ```
 insurance_game/
@@ -540,7 +550,8 @@ insurance_game/
 │   ├── design/            # 設計ドキュメント（正式仕様書）
 │   ├── development/       # 開発ガイド（セットアップ、原則など）
 │   ├── manual/           # ユーザーマニュアル
-│   └── planning/         # 計画・進捗（ロードマップ、作業状況など）
+│   ├── planning/         # 計画・進捗（ロードマップ、作業状況など）
+│   └── issues/           # 【廃止予定】旧issue記録（参考用）
 ├── scripts/              # 開発用スクリプト
 │   ├── dev/             # 開発補助（*.bat、test-runner.jsなど）
 │   └── setup/           # セットアップ用
