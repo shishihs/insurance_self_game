@@ -9,23 +9,32 @@ export class MainMenuScene extends BaseScene {
   }
 
   protected initialize(): void {
-    // デバッグ表示（開発時のみ）
-    if (import.meta.env.DEV) {
-      // 画面境界を視覚化
-      const boundary = this.add.graphics()
-      boundary.lineStyle(2, 0x00ff00, 0.5)
-      boundary.strokeRect(0, 0, this.gameWidth, this.gameHeight)
+    try {
+      // 必要なプロパティの確認
+      if (!this.add || !this.cameras || !this.centerX || !this.centerY) {
+        console.error('MainMenuScene: Required properties not initialized')
+        return
+      }
       
-      // 中央点を表示
-      const center = this.add.graphics()
-      center.fillStyle(0xff0000, 1)
-      center.fillCircle(this.centerX, this.centerY, 5)
+      // デバッグ表示（開発時のみ）
+      if (import.meta.env.DEV) {
+        // 画面境界を視覚化
+        const boundary = this.add.graphics()
+        boundary.lineStyle(2, 0x00ff00, 0.5)
+        boundary.strokeRect(0, 0, this.gameWidth, this.gameHeight)
+        
+        // 中央点を表示
+        const center = this.add.graphics()
+        center.fillStyle(0xff0000, 1)
+        center.fillCircle(this.centerX, this.centerY, 5)
+        
+        console.log('🎬 MainMenuScene initialized with debug visuals')
+      }
       
-      console.log('🎬 MainMenuScene initialized with debug visuals')
-    }
-    
-    // フェードイン
-    this.fadeIn()
+      // フェードイン（メソッドが存在する場合のみ）
+      if (typeof this.fadeIn === 'function') {
+        this.fadeIn()
+      }
 
     // タイトル
     this.add.text(
@@ -66,6 +75,23 @@ export class MainMenuScene extends BaseScene {
         color: '#999999'
       }
     )
+    } catch (error) {
+      console.error('MainMenuScene initialization error:', error)
+      console.error('Stack trace:', error.stack)
+      // エラーを表示
+      if (this.add) {
+        this.add.text(
+          this.centerX || 400,
+          this.centerY || 300,
+          'Menu initialization failed',
+          {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#ff0000'
+          }
+        ).setOrigin(0.5)
+      }
+    }
   }
 
   /**
@@ -74,6 +100,19 @@ export class MainMenuScene extends BaseScene {
   private createMenuButtons(): void {
     const buttonY = 300
     const buttonSpacing = 80
+
+    // createButtonメソッドが存在しない場合のフォールバック
+    if (typeof this.createButton !== 'function') {
+      console.error('createButton method not available')
+      // シンプルなボタンを直接作成
+      this.createSimpleButton(
+        this.centerX,
+        buttonY,
+        'ゲームを始める',
+        () => { this.startGame(); }
+      )
+      return
+    }
 
     // ゲーム開始ボタン
     this.createButton(
@@ -129,22 +168,49 @@ export class MainMenuScene extends BaseScene {
   }
 
   /**
+   * シンプルなボタンを作成（フォールバック用）
+   */
+  private createSimpleButton(x: number, y: number, text: string, onClick: () => void): void {
+    const button = this.add.text(x, y, text, {
+      fontFamily: 'Noto Sans JP',
+      fontSize: '24px',
+      color: '#ffffff',
+      backgroundColor: '#4C6EF5',
+      padding: { x: 20, y: 10 }
+    })
+    .setOrigin(0.5)
+    .setInteractive({ useHandCursor: true })
+
+    button.on('pointerup', onClick)
+  }
+
+  /**
    * ゲーム開始
    */
   private startGame(): void {
-    this.fadeOut(500, () => {
+    if (typeof this.fadeOut === 'function') {
+      this.fadeOut(500, () => {
+        this.scene.start('GameScene')
+      })
+    } else {
+      // fadeOutが利用できない場合は直接遷移
       this.scene.start('GameScene')
-    })
+    }
   }
 
   /**
    * チュートリアル開始
    */
   private startTutorial(): void {
-    this.fadeOut(500, () => {
-      // GameSceneを開始してすぐにチュートリアルを実行
+    if (typeof this.fadeOut === 'function') {
+      this.fadeOut(500, () => {
+        // GameSceneを開始してすぐにチュートリアルを実行
+        this.scene.start('GameScene', { startTutorial: true })
+      })
+    } else {
+      // fadeOutが利用できない場合は直接遷移
       this.scene.start('GameScene', { startTutorial: true })
-    })
+    }
   }
 
   /**
@@ -155,7 +221,11 @@ export class MainMenuScene extends BaseScene {
     // - 音量設定
     // - グラフィック品質設定
     // - キーボードショートカット設定
-    this.showNotification('設定機能は開発中です', 'info')
+    if (typeof this.showNotification === 'function') {
+      this.showNotification('設定機能は開発中です', 'info')
+    } else {
+      console.log('設定機能は開発中です')
+    }
   }
 
   /**
@@ -184,20 +254,39 @@ export class MainMenuScene extends BaseScene {
     ).setOrigin(0.5)
 
     // 閉じるボタン
-    const closeButton = this.createButton(
-      0,
-      100,
-      '閉じる',
-      () => {
-        creditContainer.destroy()
-        overlay.destroy()
-      },
-      {
+    let closeButton
+    if (typeof this.createButton === 'function') {
+      closeButton = this.createButton(
+        0,
+        100,
+        '閉じる',
+        () => {
+          creditContainer.destroy()
+          overlay.destroy()
+        },
+        {
+          fontFamily: 'Noto Sans JP',
+          fontSize: '20px',
+          color: '#ffffff'
+        }
+      )
+    } else {
+      // フォールバック: シンプルなテキストボタン
+      closeButton = this.add.text(0, 100, '閉じる', {
         fontFamily: 'Noto Sans JP',
         fontSize: '20px',
-        color: '#ffffff'
-      }
-    )
+        color: '#ffffff',
+        backgroundColor: '#4C6EF5',
+        padding: { x: 20, y: 10 }
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      
+      closeButton.on('pointerup', () => {
+        creditContainer.destroy()
+        overlay.destroy()
+      })
+    }
 
     creditContainer.add([creditText, closeButton])
 

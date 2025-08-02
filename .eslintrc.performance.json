@@ -1,0 +1,34 @@
+{
+  "extends": "./.eslintrc.json",
+  "parserOptions": {
+    "parser": "@typescript-eslint/parser",
+    "project": null,
+    "createDefaultProgram": false
+  },
+  "rules": {
+    // パフォーマンスが重い型ベースのルールを無効化
+    "@typescript-eslint/no-floating-promises": "off",
+    "@typescript-eslint/no-misused-promises": "off",
+    "@typescript-eslint/await-thenable": "off",
+    "@typescript-eslint/no-unnecessary-type-assertion": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/restrict-plus-operands": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/unbound-method": "off"
+  },
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "coverage",
+    "*.test.ts",
+    "*.spec.ts",
+    "**/__tests__/**",
+    "src/cui/**",
+    "src/cli/**",
+    "scripts/**"
+  ]
+}

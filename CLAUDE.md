@@ -237,6 +237,7 @@ SubAgent に依頼した方が良さそうなことがあればどんどん依�
 **[🛠️ MCP セットアップガイド](./docs/development/MCP_SETUP.md)** - **初回設定方法とトラブルシューティング**
 
 - **Gemini MCP**: 最新情報取得、技術相談、実装判断支援
+- **Serena**: インテリジェントなコード支援とプロジェクト管理
 - **filesystem**: プロジェクトファイルの安全なアクセス
 - **playwright**: デプロイ後のWebサイト動作確認・自動テスト
 - **github**: GitHub Actions確認、Issues管理、PR操作

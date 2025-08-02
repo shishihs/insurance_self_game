@@ -79,24 +79,45 @@ export class GameManager {
           
           create() {
             try {
-              // BaseSceneのcreateメソッドを呼び出し
-              if (SceneClass.prototype && typeof SceneClass.prototype.create === 'function') {
-                SceneClass.prototype.create.call(this)
-              } else {
-                // Fallback: BaseSceneの基本的なcreate処理
-                this.gameWidth = this.cameras.main.width
-                this.gameHeight = this.cameras.main.height
-                this.centerX = this.gameWidth / 2
-                this.centerY = this.gameHeight / 2
-                this.cameras.main.setBackgroundColor('#1a1a2e')
-                
-                // 各シーンの初期化を実行
-                if (SceneClass.prototype && typeof SceneClass.prototype.initialize === 'function') {
-                  SceneClass.prototype.initialize.call(this)
+              // 必要なプロパティを初期化
+              this.gameWidth = this.cameras.main.width
+              this.gameHeight = this.cameras.main.height
+              this.centerX = this.gameWidth / 2
+              this.centerY = this.gameHeight / 2
+              
+              // 背景色を設定
+              this.cameras.main.setBackgroundColor('#1a1a2e')
+              
+              // デバッグ情報
+              if (import.meta.env.DEV) {
+                console.log(`✅ ${key} initialized - Size: ${this.gameWidth}x${this.gameHeight}`)
+              }
+              
+              // BaseSceneのメソッドをバインド
+              const baseSceneMethods = {
+                fadeIn: SceneClass.prototype.fadeIn,
+                fadeOut: SceneClass.prototype.fadeOut,
+                getTextStyle: SceneClass.prototype.getTextStyle,
+                createButton: SceneClass.prototype.createButton,
+                createContainerButton: SceneClass.prototype.createContainerButton,
+                createCardContainer: SceneClass.prototype.createCardContainer,
+                showNotification: SceneClass.prototype.showNotification
+              }
+              
+              // メソッドをthisにバインド
+              Object.entries(baseSceneMethods).forEach(([methodName, method]) => {
+                if (typeof method === 'function') {
+                  this[methodName] = method.bind(this)
                 }
+              })
+              
+              // 各シーンの初期化を実行
+              if (SceneClass.prototype && typeof SceneClass.prototype.initialize === 'function') {
+                SceneClass.prototype.initialize.call(this)
               }
             } catch (error) {
               console.error(`Error in ${key} create:`, error)
+              console.error('Stack trace:', error.stack)
               // エラー時のフォールバック
               this.cameras.main.setBackgroundColor('#1a1a2e')
               this.add.text(400, 300, `Error loading ${key}`, { 

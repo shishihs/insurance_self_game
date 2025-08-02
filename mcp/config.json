@@ -37,6 +37,19 @@
         "@choplin/mcp-gemini-cli"
       ],
       "description": "Gemini AI への直接アクセス（コード生成、分析、質問応答）"
+    },
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena-mcp-server"
+      ],
+      "env": {
+        "SERENA_CONTEXT": "ide-assistant",
+        "SERENA_PROJECT": "C:\\Users\\shish\\Workspace\\insurance_game"
+      },
+      "description": "Serena IDE Assistant - Intelligent code assistance and project management"
     }
   },
   "settings": {

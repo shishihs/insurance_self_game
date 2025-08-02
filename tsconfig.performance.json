@@ -1,0 +1,38 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    // パフォーマンス最適化設定
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    
+    // 厳格なチェックを一時的に緩和（開発時のみ）
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "exactOptionalPropertyTypes": false,
+    
+    // 型チェックの並列化
+    "disableSourceOfProjectReferenceRedirect": true,
+    "disableSolutionSearching": true,
+    "disableReferencedProjectLoad": true,
+    
+    // メモリ最適化
+    "assumeChangesOnlyAffectDirectDependencies": true
+  },
+  // テストファイルを除外してチェック対象を減らす
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "src/cui/**",
+    "src/cli/**",
+    "src/benchmark/**",
+    "scripts/**"
+  ]
+}

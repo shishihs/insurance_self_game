@@ -8,6 +8,7 @@ Model Context Protocol (MCP) により、Claude Codeが外部ツールやデー�
 - **playwright**: Web自動テスト・動作確認
 - **github**: GitHub API連携
 - **gemini-cli**: Gemini AI への直接アクセス
+- **serena**: Serena IDE Assistant - インテリジェントなコード支援とプロジェクト管理
 
 ## セットアップ手順
 
@@ -75,6 +76,15 @@ source ~/.bashrc  # または ~/.zshrc
       "command": "npx",
       "args": ["-y", "@choplin/mcp-gemini-cli"],
       "description": "Gemini AI への直接アクセス（コード生成、分析、質問応答）"
+    },
+    "serena": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/oraios/serena", "serena-mcp-server"],
+      "env": {
+        "SERENA_CONTEXT": "ide-assistant",
+        "SERENA_PROJECT": "C:\\Users\\shish\\Workspace\\insurance_game"
+      },
+      "description": "Serena IDE Assistant - インテリジェントなコード支援とプロジェクト管理"
     }
   }
 }
@@ -102,6 +112,23 @@ Claude Codeを再起動すると、設定したMCPサーバーが利用可能に
    - コメント自動生成
    - README の作成支援
    - API ドキュメント作成
+
+### Serena IDE Assistant の主要機能
+
+1. **インテリジェントなコード支援**
+   - コンテキストを理解した高度なコード補完
+   - プロジェクト全体を考慮したリファクタリング提案
+   - コードパターンの検出と改善提案
+
+2. **プロジェクト管理**
+   - プロジェクト構造の分析と最適化
+   - 依存関係の管理と更新提案
+   - 開発ワークフローの自動化支援
+
+3. **IDE統合機能**
+   - Claude Codeとのシームレスな連携
+   - プロジェクト固有のコンテキスト管理
+   - カスタマイズ可能なアシスタント設定
 
 ### GitHub MCP の主要機能
 
