@@ -1,6 +1,6 @@
 # トラブルシューティングガイド
 
-> **最終更新**: 2025/07/29  
+> **最終更新**: 2025/08/02  
 > **文書種別**: 正式仕様書  
 > **更新頻度**: 問題発生時
 
@@ -8,16 +8,45 @@
 
 本ドキュメントは、開発・運用時に発生する可能性のある問題と、その診断・解決方法を体系的に整理したトラブルシューティングガイドです。問題の迅速な解決と、類似問題の予防に役立てることを目的としています。
 
+## 🚨 現在進行中の問題 (2025/08/02)
+
+### 最優先対応が必要な問題
+
+#### 1. SecurityAuditLogger環境変数エラー (Critical)
+```
+× SecurityAuditLogger Tests > エラーレート制限のテスト > レート制限エラー自体は記録されない
+  → __vite_ssr_import_meta__.env.DEV is not a function
+  → 'process.env' only accepts a configurable, writable, and enumerable data descriptor
+```
+
+**影響**: 6テスト失敗、セキュリティ監査機能の部分停止
+**対応中**: 環境変数の統一的扱い方法を検討
+
+#### 2. Vitestスタートアップエラー (Critical)
+```
+TypeError: input.replace is not a function
+at normalizeWindowsPath (pathe/dist/shared/pathe.M-eThtNZ.mjs:17:16)
+```
+
+**影響**: 全テスト実行困難、CI/CDパイプライン影響
+**対応中**: patheパッケージ依存関係調査
+
+#### 3. ESLint設定最小化 (Medium)
+**現状**: ワークフロー成功を優先してminimal configurationに変更
+**影響**: コード品質チェックの部分的機能制限
+
 ## 問題カテゴリ別索引
 
-1. [開発環境問題](#開発環境問題)
-2. [ビルドエラー](#ビルドエラー)
-3. [型エラー](#型エラー)
-4. [ランタイムエラー](#ランタイムエラー)
-5. [パフォーマンス問題](#パフォーマンス問題)
-6. [デプロイ問題](#デプロイ問題)
-7. [ブラウザ固有問題](#ブラウザ固有問題)
-8. [プラグインシステム問題](#プラグインシステム問題)
+1. [🚨 現在の緊急問題](#現在の緊急問題)
+2. [テスト環境問題](#テスト環境問題)
+3. [開発環境問題](#開発環境問題)
+4. [ビルドエラー](#ビルドエラー)
+5. [型エラー](#型エラー)
+6. [ランタイムエラー](#ランタイムエラー)
+7. [パフォーマンス問題](#パフォーマンス問題)
+8. [デプロイ問題](#デプロイ問題)
+9. [セキュリティ問題](#セキュリティ問題)
+10. [ブラウザ固有問題](#ブラウザ固有問題)
 
 ## 問題診断フローチャート
 
@@ -49,6 +78,231 @@ flowchart TD
     N -->|No| P[上級者サポート依頼]
 ```
 
+## 🚨 現在の緊急問題
+
+### SecurityAuditLogger環境変数エラー詳細解決手順
+
+#### 問題の詳細
+```typescript
+// 問題のあるコード
+if (__vite_ssr_import_meta__.env.DEV) {
+  // ブラウザ環境では動作するが、Vitestテスト環境では失敗
+}
+```
+
+#### 診断手順
+```bash
+# 1. テスト環境の確認
+npm run test:run src/__tests__/security/SecurityAuditLogger.test.ts
+
+# 2. 環境変数の確認
+echo $NODE_ENV
+echo $VITE_NODE_ENV
+
+# 3. Vitestコンフィグの確認
+cat vitest.config.ts | grep -A 5 -B 5 "env"
+```
+
+#### 解決策候補
+
+**1. 環境変数の統一**
+```typescript
+// 修正前
+if (__vite_ssr_import_meta__.env.DEV) {
+  // ...
+}
+
+// 修正後
+const isDevelopment = (
+  typeof __vite_ssr_import_meta__ !== 'undefined' && 
+  __vite_ssr_import_meta__.env?.DEV
+) || process.env.NODE_ENV === 'development'
+
+if (isDevelopment) {
+  // ...
+}
+```
+
+**2. テスト環境での環境変数モック**
+```typescript
+// vitest.config.ts
+export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['src/test/setup.ts'],
+    define: {
+      '__vite_ssr_import_meta__': {
+        env: {
+          DEV: process.env.NODE_ENV === 'development'
+        }
+      }
+    }
+  }
+})
+```
+
+**3. 条件分岐の改善**
+```typescript
+// 環境検出ユーティリティ
+export const Environment = {
+  isDevelopment(): boolean {
+    if (typeof window !== 'undefined') {
+      // ブラウザ環境
+      return import.meta.env?.DEV ?? false
+    } else {
+      // Node.js環境（テスト含む）
+      return process.env.NODE_ENV === 'development'
+    }
+  },
+  
+  isTest(): boolean {
+    return process.env.NODE_ENV === 'test' || 
+           process.env.VITEST === 'true'
+  }
+}
+```
+
+### Vitestスタートアップエラー詳細解決手順
+
+#### 問題の詳細
+```
+TypeError: input.replace is not a function
+at normalizeWindowsPath (pathe/dist/shared/pathe.M-eThtNZ.mjs:17:16)
+```
+
+#### 診断手順
+```bash
+# 1. patheパッケージの確認
+npm list pathe
+npm list vitest
+
+# 2. node_modulesクリーンアップ
+rm -rf node_modules
+rm package-lock.json
+npm install
+
+# 3. vitestの直接実行テスト
+npx vitest --version
+npx vitest --help
+```
+
+#### 解決策候補
+
+**1. パッケージの再インストール**
+```bash
+# 完全クリーンアップ
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install
+```
+
+**2. patheパッケージの明示的インストール**
+```bash
+# patheの特定バージョンを明示的インストール
+npm install pathe@^1.1.0 --save-dev
+```
+
+**3. vitestコンフィグの見直し**
+```typescript
+// vitest.config.ts - Windows環境向け設定
+export default defineConfig({
+  test: {
+    // Windows pathing問題回避
+    pool: 'forks', // threadsからforksに変更
+    poolOptions: {
+      forks: {
+        singleFork: true // 単一プロセスで実行
+      }
+    },
+    // パス正規化の強制
+    resolveSnapshotPath: (testPath, snapExtension) => {
+      return testPath.replace(/\\/g, '/') + snapExtension
+    }
+  }
+})
+```
+
+**4. Node.jsバージョンの確認**
+```bash
+# Node.jsバージョン確認（18.x以上推奨）
+node --version
+
+# 必要に応じてアップデート
+nvm install 18
+nvm use 18
+```
+
+### ESLint設定最小化問題の対処
+
+#### 現在の状況
+```javascript
+// eslint.config.mjs - 現在の最小設定
+export default [
+  {
+    files: ['src/main.ts', 'src/App.vue', 'src/components/game/GameCanvas.vue'],
+    rules: {
+      'no-console': 'off',
+      'no-debugger': 'error',
+      'no-unused-vars': 'off'
+    }
+  }
+]
+```
+
+#### 段階的復旧計画
+
+**Phase 1: 基本設定の復旧**
+```javascript
+export default [
+  {
+    files: ['**/*.ts', '**/*.vue'],
+    rules: {
+      'no-console': 'warn',
+      'no-debugger': 'error',
+      'no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn'
+    }
+  }
+]
+```
+
+**Phase 2: TypeScript設定の追加**
+```javascript
+import tseslint from '@typescript-eslint/eslint-plugin'
+
+export default [
+  ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn'
+    }
+  }
+]
+```
+
+**Phase 3: 完全設定の復旧**
+- Vue.js専用ルール
+- アクセシビリティルール
+- セキュリティルール
+
+## テスト環境問題
+
+### 解決済み問題の記録 ✅
+
+#### EventEmitterメモリリーク (2025/07/31解決)
+**問題**: `MaxListenersExceededWarning: 11 exit listeners`
+**解決**: ProcessEventCleanupユーティリティ作成、リスナー上限20に増加
+
+#### コンソールノイズ除去 (2025/07/31解決)
+**問題**: テスト実行時の大量ログ出力
+**解決**: `VITEST_VERBOSE`環境変数での制御、コンソールモック
+
+#### テストプール最適化 (2025/07/31解決)
+**問題**: threadsでの不安定実行
+**解決**: forksに変更、並列実行安定化
+
 ## 開発環境問題
 
 ### Claude Code起動問題
@@ -78,6 +332,39 @@ npm list -g | grep claude
    
    # Claude Code再インストール
    npm install -g @anthropic/claude-cli
+   ```
+
+### GitHub Issues移行問題
+
+#### 問題: Issue追跡の混乱
+
+**症状**: ドキュメントベースとGitHub Issuesの重複管理
+
+**解決状況**: 2025/01/31完全移行完了 ✅
+- docs/issues/ → .archive/2025-08/に移動
+- 6つのIssueがGitHub Issuesで管理中
+- ラベル体系とマイルストーン設定完了
+
+### MCP統合問題
+
+#### 問題: MCPサーバーの接続不安定
+
+**診断手順**:
+```bash
+# MCP設定確認
+cat mcp/config.json
+
+# Serena MCP状態確認
+# （Claude Code内でMCP status確認）
+
+# Gemini MCP設定確認
+# （API キー設定の確認）
+```
+
+**解決方法**:
+1. **設定ファイルの修正**
+2. **APIキーの再設定**
+3. **ネットワーク設定の確認**
    ```
 
 2. **Node.js バージョン問題**

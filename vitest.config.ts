@@ -21,6 +21,10 @@ export default defineConfig({
       'src/domain/valueObjects/__tests__/Vitality.test.ts',
       'src/domain/valueObjects/__tests__/RiskFactor.test.ts',
       'src/domain/valueObjects/__tests__/InsurancePremium.test.ts',
+      // Phase 4: Security and error handling tests
+      'src/__tests__/security/SecurityAuditLogger.test.ts',
+      'src/__tests__/error-handling/ErrorHandling.test.ts',
+      'src/__tests__/security/FrameDetector.test.ts',
       // Add more working tests here as we fix them
     ],
     globals: true,

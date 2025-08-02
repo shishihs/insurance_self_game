@@ -202,7 +202,40 @@ npm run test:coverage
 open coverage/index.html
 ```
 
-## 🔧 テスト環境の最新改善点 (2025/07/31)
+## 🔧 テスト環境の最新状況 (2025/08/02)
+
+### 🚨 現在の技術的課題
+
+#### SecurityAuditLogger.test.ts エラー (2025/08/02) - 解決中
+**問題**: 6つのテストが環境変数関連エラーで失敗
+```
+× SecurityAuditLogger Tests > エラーレート制限のテスト > レート制限エラー自体は記録されない
+  → __vite_ssr_import_meta__.env.DEV is not a function
+  → 'process.env' only accepts a configurable, writable, and enumerable data descriptor
+```
+
+**根本原因**: 
+- Vitestのimport.meta.env環境とNode.jsのprocess.env環境の不整合
+- SecurityAuditLoggerがブラウザ環境（import.meta.env）とNode.js環境（process.env）を両方想定
+
+**対応状況**: 調査中
+- 環境変数の統一的な扱い方の検討
+- テスト環境でのimport.meta.envモックの適切な設定
+
+#### Vitestスタートアップエラー (2025/08/02) - 解決中
+**問題**: patheパッケージでの型エラー
+```
+TypeError: input.replace is not a function
+at normalizeWindowsPath (pathe/dist/shared/pathe.M-eThtNZ.mjs:17:16)
+```
+
+**影響範囲**: 
+- 全テストの実行ブロック
+- CI/CDパイプラインへの影響
+
+**対応状況**: 調査中
+- patheパッケージの依存関係確認
+- Vitestバージョンの互換性チェック
 
 ### EventEmitterメモリリーク問題の解決 ✅
 

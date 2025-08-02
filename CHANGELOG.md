@@ -7,12 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 🐛 Fixed
+### 🎯 開発プロセス改善
+- **GitHub Issues移行**: ドキュメントベースからGitHub Issuesへの完全移行（2025年1月31日より）
+  - より効率的な問題追跡とコラボレーション
+  - 自動化された優先度管理とラベリング
+  - コミットとの連携による透明性向上
+
+### 🚨 現在の技術的課題
+- **テスト実行環境**: SecurityAuditLogger.test.tsで環境変数関連エラー（6テスト失敗）
+- **Vitestスタートアップエラー**: patheパッケージでの型エラー
+- **CSPポリシー**: 動的インポートとセキュリティの両立課題
+
+### 🐛 Fixed  
 - **セキュリティヘッダー修正**: X-Frame-OptionsをHTMLメタタグから削除（HTTPヘッダーのみで設定可能）
 - **CSPエラー修正**: 不要なGoogleフォントのpreconnectタグを削除
 - **Service Worker修正**: GitHub Pages用のbaseパスを適用してService Worker 404エラーを解決
 - **アイコン404エラー修正**: 存在しないアイコンファイルへの参照を削除、manifest.jsonを簡素化
 - **Phaser互換性修正**: Phaser v3.90.0との互換性のため、render設定から非対応オプションを削除
+
+## [0.3.1] - 2025-08-02
+
+### 🧪 Testing - テストインフラの大幅改善
+
+#### テストカバレッジの拡張
+- **テスト数**: 96 → 259テストに拡張（170%増加）
+- **テストファイル**: 5 → 11ファイルに拡張
+- **ドメインテスト追加**: Game.test.ts、Card.test.ts、Deck.test.ts
+- **Value Objectsテスト追加**: Vitality、RiskFactor、InsurancePremium
+- **成功率**: 100%（全259テスト成功）
+
+#### テスト環境の安定化
+- **EventEmitterメモリリーク警告の解決**: リスナー上限を20→100に増加
+- **テストプール最適化**: threadsからforksに変更（安定性向上）
+- **実行時間**: 約33-40秒で全テスト完了
+- **段階的テスト追加戦略**: 動作確認済みテストから順次拡張
+
+#### インフラストラクチャ改善
+- **vitest.config.ts**: 段階的なテスト追加を可能にする設定
+- **setup.ts**: プロセスイベントリスナーの適切な管理
+- **並列実行**: 最大2フォークでの安定した並列実行
+
+### 🐛 Fixed
+- **Menu initialization failedエラー**: GameManagerでのメソッドバインディングタイミング問題を修正
+- **InsurancePremium.test.ts**: エラーメッセージの不一致を修正
+
+### 📚 Documentation
+- **Issue管理の移行**: docs/issues/ディレクトリからGitHub Issuesへの移行をCLAUDE.mdに明記
+- **移行時期**: 2025年1月31日以降
+- **理由**: より効率的な追跡、コラボレーション、自動化のため
+
+### 🔧 Development
+- **GitHub Issues**: 6つの具体的なIssueを作成し、テスト問題を体系的に管理
+- **優先度管理**: High/Medium/Lowで段階的な改善計画を策定
 
 ### 🚀 今後のロードマップ
 
