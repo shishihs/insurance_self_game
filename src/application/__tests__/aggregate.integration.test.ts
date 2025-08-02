@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { GameApplicationService } from '../../../application/services/GameApplicationService'
-import { Game } from '../../entities/Game'
-import { Card } from '../../entities/Card'
-import { Challenge } from '../../aggregates/challenge'
-import { Insurance } from '../../aggregates/insurance'
-import { CardFactory } from '../../services/CardFactory'
-import type { DomainEvent } from '../../aggregates/challenge/events'
+import { GameApplicationService } from '../services/GameApplicationService'
+import { Game } from '../../domain/entities/Game'
+import { Card } from '../../domain/entities/Card'
+import { Challenge } from '../../domain/aggregates/challenge/Challenge'
+import { Insurance } from '../../domain/aggregates/insurance/Insurance'
+import { CardFactory } from '../../domain/services/CardFactory'
+import type { DomainEvent } from '../../domain/aggregates/challenge/events'
 
 describe('集約間の統合テスト', () => {
   let gameService: GameApplicationService

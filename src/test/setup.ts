@@ -4,7 +4,7 @@ import { ProcessEventCleanup } from './processEventCleanup'
 
 // Fix EventEmitter memory leak warning by increasing max listeners for tests
 if (typeof process !== 'undefined' && process.setMaxListeners) {
-  process.setMaxListeners(20) // Increase from default 10 to handle test parallelization
+  process.setMaxListeners(100) // Increase significantly to handle parallel test execution
 }
 
 // Initialize process event cleanup system

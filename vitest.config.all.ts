@@ -7,13 +7,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     passWithNoTests: true,
     include: [
-      // Phase 1: Working tests only
-      'src/domain/valueObjects/__tests__/CardPower.test.ts',
-      'src/domain/__tests__/integration/basic.integration.test.ts',
-      'src/__tests__/smoke.test.ts',
-      'src/__tests__/e2e/UnifiedGameLauncher.test.ts',
-      'src/__tests__/cui/renderers/InteractiveCUIRenderer.test.ts',
-      // Add more working tests here as we fix them
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx'
     ],
     globals: true,
     // Improve test performance and reliability
@@ -28,8 +23,8 @@ export default defineConfig({
     // Reduce test noise
     silent: process.env.VITEST_VERBOSE !== 'true',
     // Reduced timeout for faster feedback
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    testTimeout: 5000,
+    hookTimeout: 5000,
     // Better error handling
     bail: process.env.CI ? 1 : 0,
     // Memory management
