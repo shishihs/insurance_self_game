@@ -87,21 +87,49 @@ export class PreloadScene extends BaseScene {
       console.log(`✅ Asset loading completed in ${measure.duration.toFixed(2)}ms`)
     })
 
-    // アセットのロード（即座に実行）
+    // アセットのロードを非同期化
+    this.loadAssetsInChunks()
+  }
+  
+  /**
+   * アセットをチャンク単位で非同期ロード
+   */
+  private async loadAssetsInChunks(): Promise<void> {
     try {
-      // 重要なアセットを同期的にロード
-      this.createCardBack()
-      this.createBasicUIAssets()
-      
-      // 二次的なアセットを少し遅延してロード
-      this.time.delayedCall(100, () => {
-        this.createCardFaces()
-        this.createAdditionalUIAssets()
+      // フレーム1: 重要なアセット
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          this.createCardBack()
+          resolve()
+        })
       })
+      
+      // フレーム2: 基本UIアセット
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          this.createBasicUIAssets()
+          resolve()
+        })
+      })
+      
+      // フレーム3: カード表面
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          this.createCardFaces()
+          resolve()
+        })
+      })
+      
+      // フレーム4: 追加UIアセット
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => {
+          this.createAdditionalUIAssets()
+          resolve()
+        })
+      })
+      
     } catch (error) {
       console.error('[PreloadScene] Error loading assets:', error)
-      // エラーが発生してもシーン遷移を続行
-      this.scene.start('MainMenuScene')
     }
   }
   
@@ -164,13 +192,15 @@ export class PreloadScene extends BaseScene {
     graphics.fillStyle(0x2C3E50, 1)
     graphics.fillRoundedRect(0, 0, 120, 180, 8)
     
-    // パターン
+    // パターンを簡素化（パフォーマンス向上）
     graphics.lineStyle(2, 0x34495E)
-    for (let i = 10; i < 110; i += 20) {
-      for (let j = 10; j < 170; j += 20) {
-        graphics.strokeCircle(i, j, 8)
-      }
-    }
+    // 中央に大きな円を一つ描画
+    graphics.strokeCircle(60, 90, 40)
+    // 四隅に小さな円
+    graphics.strokeCircle(20, 20, 10)
+    graphics.strokeCircle(100, 20, 10)
+    graphics.strokeCircle(20, 160, 10)
+    graphics.strokeCircle(100, 160, 10)
     
     // テクスチャとして保存
     graphics.generateTexture('card-back', 120, 180)
@@ -181,14 +211,16 @@ export class PreloadScene extends BaseScene {
    * カード表面を動的に生成
    */
   private createCardFaces(): void {
-    // 人生カード
-    this.createCardFace('life-card-template', 0x4C6EF5)
+    // バッチ処理で生成
+    const cardTypes = [
+      { key: 'life-card-template', color: 0x4C6EF5 },
+      { key: 'insurance-card-template', color: 0x51CF66 },
+      { key: 'pitfall-card-template', color: 0xFF6B6B }
+    ]
     
-    // 保険カード
-    this.createCardFace('insurance-card-template', 0x51CF66)
-    
-    // 落とし穴カード
-    this.createCardFace('pitfall-card-template', 0xFF6B6B)
+    cardTypes.forEach(({ key, color }) => {
+      this.createCardFace(key, color)
+    })
   }
 
   /**

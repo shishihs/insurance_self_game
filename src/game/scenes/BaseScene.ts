@@ -43,14 +43,19 @@ export abstract class BaseScene {
       console.log(`✅ ${this.constructor.name} initialized - Size: ${this.gameWidth}x${this.gameHeight}`)
     }
 
-    // 各シーンの初期化
-    this.initialize()
+    // 各シーンの初期化（非同期対応）
+    const initResult = this.initialize()
+    if (initResult instanceof Promise) {
+      initResult.catch(error => {
+        console.error(`Failed to initialize ${this.constructor.name}:`, error)
+      })
+    }
   }
 
   /**
    * 各シーンで実装する初期化処理
    */
-  protected abstract initialize(): void
+  protected abstract initialize(): void | Promise<void>
 
   /**
    * 毎フレーム実行される更新処理（オプション）

@@ -99,7 +99,10 @@ export class GameScene extends BaseScene {
     this.shouldStartTutorial = data.startTutorial || false
   }
 
-  protected initialize(): void {
+  protected async initialize(): Promise<void> {
+    // パフォーマンス計測開始
+    performance.mark('game-scene-init-start')
+    
     // パフォーマンス最適化のセットアップ
     GameSceneOptimizationMixin.setupPerformanceOptimizations.call(this)
     GameSceneOptimizationMixin.setupCameraCulling.call(this)
@@ -108,29 +111,63 @@ export class GameScene extends BaseScene {
     this.events.once('shutdown', this.cleanup, this)
     this.events.once('destroy', this.cleanup, this)
 
-    // ゲームインスタンスの初期化
-    this.initializeGame()
+    // フレーム1: ゲームインスタンスの初期化
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => {
+        this.initializeGame()
+        resolve()
+      })
+    })
 
-    // UI要素の作成
-    this.createUI()
+    // フレーム2: UI要素の作成
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => {
+        this.createUI()
+        resolve()
+      })
+    })
 
-    // カードエリアの作成
-    this.createCardAreas()
+    // フレーム3: カードエリアの作成
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => {
+        this.createCardAreas()
+        resolve()
+      })
+    })
 
-    // チュートリアルUIの初期化
-    this.initializeTutorial()
+    // フレーム4: その他の初期化
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => {
+        // チュートリアルUIの初期化
+        this.initializeTutorial()
+        
+        // キーボード操作の初期化
+        this.initializeKeyboardControls()
+        
+        // サウンドマネージャーの初期化
+        this.initializeSoundManager()
+        
+        // モバイルパフォーマンス管理の初期化
+        this.initializePerformanceManager()
+        
+        resolve()
+      })
+    })
 
-    // ゲーム開始
-    this.startGame()
+    // フレーム5: ゲーム開始
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => {
+        this.startGame()
+        resolve()
+      })
+    })
     
-    // キーボード操作の初期化
-    this.initializeKeyboardControls()
+    // パフォーマンス計測終了
+    performance.mark('game-scene-init-end')
+    performance.measure('game-scene-initialization', 'game-scene-init-start', 'game-scene-init-end')
     
-    // サウンドマネージャーの初期化
-    this.initializeSoundManager()
-    
-    // モバイルパフォーマンス管理の初期化
-    this.initializePerformanceManager()
+    const measure = performance.getEntriesByName('game-scene-initialization')[0]
+    console.log(`✅ GameScene initialization completed in ${measure.duration.toFixed(2)}ms`)
 
     // メニューからチュートリアルが要求された場合は自動開始
     if (this.shouldStartTutorial) {
