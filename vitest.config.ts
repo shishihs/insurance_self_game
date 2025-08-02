@@ -13,6 +13,10 @@ export default defineConfig({
       'src/__tests__/smoke.test.ts',
       'src/__tests__/e2e/UnifiedGameLauncher.test.ts',
       'src/__tests__/cui/renderers/InteractiveCUIRenderer.test.ts',
+      // Phase 2: Core domain tests
+      'src/domain/__tests__/Game.test.ts',
+      'src/domain/__tests__/Card.test.ts',
+      'src/domain/__tests__/Deck.test.ts',
       // Add more working tests here as we fix them
     ],
     globals: true,
