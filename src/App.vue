@@ -42,12 +42,21 @@ const StatisticsDashboard = defineAsyncComponent({
 })
 
 const FeedbackButton = defineAsyncComponent({
-  loader: async () => import('./components/feedback/FeedbackButton.vue').catch(() => {
-    console.warn('FeedbackButton could not be loaded')
-    return { template: '<div></div>' } // フォールバック
-  }),
+  loader: async () => {
+    try {
+      return await import('./components/feedback/FeedbackButton.vue')
+    } catch (error) {
+      console.warn('FeedbackButton could not be loaded:', error)
+      // フォールバックコンポーネント
+      return {
+        name: 'FeedbackButtonFallback',
+        template: '<div class="feedback-button-fallback" style="display: none;"></div>'
+      }
+    }
+  },
   errorComponent: {
-    template: '<div></div>' // エラー時は空のコンポーネント
+    name: 'FeedbackButtonError',
+    template: '<div class="feedback-button-error" style="display: none;"></div>'
   },
   delay: 200,
   timeout: 10000

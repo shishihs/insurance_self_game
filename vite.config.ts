@@ -18,9 +18,9 @@ export default defineConfig(({ command, mode }) => ({
     UnoCSS(),
   ],
   server: {
-    // 開発サーバーでCSPを無効化
+    // 開発サーバーでCSPを設定
     headers: {
-      'Content-Security-Policy': undefined
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: http://localhost:* ws://localhost:*; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self';"
     }
   },
   resolve: {
