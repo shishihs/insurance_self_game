@@ -95,6 +95,47 @@ const mockPhaser = {
 // PhaserをグローバルにモックとしてInjection
 ;(globalThis as typeof globalThis & { Phaser: typeof mockPhaser }).Phaser = mockPhaser
 
+// PerformanceObserverのグローバルモック
+if (typeof globalThis.PerformanceObserver === 'undefined') {
+  class MockPerformanceObserver {
+    callback: (list: any) => void
+    
+    constructor(callback: (list: any) => void) {
+      this.callback = callback
+    }
+    
+    observe(options?: any) {
+      // テスト用の空実装
+    }
+    
+    disconnect() {
+      // テスト用の空実装
+    }
+    
+    takeRecords() {
+      return []
+    }
+  }
+  
+  ;(globalThis as any).PerformanceObserver = MockPerformanceObserver
+}
+
+// requestIdleCallbackのグローバルモック
+if (typeof globalThis.requestIdleCallback === 'undefined') {
+  ;(globalThis as any).requestIdleCallback = (callback: IdleRequestCallback, options?: IdleRequestOptions) => {
+    const deadline: IdleDeadline = {
+      didTimeout: false,
+      timeRemaining: () => 50
+    }
+    setTimeout(() => callback(deadline), options?.timeout || 1)
+    return Math.random()
+  }
+  
+  ;(globalThis as any).cancelIdleCallback = (handle: number) => {
+    // テスト用の空実装
+  }
+}
+
 // PhaserLoaderの完全なモック化（テスト環境で実際のPhaserを読み込まないようにする）
 vi.doMock('@/game/loaders/PhaserLoader', () => ({
   loadPhaser: vi.fn().mockResolvedValue({

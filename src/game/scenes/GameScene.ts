@@ -100,6 +100,24 @@ export class GameScene extends BaseScene {
   }
 
   protected async initialize(): Promise<void> {
+    // 暗転を防ぐため、最初に背景色を設定
+    this.cameras.main.setBackgroundColor('#2c3e50')
+    
+    // カメラを一旦フェードアウト状態にする
+    this.cameras.main.fadeFrom(0, 0, 0, 0, 0)
+    
+    // ローディング表示
+    const loadingText = this.add.text(
+      this.centerX || 400,
+      this.centerY || 300,
+      'ゲームを読み込み中...',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '24px',
+        color: '#ffffff'
+      }
+    ).setOrigin(0.5)
+    
     // パフォーマンス計測開始
     performance.mark('game-scene-init-start')
     
@@ -162,12 +180,18 @@ export class GameScene extends BaseScene {
       })
     })
     
+    // ローディングテキストを削除
+    loadingText.destroy()
+    
     // パフォーマンス計測終了
     performance.mark('game-scene-init-end')
     performance.measure('game-scene-initialization', 'game-scene-init-start', 'game-scene-init-end')
     
     const measure = performance.getEntriesByName('game-scene-initialization')[0]
     console.log(`✅ GameScene initialization completed in ${measure.duration.toFixed(2)}ms`)
+    
+    // 初期化完了後にフェードイン
+    this.cameras.main.fadeIn(500, 0, 0, 0)
 
     // メニューからチュートリアルが要求された場合は自動開始
     if (this.shouldStartTutorial) {
