@@ -522,7 +522,7 @@ export class GamePerformanceAnalyzer {
     }
   }
 
-  private lastCpuUsage: ReturnType<typeof setTimeout>CpuUsage | null = null
+  private lastCpuUsage: NodeJS.CpuUsage | null = null
   private lastCpuTime: number = 0
 
   private getCpuUsage(): number {
