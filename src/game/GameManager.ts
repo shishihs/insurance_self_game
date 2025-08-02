@@ -93,24 +93,38 @@ export class GameManager {
                 console.log(`✅ ${key} initialized - Size: ${this.gameWidth}x${this.gameHeight}`)
               }
               
+              // すべてのプロトタイプメソッドをバインド
+              const bindingErrors = []
+              
               // BaseSceneのメソッドをバインド
-              const baseSceneMethods = {
-                fadeIn: SceneClass.prototype.fadeIn,
-                fadeOut: SceneClass.prototype.fadeOut,
-                getTextStyle: SceneClass.prototype.getTextStyle,
-                createButton: SceneClass.prototype.createButton,
-                createContainerButton: SceneClass.prototype.createContainerButton,
-                createCardContainer: SceneClass.prototype.createCardContainer,
-                showNotification: SceneClass.prototype.showNotification
+              let proto = SceneClass.prototype
+              while (proto && proto.constructor !== Object) {
+                Object.getOwnPropertyNames(proto).forEach(methodName => {
+                  // コンストラクタと特殊メソッドはスキップ
+                  if (methodName === 'constructor' || methodName.startsWith('__')) {
+                    return
+                  }
+                  
+                  const descriptor = Object.getOwnPropertyDescriptor(proto, methodName)
+                  if (descriptor && typeof descriptor.value === 'function') {
+                    // メソッドをバインド
+                    this[methodName] = descriptor.value.bind(this)
+                  }
+                })
+                
+                // 親クラスのプロトタイプへ
+                proto = Object.getPrototypeOf(proto)
               }
               
-              // メソッドをthisにバインド
-              const bindingErrors = []
-              Object.entries(baseSceneMethods).forEach(([methodName, method]) => {
-                if (typeof method === 'function') {
-                  this[methodName] = method.bind(this)
-                } else {
-                  bindingErrors.push(`${methodName}: ${typeof method}`)
+              // SceneClass独自のメソッドもバインド
+              Object.getOwnPropertyNames(SceneClass.prototype).forEach(methodName => {
+                if (methodName === 'constructor' || methodName.startsWith('__')) {
+                  return
+                }
+                
+                const descriptor = Object.getOwnPropertyDescriptor(SceneClass.prototype, methodName)
+                if (descriptor && typeof descriptor.value === 'function' && !this[methodName]) {
+                  this[methodName] = descriptor.value.bind(this)
                 }
               })
               
