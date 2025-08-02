@@ -1,89 +1,48 @@
 # フロントエンド関連
 frontend:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'src/components/**/*'
-      - 'src/App.vue'
-      - 'src/main.ts'
-      - '**/*.vue'
+  - 'src/components/**/*'
+  - 'src/App.vue'
+  - 'src/main.ts'
+  - '**/*.vue'
 
 # バックエンド・ドメイン関連
 backend:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'src/domain/**/*'
-      - 'src/application/**/*'
-      - 'src/infrastructure/**/*'
+  - 'src/domain/**/*'
+  - 'src/application/**/*'
+  - 'src/infrastructure/**/*'
 
 # ゲームロジック関連
 game:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'src/game/**/*'
-      - 'src/cui/**/*'
-      - '**/game/**/*'
+  - 'src/game/**/*'
+  - 'src/cui/**/*'
 
 # テスト関連
 tests:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'src/__tests__/**/*'
-      - '**/*.test.ts'
-      - '**/*.test.tsx'
-      - 'vitest.config.ts'
-      - 'src/test/**/*'
+  - 'src/__tests__/**/*'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - 'vitest.config.ts'
+  - 'src/test/**/*'
 
 # ドキュメント関連
 documentation:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'docs/**/*'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - 'CLAUDE.md'
-      - '**/*.md'
+  - 'docs/**/*'
+  - 'README.md'
+  - 'CHANGELOG.md'
+  - 'CLAUDE.md'
+  - '**/*.md'
 
 # 設定・インフラ関連
 configuration:
-  - changed-files:
-    - any-glob-to-any-file:
-      - '.github/**/*'
-      - 'package.json'
-      - 'tsconfig*.json'
-      - 'vite.config.ts'
-      - 'eslint.config.mjs'
-      - '.gitignore'
-      - '.npmrc'
-
-# スタイル・UI関連
-styles:
-  - changed-files:
-    - any-glob-to-any-file:
-      - '**/*.css'
-      - '**/*.scss'
-      - '**/*.sass'
-      - 'src/styles/**/*'
-
-# パフォーマンス関連
-performance:
-  - changed-files:
-    - any-glob-to-any-file:
-      - '**/performance/**/*'
-      - '**/benchmark/**/*'
-      - 'src/utils/performance*'
-
-# セキュリティ関連
-security:
-  - changed-files:
-    - any-glob-to-any-file:
-      - '**/security/**/*'
-      - 'src/utils/security*'
-      - '**/auth/**/*'
+  - '.github/**/*'
+  - 'package.json'
+  - 'tsconfig*.json'
+  - 'vite.config.ts'
+  - 'eslint.config.mjs'
+  - '.gitignore'
+  - '.npmrc'
 
 # 依存関係
 dependencies:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'npm-shrinkwrap.json'
+  - 'package.json'
+  - 'package-lock.json'
