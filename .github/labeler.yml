@@ -1,0 +1,48 @@
+# フロントエンド関連
+frontend:
+  - 'src/components/**/*'
+  - 'src/App.vue'
+  - 'src/main.ts'
+  - '**/*.vue'
+
+# バックエンド・ドメイン関連
+backend:
+  - 'src/domain/**/*'
+  - 'src/application/**/*'
+  - 'src/infrastructure/**/*'
+
+# ゲームロジック関連
+game:
+  - 'src/game/**/*'
+  - 'src/cui/**/*'
+
+# テスト関連
+tests:
+  - 'src/__tests__/**/*'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - 'vitest.config.ts'
+  - 'src/test/**/*'
+
+# ドキュメント関連
+documentation:
+  - 'docs/**/*'
+  - 'README.md'
+  - 'CHANGELOG.md'
+  - 'CLAUDE.md'
+  - '**/*.md'
+
+# 設定・インフラ関連
+configuration:
+  - '.github/**/*'
+  - 'package.json'
+  - 'tsconfig*.json'
+  - 'vite.config.ts'
+  - 'eslint.config.mjs'
+  - '.gitignore'
+  - '.npmrc'
+
+# 依存関係
+dependencies:
+  - 'package.json'
+  - 'package-lock.json'
