@@ -507,14 +507,14 @@ export class Card implements IAdvancedCard {
   /**
    * 保険カードを作成
    */
-  static createInsuranceCard(name: string, power: number, cost: number = 1, ...effects: CardEffect[]): Card {
+  static createInsuranceCard(name: string, power: number, ...effects: CardEffect[]): Card {
     return new Card({
       id: IdGenerator.generate('insurance'),
       name,
       description: `保険カード - パワー: +${power}`,
       type: 'insurance',
       power,
-      cost,
+      cost: 1, // デフォルトコスト
       effects
     })
   }

@@ -7,25 +7,12 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     passWithNoTests: true,
     include: [
-      // Phase 1: Working tests only
-      'src/domain/valueObjects/__tests__/CardPower.test.ts',
-      'src/domain/__tests__/integration/basic.integration.test.ts',
-      'src/__tests__/smoke.test.ts',
-      'src/__tests__/e2e/UnifiedGameLauncher.test.ts',
-      'src/__tests__/cui/renderers/InteractiveCUIRenderer.test.ts',
-      // Phase 2: Core domain tests
-      'src/domain/__tests__/Game.test.ts',
-      'src/domain/__tests__/Card.test.ts',
-      'src/domain/__tests__/Deck.test.ts',
-      // Phase 3: Value objects tests
-      'src/domain/valueObjects/__tests__/Vitality.test.ts',
-      'src/domain/valueObjects/__tests__/RiskFactor.test.ts',
-      'src/domain/valueObjects/__tests__/InsurancePremium.test.ts',
-      // Phase 4: Security tests (now fixed!)
-      'src/__tests__/security/SecurityAuditLogger.test.ts',
-      'src/__tests__/security/FrameDetector.test.ts'
-      // TODO: Additional tests to be enabled after verification
-      // 'src/__tests__/error-handling/ErrorHandling.test.ts'
+      'src/**/__tests__/**/*.test.ts',
+      'src/**/__tests__/**/*.test.tsx'
+    ],
+    exclude: [
+      'node_modules/**',
+      'dist/**'
     ],
     globals: true,
     // Improve test performance and reliability

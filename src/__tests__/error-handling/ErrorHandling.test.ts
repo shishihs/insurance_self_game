@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
-import { errorHandlingSystem } from '../../utils/error-handling'
+import { errorHandlingSystem } from '../../utils/error-handling/index'
 import { ErrorRecovery } from '../../utils/error-handling/ErrorRecovery'
 
 // PerformanceObserverのモック
@@ -19,16 +19,29 @@ class MockPerformanceObserver {
   
   observe(options: any) {
     // Long taskをシミュレート
-    if (options.entryTypes.includes('longtask')) {
-      setTimeout(() => {
-        this.callback({
-          getEntries: () => [
-            { duration: 150, startTime: 1000, name: 'long-task-1' },
-            { duration: 80, startTime: 2000, name: 'short-task' },
-            { duration: 200, startTime: 3000, name: 'long-task-2' }
-          ]
+    if (options.entryTypes && options.entryTypes.includes('longtask')) {
+      // フェイクタイマー使用時は即座にコールバックを設定
+      if (vi.isFakeTimers()) {
+        Promise.resolve().then(() => {
+          this.callback({
+            getEntries: () => [
+              { duration: 150, startTime: 1000, name: 'long-task-1' },
+              { duration: 80, startTime: 2000, name: 'short-task' },
+              { duration: 200, startTime: 3000, name: 'long-task-2' }
+            ]
+          })
         })
-      }, 100)
+      } else {
+        setTimeout(() => {
+          this.callback({
+            getEntries: () => [
+              { duration: 150, startTime: 1000, name: 'long-task-1' },
+              { duration: 80, startTime: 2000, name: 'short-task' },
+              { duration: 200, startTime: 3000, name: 'long-task-2' }
+            ]
+          })
+        }, 100)
+      }
     }
   }
   
@@ -37,7 +50,12 @@ class MockPerformanceObserver {
 
 // requestIdleCallbackのモック
 global.requestIdleCallback = vi.fn((callback, options) => {
-  setTimeout(callback, options?.timeout || 0)
+  // フェイクタイマー使用時は即座に実行
+  if (vi.isFakeTimers()) {
+    callback({ timeRemaining: () => 50, didTimeout: false } as IdleDeadline)
+  } else {
+    setTimeout(() => callback({ timeRemaining: () => 50, didTimeout: false } as IdleDeadline), options?.timeout || 0)
+  }
   return 1
 })
 
@@ -52,8 +70,18 @@ describe('ErrorHandling System Tests', () => {
     Object.defineProperty(globalThis, 'PerformanceObserver', {
       writable: true,
       value: MockPerformanceObserver,
+      configurable: true
     })
     performanceObserverSpy = MockPerformanceObserver
+    
+    // windowオブジェクトにPerformanceObserverが存在することを保証
+    if (typeof window !== 'undefined') {
+      Object.defineProperty(window, 'PerformanceObserver', {
+        writable: true,
+        value: MockPerformanceObserver,
+        configurable: true
+      })
+    }
   })
 
   afterEach(() => {
@@ -70,8 +98,24 @@ describe('ErrorHandling System Tests', () => {
         enableReporting: true
       })
       
-      // Long taskが検出されるまで待つ
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // PerformanceObserverのコールバックが設定されるまで待つ
+      await vi.waitFor(() => {
+        return MockPerformanceObserver.callback !== undefined
+      }, { timeout: 1000 })
+      
+      // Long taskのコールバックを手動で実行
+      if (MockPerformanceObserver.callback) {
+        MockPerformanceObserver.callback({
+          getEntries: () => [
+            { duration: 150, startTime: 1000, name: 'long-task-1' },
+            { duration: 80, startTime: 2000, name: 'short-task' },
+            { duration: 200, startTime: 3000, name: 'long-task-2' }
+          ]
+        })
+      }
+      
+      // タイマーを進める
+      vi.advanceTimersByTime(100)
       
       // reportErrorが呼ばれることを確認
       expect(reportErrorSpy).toHaveBeenCalled()
@@ -102,7 +146,8 @@ describe('ErrorHandling System Tests', () => {
         })
       }
       
-      await new Promise(resolve => setTimeout(resolve, 300))
+      // タイマーを進める
+      vi.advanceTimersByTime(300)
       
       // 1回のみ報告されることを確認（レート制限のため）
       expect(reportErrorSpy).toHaveBeenCalledTimes(1)
@@ -116,7 +161,8 @@ describe('ErrorHandling System Tests', () => {
         enableReporting: true
       })
       
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // タイマーを進める
+      vi.advanceTimersByTime(200)
       
       const reportedData = reportErrorSpy.mock.calls[0][1]
       expect(reportedData.duration).toBe(200) // 最も長いタスク
@@ -193,7 +239,12 @@ describe('ErrorRecovery Tests', () => {
     test('requestIdleCallbackが使用される', async () => {
       const requestIdleCallbackSpy = vi.spyOn(global, 'requestIdleCallback')
       
-      await (errorRecovery as any).performMemoryCleanup()
+      const cleanupPromise = (errorRecovery as any).performMemoryCleanup()
+      
+      // タイマーを進めてrequestIdleCallbackとsetTimeoutを実行
+      vi.advanceTimersByTime(100)
+      
+      await cleanupPromise
       
       // DOM要素のクリーンアップなどがrequestIdleCallbackで実行される
       expect(requestIdleCallbackSpy).toHaveBeenCalled()

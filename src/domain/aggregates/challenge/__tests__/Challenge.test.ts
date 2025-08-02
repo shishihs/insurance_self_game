@@ -7,11 +7,11 @@ import { CardSelectedForChallengeEvent, ChallengeResolvedEvent } from '../events
 
 describe('Challenge集約', () => {
   const createChallengeCard = (power: number): Card => {
-    return Card.createChallengeCard(`challenge_${power}`, 'テストチャレンジ', CardPower.create(power))
+    return Card.createChallengeCard('テストチャレンジ', power)
   }
 
   const createLifeCard = (power: number): Card => {
-    return Card.createLifeCard(`life_${power}`, 'テストライフカード', CardPower.create(power))
+    return Card.createLifeCard('テストライフカード', power)
   }
 
   describe('チャレンジの生成', () => {
