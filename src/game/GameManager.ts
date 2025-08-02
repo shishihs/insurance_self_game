@@ -111,10 +111,13 @@ export class GameManager {
                 }
               })
               
-              // 各シーンの初期化を実行
-              if (SceneClass.prototype && typeof SceneClass.prototype.initialize === 'function') {
-                SceneClass.prototype.initialize.call(this)
-              }
+              // バインディングが確実に完了するように次のイベントループまで待機
+              this.time.delayedCall(0, () => {
+                // 各シーンの初期化を実行
+                if (SceneClass.prototype && typeof SceneClass.prototype.initialize === 'function') {
+                  SceneClass.prototype.initialize.call(this)
+                }
+              })
             } catch (error) {
               console.error(`Error in ${key} create:`, error)
               console.error('Stack trace:', error.stack)
