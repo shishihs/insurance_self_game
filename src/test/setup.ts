@@ -95,6 +95,91 @@ const mockPhaser = {
 // PhaserをグローバルにモックとしてInjection
 ;(globalThis as typeof globalThis & { Phaser: typeof mockPhaser }).Phaser = mockPhaser
 
+// PhaserLoaderの完全なモック化（テスト環境で実際のPhaserを読み込まないようにする）
+vi.doMock('@/game/loaders/PhaserLoader', () => ({
+  loadPhaser: vi.fn().mockResolvedValue({
+    Game: vi.fn().mockImplementation(() => ({
+      scale: {
+        refresh: vi.fn(),
+        removeAllListeners: vi.fn(),
+        resize: vi.fn(),
+        gameSize: { width: 800, height: 600 },
+        displaySize: { width: 800, height: 600 },
+        parentSize: { width: 800, height: 600 },
+        setGameSize: vi.fn(),
+        setDisplaySize: vi.fn(),
+        setParentSize: vi.fn(),
+        setZoom: vi.fn(),
+        setMode: vi.fn()
+      },
+      destroy: vi.fn(),
+      scene: {
+        getScenes: vi.fn(() => [])
+      },
+      sound: {
+        pauseAll: vi.fn(),
+        resumeAll: vi.fn(),
+        stopAll: vi.fn(),
+        mute: vi.fn(),
+        unmute: vi.fn()
+      },
+      loop: {
+        sleep: vi.fn(),
+        wake: vi.fn()
+      }
+    })),
+    Scene: class MockScene {
+      constructor(config: { key: string }) {
+        this.scene = { key: config.key }
+      }
+      scene: { key: string }
+      cameras = { main: { width: 800, height: 600, setBackgroundColor: vi.fn() } }
+      add = { text: vi.fn(() => ({ setOrigin: vi.fn() })) }
+    },
+    AUTO: 1,
+    Scale: { 
+      FIT: 1, 
+      CENTER_BOTH: 1,
+      RESIZE: 2,
+      SHOW_ALL: 3
+    },
+    Input: {
+      Events: {
+        POINTER_DOWN: 'pointerdown',
+        POINTER_UP: 'pointerup',
+        POINTER_MOVE: 'pointermove'
+      }
+    },
+    ...mockPhaser
+  }),
+  clearPhaserCache: vi.fn(),
+  isPhaserLoaded: vi.fn(() => true),
+  getPhaser: vi.fn(() => mockPhaser)
+}))
+
+// gameConfigも安全にモック
+vi.doMock('@/game/config/gameConfig', () => ({
+  createGameConfig: vi.fn().mockResolvedValue({
+    type: 1, // Phaser.AUTO
+    width: 800,
+    height: 600,
+    parent: 'game-container',
+    backgroundColor: '#1a1a2e',
+    scene: [],
+    physics: {
+      default: 'arcade',
+      arcade: {
+        gravity: { y: 0 },
+        debug: false
+      }
+    },
+    scale: {
+      mode: 1, // Phaser.Scale.FIT
+      autoCenter: 1 // Phaser.Scale.CENTER_BOTH
+    }
+  })
+}))
+
 // HTMLCanvasElementのgetContextをモック
 if (typeof HTMLCanvasElement !== 'undefined') {
   const mockWebGLContext = {
