@@ -59,43 +59,99 @@ export class GameManager {
         // モバイルでもFITモードを使用（設定変更なし）
       }
       
-      // Phaserのシーンクラスを作成（動的継承）
+      // Phaserのシーンクラスを作成（安全な実装）
       const createPhaserScene = (SceneClass: any, key: string) => {
-        return class extends this.Phaser.Scene {
+        const ExtendedScene = class extends this.Phaser.Scene {
           constructor() {
             super({ key })
           }
           
-          // 元のシーンクラスのメソッドをコピー
           preload() {
-            if (SceneClass.prototype.preload) {
-              SceneClass.prototype.preload.call(this)
+            // 安全にメソッドを呼び出し
+            if (SceneClass.prototype && typeof SceneClass.prototype.preload === 'function') {
+              try {
+                SceneClass.prototype.preload.call(this)
+              } catch (error) {
+                console.error(`Error in ${key} preload:`, error)
+              }
             }
           }
           
           create() {
-            if (SceneClass.prototype.create) {
-              SceneClass.prototype.create.call(this)
-            }
-            if (SceneClass.prototype.initialize) {
-              SceneClass.prototype.initialize.call(this)
+            try {
+              // BaseSceneのcreateメソッドを呼び出し
+              if (SceneClass.prototype && typeof SceneClass.prototype.create === 'function') {
+                SceneClass.prototype.create.call(this)
+              } else {
+                // Fallback: BaseSceneの基本的なcreate処理
+                this.gameWidth = this.cameras.main.width
+                this.gameHeight = this.cameras.main.height
+                this.centerX = this.gameWidth / 2
+                this.centerY = this.gameHeight / 2
+                this.cameras.main.setBackgroundColor('#1a1a2e')
+                
+                // 各シーンの初期化を実行
+                if (SceneClass.prototype && typeof SceneClass.prototype.initialize === 'function') {
+                  SceneClass.prototype.initialize.call(this)
+                }
+              }
+            } catch (error) {
+              console.error(`Error in ${key} create:`, error)
+              // エラー時のフォールバック
+              this.cameras.main.setBackgroundColor('#1a1a2e')
+              this.add.text(400, 300, `Error loading ${key}`, { 
+                fontSize: '24px', 
+                color: '#ffffff' 
+              }).setOrigin(0.5)
             }
           }
           
           update(time: number, delta: number) {
-            if (SceneClass.prototype.update) {
-              SceneClass.prototype.update.call(this, time, delta)
+            if (SceneClass.prototype && typeof SceneClass.prototype.update === 'function') {
+              try {
+                SceneClass.prototype.update.call(this, time, delta)
+              } catch (error) {
+                // 更新エラーは静かにログのみ
+                if (import.meta.env.DEV) {
+                  console.warn(`Update error in ${key}:`, error)
+                }
+              }
             }
           }
         }
+        
+        // クラス名を設定（デバッグ用）
+        Object.defineProperty(ExtendedScene, 'name', { value: `Extended${key}` })
+        
+        return ExtendedScene
       }
       
-      // シーンを追加（Phaserの正しいシーンクラスとして）
-      config.scene = [
-        createPhaserScene(PreloadScene, 'PreloadScene'),
-        createPhaserScene(MainMenuScene, 'MainMenuScene'),
-        createPhaserScene(GameScene, 'GameScene')
-      ]
+      // シーンを追加（エラーハンドリング強化）
+      try {
+        config.scene = [
+          createPhaserScene(PreloadScene, 'PreloadScene'),
+          createPhaserScene(MainMenuScene, 'MainMenuScene'),
+          createPhaserScene(GameScene, 'GameScene')
+        ]
+      } catch (error) {
+        console.error('Scene creation error:', error)
+        // フォールバック: 最低限のシーンを設定
+        config.scene = [
+          class FallbackScene extends this.Phaser.Scene {
+            constructor() {
+              super({ key: 'FallbackScene' })
+            }
+            
+            create() {
+              this.cameras.main.setBackgroundColor('#1a1a2e')
+              this.add.text(400, 300, 'ゲームを読み込み中...', {
+                fontSize: '24px',
+                color: '#ffffff'
+              }).setOrigin(0.5)
+            }
+          }
+        ]
+      }
 
       // レンダラーを別スレッドで初期化（フレームを分割）
       await new Promise(resolve => requestAnimationFrame(resolve))

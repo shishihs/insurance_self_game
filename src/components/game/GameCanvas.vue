@@ -55,7 +55,20 @@ onMounted(async () => {
       
       await Promise.race([initPromise, initTimeoutPromise])
       
-      if (isDev) console.log('✅ ゲーム初期化完了')
+      if (isDev) {
+        console.log('✅ ゲーム初期化完了')
+        // 初期化後の状態確認
+        const containerRect = gameContainer.value?.getBoundingClientRect()
+        console.log('📐 Container dimensions:', containerRect)
+        
+        // Phaserゲームの状態確認
+        if (gameManager.value && gameManager.value.isInitialized()) {
+          console.log('🎮 Game Manager initialized successfully')
+          const currentScene = gameManager.value.getCurrentScene()
+          console.log('🎬 Current scene:', currentScene)
+        }
+      }
+      
       isLoading.value = false
       
       // チュートリアル開始イベントリスナーを設定

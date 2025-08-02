@@ -4,8 +4,8 @@ import { BaseScene } from './BaseScene'
  * アセットをロードするシーン
  */
 export class PreloadScene extends BaseScene {
-  constructor() {
-    super({ key: 'PreloadScene' })
+  constructor(config?: any) {
+    super(config)
   }
 
   preload(): void {

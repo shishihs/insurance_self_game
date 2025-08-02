@@ -4,11 +4,26 @@ import { BaseScene } from './BaseScene'
  * メインメニューシーン
  */
 export class MainMenuScene extends BaseScene {
-  constructor() {
-    super({ key: 'MainMenuScene' })
+  constructor(config?: any) {
+    super(config)
   }
 
   protected initialize(): void {
+    // デバッグ表示（開発時のみ）
+    if (import.meta.env.DEV) {
+      // 画面境界を視覚化
+      const boundary = this.add.graphics()
+      boundary.lineStyle(2, 0x00ff00, 0.5)
+      boundary.strokeRect(0, 0, this.gameWidth, this.gameHeight)
+      
+      // 中央点を表示
+      const center = this.add.graphics()
+      center.fillStyle(0xff0000, 1)
+      center.fillCircle(this.centerX, this.centerY, 5)
+      
+      console.log('🎬 MainMenuScene initialized with debug visuals')
+    }
+    
     // フェードイン
     this.fadeIn()
 

@@ -88,8 +88,8 @@ export class GameScene extends BaseScene {
   // アニメーション関連
   private readonly animationManager: UnifiedAnimationManager
 
-  constructor() {
-    super({ key: 'GameScene' })
+  constructor(config?: any) {
+    super(config)
     // アニメーションマネージャーの取得（シングルトン）
     this.animationManager = getUnifiedAnimationManager()
   }

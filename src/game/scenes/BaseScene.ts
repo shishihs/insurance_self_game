@@ -4,17 +4,29 @@ import { GAME_CONSTANTS } from '../config/gameConfig'
 
 /**
  * すべてのシーンの基底クラス
- * 実際のPhaserシーンクラスの継承は動的に行う
+ * 注意: このクラスはGameManagerで動的に継承され、Phaserシーンとして動作する
  */
 export abstract class BaseScene {
-  protected scene!: PhaserTypes['Scene']
-  protected add!: PhaserTypes['Scene']['add']
-  protected cameras!: PhaserTypes['Scene']['cameras']
-  protected tweens!: PhaserTypes['Scene']['tweens']
+  // Phaserシーンのプロパティ（実行時に動的継承により設定される）
+  declare add: PhaserTypes['Scene']['add']
+  declare cameras: PhaserTypes['Scene']['cameras']
+  declare tweens: PhaserTypes['Scene']['tweens']
+  declare scene: PhaserTypes['Scene']['scene']
+  declare time: PhaserTypes['Scene']['time']
+  declare load: PhaserTypes['Scene']['load']
+  declare input: PhaserTypes['Scene']['input']
+  declare events: PhaserTypes['Scene']['events']
+  
   protected centerX!: number
   protected centerY!: number
   protected gameWidth!: number
   protected gameHeight!: number
+
+  // コンストラクター（動的継承時に無視される）
+  constructor(config?: any) {
+    // このコンストラクターは動的継承時には呼ばれない
+    // 実際のPhaserシーンコンストラクターが使用される
+  }
 
   create(): void {
     // 画面サイズの取得
@@ -22,6 +34,14 @@ export abstract class BaseScene {
     this.gameHeight = this.cameras.main.height
     this.centerX = this.gameWidth / 2
     this.centerY = this.gameHeight / 2
+
+    // 背景色を設定（暗転問題の対策）
+    this.cameras.main.setBackgroundColor('#1a1a2e')
+    
+    // デバッグ情報（開発時のみ）
+    if (import.meta.env.DEV) {
+      console.log(`✅ ${this.constructor.name} initialized - Size: ${this.gameWidth}x${this.gameHeight}`)
+    }
 
     // 各シーンの初期化
     this.initialize()
@@ -363,5 +383,51 @@ export abstract class BaseScene {
     })
     
     return container
+  }
+
+  /**
+   * 通知を表示
+   */
+  protected showNotification(message: string, type: 'info' | 'warning' | 'error' = 'info'): void {
+    const colors = {
+      info: 0x4C6EF5,
+      warning: 0xF59E0B,
+      error: 0xEF4444
+    }
+    
+    const notification = this.add.container(this.centerX, 100)
+    
+    // 背景
+    const bg = this.add.graphics()
+    bg.fillStyle(colors[type], 0.9)
+    bg.fillRoundedRect(-150, -25, 300, 50, 25)
+    
+    // テキスト
+    const text = this.add.text(0, 0, message, {
+      fontFamily: 'Noto Sans JP',
+      fontSize: '16px',
+      color: '#ffffff',
+      align: 'center'
+    }).setOrigin(0.5)
+    
+    notification.add([bg, text])
+    
+    // フェードイン→表示→フェードアウト
+    notification.setAlpha(0)
+    this.tweens.add({
+      targets: notification,
+      alpha: 1,
+      duration: 300,
+      onComplete: () => {
+        this.time.delayedCall(2000, () => {
+          this.tweens.add({
+            targets: notification,
+            alpha: 0,
+            duration: 300,
+            onComplete: () => notification.destroy()
+          })
+        })
+      }
+    })
   }
 }
