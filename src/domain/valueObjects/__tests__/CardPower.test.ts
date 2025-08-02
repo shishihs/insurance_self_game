@@ -19,7 +19,7 @@ describe('CardPower値オブジェクト', () => {
     })
 
     it('最大値を超える値では生成できない', () => {
-      expect(() => CardPower.create(1000)).toThrow('CardPower cannot exceed maximum')
+      expect(() => CardPower.create(1000)).toThrow('Card power cannot exceed maximum')
     })
   })
 

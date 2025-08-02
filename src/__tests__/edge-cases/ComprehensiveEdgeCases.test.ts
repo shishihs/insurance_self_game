@@ -75,12 +75,12 @@ describe('包括的エッジケーステスト', () => {
         expect(power.getValue()).toBe(999)
       })
 
-      it('負の値でエラーを投げる', () => {
-        expect(() => CardPower.create(-1)).toThrow('CardPower must be non-negative')
+      it('最小値以下でエラーを投げる', () => {
+        expect(() => CardPower.create(-100)).toThrow('CardPower must be at least -99')
       })
 
       it('最大値を超えた場合制限される', () => {
-        expect(() => CardPower.create(1000)).toThrow('CardPower cannot exceed maximum')
+        expect(() => CardPower.create(1000)).toThrow('Card power cannot exceed maximum')
       })
 
       it('加算で最大値を超える場合制限される', () => {

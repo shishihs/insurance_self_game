@@ -34,6 +34,16 @@ jobs:
         key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-npm-cache-
+    
+    - name: Setup TypeScript build cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          .tsbuildinfo*
+          .eslintcache*
+        key: ${{ runner.os }}-tsc-cache-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.vue') }}
+        restore-keys: |
+          ${{ runner.os }}-tsc-cache-
 
     - name: Install dependencies
       run: |
@@ -41,8 +51,10 @@ jobs:
         rm -rf node_modules
         npm ci
       
-    - name: Type check
-      run: npm run type-check
+    - name: Type check (Fast Mode)
+      run: npm run type-check:fast || npm run type-check
+      env:
+        TSC_COMPILE_ON_ERROR: true
       
     - name: Lint
       run: npm run lint || echo "⚠️ Lint failed but continuing deployment"

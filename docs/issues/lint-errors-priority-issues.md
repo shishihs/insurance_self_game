@@ -1,5 +1,57 @@
 # GitHub Actions Lintエラー対応 Issue一覧
 
+> **最終更新**: 2025/08/02  
+> **ステータス**: 一部修正済み、一部継続中
+
+## 🚨 **Critical Issues from Priority 1 Report**
+
+以下のクリティカルな問題がGitHub Issues Priority 1レポートで発見されました：
+
+### 🚨 **新たに発見されたパースエラー** (Critical)
+
+**問題**: src/game/commands/配下の3ファイルでパースエラーが発生し、コンパイルをブロック
+
+**該当ファイルとエラー位置**:
+```
+C:\Users\shish\Workspace\insurance_game\src\game\commands\CommandHistory.ts
+  3:61  error  Parsing error: Invalid character
+
+C:\Users\shish\Workspace\insurance_game\src\game\commands\GameCommand.ts
+  1:50  error  Parsing error: Invalid character
+
+C:\Users\shish\Workspace\insurance_game\src\game\commands\UndoRedoManager.ts
+  1:50  error  Parsing error: Invalid character
+```
+
+**影響範囲**:
+- ❗ **即座の影響**: GitHub Actionsのビルドが失敗し、デプロイがブロック
+- ❗ **開発への影響**: 該当ファイルを含む機能開発が不可能
+
+**推測原因**: 無効な文字（おそらく全角文字や特殊文字）
+
+**作業見積もり**: 30分程度
+**優先度**: **Critical**
+
+### 🚨 **未使用変数によるビルド失敗** (Critical)
+
+**問題**: 複数ファイルで未使用変数・引数がlintエラーとして検出され、strict modeでビルドが失敗
+
+**該当箇所**:
+```
+cui-playtest.mjs:322:11  error  'totalCards' is assigned a value but never used
+src/game/input/TouchGestureManager.ts:219:29  error  'event' is defined but never used
+src/game/input/TouchGestureManager.ts:231:11  error  'fakeTouch' is assigned a value but never used
+```
+
+**影響範囲**:
+- ❗ **即座の影響**: CIパイプラインでの品質チェック失敗
+- ❗ **開発への影響**: 新しいコミットがマージできない
+
+**作業見積もり**: 1時間程度
+**優先度**: **Critical**
+
+---
+
 ## Issue 1: [LINT] TypeScript型安全性の改善 - 関数戻り値型定義とTS厳格ルール対応
 
 ### 概要
@@ -20,15 +72,15 @@ GitHub ActionsのLintチェックでTypeScript厳格ルールに違反してい�
 
 ### タスク
 - [ ] cui-playtest.mjsのすべての関数に戻り値型を追加
-- [ ] MobileErrorHandlerのimport名をcamelCaseに修正
+- ✅ MobileErrorHandlerのimport名をcamelCaseに修正 (修正済み)
 - [ ] 非null断言を安全なnullチェックに変更
-- [ ] 未使用変数の削除
+- ⚠️ 未使用変数の削除 (新たなケースが発見 - 上記Critical項目参照)
 
 ### 優先度
-**High** - 型安全性はバグ防止の基本
+**Critical** - 新たなパースエラーと未使用変数がデプロイをブロック
 
 ### 見積もり
-2-3時間
+2-3時間 (パースエラー修正に30分、未使用変数修正に1時間追加)
 
 ### 参考
 [GitHub Actions実行結果](https://github.com/shishihs/insurance_self_game/actions/runs/12740491615)

@@ -32,7 +32,7 @@ export class CardPower {
       throw new Error(`CardPower must be at least ${CardPower.MIN_POWER}`)
     }
     if (this.value > CardPower.MAX_POWER) {
-      throw new Error('CardPower cannot exceed maximum')
+      throw new Error('Card power cannot exceed maximum')
     }
   }
 

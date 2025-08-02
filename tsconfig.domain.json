@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.performance.json",
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo.domain"
+  },
+  "include": [
+    "src/domain/**/*.ts",
+    "src/domain/**/*.tsx",
+    "src/domain/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**"
+  ]
+}

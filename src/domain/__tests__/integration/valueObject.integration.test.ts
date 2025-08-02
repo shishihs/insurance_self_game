@@ -174,8 +174,8 @@ describe('値オブジェクト統合テスト', () => {
 
   describe('値オブジェクトのエラーハンドリング', () => {
     it('不正な値での値オブジェクト作成時にエラーが発生する', () => {
-      // CardPowerの負の値
-      expect(() => CardPower.create(-1)).toThrow('CardPower must be non-negative')
+      // CardPowerの最小値以下
+      expect(() => CardPower.create(-100)).toThrow('CardPower must be at least -99')
 
       // InsurancePremiumの負の値
       expect(() => InsurancePremium.create(-1)).toThrow('InsurancePremium must be non-negative')

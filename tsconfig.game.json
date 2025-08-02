@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.performance.json",
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo.game"
+  },
+  "include": [
+    "src/game/**/*.ts",
+    "src/game/**/*.tsx",
+    "src/game/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**"
+  ]
+}

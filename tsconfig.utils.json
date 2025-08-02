@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.performance.json",
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo.utils"
+  },
+  "include": [
+    "src/utils/**/*.ts",
+    "src/utils/**/*.tsx",
+    "src/utils/**/*.vue",
+    "src/services/**/*.ts",
+    "src/services/**/*.tsx",
+    "src/services/**/*.vue",
+    "src/analytics/**/*.ts",
+    "src/analytics/**/*.tsx",
+    "src/analytics/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**"
+  ]
+}
