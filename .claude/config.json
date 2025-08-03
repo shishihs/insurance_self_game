@@ -2,12 +2,6 @@
   "name": "insurance_game",
   "description": "人生充実ゲーム - 生命保険を「人生の味方」として描く一人用デッキ構築ゲーム",
   "version": "0.2.2",
-  "hooks": {
-    "pre-bash": ".claude/hooks/pre-bash.cjs",
-    "post-bash": ".claude/hooks/post-bash.cjs",
-    "pre-commit": ".claude/hooks/pre-commit.cjs",
-    "task-complete": ".claude/hooks/task-complete.cjs"
-  },
   "settings": {
     "safe_mode": true,
     "git_safety": {
