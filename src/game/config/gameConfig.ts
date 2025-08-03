@@ -7,7 +7,7 @@ import { loadPhaser } from '../loaders/PhaserLoader'
 export const gameConfig = {
   type: 'AUTO' as const,
   parent: 'game-container',
-  backgroundColor: '#f5f5f5',
+  backgroundColor: '#2a2a3e', // 初期画面の黒画面を防ぐため、少し明るい色に設定
   scale: {
     mode: 'FIT' as const, // 画面に合わせてフィットするように変更
     autoCenter: 'CENTER_BOTH' as const,

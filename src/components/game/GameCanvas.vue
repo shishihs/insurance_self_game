@@ -12,7 +12,7 @@ const errorMessage = ref<string>('')
 const isDev = import.meta.env.DEV
 
 // ローディング表示の最小時間（ミリ秒）- 初回アクセス時の黒画面を防ぐため短縮
-const MIN_LOADING_TIME = 300
+const MIN_LOADING_TIME = 100
 let loadingStartTime = 0
 
 // コンポーネントがマウントされているか追跡
@@ -28,6 +28,19 @@ onMounted(async () => {
   loadingStartTime = Date.now()
   
   // DOMの準備とコンテナサイズの確保（改善版）
+  // 初回レンダリング時の黒画面を防ぐため、コンテナを事前に表示
+  if (gameContainer.value) {
+    // コンテナを表示状態にして、サイズを確保
+    gameContainer.value.style.display = 'block'
+    gameContainer.value.style.width = '100%'
+    gameContainer.value.style.height = '100%'
+    gameContainer.value.style.minHeight = '600px'
+    gameContainer.value.style.visibility = 'hidden' // 初期化中は非表示
+  }
+  
+  // DOMの更新を待つ
+  await new Promise(resolve => requestAnimationFrame(resolve))
+  
   let retryCount = 0
   const maxRetries = 10
   
@@ -40,15 +53,6 @@ onMounted(async () => {
       if (rect.width > 0 && rect.height > 0) {
         if (isDev) console.log('✅ Container ready:', rect)
         break
-      }
-      
-      // サイズが0の場合は強制的に最小サイズを設定
-      if (retryCount === 5) {
-        gameContainer.value.style.width = '100%'
-        gameContainer.value.style.height = '100%'
-        gameContainer.value.style.minWidth = '800px'
-        gameContainer.value.style.minHeight = '600px'
-        if (isDev) console.log('⚠️ Forced container size')
       }
     }
     
@@ -103,6 +107,11 @@ onMounted(async () => {
       // 初期化成功時は即座にローディングを終了（黒画面を防ぐ）
       if (isDev) console.log('🎉 ゲーム初期化完了 - ローディング終了')
       isLoading.value = false
+      
+      // コンテナを表示
+      if (gameContainer.value) {
+        gameContainer.value.style.visibility = 'visible'
+      }
       
       // 必要に応じて最小時間を保証（UX向上のため）
       const elapsedTime = Date.now() - loadingStartTime
@@ -269,7 +278,6 @@ defineExpose({
       id="game-container" 
       ref="gameContainer" 
       class="game-container" 
-      :style="{ display: !isLoading && !errorMessage ? 'block' : 'none' }"
       :aria-hidden="isLoading || !!errorMessage"
     ></div>
     
@@ -294,7 +302,8 @@ defineExpose({
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #1a1a1a;
+  background-color: #2a2a3e; /* 少し明るい背景色に変更 */
+  transition: background-color 0.3s ease;
 }
 
 .loading-container {
@@ -444,6 +453,7 @@ defineExpose({
   height: 100%;
   max-width: 1280px;
   max-height: 720px;
+  display: none; /* 初期状態は非表示、JavaScriptで制御 */
 }
 
 .debug-controls {

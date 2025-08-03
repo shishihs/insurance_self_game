@@ -85,8 +85,8 @@ export class GameManager {
               this.centerX = this.gameWidth / 2
               this.centerY = this.gameHeight / 2
               
-              // 背景色を設定
-              this.cameras.main.setBackgroundColor('#1a1a2e')
+              // 背景色を設定（初期画面の黒画面を防ぐため、少し明るい色に）
+              this.cameras.main.setBackgroundColor('#2a2a3e')
               
               // デバッグ情報
               if (import.meta.env.DEV) {
