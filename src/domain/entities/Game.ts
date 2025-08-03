@@ -9,6 +9,7 @@ import { ChallengeResolutionService } from '../services/ChallengeResolutionServi
 import { GameTurnManager } from '../services/GameTurnManager'
 import { GameChallengeService } from '../services/GameChallengeService'
 import { GameInsuranceService } from '../services/GameInsuranceService'
+import { AIStrategyService, type AIStrategyType } from '../services/AIStrategyService'
 import { GameStateManager } from '../services/GameStateManager'
 import { GameActionProcessor } from '../services/GameActionProcessor'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -70,6 +71,7 @@ export class Game implements IGameState {
   private readonly turnManager: GameTurnManager
   private readonly challengeService: GameChallengeService
   private readonly insuranceService: GameInsuranceService
+  private readonly aiStrategyService: AIStrategyService
   
   // 新しいアーキテクチャ
   private readonly stateManager: GameStateManager
@@ -96,6 +98,10 @@ export class Game implements IGameState {
   
   // 経験学習システム（GAME_DESIGN.mdより）
   private readonly _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
+  
+  // AI戦略設定
+  private _aiEnabled: boolean = false
+  private _currentAIStrategy: AIStrategyType = 'balanced'
   
   // パフォーマンス最適化: オブジェクトプール
   private static readonly OBJECT_POOLS = {
@@ -157,6 +163,7 @@ export class Game implements IGameState {
     this.turnManager = new GameTurnManager(this.stageManager, this.expirationManager)
     this.challengeService = new GameChallengeService(this.challengeResolutionService)
     this.insuranceService = new GameInsuranceService(this.premiumCalculationService)
+    this.aiStrategyService = new AIStrategyService(this._currentAIStrategy)
     
     // 新しいアーキテクチャを初期化
     this.stateManager = new GameStateManager()
@@ -1052,5 +1059,139 @@ export class Game implements IGameState {
       cacheHitRate: this._cachedValues.lastUpdateTime > 0 ? 0.85 : 0, // 概算
       dirtyFlags: { ...this._dirtyFlags }
     }
+  }
+
+  // === AI戦略システム ===
+
+  /**
+   * AI機能の有効/無効を設定
+   */
+  setAIEnabled(enabled: boolean): void {
+    this._aiEnabled = enabled
+    if (enabled) {
+      console.log(`AI戦略システムが有効になりました (戦略: ${this._currentAIStrategy})`)
+    } else {
+      console.log('AI戦略システムが無効になりました')
+    }
+  }
+
+  /**
+   * AI機能の有効状態を取得
+   */
+  isAIEnabled(): boolean {
+    return this._aiEnabled
+  }
+
+  /**
+   * AI戦略を変更
+   */
+  setAIStrategy(strategyType: AIStrategyType): void {
+    this._currentAIStrategy = strategyType
+    this.aiStrategyService.setStrategy(strategyType)
+    console.log(`AI戦略を変更しました: ${strategyType}`)
+  }
+
+  /**
+   * 現在のAI戦略を取得
+   */
+  getCurrentAIStrategy(): AIStrategyType {
+    return this._currentAIStrategy
+  }
+
+  /**
+   * AI戦略の統計情報を取得
+   */
+  getAIStatistics() {
+    return this.aiStrategyService.getStatistics()
+  }
+
+  /**
+   * AIによるチャレンジ自動選択
+   */
+  aiSelectChallenge(): Card | null {
+    if (!this._aiEnabled) {
+      throw new Error('AI is not enabled')
+    }
+
+    const availableChallenges = this.cardManager.challengeDeck.getCards()
+    if (availableChallenges.length === 0) {
+      return null
+    }
+
+    const choice = this.aiStrategyService.autoSelectChallenge(availableChallenges, this)
+    console.log(`AI戦略によるチャレンジ選択: ${choice.challenge.name} (成功確率: ${(choice.successProbability * 100).toFixed(1)}%)`)
+    console.log(`選択理由: ${choice.reason}`)
+    
+    return choice.challenge
+  }
+
+  /**
+   * AIによるカード自動選択
+   */
+  aiSelectCards(challenge: Card): Card[] {
+    if (!this._aiEnabled) {
+      throw new Error('AI is not enabled')
+    }
+
+    const availableCards = this.cardManager.playerDeck.getCards()
+    const choice = this.aiStrategyService.autoSelectCards(challenge, availableCards, this)
+    
+    console.log(`AI戦略によるカード選択: ${choice.cards.map(c => c.name).join(', ')}`)
+    console.log(`選択理由: ${choice.reason}`)
+    console.log(`期待パワー: ${choice.expectedPower}`)
+    
+    return choice.cards
+  }
+
+  /**
+   * AIによる完全自動プレイ（チャレンジ選択→カード選択→解決）
+   */
+  aiAutoPlay(): ChallengeResult | null {
+    if (!this._aiEnabled) {
+      throw new Error('AI is not enabled')
+    }
+
+    if (this.phase !== 'draw') {
+      throw new Error('Auto play can only be used during draw phase')
+    }
+
+    // 1. チャレンジを選択
+    const selectedChallenge = this.aiSelectChallenge()
+    if (!selectedChallenge) {
+      console.log('利用可能なチャレンジがありません')
+      return null
+    }
+
+    // 2. チャレンジを開始
+    this.challengeService.startChallenge(this, selectedChallenge)
+
+    // 3. カードを選択
+    const selectedCards = this.aiSelectCards(selectedChallenge)
+    
+    // 4. カードを選択状態にする
+    selectedCards.forEach(card => {
+      this.cardManager.selectCard(card)
+    })
+
+    // 5. チャレンジを解決
+    const result = this.challengeService.resolveChallenge(this)
+
+    // 6. 統計を記録
+    const challengeChoice = this.aiStrategyService.autoSelectChallenge([selectedChallenge], this)
+    const cardChoice = this.aiStrategyService.autoSelectCards(selectedChallenge, selectedCards, this)
+    this.aiStrategyService.recordDecision(this.turn, challengeChoice, cardChoice, result.success)
+
+    return result
+  }
+
+  /**
+   * AI設定のリセット
+   */
+  resetAISettings(): void {
+    this._aiEnabled = false
+    this._currentAIStrategy = 'balanced'
+    this.aiStrategyService.setStrategy('balanced')
+    this.aiStrategyService.clearHistory()
+    console.log('AI設定をリセットしました')
   }
 }
