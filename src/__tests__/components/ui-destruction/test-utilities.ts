@@ -103,21 +103,21 @@ export class MockGameManager {
 
 // Mock TouchGestureManager for testing swipe components
 export class MockTouchGestureManager {
-  private eventHandlers: Map<string, Function[]> = new Map()
+  private eventHandlers: Map<string, ((...args: unknown[]) => void)[]> = new Map()
   private isDestroyed = false
 
   constructor(element: HTMLElement, options?: any) {
     // Mock initialization
   }
 
-  on(eventType: string, handler: Function) {
+  on(eventType: string, handler: (...args: unknown[]) => void) {
     if (!this.eventHandlers.has(eventType)) {
       this.eventHandlers.set(eventType, [])
     }
     this.eventHandlers.get(eventType)!.push(handler)
   }
 
-  off(eventType: string, handler: Function) {
+  off(eventType: string, handler: (...args: unknown[]) => void) {
     const handlers = this.eventHandlers.get(eventType)
     if (handlers) {
       const index = handlers.indexOf(handler)
