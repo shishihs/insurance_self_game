@@ -85,6 +85,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
     lines.push(chalk[statusColor as keyof typeof chalk](`📊 Status: ${game.status}`))
 
     console.log('\n' + lines.join('\n'))
+
+    // カード枚数情報を表示
+    this.displayCardCounts(game)
   }
 
   displayHand(cards: Card[]): void {
@@ -136,6 +139,34 @@ export class InteractiveCUIRenderer implements GameRenderer {
       style: this.configManager.getConfig().theme === 'matrix' ? 'ascii' : 'blocks'
     })
     console.log('\n' + vitalityBar)
+  }
+
+  /**
+   * 手札・デッキ・捨て札の枚数情報を表示
+   */
+  displayCardCounts(game: Game): void {
+    const theme = this.configManager.getAccessibleColors()
+    const lines: string[] = []
+
+    lines.push(chalk.bold.hex(theme.primary)('📊 Card Information'))
+    lines.push(chalk.gray('─'.repeat(40)))
+
+    // 手札枚数
+    const handCount = game.hand.length
+    const handText = `🃏 Hand: ${handCount} card${handCount !== 1 ? 's' : ''}`
+    lines.push(chalk.cyan(handText))
+
+    // デッキ枚数
+    const deckCount = game.playerDeck.getCards().length
+    const deckText = `🎴 Deck: ${deckCount} card${deckCount !== 1 ? 's' : ''}`
+    lines.push(chalk.blue(deckText))
+
+    // 捨て札枚数
+    const discardCount = game.discardPile.length
+    const discardText = `🗑️ Discard: ${discardCount} card${discardCount !== 1 ? 's' : ''}`
+    lines.push(chalk.gray(discardText))
+
+    console.log('\n' + lines.join('\n'))
   }
 
   displayInsuranceCards(insurances: Card[]): void {

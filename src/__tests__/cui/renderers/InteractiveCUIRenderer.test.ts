@@ -252,6 +252,54 @@ describe('InteractiveCUIRenderer Tests', () => {
       expect(allLogs).toContain('youth')
       expect(allLogs).toContain('3')
     })
+
+    it('should display card counts information', () => {
+      // Set up test game with cards
+      testGame.addCardToHand(TestDataGenerator.createTestCards(1)[0])
+      testGame.addCardToHand(TestDataGenerator.createTestCards(1)[0])
+      testGame.addCardToDiscardPile(TestDataGenerator.createTestCards(1)[0])
+      
+      renderer.displayCardCounts(testGame)
+      
+      expect(consoleLogSpy).toHaveBeenCalled()
+      const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
+      
+      // Should display hand count
+      expect(allLogs).toContain('Hand: 2')
+      
+      // Should display deck count (initial deck has cards)
+      expect(allLogs).toMatch(/Deck: \d+/)
+      
+      // Should display discard count  
+      expect(allLogs).toContain('Discard: 1')
+    })
+
+    it('should display card counts with correct pluralization', () => {
+      // Test with single cards
+      testGame.clearHand()
+      testGame.addCardToHand(TestDataGenerator.createTestCards(1)[0])
+      
+      renderer.displayCardCounts(testGame)
+      
+      const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
+      
+      // Should use singular form for 1 card
+      expect(allLogs).toContain('Hand: 1 card')
+      expect(allLogs).not.toContain('Hand: 1 cards')
+    })
+
+    it('should handle empty card counts gracefully', () => {
+      // Clear all cards
+      testGame.clearHand()
+      
+      renderer.displayCardCounts(testGame)
+      
+      expect(consoleLogSpy).toHaveBeenCalled()
+      const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
+      
+      // Should display zero counts
+      expect(allLogs).toContain('Hand: 0')
+    })
   })
 
   describe('Message Display Methods', () => {
