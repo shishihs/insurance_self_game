@@ -19,12 +19,12 @@
           </div>
           <div class="volume-slider-container">
             <input
+              v-model="masterVolume"
               type="range"
               min="0"
               max="100"
-              v-model="masterVolume"
-              @input="updateMasterVolume"
               class="volume-slider"
+              @input="updateMasterVolume"
             />
             <div class="volume-indicators">
               <span>🔇</span>
@@ -41,13 +41,13 @@
           </div>
           <div class="volume-slider-container">
             <input
+              v-model="bgmVolume"
               type="range"
               min="0"
               max="100"
-              v-model="bgmVolume"
-              @input="updateBgmVolume"
               class="volume-slider"
               :disabled="masterVolume === 0"
+              @input="updateBgmVolume"
             />
             <div class="volume-indicators">
               <span>🔇</span>
@@ -64,13 +64,13 @@
           </div>
           <div class="volume-slider-container">
             <input
+              v-model="sfxVolume"
               type="range"
               min="0"
               max="100"
-              v-model="sfxVolume"
-              @input="updateSfxVolume"
               class="volume-slider"
               :disabled="masterVolume === 0"
+              @input="updateSfxVolume"
             />
             <div class="volume-indicators">
               <span>🔇</span>
@@ -88,10 +88,10 @@
         <div class="option-item">
           <label class="option-label">
             <input
-              type="checkbox"
               v-model="enableBgm"
-              @change="updateEnableBgm"
+              type="checkbox"
               class="option-checkbox"
+              @change="updateEnableBgm"
             />
             <span class="checkbox-custom"></span>
             <span class="option-text">背景音楽を有効化</span>
@@ -102,10 +102,10 @@
         <div class="option-item">
           <label class="option-label">
             <input
-              type="checkbox"
               v-model="enableSfx"
-              @change="updateEnableSfx"
+              type="checkbox"
               class="option-checkbox"
+              @change="updateEnableSfx"
             />
             <span class="checkbox-custom"></span>
             <span class="option-text">効果音を有効化</span>
@@ -116,10 +116,10 @@
         <div class="option-item">
           <label class="option-label">
             <input
-              type="checkbox"
               v-model="enableVoice"
-              @change="updateEnableVoice"
+              type="checkbox"
               class="option-checkbox"
+              @change="updateEnableVoice"
             />
             <span class="checkbox-custom"></span>
             <span class="option-text">音声ガイドを有効化</span>
@@ -140,8 +140,8 @@
         <div class="test-buttons">
           <button
             class="test-button"
-            @click="testBgm"
             :disabled="!enableBgm || masterVolume === 0"
+            @click="testBgm"
           >
             <span class="test-icon">🎼</span>
             <span class="test-text">BGMテスト</span>
@@ -149,8 +149,8 @@
           
           <button
             class="test-button"
-            @click="testCardSound"
             :disabled="!enableSfx || masterVolume === 0"
+            @click="testCardSound"
           >
             <span class="test-icon">🃏</span>
             <span class="test-text">カード音</span>
@@ -158,8 +158,8 @@
           
           <button
             class="test-button"
-            @click="testSuccessSound"
             :disabled="!enableSfx || masterVolume === 0"
+            @click="testSuccessSound"
           >
             <span class="test-icon">✅</span>
             <span class="test-text">成功音</span>
@@ -167,8 +167,8 @@
           
           <button
             class="test-button"
-            @click="testFailSound"
             :disabled="!enableSfx || masterVolume === 0"
+            @click="testFailSound"
           >
             <span class="test-icon">❌</span>
             <span class="test-text">失敗音</span>

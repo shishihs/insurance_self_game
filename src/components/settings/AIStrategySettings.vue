@@ -11,10 +11,10 @@
       <div class="toggle-group">
         <label class="toggle-label">
           <input
-            type="checkbox"
             v-model="aiEnabled"
-            @change="updateAIEnabled"
+            type="checkbox"
             class="toggle-checkbox"
+            @change="updateAIEnabled"
           />
           <span class="toggle-slider"></span>
           <span class="toggle-text">AI自動プレイを有効にする</span>
@@ -93,16 +93,16 @@
       <div class="action-buttons">
         <button
           class="btn btn-secondary"
-          @click="clearStatistics"
           :disabled="statistics.totalDecisions === 0"
+          @click="clearStatistics"
         >
           統計をクリア
         </button>
         
         <button
           class="btn btn-primary"
-          @click="testAIStrategy"
           :disabled="!aiEnabled"
+          @click="testAIStrategy"
         >
           戦略をテスト
         </button>
@@ -115,9 +115,9 @@
       <div class="action-grid">
         <button
           class="action-button"
-          @click="aiAutoPlay"
           :disabled="!canAutoPlay"
           title="現在のターンでAIに自動プレイさせる"
+          @click="aiAutoPlay"
         >
           <span class="action-icon">🎮</span>
           <span class="action-text">1ターン自動プレイ</span>
@@ -125,9 +125,9 @@
         
         <button
           class="action-button"
-          @click="aiSelectChallenge"
           :disabled="!canSelectChallenge"
           title="AIにチャレンジを選択させる"
+          @click="aiSelectChallenge"
         >
           <span class="action-icon">🎯</span>
           <span class="action-text">チャレンジ選択</span>

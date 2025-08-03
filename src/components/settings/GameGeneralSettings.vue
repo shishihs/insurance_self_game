@@ -45,10 +45,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <input
-              type="checkbox"
               v-model="showHints"
-              @change="updateShowHints"
+              type="checkbox"
               class="setting-checkbox"
+              @change="updateShowHints"
             />
             <span class="checkbox-custom"></span>
             <span class="setting-text">チュートリアルヒントを表示</span>
@@ -59,10 +59,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <input
-              type="checkbox"
               v-model="showAnimations"
-              @change="updateShowAnimations"
+              type="checkbox"
               class="setting-checkbox"
+              @change="updateShowAnimations"
             />
             <span class="checkbox-custom"></span>
             <span class="setting-text">アニメーションを有効化</span>
@@ -73,10 +73,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <input
-              type="checkbox"
               v-model="showStatistics"
-              @change="updateShowStatistics"
+              type="checkbox"
               class="setting-checkbox"
+              @change="updateShowStatistics"
             />
             <span class="checkbox-custom"></span>
             <span class="setting-text">統計情報を表示</span>
@@ -93,10 +93,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <input
-              type="checkbox"
               v-model="autoSave"
-              @change="updateAutoSave"
+              type="checkbox"
               class="setting-checkbox"
+              @change="updateAutoSave"
             />
             <span class="checkbox-custom"></span>
             <span class="setting-text">自動保存を有効化</span>
@@ -107,7 +107,7 @@
         <div v-if="autoSave" class="setting-item">
           <label class="setting-label-inline">
             <span class="setting-text">保存間隔</span>
-            <select v-model="autoSaveInterval" @change="updateAutoSaveInterval" class="setting-select">
+            <select v-model="autoSaveInterval" class="setting-select" @change="updateAutoSaveInterval">
               <option value="30">30秒</option>
               <option value="60">1分</option>
               <option value="120">2分</option>
@@ -124,8 +124,8 @@
       <div class="reset-actions">
         <button
           class="btn btn-warning"
-          @click="confirmReset = true"
           :disabled="!gameStore.game"
+          @click="confirmReset = true"
         >
           ゲームをリセット
         </button>

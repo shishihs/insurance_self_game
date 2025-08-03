@@ -2,7 +2,7 @@
   <div class="game-settings">
     <div class="settings-header">
       <h2 class="settings-title">ゲーム設定</h2>
-      <button class="close-button" @click="$emit('close')" aria-label="設定を閉じる">
+      <button class="close-button" aria-label="設定を閉じる" @click="$emit('close')">
         ×
       </button>
     </div>
