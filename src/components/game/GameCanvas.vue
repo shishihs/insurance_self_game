@@ -11,8 +11,8 @@ const isLoading = ref(true)
 const errorMessage = ref<string>('')
 const isDev = import.meta.env.DEV
 
-// ローディング表示の最小時間（ミリ秒）
-const MIN_LOADING_TIME = 1000
+// ローディング表示の最小時間（ミリ秒）- 初回アクセス時の黒画面を防ぐため短縮
+const MIN_LOADING_TIME = 300
 let loadingStartTime = 0
 
 // コンポーネントがマウントされているか追跡
@@ -27,25 +27,48 @@ onMounted(async () => {
   // ローディング開始時間を記録
   loadingStartTime = Date.now()
   
-  // requestAnimationFrameでDOMが完全に準備されるまで待機
-  await new Promise(resolve => requestAnimationFrame(resolve))
+  // DOMの準備とコンテナサイズの確保（改善版）
+  let retryCount = 0
+  const maxRetries = 10
   
-  // 親要素のサイズを確認（サイズ0の場合は待機）
-  if (gameContainer.value) {
-    // 親要素のサイズが0の場合は少し待つ
-    if (gameContainer.value.offsetWidth === 0 || gameContainer.value.offsetHeight === 0) {
-      await new Promise(resolve => setTimeout(resolve, 100))
+  // コンテナサイズの確認を複数回試行
+  while (retryCount < maxRetries) {
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    
+    if (gameContainer.value) {
+      const rect = gameContainer.value.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
+        if (isDev) console.log('✅ Container ready:', rect)
+        break
+      }
+      
+      // サイズが0の場合は強制的に最小サイズを設定
+      if (retryCount === 5) {
+        gameContainer.value.style.width = '100%'
+        gameContainer.value.style.height = '100%'
+        gameContainer.value.style.minWidth = '800px'
+        gameContainer.value.style.minHeight = '600px'
+        if (isDev) console.log('⚠️ Forced container size')
+      }
     }
     
+    retryCount++
+    await new Promise(resolve => setTimeout(resolve, 50))
+  }
+  
+  if (gameContainer.value) {
     try {
-      // タイムアウト付きでPhaserとゲームマネージャーを動的にインポート
-      const importPromise = import('@/game/GameManager')
-      const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => { reject(new Error('GameManager import timeout after 10 seconds')); }, 10000)
-      )
-      
+      // GameManagerの動的インポート（エラーハンドリング強化）
       if (isDev) console.log('🎮 GameManagerをインポート中...')
-      const { GameManager } = await Promise.race([importPromise, timeoutPromise])
+      
+      let GameManager
+      try {
+        const module = await import('@/game/GameManager')
+        GameManager = module.GameManager
+      } catch (importError) {
+        console.error('❌ GameManager import failed:', importError)
+        throw new Error(`GameManagerの読み込みに失敗: ${importError.message}`)
+      }
       
       // マウント状態を再確認
       if (!isMounted) return
@@ -53,14 +76,15 @@ onMounted(async () => {
       if (isDev) console.log('🎮 GameManagerインスタンスを取得中...')
       gameManager.value = GameManager.getInstance()
       
-      // ゲームを初期化（タイムアウト付き）
+      // ゲーム初期化（エラーハンドリング強化）
       if (isDev) console.log('🎮 ゲームを初期化中...')
-      const initPromise = gameManager.value.initialize(gameContainer.value)
-      const initTimeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => { reject(new Error('Game initialization timeout after 15 seconds')); }, 15000)
-      )
       
-      await Promise.race([initPromise, initTimeoutPromise])
+      try {
+        await gameManager.value.initialize(gameContainer.value)
+      } catch (initError) {
+        console.error('❌ Game initialization failed:', initError)
+        throw new Error(`ゲーム初期化に失敗: ${initError.message}`)
+      }
       
       if (isDev) {
         console.log('✅ ゲーム初期化完了')
@@ -76,13 +100,17 @@ onMounted(async () => {
         }
       }
       
-      // 最小ローディング時間を保証
-      const elapsedTime = Date.now() - loadingStartTime
-      if (elapsedTime < MIN_LOADING_TIME) {
-        await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME - elapsedTime))
-      }
-      
+      // 初期化成功時は即座にローディングを終了（黒画面を防ぐ）
+      if (isDev) console.log('🎉 ゲーム初期化完了 - ローディング終了')
       isLoading.value = false
+      
+      // 必要に応じて最小時間を保証（UX向上のため）
+      const elapsedTime = Date.now() - loadingStartTime
+      if (elapsedTime < MIN_LOADING_TIME && !isDev) {
+        setTimeout(() => {
+          // 追加の初期化完了処理があればここで実行
+        }, MIN_LOADING_TIME - elapsedTime)
+      }
       
       // チュートリアル開始イベントリスナーを設定
       const handleTutorialEvent = () => {
@@ -133,12 +161,7 @@ onMounted(async () => {
         errorMessage.value = `ゲーム初期化エラー: ${errorMsg}`
       }
       
-      // エラー時でも最小ローディング時間を保証
-      const elapsedTime = Date.now() - loadingStartTime
-      if (elapsedTime < MIN_LOADING_TIME) {
-        await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME - elapsedTime))
-      }
-      
+      // エラー時は即座にローディングを終了してエラーを表示
       isLoading.value = false
       
       // グローバルエラーハンドラーによる重複通知を避けるため、
