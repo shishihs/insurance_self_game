@@ -18,6 +18,7 @@ import type {
 import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
 import { IdGenerator } from '../../common/IdGenerator'
+import { MAX_DAMAGE_REDUCTION_PER_INSURANCE, INSURANCE_EFFECTIVENESS_RATE } from '../constants/insurance.constants'
 
 /**
  * カードエンティティ - ゲーム内のすべてのカードの基底クラス
@@ -239,19 +240,32 @@ export class Card implements IAdvancedCard {
 
   /**
    * ダメージ軽減量を計算（防御型保険用）
+   * Issue #24: 保険効果の上限を設定して過度な軽減を防ぐ
    * @returns {number} ダメージ軽減量
    */
   calculateDamageReduction(): number {
-    if (!this.isDefensiveInsurance()) return 0
+    // 保険カードでない場合は0
+    if (!this.isInsurance()) return 0
     
-    // カバレッジがそのままダメージ軽減量となる
-    const baseReduction = this.coverage || 0
+    // ダメージ軽減効果を持つかチェック
+    const hasDefensiveEffect = this.isDefensiveInsurance() || this.hasEffect('damage_reduction')
+    if (!hasDefensiveEffect) return 0
     
-    // ダメージ軽減効果がある場合はその値を加算
+    let totalReduction = 0
+    
+    // 防御型保険の場合、カバレッジベースの軽減
+    if (this.isDefensiveInsurance()) {
+      totalReduction += (this.coverage || 0) * INSURANCE_EFFECTIVENESS_RATE
+    }
+    
+    // damage_reduction効果がある場合はその値を加算（効果率適用）
     const reductionEffect = this.getEffect('damage_reduction')
-    const effectReduction = reductionEffect ? reductionEffect.value : 0
+    if (reductionEffect) {
+      totalReduction += reductionEffect.value * INSURANCE_EFFECTIVENESS_RATE
+    }
     
-    return baseReduction + effectReduction
+    // 1枚の保険カードあたりの上限を適用
+    return Math.min(totalReduction, MAX_DAMAGE_REDUCTION_PER_INSURANCE)
   }
 
   /**
