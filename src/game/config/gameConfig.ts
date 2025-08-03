@@ -1,4 +1,5 @@
 import { loadPhaser } from '../loaders/PhaserLoader'
+import { mobilePerformanceManager } from '../../performance/MobilePerformanceManager'
 
 /**
  * モバイル対応を含むPhaserゲームの基本設定
@@ -85,7 +86,8 @@ export const gameConfig = {
 export async function createGameConfig(): Promise<import('phaser').Types.Core.GameConfig> {
   const Phaser = await loadPhaser()
   
-  return {
+  // 基本設定を作成
+  const baseConfig = {
     ...gameConfig,
     type: Phaser.AUTO,
     scale: {
@@ -101,6 +103,21 @@ export async function createGameConfig(): Promise<import('phaser').Types.Core.Ga
       }
     }
   } as import('phaser').Types.Core.GameConfig
+  
+  // モバイルパフォーマンス最適化を適用
+  const optimizedConfig = mobilePerformanceManager.optimizePhaserConfig(baseConfig)
+  
+  // デバイス情報をログ出力
+  const deviceInfo = mobilePerformanceManager.getDeviceInfo()
+  console.log('🔧 Device Info:', deviceInfo)
+  
+  // 最適化推奨事項をログ出力
+  const recommendations = mobilePerformanceManager.getOptimizationRecommendations()
+  if (recommendations.length > 0) {
+    console.log('💡 Performance Recommendations:', recommendations)
+  }
+  
+  return optimizedConfig
 }
 
 /**
