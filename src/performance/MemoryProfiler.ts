@@ -109,7 +109,7 @@ export class MemoryProfiler {
   private startTime: number = 0
   private snapshots: MemorySnapshot[] = []
   private samplingInterval: number = 1000 // 1 second
-  private samplingTimer: ReturnType<typeof setTimeout>Timeout | null = null
+  private samplingTimer: ReturnType<typeof setTimeout> | null = null
   private leakDetectionThreshold: number = 1 // 1MB per minute
   private maxSnapshots: number = 1000
   private heapDumpPath: string = './heap-dumps'
@@ -221,8 +221,8 @@ export class MemoryProfiler {
     }
 
     try {
-      import v8 from 'v8'
-      const heapSnapshot = v8.getHeapSnapshot()
+      const v8 = await import('v8')
+      const heapSnapshot = v8.default.getHeapSnapshot()
       
       const dumpFilename = filename || `heap-dump-${this.sessionId}-${Date.now()}.heapsnapshot`
       const dumpPath = join(this.heapDumpPath, dumpFilename)

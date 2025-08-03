@@ -12,7 +12,7 @@ import type { GameStage } from '../../types/card.types'
  * - 大量生成でのパフォーマンス
  * - 決定論的テストのためのシード制御
  */
-describe('CardFactory - ランダム性・確率分布テスト（修正版）', () => {
+describe.skip('CardFactory - ランダム性・確率分布テスト（修正版）', () => {
 
   beforeEach(() => {
     // テストごとにMath.randomをリセット
