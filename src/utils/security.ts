@@ -28,6 +28,7 @@ export function sanitizeInput(input: string): string {
       }
       return htmlEntities[match] || match
     })
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0002-\u001F\u007F-\u009F]/g, '') // 制御文字を除去
     .trim()
     .slice(0, 1000) // 長さ制限

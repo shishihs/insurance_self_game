@@ -435,7 +435,7 @@ describe('UI Component Destruction Suite', () => {
     it('should handle network failures during dynamic imports', async () => {
       // Mock dynamic import failure
       const originalImport = global.import
-      // @ts-ignore
+      // @ts-expect-error - Mocking global.import for testing error handling
       global.import = vi.fn().mockRejectedValue(new Error('Network error'))
 
       const wrapper = mount(GameCanvas)

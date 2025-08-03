@@ -412,6 +412,7 @@ function sanitizeAdvancedInput(input: string): string {
     // コマンドインジェクション対策
     .replace(/[;&|`$\\]/g, '')
     // 制御文字と特殊文字の除去
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0002-\u001F\u007F-\u009F\uFEFF]/g, '')
     .trim()
 }

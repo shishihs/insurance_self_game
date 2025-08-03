@@ -17,6 +17,7 @@ import { nextTick } from 'vue'
 import GameCanvas from '@/components/game/GameCanvas.vue'
 import OptimizedGameInterface from '@/components/mobile/OptimizedGameInterface.vue'
 import SwipeableCardStack from '@/components/mobile/SwipeableCardStack.vue'
+import MobileBottomNav from '@/components/mobile/MobileBottomNav.vue'
 import AccessibilitySettings from '@/components/accessibility/AccessibilitySettings.vue'
 import ErrorBoundary from '@/components/error/ErrorBoundary.vue'
 
@@ -543,7 +544,7 @@ describe('Browser Compatibility Destructive Tests', () => {
 
     it('should handle prototype pollution attacks', async () => {
       // Simulate prototype pollution
-      (Object.prototype as any).__proto__ = { malicious: 'payload' }
+      (Object.prototype as any).__proto__ = { malicious: 'payload' };
       (Array.prototype as any).__proto__ = { evil: 'code' }
 
       const wrapper = mount(AccessibilitySettings, {

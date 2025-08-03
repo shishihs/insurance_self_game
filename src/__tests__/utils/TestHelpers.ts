@@ -144,8 +144,82 @@ export class MockRenderer implements GameRenderer {
     return Promise.resolve()
   }
 
+  dispose(): void {
+    this.recordCall('dispose')
+  }
+
+  showError(message: string): void {
+    this.recordCall('showError', message)
+  }
+
   displayDebugInfo(info: any): void {
     this.recordCall('displayDebugInfo', info)
+  }
+
+  // Missing GameRenderer interface methods
+  displayProgress(stage: string, turn: number): void {
+    this.recordCall('displayProgress', stage, turn)
+  }
+
+  async askCardSelection(cards: Card[], minSelection?: number, maxSelection?: number, message?: string): Promise<Card[]> {
+    this.recordCall('askCardSelection', cards, minSelection, maxSelection, message)
+    const selections = this.inputValues[this.inputIndex++] || []
+    return Array.isArray(selections) ? selections : [cards[0]]
+  }
+
+  async askChallengeAction(challenge: Card): Promise<'start' | 'skip'> {
+    this.recordCall('askChallengeAction', challenge)
+    return this.inputValues[this.inputIndex++] || 'start'
+  }
+
+  async askInsuranceTypeChoice(availableTypes: ('whole_life' | 'term')[]): Promise<'whole_life' | 'term'> {
+    this.recordCall('askInsuranceTypeChoice', availableTypes)
+    return this.inputValues[this.inputIndex++] || availableTypes[0]
+  }
+
+  async askInsuranceChoice(cards: Card[], message?: string): Promise<Card> {
+    this.recordCall('askInsuranceChoice', cards, message)
+    const index = this.inputValues[this.inputIndex++] || 0
+    return cards[index] || cards[0]
+  }
+
+  async askInsuranceRenewalChoice(insurance: Card, cost: number): Promise<'renew' | 'expire'> {
+    this.recordCall('askInsuranceRenewalChoice', insurance, cost)
+    return this.inputValues[this.inputIndex++] || 'renew'
+  }
+
+  async askConfirmation(message: string, defaultChoice?: 'yes' | 'no'): Promise<'yes' | 'no'> {
+    this.recordCall('askConfirmation', message, defaultChoice)
+    return this.inputValues[this.inputIndex++] || defaultChoice || 'no'
+  }
+
+  showChallengeResult(result: ChallengeResult): void {
+    this.recordCall('showChallengeResult', result)
+  }
+
+  showMessage(message: string, level?: 'info' | 'success' | 'warning'): void {
+    this.recordCall('showMessage', message, level)
+  }
+
+  showGameOver(stats: PlayerStats): void {
+    this.recordCall('showGameOver', stats)
+  }
+
+  showVictory(stats: PlayerStats): void {
+    this.recordCall('showVictory', stats)
+  }
+
+  showStageClear(stage: string, stats: PlayerStats): void {
+    this.recordCall('showStageClear', stage, stats)
+  }
+
+  isWaitingForInput(): boolean {
+    this.recordCall('isWaitingForInput')
+    return false
+  }
+
+  setDebugMode(enabled: boolean): void {
+    this.recordCall('setDebugMode', enabled)
   }
 }
 

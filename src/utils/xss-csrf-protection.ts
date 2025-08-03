@@ -114,10 +114,13 @@ export class XSSProtection {
       .replace(/\n/g, '\\n')
       .replace(/\r/g, '\\r')
       .replace(/\t/g, '\\t')
+      // eslint-disable-next-line no-control-regex
       .replace(/[\u0009]/g, '\\t') // tab escape
       .replace(/\f/g, '\\f')
       .replace(/\v/g, '\\v')
+      // eslint-disable-next-line no-control-regex
       .replace(/[\u0001]/g, '\\x01') // control char escape
+      // eslint-disable-next-line no-control-regex
       .replace(/[\u0002-\u001F\u007F-\u009F]/g, (match) => {
         return `\\u${  (`0000${  match.charCodeAt(0).toString(16)}`).slice(-4)}`
       })
