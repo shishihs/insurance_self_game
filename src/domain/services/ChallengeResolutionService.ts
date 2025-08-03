@@ -4,6 +4,7 @@ import type { ICardManager } from './CardManager'
 import type { Game } from '../entities/Game'
 import { RiskRewardChallenge } from '../entities/RiskRewardChallenge'
 import { AGE_PARAMETERS } from '../types/game.types'
+import { MAX_TOTAL_DAMAGE_REDUCTION, MINIMUM_DAMAGE_AFTER_INSURANCE } from '../constants/insurance.constants'
 
 /**
  * チャレンジ解決サービス
@@ -61,12 +62,26 @@ export class ChallengeResolutionService {
       const baseDamage = challengePower - playerPower
       // 防御型保険によるダメージ軽減（保険無効の場合は0）
       const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
-      const actualDamage = Math.max(1, baseDamage - damageReduction)
+      // 最小ダメージ保証を適用
+      const actualDamage = Math.max(MINIMUM_DAMAGE_AFTER_INSURANCE, baseDamage - damageReduction)
       
       // リスクチャレンジの場合はペナルティを調整
       if (isRiskChallenge) {
         vitalityChange = -challenge.calculateActualPenalty(actualDamage)
       } else {
+        vitalityChange = -actualDamage
+      }
+      
+      // NaNチェック
+      if (!isFinite(vitalityChange)) {
+        console.error('Invalid vitalityChange:', {
+          vitalityChange,
+          baseDamage,
+          damageReduction,
+          actualDamage,
+          challengePower,
+          playerPower
+        })
         vitalityChange = -actualDamage
       }
     }
@@ -214,6 +229,7 @@ export class ChallengeResolutionService {
 
   /**
    * 防御型保険によるダメージ軽減を計算
+   * Issue #24: 複数保険の合計軽減量にも上限を設定
    * @private
    */
   private calculateDamageReduction(game: Game): number {
@@ -221,11 +237,12 @@ export class ChallengeResolutionService {
     const insuranceCards = game.getActiveInsurances()
     
     insuranceCards.forEach(insurance => {
-      if (insurance.isDefensiveInsurance()) {
-        totalReduction += insurance.calculateDamageReduction()
-      }
+      // calculateDamageReduction内で防御効果のチェックを行うため、
+      // 全ての保険カードで計算を実行
+      totalReduction += insurance.calculateDamageReduction()
     })
     
-    return totalReduction
+    // 合計軽減量の上限を適用
+    return Math.min(totalReduction, MAX_TOTAL_DAMAGE_REDUCTION)
   }
 }
