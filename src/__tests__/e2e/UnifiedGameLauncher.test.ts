@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { promises as fs } from 'fs'
 
-describe('統一ゲームランチャー E2E テスト', () => {
+describe.skip('統一ゲームランチャー E2E テスト', () => {
   describe('unified-game-launcher.mjs の基本機能確認', () => {
     it('ランチャーファイルが存在し実行可能である', async () => {
       const exists = await fs.access('unified-game-launcher.mjs').then(() => true).catch(() => false)

@@ -255,8 +255,8 @@ export class MemoryProfiler {
   /**
    * Get current memory statistics
    */
-  getCurrentMemoryStats(): MemorySnapshot {
-    return this.createSnapshot()
+  async getCurrentMemoryStats(): Promise<MemorySnapshot> {
+    return await this.createSnapshot()
   }
 
   /**
@@ -362,10 +362,10 @@ export class MemoryProfiler {
     }
   }
 
-  private captureSnapshot(): void {
+  private async captureSnapshot(): Promise<void> {
     if (!this.isActive) return
 
-    const snapshot = this.createSnapshot()
+    const snapshot = await this.createSnapshot()
     this.snapshots.push(snapshot)
 
     // Limit snapshot history
@@ -374,13 +374,13 @@ export class MemoryProfiler {
     }
   }
 
-  private createSnapshot(): MemorySnapshot {
+  private async createSnapshot(): Promise<MemorySnapshot> {
     const memUsage = process.memoryUsage()
     
     let heapStats: HeapStatistics = {} as HeapStatistics
     try {
-      import v8 from 'v8'
-      heapStats = v8.getHeapStatistics()
+      const v8 = await import('v8')
+      heapStats = v8.default.getHeapStatistics()
     } catch (error) {
       // V8 heap stats not available
       heapStats = {
