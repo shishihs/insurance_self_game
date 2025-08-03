@@ -172,9 +172,10 @@ export class ChallengeResolutionService {
       return challenge.power
     }
     
-    // 中年期・充実期の年齢調整を適用（簡易版）
-    const adjustment = stage === 'middle' ? 1 : 2
-    const adjustedPower = challenge.power + adjustment
+    // 中年期・充実期の年齢調整を適用（段階的に調整）
+    // Issue #23: 難易度上昇をよりスムーズに
+    const adjustment = stage === 'middle' ? 0.5 : 1.0
+    const adjustedPower = Math.round(challenge.power + adjustment)
     
     // 最小値は1
     return Math.max(1, adjustedPower)

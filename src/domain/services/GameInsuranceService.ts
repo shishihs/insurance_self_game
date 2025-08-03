@@ -93,8 +93,9 @@ export class GameInsuranceService {
   updateInsuranceBurden(game: Game): void {
     const burden = this.calculateInsuranceBurden(game)
     // Gameクラスの内部プロパティを更新
-    const absValue = Math.abs(burden)
-    ;(game as any)._insuranceBurden = InsurancePremium.create(absValue)
+    // 保険料負担は負の値として計算されるため、符号を反転させて保存
+    const burdenValue = Math.abs(burden)
+    ;(game as any)._insuranceBurden = InsurancePremium.create(burdenValue)
     
     // ダーティフラグを更新
     if ((game as any)._dirtyFlags) {

@@ -418,24 +418,24 @@ export class CardFactory {
         { name: '転職活動', description: 'キャリアの分岐点', power: 6, dreamCategory: 'intellectual' as DreamCategory }
       ],
       middle: [
-        // 基本チャレンジ（難易度: 中）
-        { name: '結婚資金', description: '新しい家族のスタート', power: 6, dreamCategory: 'mixed' as DreamCategory },
-        { name: '子育て', description: '家族の成長', power: 7, dreamCategory: 'physical' as DreamCategory },
-        { name: '両親の健康', description: '家族の支え合い', power: 8, dreamCategory: 'mixed' as DreamCategory },
-        { name: '住宅購入', description: '大きな決断', power: 9, dreamCategory: 'physical' as DreamCategory },
+        // 基本チャレンジ（難易度: 中） - Issue #23: 難易度を調整
+        { name: '結婚資金', description: '新しい家族のスタート', power: 5, dreamCategory: 'mixed' as DreamCategory },
+        { name: '子育て', description: '家族の成長', power: 6, dreamCategory: 'physical' as DreamCategory },
+        { name: '両親の健康', description: '家族の支え合い', power: 6, dreamCategory: 'mixed' as DreamCategory },
+        { name: '住宅購入', description: '大きな決断', power: 7, dreamCategory: 'physical' as DreamCategory },
         // 高難度チャレンジ
-        { name: '親の介護', description: '家族の責任', power: 10, dreamCategory: 'mixed' as DreamCategory },
-        { name: '教育資金', description: '子供の将来への投資', power: 8, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '親の介護', description: '家族の責任', power: 8, dreamCategory: 'mixed' as DreamCategory },
+        { name: '教育資金', description: '子供の将来への投資', power: 7, dreamCategory: 'intellectual' as DreamCategory }
       ],
       fulfillment: [
-        // 基本チャレンジ（難易度: 高）
-        { name: '健康管理', description: '健やかな老後のために', power: 8, dreamCategory: 'mixed' as DreamCategory },
-        { name: '趣味の充実', description: '人生の新たな楽しみ', power: 9, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '社会貢献', description: '経験を活かした活動', power: 10, dreamCategory: 'mixed' as DreamCategory },
-        { name: '定年退職', description: '新しい人生のスタート', power: 11, dreamCategory: 'intellectual' as DreamCategory },
+        // 基本チャレンジ（難易度: 高） - Issue #23: 難易度を調整
+        { name: '健康管理', description: '健やかな老後のために', power: 7, dreamCategory: 'mixed' as DreamCategory },
+        { name: '趣味の充実', description: '人生の新たな楽しみ', power: 7, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '社会貢献', description: '経験を活かした活動', power: 8, dreamCategory: 'mixed' as DreamCategory },
+        { name: '定年退職', description: '新しい人生のスタート', power: 9, dreamCategory: 'intellectual' as DreamCategory },
         // 最高難度チャレンジ
-        { name: '遺産相続', description: '家族への最後の贈り物', power: 12, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '健康上の大きな試練', description: '人生最大の挑戦', power: 13, dreamCategory: 'physical' as DreamCategory }
+        { name: '遺産相続', description: '家族への最後の贈り物', power: 10, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '健康上の大きな試練', description: '人生最大の挑戦', power: 11, dreamCategory: 'physical' as DreamCategory }
       ]
     }
 
