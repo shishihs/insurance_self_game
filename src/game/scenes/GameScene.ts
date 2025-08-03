@@ -555,7 +555,20 @@ export class GameScene extends BaseScene {
       }
     ).setOrigin(0.5)
 
-    discardArea.add([discardPlaceholder, discardLabel])
+    const discardCount = this.add.text(
+      0,
+      90,
+      `Discard: ${this.gameInstance.discardPile.length}`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '14px',
+        color: '#888888'
+      }
+    )
+    discardCount.setOrigin(0.5)
+    discardCount.setName('discard-count')
+
+    discardArea.add([discardPlaceholder, discardLabel, discardCount])
     discardArea.setName('discard-area')
 
     // チャレンジエリア
@@ -587,6 +600,39 @@ export class GameScene extends BaseScene {
 
     challengeArea.add([challengePlaceholder, challengeLabel])
     challengeArea.setName('challenge-area')
+
+    // 手札情報表示エリア（画面右上）
+    const handInfoArea = this.add.container(this.gameWidth - 150, 60)
+    
+    const handInfoBg = this.add.rectangle(0, 0, 140, 80, 0x1F2937, 0.8)
+    handInfoBg.setStrokeStyle(2, 0x374151)
+    
+    const handCountText = this.add.text(
+      0,
+      -15,
+      `Hand: ${this.gameInstance.hand.length}`,
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '16px',
+        color: '#F9FAFB',
+        fontStyle: 'bold'
+      }
+    ).setOrigin(0.5)
+    handCountText.setName('hand-count')
+
+    const handLabel = this.add.text(
+      0,
+      10,
+      '手札枚数',
+      {
+        fontFamily: 'Noto Sans JP',
+        fontSize: '12px',
+        color: '#9CA3AF'
+      }
+    ).setOrigin(0.5)
+
+    handInfoArea.add([handInfoBg, handCountText, handLabel])
+    handInfoArea.setName('hand-info-area')
     
     // ドロップゾーンの初期化
     this.initializeDropZones()
@@ -1417,6 +1463,9 @@ export class GameScene extends BaseScene {
         ease: 'Power2'
       })
     })
+
+    // 手札枚数表示を更新
+    this.updateHandCountDisplay()
     
     // キーボード操作用にフォーカス可能要素を再登録
     this.registerHandCardsFocus()
@@ -1907,6 +1956,32 @@ export class GameScene extends BaseScene {
     const deckCount = this.children.getByName('deck-count') as Phaser.GameObjects.Text
     if (deckCount) {
       deckCount.setText(`${this.gameInstance.playerDeck.size()}`)
+    }
+
+    // 手札枚数表示を更新
+    this.updateHandCountDisplay()
+
+    // 捨て札枚数表示を更新
+    this.updateDiscardCountDisplay()
+  }
+
+  /**
+   * 手札枚数表示を更新
+   */
+  private updateHandCountDisplay(): void {
+    const handCountText = this.children.getByName('hand-count') as Phaser.GameObjects.Text
+    if (handCountText) {
+      handCountText.setText(`Hand: ${this.gameInstance.hand.length}`)
+    }
+  }
+
+  /**
+   * 捨て札枚数表示を更新
+   */
+  private updateDiscardCountDisplay(): void {
+    const discardCountText = this.children.getByName('discard-count') as Phaser.GameObjects.Text
+    if (discardCountText) {
+      discardCountText.setText(`Discard: ${this.gameInstance.discardPile.length}`)
     }
   }
 
