@@ -4117,7 +4117,10 @@ export class GameScene extends BaseScene {
    */
   private updateActionButtons(): void {
     const actionButtons = this.children.getByName('action-buttons') as Phaser.GameObjects.Container
-    if (!actionButtons) return
+    if (!actionButtons) {
+      console.warn('❌ Action buttons container not found')
+      return
+    }
 
     const drawButton = actionButtons.getByName('draw-button')
     const challengeButton = actionButtons.getByName('challenge-button')
@@ -4125,6 +4128,18 @@ export class GameScene extends BaseScene {
 
     const phase = this.gameInstance.phase
     const isInProgress = this.gameInstance.isInProgress()
+    
+    // デバッグ情報を出力
+    if (import.meta.env.DEV) {
+      console.log('🔄 Updating action buttons:', {
+        phase,
+        isInProgress,
+        drawButton: !!drawButton,
+        challengeButton: !!challengeButton,
+        endTurnButton: !!endTurnButton,
+        currentChallenge: !!this.gameInstance.currentChallenge
+      })
+    }
 
     // フェーズに応じてボタンの有効/無効を切り替え
     if (drawButton) {
@@ -4195,7 +4210,7 @@ export class GameScene extends BaseScene {
    */
   private setButtonEnabled(button: Phaser.GameObjects.Container, enabled: boolean): void {
     if (!button?.list || button.list.length < 2) {
-      console.warn('Invalid button structure')
+      console.warn('Invalid button structure for button:', button?.name)
       return
     }
 
@@ -4203,18 +4218,28 @@ export class GameScene extends BaseScene {
     const buttonText = button.list[1] as Phaser.GameObjects.Text
 
     if (!buttonBg || !buttonText) {
-      console.warn('Button components not found')
+      console.warn('Button components not found for button:', button.name)
       return
     }
 
     if (enabled) {
       buttonBg.setFillStyle(0x3498DB)
       buttonText.setColor('#ffffff')
-      buttonBg.setInteractive()
+      buttonBg.setInteractive({ useHandCursor: true })
+      button.setAlpha(1.0)
+      // デバッグログを追加
+      if (import.meta.env.DEV) {
+        console.log(`✅ Button enabled: ${button.name}`)
+      }
     } else {
       buttonBg.setFillStyle(0x95A5A6)
       buttonText.setColor('#cccccc')
       buttonBg.disableInteractive()
+      button.setAlpha(0.5)
+      // デバッグログを追加
+      if (import.meta.env.DEV) {
+        console.log(`❌ Button disabled: ${button.name}`)
+      }
     }
   }
 
