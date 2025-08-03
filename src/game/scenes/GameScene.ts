@@ -174,8 +174,8 @@ export class GameScene extends BaseScene {
 
     // フレーム5: ゲーム開始
     await new Promise<void>(resolve => {
-      requestAnimationFrame(() => {
-        this.startGame()
+      requestAnimationFrame(async () => {
+        await this.startGame()
         resolve()
       })
     })
@@ -725,7 +725,12 @@ export class GameScene extends BaseScene {
       0,
       0,
       'カードを引く',
-      () => { this.drawCards(1); },
+      () => { 
+        // 非同期処理を適切に処理
+        this.drawCards(1).catch(error => {
+          console.error('ドローボタンエラー:', error)
+        })
+      },
       {
         fontFamily: 'Noto Sans JP',
         fontSize: '18px',
@@ -778,7 +783,9 @@ export class GameScene extends BaseScene {
     // アクションのコールバックを登録
     this.keyboardController.registerActionCallback('draw', () => {
       if (this.gameInstance.phase === 'draw' && this.gameInstance.isInProgress()) {
-        this.drawCards(1)
+        this.drawCards(1).catch(error => {
+          console.error('キーボードドローエラー:', error)
+        })
       }
     })
     
@@ -838,7 +845,9 @@ export class GameScene extends BaseScene {
       if (drawButton) {
         this.keyboardController.registerFocusableElement(drawButton, () => {
           if (this.gameInstance.phase === 'draw' && this.gameInstance.isInProgress()) {
-            this.drawCards(1)
+            this.drawCards(1).catch(error => {
+              console.error('フォーカス要素ドローエラー:', error)
+            })
           }
         })
       }
@@ -890,41 +899,86 @@ export class GameScene extends BaseScene {
   /**
    * ゲーム開始
    */
-  private startGame(): void {
-    this.gameInstance.start()
-    
-    // 初期手札を引く
-    this.drawCards(GAME_CONSTANTS.INITIAL_DRAW)
-    
-    // ボタン状態を初期化
-    this.time.delayedCall(100, () => {
-      this.updateActionButtons()
-    })
+  private async startGame(): Promise<void> {
+    try {
+      this.gameInstance.start()
+      
+      if (import.meta.env.DEV) {
+        console.log('🎮 ゲーム開始 - 初期手札を配布中...')
+      }
+      
+      // 初期手札を引く
+      await this.drawCards(GAME_CONSTANTS.INITIAL_DRAW)
+      
+      // ボタン状態を初期化
+      this.time.delayedCall(100, () => {
+        this.updateActionButtons()
+      })
 
-    // ゲーム状態を公開（チュートリアル用）
-    this.updateGameStateForTutorial()
+      // ゲーム状態を公開（チュートリアル用）
+      this.updateGameStateForTutorial()
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ ゲーム開始処理完了')
+      }
+    } catch (error) {
+      console.error('❌ ゲーム開始エラー:', error)
+      this.showMessage('ゲーム開始に失敗しました', 'error')
+    }
   }
 
   /**
    * カードを引く
    */
-  private drawCards(count: number): void {
-    const drawnCards = this.gameInstance.drawCards(count)
-    
-    drawnCards.forEach((card, index) => {
-      this.time.delayedCall(index * 100, () => {
-        this.createHandCard(card)
-        // カードドロー音を再生
-        this.soundManager?.play('cardDraw')
+  private async drawCards(count: number): Promise<void> {
+    try {
+      // 非同期でカードを引く
+      const drawnCards = await this.gameInstance.drawCards(count)
+      
+      if (import.meta.env.DEV) {
+        console.log(`✅ カードを${drawnCards.length}枚ドローしました:`, drawnCards.map(c => c.name))
+      }
+      
+      drawnCards.forEach((card, index) => {
+        this.time.delayedCall(index * 100, () => {
+          this.createHandCard(card)
+          // カードドロー音を再生
+          this.soundManager?.play('cardDraw')
+        })
       })
-    })
 
-    // 手札を再配置
-    this.time.delayedCall(count * 100 + 100, () => {
-      this.arrangeHand()
-      // チュートリアル用にゲーム状態を更新
-      this.updateGameStateForTutorial()
-    })
+      // 手札を再配置
+      this.time.delayedCall(count * 100 + 100, () => {
+        this.arrangeHand()
+        // チュートリアル用にゲーム状態を更新
+        this.updateGameStateForTutorial()
+      })
+    } catch (error) {
+      console.error('❌ カードドローエラー:', error)
+      
+      // エラー時はフォールバック: 同期メソッドを使用
+      try {
+        const drawnCards = this.gameInstance.drawCardsSync(count)
+        if (import.meta.env.DEV) {
+          console.log(`⚠️ フォールバック: カードを${drawnCards.length}枚ドローしました`)
+        }
+        
+        drawnCards.forEach((card, index) => {
+          this.time.delayedCall(index * 100, () => {
+            this.createHandCard(card)
+            this.soundManager?.play('cardDraw')
+          })
+        })
+
+        this.time.delayedCall(count * 100 + 100, () => {
+          this.arrangeHand()
+          this.updateGameStateForTutorial()
+        })
+      } catch (fallbackError) {
+        console.error('❌ フォールバックも失敗:', fallbackError)
+        this.showMessage('カードドローに失敗しました', 'error')
+      }
+    }
   }
 
   /**
