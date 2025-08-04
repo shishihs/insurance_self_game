@@ -40,6 +40,8 @@ export class CardFactory {
    * 初期デッキ用の人生カードを生成
    */
   static createStarterLifeCards(): Card[] {
+    console.log('🎴 [CardFactory.createStarterLifeCards] スターターカード作成開始')
+    
     const starterCardDefinitions = [
       // 健康カード
       { name: '朝のジョギング', description: '健康的な一日の始まり', category: 'health' as LifeCardCategory, power: 2, cost: 1 },
@@ -55,7 +57,13 @@ export class CardFactory {
       { name: '計画的な貯蓄', description: '将来への備え', category: 'finance' as LifeCardCategory, power: 3, cost: 2 }
     ]
 
-    return this.createCardsFromDefinitions(starterCardDefinitions, def => this.createLifeCard(def))
+    console.log(`📊 [CardFactory.createStarterLifeCards] 定義数: ${starterCardDefinitions.length}`)
+    
+    const cards = this.createCardsFromDefinitions(starterCardDefinitions, def => this.createLifeCard(def))
+    
+    console.log(`✅ [CardFactory.createStarterLifeCards] 作成されたカード数: ${cards.length}`)
+    
+    return cards
   }
 
   /**
