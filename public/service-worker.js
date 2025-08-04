@@ -19,8 +19,8 @@ const IMAGES_CACHE_NAME = `life-fulfillment-images-v${CACHE_VERSION}`;
 const API_CACHE_NAME = `life-fulfillment-api-v${CACHE_VERSION}`;
 
 // 必須の静的ファイル（即座にキャッシュ）
-// GitHub Pagesのサブディレクトリに対応
-const BASE_PATH = '/insurance_self_game';
+// BASE_PATHは self.location.pathname から動的に取得
+const BASE_PATH = self.location.pathname.replace(/\/[^/]*$/, '').replace(/\/$/, '') || '';
 const CRITICAL_STATIC_FILES = [
   `${BASE_PATH}/`,
   `${BASE_PATH}/index.html`,
