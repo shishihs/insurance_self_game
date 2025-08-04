@@ -213,8 +213,17 @@ export class GameInsuranceService {
    */
   private fallbackBurdenCalculation(game: Game): number {
     const activeInsuranceCount = game.insuranceCards.length
-    const burden = Math.floor(activeInsuranceCount / 3)
-    return burden === 0 ? 0 : -burden
+    if (activeInsuranceCount === 0) return 0
+    
+    // コストも考慮した負担計算
+    const totalCost = game.insuranceCards.reduce((sum, card) => sum + card.cost, 0)
+    
+    // コストが0の場合は負担なし
+    if (totalCost === 0) return 0
+    
+    // 保険が1枚でも負担が発生するように、最低1の負担を保証
+    const burden = Math.max(1, Math.floor(activeInsuranceCount / 3))
+    return -burden
   }
 
   /**
