@@ -137,12 +137,12 @@ export const GAME_CONSTANTS = {
   CARD_DRAW_DURATION: 400,
   
   // レイアウト（1280x720基準）
-  HAND_Y_POSITION: 600,
+  HAND_Y_POSITION: 520,  // Changed from 600 to 520 to ensure cards are fully visible
   CHALLENGE_Y_POSITION: 180,
   DECK_X_POSITION: 100,
-  DECK_Y_POSITION: 600,
+  DECK_Y_POSITION: 520,  // Changed from 600 to 520 to match hand position
   DISCARD_X_POSITION: 1180,
-  DISCARD_Y_POSITION: 600,
+  DISCARD_Y_POSITION: 520,  // Changed from 600 to 520 to match hand position
   
   // ゲームプレイ
   MAX_HAND_SIZE: 7,
