@@ -90,15 +90,16 @@ export class DrawCardsProcessor extends BaseActionProcessor<number, Card[]> {
   }
 
   protected async process(game: Game, count: number): Promise<ActionResult<Card[]>> {
-    const drawnCards = game.drawCardsSync(count)
+    // CardManagerから直接カードをドロー
+    const result = game.cardManager.drawCards(count)
     
     return {
       success: true,
-      data: drawnCards,
+      data: result.drawnCards,
       effects: [{
         type: 'card_draw',
         description: `${count}枚のカードをドローしました`,
-        cards: drawnCards
+        cards: result.drawnCards
       }]
     }
   }
