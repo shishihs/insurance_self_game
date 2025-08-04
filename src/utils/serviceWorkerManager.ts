@@ -49,8 +49,8 @@ class ServiceWorkerManager {
     }
 
     try {
-      this.registration = await navigator.serviceWorker.register('/service-worker.js', {
-        scope: '/',
+      this.registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}service-worker.js`, {
+        scope: import.meta.env.BASE_URL,
         updateViaCache: 'none' // 常に最新版をチェック
       })
 

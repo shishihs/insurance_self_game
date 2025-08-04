@@ -101,8 +101,8 @@ export class PWAManager {
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js', {
-        scope: '/',
+      const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}service-worker.js`, {
+        scope: import.meta.env.BASE_URL,
         updateViaCache: 'none'
       })
 
@@ -247,7 +247,7 @@ export class PWAManager {
       await this.sendNotification({
         title: '人生充実ゲーム',
         body: '新しいチャレンジが待っています！プレイを再開しませんか？',
-        icon: '/favicon.ico',
+        icon: `${import.meta.env.BASE_URL}favicon.ico`,
         tag: 'game-reminder',
         data: {
           action: 'resume-game',
@@ -449,9 +449,9 @@ export class PWAManager {
     if (!this.serviceWorker) return
 
     const criticalAssets = [
-      '/manifest.json',
-      '/favicon.ico',
-      '/favicon.svg'
+      `${import.meta.env.BASE_URL}manifest.json`,
+      `${import.meta.env.BASE_URL}favicon.ico`,
+      `${import.meta.env.BASE_URL}favicon.svg`
     ]
 
     try {
