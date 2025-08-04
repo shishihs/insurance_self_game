@@ -57,7 +57,7 @@ export class RealTimeMonitor {
   private performanceAnalyzer: GamePerformanceAnalyzer
   private memoryProfiler: MemoryProfiler
   private optimizationSuite: OptimizationSuite
-  private updateTimer: ReturnType<typeof setTimeout>Timeout | null = null
+  private updateTimer: ReturnType<typeof setTimeout> | null = null
   private displayLines: number = 0
 
   constructor(config?: Partial<MonitorConfig>) {
