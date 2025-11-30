@@ -31,6 +31,7 @@ import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
 import { RiskProfile } from '../valueObjects/RiskFactor'
 import type { PlayerHistory } from '../services/InsurancePremiumCalculationService'
+import { GameConstantsAccessor } from '../constants/GameConstants'
 
 /**
  * ゲームエンティティ - ゲーム全体の状態と進行を管理する中核クラス
@@ -176,6 +177,13 @@ export class Game implements IGameState {
       startingHandSize: 5,
       maxHandSize: 10,
       dreamCardCount: 3
+    }
+
+    // Apply balance overrides if provided
+    if (this.config.balanceConfig) {
+      GameConstantsAccessor.setOverrides(this.config.balanceConfig)
+    } else {
+      GameConstantsAccessor.clearOverrides()
     }
 
     // 状態変更イベントの監視を設定

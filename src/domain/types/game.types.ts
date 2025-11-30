@@ -5,7 +5,7 @@ import type { Deck } from '../entities/Deck'
 /**
  * ゲーム状態
  */
-export type GameStatus = 
+export type GameStatus =
   | 'not_started'
   | 'in_progress'
   | 'stage_clear'
@@ -15,7 +15,7 @@ export type GameStatus =
 /**
  * ゲームフェーズ
  */
-export type GamePhase = 
+export type GamePhase =
   | 'setup'                    // セットアップ
   | 'draw'                     // ドロー
   | 'challenge'                // チャレンジ
@@ -55,6 +55,46 @@ export interface GameConfig {
   dreamCardCount: number // 最終試練で選ぶ夢カードの数
   // テスト・分析用の追加設定
   maxTurns?: number
+  // バランス調整設定
+  balanceConfig?: BalanceConfig
+}
+
+/**
+ * バランス調整設定
+ * GameConstantsの値を上書きするための設定
+ */
+export interface BalanceConfig {
+  stageParameters?: {
+    youth?: Partial<AgeParameters & { startTurn: number, endTurn: number, insuranceMultiplier: number, challengeDifficultyModifier: number }>
+    middle?: Partial<AgeParameters & { startTurn: number, endTurn: number, insuranceMultiplier: number, challengeDifficultyModifier: number }>
+    fulfillment?: Partial<AgeParameters & { startTurn: number, endTurn: number, insuranceMultiplier: number, challengeDifficultyModifier: number }>
+  }
+  vitalitySettings?: {
+    defaultStarting?: number
+    minimumValue?: number
+    maximumValue?: number
+    healingCap?: number
+  }
+  cardLimits?: {
+    maxHandSize?: number
+    startingHandSize?: number
+    defaultDrawCount?: number
+    maxDeckSize?: number
+  }
+  challengeSettings?: {
+    minDifficulty?: number
+    maxDifficulty?: number
+    successBonusBase?: number
+    failurePenaltyRatio?: number
+    enableDynamicDifficulty?: boolean
+  }
+  progressionSettings?: {
+    maxTurns?: number
+    victoryConditions?: {
+      minTurns?: number
+      minVitality?: number
+    }
+  }
 }
 
 /**
@@ -141,23 +181,23 @@ export interface AgeParameters {
  * 年齢別設定
  */
 export const AGE_PARAMETERS: Record<string, AgeParameters> = {
-  youth: { 
-    maxVitality: 100, 
+  youth: {
+    maxVitality: 100,
     label: '青年期',
     ageMultiplier: 0
   },
-  middle: { 
-    maxVitality: 80, 
+  middle: {
+    maxVitality: 80,
     label: '中年期',
     ageMultiplier: 0.5
   },
-  middle_age: { 
-    maxVitality: 80, 
+  middle_age: {
+    maxVitality: 80,
     label: '中年期',
     ageMultiplier: 0.5
   },
-  fulfillment: { 
-    maxVitality: 60, 
+  fulfillment: {
+    maxVitality: 60,
     label: '充実期',
     ageMultiplier: 1.0
   }
@@ -182,33 +222,33 @@ export interface IGameState {
   turn: number
   vitality: number
   maxVitality: number
-  
+
   // デッキ関連
   playerDeck: Deck
   hand: Card[]
   discardPile: Card[]
   challengeDeck: Deck
-  
+
   // チャレンジ関連
   currentChallenge?: Card
   selectedCards: Card[]
   cardChoices?: Card[]  // 現在の選択肢カード
   insuranceTypeChoices?: InsuranceTypeChoice[]  // 現在の保険種類選択肢
-  
+
   // Phase 2-4: 保険カード管理
   insuranceCards?: Card[]  // 現在有効な保険カード
   expiredInsurances?: Card[]  // 期限切れになった保険カード
-  
+
   // Phase 3: 保険料負担
   insuranceBurden?: number  // 保険料による負担（負の値）
-  
-  
+
+
   // 統計
   stats: PlayerStats
-  
+
   // 設定
   config: GameConfig
-  
+
   // タイムスタンプ
   startedAt?: Date
   completedAt?: Date

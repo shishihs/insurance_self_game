@@ -13,17 +13,18 @@ onMounted(() => {
   }
 })
 
-function onDraw() {
-  store.drawCards(1)
+async function onDraw() {
+  await store.drawCards(1)
 }
 
-function onEndTurn() {
-  store.endTurn()
+async function onEndTurn() {
+  await store.endTurn()
 }
 
-function onChallenge() {
-  store.drawChallenge()
+async function onChallenge() {
+  await store.drawChallenge()
 }
+
 </script>
 
 <template>

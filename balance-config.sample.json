@@ -1,0 +1,13 @@
+{
+    "vitalitySettings": {
+        "defaultStarting": 80,
+        "maximumValue": 120
+    },
+    "cardLimits": {
+        "startingHandSize": 4
+    },
+    "challengeSettings": {
+        "successBonusBase": 3,
+        "enableDynamicDifficulty": false
+    }
+}

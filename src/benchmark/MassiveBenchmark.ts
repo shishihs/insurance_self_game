@@ -231,15 +231,19 @@ export class MassiveBenchmark {
   async execute(): Promise<MassiveBenchmarkResults> {
     console.clear()
     this.displayBenchmarkHeader()
-    
+
     this.startTime = Date.now()
     this.performanceAnalyzer.startMonitoring()
 
     try {
-      await this.initializeWorkers()
-      await this.distributeTasks()
-      await this.waitForCompletion()
-      await this.collectResults()
+      if (this.config.workerThreads <= 0) {
+        await this.executeSingleThreaded()
+      } else {
+        await this.initializeWorkers()
+        await this.distributeTasks()
+        await this.waitForCompletion()
+        await this.collectResults()
+      }
     } catch (error) {
       console.error(chalk.red(`❌ Benchmark failed: ${error}`))
       throw error
@@ -249,7 +253,7 @@ export class MassiveBenchmark {
 
     const performanceAnalysis = this.performanceAnalyzer.stopMonitoring()
     this.results = await this.generateResults(performanceAnalysis)
-    
+
     this.displayResults()
     await this.exportResults()
 
@@ -261,16 +265,16 @@ export class MassiveBenchmark {
    */
   async executeInPhases(phaseSizes: number[]): Promise<MassiveBenchmarkResults[]> {
     const phaseResults: MassiveBenchmarkResults[] = []
-    
+
     for (let i = 0; i < phaseSizes.length; i++) {
       console.log(chalk.cyan(`\n🚀 Starting Phase ${i + 1}/${phaseSizes.length} - ${phaseSizes[i]} games`))
-      
+
       const phaseConfig = { ...this.config, totalGames: phaseSizes[i] }
       const phaseBenchmark = new MassiveBenchmark(phaseConfig)
-      
+
       const result = await phaseBenchmark.execute()
       phaseResults.push(result)
-      
+
       // Cleanup between phases
       await this.sleep(1000)
       if (global.gc) global.gc()
@@ -312,13 +316,71 @@ export class MassiveBenchmark {
    */
   async stop(): Promise<void> {
     console.log(chalk.yellow('\n⏹️ Stopping benchmark...'))
-    
+
     for (const worker of this.workers) {
       await worker.terminate()
     }
-    
+
     await this.cleanup()
     console.log(chalk.green('✅ Benchmark stopped'))
+  }
+
+  /**
+   * Execute benchmark in single-threaded mode
+   */
+  private async executeSingleThreaded(): Promise<void> {
+    console.log(chalk.blue('🧵 Running in single-threaded mode...'))
+
+    const totalGames = this.config.totalGames
+    const gameConfig = this.config.gameConfig
+    const strategy = this.config.strategy
+    const gameTimeout = this.config.gameTimeout
+
+    if (this.config.showProgress) {
+      this.progressBar = new cliProgress.MultiBar({
+        clearOnComplete: false,
+        hideCursor: true,
+        format: ' {label} |{bar}| {percentage}% | {value}/{total} | ETA: {eta}s | Speed: {speed}'
+      }, cliProgress.Presets.shades_grey)
+
+      const bar = this.progressBar.create(totalGames, 0, {
+        label: 'Main Thread',
+        speed: '0 games/s'
+      })
+      this.workerProgressBars.set(0, bar)
+    }
+
+    const startTime = Date.now()
+    let lastProgressUpdate = startTime
+    const results: GameResultSummary[] = []
+
+    for (let i = 0; i < totalGames; i++) {
+      try {
+        const result = await executeGame(i, gameConfig, strategy, gameTimeout, 0)
+        results.push(result)
+
+        const now = Date.now()
+        if (now - lastProgressUpdate > 500 && this.workerProgressBars.has(0)) {
+          const elapsed = (now - startTime) / 1000
+          const speed = (i + 1) / elapsed
+          this.workerProgressBars.get(0)!.update(i + 1, {
+            speed: `${speed.toFixed(1)} games/s`
+          })
+          lastProgressUpdate = now
+        }
+      } catch (error) {
+        console.error(chalk.red(`❌ Game ${i} failed: ${error}`))
+      }
+    }
+
+    // Store results
+    this.workerResults.set(0, results)
+
+    if (this.workerProgressBars.has(0)) {
+      this.workerProgressBars.get(0)!.update(totalGames, {
+        speed: 'Completed'
+      })
+    }
   }
 
   // === Private Methods ===
@@ -341,7 +403,7 @@ ${chalk.gray('═'.repeat(80))}
 
   private async initializeWorkers(): Promise<void> {
     console.log(chalk.blue('🔧 Initializing worker threads...'))
-    
+
     if (this.config.showProgress) {
       this.progressBar = new cliProgress.MultiBar({
         clearOnComplete: false,
@@ -351,10 +413,10 @@ ${chalk.gray('═'.repeat(80))}
     }
 
     const gamesPerWorker = Math.ceil(this.config.totalGames / this.config.workerThreads)
-    
+
     for (let i = 0; i < this.config.workerThreads; i++) {
       const workerGames = Math.min(gamesPerWorker, this.config.totalGames - (i * gamesPerWorker))
-      
+
       if (workerGames <= 0) break
 
       const worker = new Worker(__filename, {
@@ -392,7 +454,7 @@ ${chalk.gray('═'.repeat(80))}
 
   private async distributeTasks(): Promise<void> {
     console.log(chalk.blue('📨 Distributing tasks to workers...'))
-    
+
     for (let i = 0; i < this.workers.length; i++) {
       this.workers[i].postMessage({ command: 'start' })
     }
@@ -401,7 +463,7 @@ ${chalk.gray('═'.repeat(80))}
   private async waitForCompletion(): Promise<void> {
     return new Promise((resolve) => {
       let completedWorkers = 0
-      
+
       const checkCompletion = () => {
         if (completedWorkers >= this.workers.length) {
           resolve()
@@ -427,23 +489,23 @@ ${chalk.gray('═'.repeat(80))}
           })
         }
         break
-        
+
       case 'completed':
         // Store worker results
         if (message.results && Array.isArray(message.results)) {
           this.workerResults.set(workerId, message.results)
         }
-        
+
         if (this.workerProgressBars.has(workerId)) {
           const bar = this.workerProgressBars.get(workerId)!
           bar.update(message.totalGames, {
             speed: 'Completed'
           })
         }
-        
+
         console.log(chalk.green(`✅ Worker ${workerId} completed ${message.totalGames} games`))
         break
-        
+
       case 'batch_results':
         // Handle batch results for streaming collection
         if (!this.workerResults.has(workerId)) {
@@ -452,30 +514,30 @@ ${chalk.gray('═'.repeat(80))}
         const existingResults = this.workerResults.get(workerId)!
         existingResults.push(...message.results)
         break
-        
+
       case 'error':
         // Store worker errors
         if (!this.workerErrors.has(workerId)) {
           this.workerErrors.set(workerId, [])
         }
         this.workerErrors.get(workerId)!.push(message.error)
-        
+
         console.error(chalk.red(`❌ Worker ${workerId} error: ${message.error}`))
-        
+
         // Attempt to restart worker if possible
         if (message.fatal) {
           console.error(chalk.red(`💥 Worker ${workerId} encountered fatal error, terminating`))
         }
         break
-        
+
       case 'memory_warning':
         console.warn(chalk.yellow(`⚠️ Worker ${workerId} memory warning: ${message.usage}MB`))
         break
-        
+
       case 'heartbeat':
         // Worker is alive, update last seen time
         break
-        
+
       default:
         console.warn(chalk.yellow(`Unknown message type from worker ${workerId}: ${message.type}`))
     }
@@ -486,15 +548,15 @@ ${chalk.gray('═'.repeat(80))}
 
   private async collectResults(): Promise<void> {
     console.log(chalk.blue('📊 Collecting results from workers...'))
-    
+
     // Results are collected through worker messages
     // Verify all workers have completed
     const totalExpectedResults = this.config.totalGames
     const totalCollectedResults = Array.from(this.workerResults.values())
       .reduce((total, results) => total + results.length, 0)
-    
+
     console.log(chalk.green(`✅ Collected ${totalCollectedResults}/${totalExpectedResults} results`))
-    
+
     if (totalCollectedResults < totalExpectedResults) {
       const missing = totalExpectedResults - totalCollectedResults
       console.log(chalk.yellow(`⚠️ Missing ${missing} results from failed workers`))
@@ -530,7 +592,7 @@ ${chalk.gray('═'.repeat(80))}
 
   private calculateSystemUsage(performanceAnalysis: PerformanceAnalysis): SystemResourceUsage {
     const metrics = performanceAnalysis.metrics
-    
+
     return {
       cpu: {
         averageUsage: metrics.cpuUsage,
@@ -557,23 +619,23 @@ ${chalk.gray('═'.repeat(80))}
     // Collect all results from workers
     const allGameResults: GameResultSummary[] = []
     const workerPerformanceData: WorkerPerformanceData[] = []
-    
+
     for (const [workerId, results] of this.workerResults) {
       allGameResults.push(...results)
-      
+
       // Calculate worker performance metrics
       const workerErrors = this.workerErrors.get(workerId) || []
       const workerMemoryUsage = this.estimateWorkerMemoryUsage(workerId)
-      
+
       workerPerformanceData.push({
         workerId,
         gamesProcessed: results.length,
         totalTime: results.reduce((sum, r) => sum + r.duration, 0),
-        averageGameTime: results.length > 0 ? 
+        averageGameTime: results.length > 0 ?
           results.reduce((sum, r) => sum + r.duration, 0) / results.length : 0,
         memoryUsage: workerMemoryUsage,
         errors: workerErrors.length,
-        successRate: results.length > 0 ? 
+        successRate: results.length > 0 ?
           results.filter(r => r.outcome === 'victory').length / results.length : 0
       })
     }
@@ -581,7 +643,7 @@ ${chalk.gray('═'.repeat(80))}
     const completedGames = allGameResults.length
     const failedGames = this.config.totalGames - completedGames
     const gamesPerSecond = completedGames / (totalDuration / 1000)
-    const averageGameTime = completedGames > 0 ? 
+    const averageGameTime = completedGames > 0 ?
       allGameResults.reduce((sum, r) => sum + r.duration, 0) / completedGames : 0
 
     return {
@@ -604,7 +666,73 @@ ${chalk.gray('═'.repeat(80))}
   }
 
   private async calculateStatistics(gameResults: GameResultSummary[]): Promise<BenchmarkStatistics> {
-    // Comprehensive statistical analysis would be implemented here
+    const totalGames = gameResults.length
+    if (totalGames === 0) {
+      return this.getEmptyStatistics()
+    }
+
+    const victories = gameResults.filter(r => r.outcome === 'victory').length
+    const gameOvers = gameResults.filter(r => r.outcome === 'game_over').length
+    const timeouts = gameResults.filter(r => r.outcome === 'timeout').length
+    const errors = gameResults.filter(r => r.outcome === 'error').length
+
+    const totalTurns = gameResults.reduce((sum, r) => sum + r.stats.turnsPlayed, 0)
+    const totalScore = gameResults.reduce((sum, r) => sum + (r.stats.score || 0), 0)
+
+    return {
+      outcomes: {
+        victories,
+        gameOvers,
+        timeouts,
+        errors,
+        victoryRate: (victories / totalGames) * 100,
+        averageTurns: totalTurns / totalGames,
+        averageScore: totalScore / totalGames
+      },
+      challenges: {
+        totalAttempted: 0, // Detailed stats would require deeper extraction
+        totalSuccessful: 0,
+        totalFailed: 0,
+        successRate: 0,
+        averagePerGame: 0,
+        difficultyDistribution: {}
+      },
+      resources: {
+        averageCardsAcquired: 0,
+        averageHighestVitality: 0,
+        averageInsuranceBurden: 0,
+        cardAcquisitionRate: 0
+      },
+      distributions: {
+        turnCounts: gameResults.map(r => r.stats.turnsPlayed),
+        scores: gameResults.map(r => r.stats.score || 0),
+        challengeSuccessRates: [],
+        gameDurations: gameResults.map(r => r.duration)
+      },
+      analytics: {
+        correlations: {
+          turnVsScore: 0,
+          challengeSuccessVsVictory: 0,
+          cardsAcquiredVsScore: 0,
+          insuranceBurdenVsPerformance: 0
+        },
+        outliers: {
+          exceptionalVictories: [],
+          poorPerformances: [],
+          unusualDurations: [],
+          statisticalOutliers: []
+        },
+        trends: {
+          performanceOverTime: [],
+          memoryUsageOverTime: [],
+          successRateOverTime: [],
+          speedOverTime: []
+        }
+      }
+    }
+  }
+
+  private getEmptyStatistics(): BenchmarkStatistics {
     return {
       outcomes: {
         victories: 0,
@@ -684,7 +812,7 @@ ${chalk.gray('═'.repeat(80))}
     if (!this.results) return
 
     console.log(chalk.blue('📤 Exporting results...'))
-    
+
     // Export implementation would save results in specified formats
     console.log(chalk.green('✅ Results exported successfully'))
   }
@@ -718,13 +846,13 @@ if (!isMainThread && parentPort && workerData) {
     try {
       for (let i = 0; i < totalGames; i++) {
         const gameStart = Date.now()
-        
+
         try {
           const result = await executeGame(i, gameConfig, strategy, gameTimeout)
           gameResults.push(result)
           batchResults.push(result)
           completedGames++
-          
+
           // Send batch results periodically to reduce memory usage
           if (batchResults.length >= batchReportSize) {
             parentPort?.postMessage({
@@ -734,29 +862,29 @@ if (!isMainThread && parentPort && workerData) {
             })
             batchResults = [] // Clear batch
           }
-          
+
           const now = Date.now()
-          
+
           // Send progress updates every 500ms (reduced frequency)
           if (now - lastProgressUpdate > 500) {
             const elapsed = (now - startTime) / 1000
             const speed = completedGames / elapsed
-            
+
             parentPort?.postMessage({
               type: 'progress',
               completed: completedGames,
               total: totalGames,
               speed: speed.toFixed(1)
             })
-            
+
             lastProgressUpdate = now
           }
-          
+
           // Memory monitoring every 5 seconds
           if (now - lastMemoryCheck > 5000) {
             const memUsage = process.memoryUsage()
             const memUsageMB = memUsage.heapUsed / (1024 * 1024)
-            
+
             if (memUsageMB > 500) { // Warn if over 500MB
               parentPort?.postMessage({
                 type: 'memory_warning',
@@ -764,32 +892,32 @@ if (!isMainThread && parentPort && workerData) {
                 usage: memUsageMB.toFixed(1)
               })
             }
-            
+
             // Force GC if available and memory is high
             if (memUsageMB > 800 && global.gc) {
               global.gc()
             }
-            
+
             lastMemoryCheck = now
           }
-          
+
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error)
-          
+
           parentPort?.postMessage({
             type: 'error',
             gameId: i,
             error: errorMessage,
             fatal: errorMessage.includes('FATAL') || errorMessage.includes('out of memory')
           })
-          
+
           // Continue with next game unless fatal error
           if (errorMessage.includes('FATAL') || errorMessage.includes('out of memory')) {
             break
           }
         }
       }
-      
+
       // Send any remaining batch results
       if (batchResults.length > 0) {
         parentPort?.postMessage({
@@ -798,14 +926,14 @@ if (!isMainThread && parentPort && workerData) {
           results: batchResults
         })
       }
-      
+
       parentPort?.postMessage({
         type: 'completed',
         workerId,
         totalGames: completedGames,
         results: gameResults.length > 100 ? [] : gameResults // Send all results only if small
       })
-      
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       parentPort?.postMessage({
@@ -817,44 +945,51 @@ if (!isMainThread && parentPort && workerData) {
     }
   }
 
-  async function executeGame(
-    gameId: number,
-    config: GameConfig,
-    strategy: string,
-    timeout: number
-  ): Promise<GameResultSummary> {
-    return new Promise((resolve, reject) => {
-      const timeoutHandle = setTimeout(() => {
-        reject(new Error('Game timeout'))
-      }, timeout)
+}
 
-      try {
-        const renderer = new BenchmarkModeRenderer({}, 1)
-        const controller = GameControllerFactory.create(config, renderer)
-        
-        controller.playGame().then((stats) => {
-          clearTimeout(timeoutHandle)
-          
-          resolve({
-            gameId,
-            workerId,
-            outcome: 'victory', // Simplified - would determine actual outcome
-            stats,
-            duration: Date.now() - gameId, // Simplified timing
-            strategy,
-            stage: 'elderly' // Simplified - would track actual stage
-          })
-        }).catch((error) => {
-          clearTimeout(timeoutHandle)
-          reject(error)
+/**
+ * Execute a single game simulation
+ */
+export async function executeGame(
+  gameId: number,
+  config: GameConfig,
+  strategy: string,
+  timeout: number,
+  workerId: number = 0
+): Promise<GameResultSummary> {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now()
+    const timeoutHandle = setTimeout(() => {
+      reject(new Error('Game timeout'))
+    }, timeout)
+
+    try {
+      const renderer = new BenchmarkModeRenderer({}, 1)
+      const controller = GameControllerFactory.create(config, renderer)
+
+      controller.playGame().then((stats) => {
+        clearTimeout(timeoutHandle)
+        const gameState = controller.getGameState()
+
+        resolve({
+          gameId,
+          workerId,
+          outcome: gameState.status === 'victory' ? 'victory' : 'game_over',
+          stats,
+          duration: Date.now() - startTime,
+          strategy,
+          stage: gameState.stage
         })
-        
-      } catch (error) {
+      }).catch((error) => {
         clearTimeout(timeoutHandle)
         reject(error)
-      }
-    })
-  }
+      })
+
+    } catch (error) {
+      clearTimeout(timeoutHandle)
+      reject(error)
+    }
+  })
 }
 
 /**

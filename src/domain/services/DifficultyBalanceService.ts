@@ -2,6 +2,7 @@ import { Card } from '../entities/Card'
 import type { Difficulty, GameStage } from '../types/card.types'
 import type { PlayerProgression } from './PlayerProgressionService'
 import type { PlayerAchievements } from './AchievementSystemService'
+import { GameConstantsAccessor } from '../constants/GameConstants'
 
 /**
  * 動的難易度調整データ
@@ -35,7 +36,7 @@ export interface BalanceAdjustment {
  * 動的難易度調整とゲームバランスを管理
  */
 export class DifficultyBalanceService {
-  
+
   /**
    * プレイヤーの実力に基づいて動的難易度を計算
    */
@@ -47,7 +48,11 @@ export class DifficultyBalanceService {
   ): DynamicDifficulty {
     const playerLevel = progression.level.currentLevel
     const totalAchievements = achievements.achievements.filter(a => a.isUnlocked).length
-    
+
+    // Check if dynamic difficulty is enabled
+    const balanceSettings = GameConstantsAccessor.getBalanceSettings()
+    const isDynamicEnabled = balanceSettings.CHALLENGE_SETTINGS.enableDynamicDifficulty !== false
+
     // ベース難易度を決定
     let baseDifficulty: Difficulty = 'normal'
     if (playerLevel >= 20 || totalAchievements >= 15) {
@@ -60,16 +65,19 @@ export class DifficultyBalanceService {
 
     // 最近のパフォーマンスを分析
     const performance = recentPerformance || []
-    const averagePerformance = performance.length > 0 
+    const averagePerformance = performance.length > 0
       ? performance.reduce((sum, p) => sum + p, 0) / performance.length
       : 0.5 // デフォルト50%
 
     // 調整係数を計算（-0.5 to +0.5）
     let adjustmentFactor = 0
-    if (averagePerformance < 0.3) {
-      adjustmentFactor = -0.3 // 難易度を下げる
-    } else if (averagePerformance > 0.8) {
-      adjustmentFactor = 0.2 // 難易度を上げる
+
+    if (isDynamicEnabled) {
+      if (averagePerformance < 0.3) {
+        adjustmentFactor = -0.3 // 難易度を下げる
+      } else if (averagePerformance > 0.8) {
+        adjustmentFactor = 0.2 // 難易度を上げる
+      }
     }
 
     // ステージ別の調整
@@ -134,7 +142,7 @@ export class DifficultyBalanceService {
 
     // 推奨戦略を決定
     const recommendedStrategy = this.getRecommendedStrategy(difficulty, playerLevel)
-    
+
     // 難易度説明を生成
     const difficultyExplanation = this.generateDifficultyExplanation(difficulty, adjustedPower, originalPower)
 
@@ -158,7 +166,7 @@ export class DifficultyBalanceService {
     const baseLevel = playerLevel
     const achievementBonus = Math.floor(achievements / 3)
     const stageBonus = { youth: 0, middle: 5, fulfillment: 10 }[stage]
-    
+
     return baseLevel + achievementBonus + stageBonus
   }
 
@@ -172,9 +180,9 @@ export class DifficultyBalanceService {
       return '積極的戦略：高難易度チャレンジで大きな報酬を狙い、コンボを活用してください'
     } if (playerLevel >= 15) {
       return 'バランス戦略：スキルとコンボを組み合わせて効率的にプレイしてください'
-    } 
-      return '成長戦略：新しいカードを積極的に獲得し、スキルを向上させてください'
-    
+    }
+    return '成長戦略：新しいカードを積極的に獲得し、スキルを向上させてください'
+
   }
 
   /**
@@ -222,7 +230,7 @@ export class DifficultyBalanceService {
     if (challengeSuccess) {
       // 成功時の報酬調整
       adjustedReward *= difficulty.adaptiveModifiers.rewardMultiplier
-      
+
       // 高難易度ボーナス
       const difficultyBonuses = {
         easy: 0.8,
@@ -251,7 +259,7 @@ export class DifficultyBalanceService {
     difficulty: DynamicDifficulty
   ): { common: number, rare: number, epic: number, legendary: number } {
     const bonus = difficulty.adaptiveModifiers.cardRarityBonus
-    
+
     return {
       common: Math.max(0.1, baseRarityChances.common - bonus * 0.1),
       rare: baseRarityChances.rare + bonus * 0.05,
@@ -272,20 +280,20 @@ export class DifficultyBalanceService {
     recommendations: string[]
   } {
     const performance = difficulty.recentPerformance
-    const avgPerformance = performance.length > 0 
+    const avgPerformance = performance.length > 0
       ? performance.reduce((sum, p) => sum + p, 0) / performance.length
       : 0.5
 
     // フロー状態の理想は成功率60-75%
     const idealPerformance = 0.675
     const performanceDiff = Math.abs(avgPerformance - idealPerformance)
-    
+
     // フロースコアを計算（理想的な成功率に近いほど高い）
     const flowScore = Math.max(0, 100 - (performanceDiff * 200))
     const isInFlow = flowScore >= 70
 
     const recommendations: string[] = []
-    
+
     if (avgPerformance < 0.4) {
       recommendations.push('難易度を下げることを検討してください')
       recommendations.push('基本的なスキルの練習を重点的に行ってください')
@@ -403,7 +411,7 @@ export class DifficultyBalanceService {
     success: boolean
   ): DynamicDifficulty {
     const newPerformance = [...difficulty.recentPerformance, success ? 1 : 0]
-    
+
     // 最新10ゲームのみ保持
     if (newPerformance.length > 10) {
       newPerformance.shift()

@@ -164,7 +164,8 @@ export const BALANCE_CONSTANTS = {
     minDifficulty: 1,          // 最小難易度
     maxDifficulty: 20,         // 最大難易度
     successBonusBase: 2,       // 成功時ボーナス基準値
-    failurePenaltyRatio: 1.0   // 失敗時ペナルティ比率
+    failurePenaltyRatio: 1.0,  // 失敗時ペナルティ比率
+    enableDynamicDifficulty: true // 動的難易度調整の有効化
   } as const,
 
   /**
@@ -273,12 +274,37 @@ export const DEBUG_CONSTANTS = {
 /**
  * 定数の型安全なアクセサ
  */
+import type { BalanceConfig } from '../types/game.types'
+
+/**
+ * 定数の型安全なアクセサ
+ */
 export class GameConstantsAccessor {
+  private static overrides: BalanceConfig | undefined
+
+  /**
+   * オーバーライド設定を適用
+   */
+  static setOverrides(config?: BalanceConfig) {
+    this.overrides = config
+  }
+
+  /**
+   * オーバーライドをクリア
+   */
+  static clearOverrides() {
+    this.overrides = undefined
+  }
+
   /**
    * ステージパラメータを安全に取得
    */
   static getStageParameters(stage: GameStage) {
-    return AGE_CONSTANTS.STAGE_PARAMETERS[stage] || AGE_CONSTANTS.STAGE_PARAMETERS.youth
+    const base = AGE_CONSTANTS.STAGE_PARAMETERS[stage] || AGE_CONSTANTS.STAGE_PARAMETERS.youth
+    if (this.overrides?.stageParameters?.[stage]) {
+      return { ...base, ...this.overrides.stageParameters[stage] }
+    }
+    return base
   }
 
   /**
@@ -299,7 +325,17 @@ export class GameConstantsAccessor {
    * バランス設定を取得
    */
   static getBalanceSettings() {
-    return BALANCE_CONSTANTS
+    const base = BALANCE_CONSTANTS
+    if (this.overrides) {
+      return {
+        ...base,
+        CARD_LIMITS: { ...base.CARD_LIMITS, ...this.overrides.cardLimits },
+        CHALLENGE_SETTINGS: { ...base.CHALLENGE_SETTINGS, ...this.overrides.challengeSettings },
+        VITALITY_SETTINGS: { ...base.VITALITY_SETTINGS, ...this.overrides.vitalitySettings },
+        PROGRESSION_SETTINGS: { ...base.PROGRESSION_SETTINGS, ...this.overrides.progressionSettings }
+      }
+    }
+    return base
   }
 
   /**
@@ -319,7 +355,7 @@ export class ConstantsValidator {
    */
   static isValidVitality(value: number): boolean {
     return value >= BALANCE_CONSTANTS.VITALITY_SETTINGS.minimumValue &&
-           value <= BALANCE_CONSTANTS.VITALITY_SETTINGS.maximumValue
+      value <= BALANCE_CONSTANTS.VITALITY_SETTINGS.maximumValue
   }
 
   /**
@@ -341,6 +377,6 @@ export class ConstantsValidator {
    */
   static isValidDifficulty(difficulty: number): boolean {
     return difficulty >= BALANCE_CONSTANTS.CHALLENGE_SETTINGS.minDifficulty &&
-           difficulty <= BALANCE_CONSTANTS.CHALLENGE_SETTINGS.maxDifficulty
+      difficulty <= BALANCE_CONSTANTS.CHALLENGE_SETTINGS.maxDifficulty
   }
 }
