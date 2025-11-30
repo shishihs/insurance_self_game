@@ -1,0 +1,141 @@
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { useGameStore } from '@/stores/gameStore'
+import Hand from './Hand.vue'
+import CardComponent from './Card.vue'
+
+const store = useGameStore()
+
+onMounted(() => {
+  if (!store.game) {
+    store.initializeGame()
+    store.startGame()
+  }
+})
+
+function onDraw() {
+  store.drawCards(1)
+}
+
+function onEndTurn() {
+  store.endTurn()
+}
+
+function onChallenge() {
+  store.drawChallenge()
+}
+</script>
+
+<template>
+  <div class="w-full h-screen bg-slate-900 text-white overflow-hidden relative font-sans">
+    <!-- Header / Stats -->
+    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-slate-800/80 backdrop-blur-md z-20 shadow-md">
+      <div class="flex items-center space-x-6">
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 uppercase">Stage</span>
+          <span class="font-bold text-xl text-purple-400">{{ store.currentStage }}</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 uppercase">Vitality</span>
+          <div class="flex items-end">
+            <span class="font-bold text-2xl text-green-400">{{ store.vitality }}</span>
+            <span class="text-sm text-slate-500 mb-1 ml-1">/ {{ store.maxVitality }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="flex flex-col items-end">
+          <span class="text-xs text-slate-400 uppercase">Turn</span>
+          <span class="font-bold text-xl">{{ store.currentTurn }}</span>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="text-xs text-slate-400 uppercase">Phase</span>
+          <span class="font-bold text-lg text-blue-300">{{ store.currentPhase }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="absolute inset-0 flex flex-col items-center justify-center pt-20 pb-64 z-10">
+      
+      <!-- Challenge Area -->
+      <div class="mb-8 flex flex-col items-center">
+        <h2 class="text-slate-400 uppercase tracking-widest text-sm mb-4">Current Challenge</h2>
+        <div v-if="store.currentChallenge" class="transform scale-110">
+          <CardComponent :card="store.currentChallenge" />
+        </div>
+        <div v-else class="w-48 h-72 border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center bg-slate-800/50">
+          <span class="text-slate-500">No Active Challenge</span>
+        </div>
+      </div>
+
+      <!-- Message Area -->
+      <div v-if="store.lastMessage" class="absolute top-20 bg-black/50 text-white px-6 py-2 rounded-full backdrop-blur-sm animate-fade-in-down">
+        {{ store.lastMessage }}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex space-x-4 mt-4">
+        <button 
+          v-if="store.currentPhase === 'draw'"
+          @click="onDraw"
+          class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-lg transition-colors flex items-center"
+        >
+          Draw Card
+        </button>
+        
+        <button 
+          v-if="store.currentPhase === 'draw' && !store.currentChallenge"
+          @click="onChallenge"
+          class="px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold shadow-lg transition-colors"
+        >
+          Start Challenge
+        </button>
+
+        <button 
+          v-if="store.currentPhase === 'challenge'"
+          @click="store.resolveChallenge()"
+          class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold shadow-lg transition-colors"
+        >
+          Resolve Challenge
+        </button>
+
+        <button 
+          v-if="store.currentPhase === 'resolution' || store.currentPhase === 'end'"
+          @click="onEndTurn"
+          class="px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold shadow-lg transition-colors"
+        >
+          End Turn
+        </button>
+      </div>
+
+      <!-- Insurance Selection Overlay -->
+      <div v-if="store.insuranceTypeChoices && store.insuranceTypeChoices.length > 0" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-8">
+        <div class="bg-white rounded-xl p-8 max-w-4xl w-full">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Choose Insurance</h2>
+          <div class="grid grid-cols-3 gap-4">
+            <div 
+              v-for="choice in store.insuranceTypeChoices" 
+              :key="choice.insuranceType"
+              class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-colors"
+              @click="store.selectInsurance(choice.insuranceType)"
+            >
+              <h3 class="font-bold text-lg text-gray-800">{{ choice.name }}</h3>
+              <p class="text-sm text-gray-600">{{ choice.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Hand -->
+    <Hand />
+    
+    <!-- Background Elements -->
+    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none">
+      <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+    </div>
+  </div>
+</template>

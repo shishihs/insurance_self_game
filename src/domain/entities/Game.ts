@@ -59,10 +59,10 @@ export class Game implements IGameState {
   stage: GameStage
   turn: number
   private _vitality: Vitality
-  
+
   // カード管理を移譲
   public cardManager: ICardManager
-  
+
   // ドメインサービス
   private readonly premiumCalculationService: InsurancePremiumCalculationService
   private readonly stageManager: GameStageManager
@@ -72,37 +72,37 @@ export class Game implements IGameState {
   private readonly challengeService: GameChallengeService
   private readonly insuranceService: GameInsuranceService
   private readonly aiStrategyService: AIStrategyService
-  
+
   // 新しいアーキテクチャ
   private readonly stateManager: GameStateManager
   private readonly actionProcessor: GameActionProcessor
-  
+
   currentChallenge?: Card
-  
+
   stats: PlayerStats
   config: GameConfig
-  
+
   // Phase 5: リスクプロファイルとプレイヤー履歴
   private readonly _riskProfile: RiskProfile
   private readonly _playerHistory: PlayerHistory
-  
+
   // Phase 2-4: 保険カード管理
   insuranceCards: Card[]
   expiredInsurances: Card[]
-  
+
   // Phase 3: 保険料負担
   private readonly _insuranceBurden: InsurancePremium
-  
+
   // 保険種類選択
   insuranceTypeChoices?: InsuranceTypeChoice[]
-  
+
   // 経験学習システム（GAME_DESIGN.mdより）
   private readonly _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
-  
+
   // AI戦略設定
   private _aiEnabled: boolean = false
   private _currentAIStrategy: AIStrategyType = 'balanced'
-  
+
   // パフォーマンス最適化: オブジェクトプール
   private static readonly OBJECT_POOLS = {
     cards: [] as Card[],
@@ -126,7 +126,7 @@ export class Game implements IGameState {
     totalInsuranceCount: 0,
     lastUpdateTime: 0
   }
-  
+
   startedAt?: Date
   completedAt?: Date
 
@@ -145,16 +145,16 @@ export class Game implements IGameState {
     this.phase = 'setup'
     this.stage = 'youth'
     this.turn = 0
-    
+
     // 値オブジェクトで初期化（年齢別最大活力を適用）
     const startingVitality = config?.startingVitality ?? 100
     const ageParams = AGE_PARAMETERS[this.stage] || AGE_PARAMETERS.youth
     const maxVitality = ageParams.maxVitality
     this._vitality = Vitality.create(Math.min(startingVitality, maxVitality), maxVitality)
-    
+
     // CardManagerを初期化
     this.cardManager = new CardManager()
-    
+
     // ドメインサービスを初期化
     this.premiumCalculationService = new InsurancePremiumCalculationService()
     this.stageManager = new GameStageManager()
@@ -164,26 +164,36 @@ export class Game implements IGameState {
     this.challengeService = new GameChallengeService(this.challengeResolutionService)
     this.insuranceService = new GameInsuranceService(this.premiumCalculationService)
     this.aiStrategyService = new AIStrategyService(this._currentAIStrategy)
-    
+
     // 新しいアーキテクチャを初期化
     this.stateManager = new GameStateManager()
     this.actionProcessor = new GameActionProcessor()
-    
+
+    // Config must be set before initializing CardManager
+    this.config = config || {
+      difficulty: 'normal',
+      startingVitality,
+      startingHandSize: 5,
+      maxHandSize: 10,
+      dreamCardCount: 3
+    }
+
     // 状態変更イベントの監視を設定
     this.setupStateListeners()
     const playerDeck = new Deck('Player Deck')
     const challengeDeck = new Deck('Challenge Deck')
-    
+
     // 初期デッキを作成
     const initialCards = CardFactory.createStarterLifeCards()
     initialCards.forEach(card => { playerDeck.addCard(card); })
-    
+
     // チャレンジデッキを作成
     const challengeCards = CardFactory.createChallengeCards(this.stage)
     challengeCards.forEach(card => { challengeDeck.addCard(card); })
-    
-    this.cardManager.initialize(playerDeck, challengeDeck, config)
-    
+
+    // Initialize CardManager with config already set
+    this.cardManager.initialize(playerDeck, challengeDeck, this.config)
+
     this.stats = {
       totalChallenges: 0,
       successfulChallenges: 0,
@@ -192,7 +202,7 @@ export class Game implements IGameState {
       highestVitality: startingVitality,
       turnsPlayed: 0
     }
-    
+
     // Phase 5: リスクプロファイルと履歴の初期化
     this._riskProfile = RiskProfile.default()
     this._playerHistory = {
@@ -203,22 +213,15 @@ export class Game implements IGameState {
       riskyChoiceCount: 0,
       totalChoiceCount: 0
     }
-    
-    this.config = config || {
-      difficulty: 'normal',
-      startingVitality,
-      startingHandSize: 5,
-      maxHandSize: 10,
-      dreamCardCount: 3
-    }
-    
+
     // Phase 2-4: 保険カード管理の初期化
     this.insuranceCards = []
     this.expiredInsurances = []
-    
+
     // Phase 3: 保険料負担の初期化
     this._insuranceBurden = InsurancePremium.create(0)
-    
+
+
   }
 
   /**
@@ -330,21 +333,21 @@ export class Game implements IGameState {
    */
   getAvailableVitality(): number {
     const currentTime = Date.now()
-    
+
     // キャッシュが有効な場合（50ms以内）は計算をスキップ
-    if (!this._dirtyFlags.vitality && !this._dirtyFlags.burden && 
-        currentTime - this._cachedValues.lastUpdateTime < 50) {
+    if (!this._dirtyFlags.vitality && !this._dirtyFlags.burden &&
+      currentTime - this._cachedValues.lastUpdateTime < 50) {
       return this._cachedValues.availableVitality
     }
-    
+
     const result = this.vitality - this.insuranceBurden
-    
+
     // キャッシュを更新
     this._cachedValues.availableVitality = result
     this._cachedValues.lastUpdateTime = currentTime
     this._dirtyFlags.vitality = false
     this._dirtyFlags.burden = false
-    
+
     return result
   }
 
@@ -382,7 +385,7 @@ export class Game implements IGameState {
     if (this.status !== 'not_started') {
       throw new Error('Game has already started')
     }
-    
+
     this.changeStatus('in_progress')
     this.startedAt = new Date()
     this.changePhase('draw')
@@ -396,11 +399,11 @@ export class Game implements IGameState {
    */
   async drawCards(count: number): Promise<Card[]> {
     const result = await this.actionProcessor.executeAction('draw_cards', this, count)
-    
+
     if (!result.success) {
       throw new Error(result.error || 'カードドローに失敗しました')
     }
-    
+
     return result.data || []
   }
 
@@ -473,29 +476,29 @@ export class Game implements IGameState {
     if (this.phase !== 'card_selection') {
       throw new Error('Not in card selection phase')
     }
-    
+
     const selectedCard = this.cardManager.getCardChoiceById(cardId)
     if (!selectedCard) {
       throw new Error('Invalid card selection')
     }
-    
+
     // カードをデッキに追加
     this.cardManager.addToPlayerDeck(selectedCard)
     this.stats.cardsAcquired++
-    
+
     // Phase 2-4: 保険カードの場合は管理リストに追加
     if (selectedCard.type === 'insurance') {
       this.insuranceCards.push(selectedCard)
       // Phase 3: 保険料負担を更新
       this.updateInsuranceBurden()
     }
-    
+
     // 選択肢をクリア
     this.cardManager.clearCardChoices()
-    
+
     // 解決フェーズに移行（ターン終了可能状態）
     this.changePhase('resolution')
-    
+
     return true
   }
 
@@ -522,43 +525,43 @@ export class Game implements IGameState {
     if (typeof change !== 'number' || !isFinite(change)) {
       throw new Error('Change amount must be a finite number')
     }
-    
+
     // 変更がない場合は処理をスキップ
     if (change === 0) return
-    
+
     const previousVitality = this.vitality
-    
+
     if (change >= 0) {
       this._vitality = this._vitality.increase(change)
     } else {
       this._vitality = this._vitality.decrease(-change)
     }
-    
+
     // 事後条件チェック
     const currentVitality = this.vitality
     if (currentVitality < 0 || currentVitality > this.maxVitality) {
       throw new Error(`Vitality invariant violation: ${currentVitality} not in [0, ${this.maxVitality}]`)
     }
-    
+
     // ダーティフラグを設定
     this._dirtyFlags.vitality = true
     this._dirtyFlags.stats = true
-    
+
     // 統計更新（防御的プログラミング）
     if (currentVitality > this.stats.highestVitality) {
       this.stats.highestVitality = currentVitality
     }
-    
+
     // ダメージ履歴を記録
     if (change < 0) {
       this._playerHistory.totalDamageTaken += Math.abs(change)
     }
-    
+
     // ゲームオーバー判定
     if (this._vitality.isDepleted()) {
       this.changeStatus('game_over')
     }
-    
+
     // 不変条件チェック
     if (this.status === 'game_over' && !this._vitality.isDepleted()) {
       throw new Error('Game over state inconsistency: vitality not depleted')
@@ -576,9 +579,9 @@ export class Game implements IGameState {
       console.warn(`Unknown stage: ${this.stage}`)
       return
     }
-    
+
     const newMaxVitality = ageParams.maxVitality
-    
+
     // 現在の活力値が新しい上限を超える場合は調整
     const currentValue = this._vitality.getValue()
     if (currentValue > newMaxVitality) {
@@ -588,7 +591,7 @@ export class Game implements IGameState {
       // 上限のみ更新（現在値はそのまま）
       this._vitality = Vitality.create(currentValue, newMaxVitality)
     }
-    
+
     // ダーティフラグを設定
     this._dirtyFlags.vitality = true
   }
@@ -606,7 +609,7 @@ export class Game implements IGameState {
    */
   advanceStage(): void {
     const advanceResult = this.stageManager.advanceStage(this.stage)
-    
+
     if (advanceResult.isCompleted) {
       // 最終ステージクリア
       this.changeStatus('victory')
@@ -686,16 +689,16 @@ export class Game implements IGameState {
     if (!challenge.isDreamCard() || !challenge.dreamCategory) {
       return challenge.power
     }
-    
+
     // 青年期は調整なし
     if (this.stage === 'youth') {
       return challenge.power
     }
-    
+
     // 中年期・充実期の年齢調整を適用
     const adjustment = DREAM_AGE_ADJUSTMENTS[challenge.dreamCategory]
     const adjustedPower = challenge.power + adjustment
-    
+
     // 最小値は1
     return Math.max(1, adjustedPower)
   }
@@ -766,7 +769,7 @@ export class Game implements IGameState {
     if (card.type !== 'insurance') {
       throw new Error('Card must be an insurance card')
     }
-    
+
     return this.premiumCalculationService.calculateComprehensivePremium(card, this.stage, this._riskProfile)
   }
 
@@ -777,22 +780,22 @@ export class Game implements IGameState {
    */
   calculateInsuranceBurden(): number {
     const currentTime = Date.now()
-    
+
     // キャッシュが有効で保険状態が変わっていない場合は再計算をスキップ
-    if (!this._dirtyFlags.insurance && 
-        currentTime - this._cachedValues.lastUpdateTime < 100 &&
-        this._cachedValues.totalInsuranceCount === this.insuranceCards.length) {
+    if (!this._dirtyFlags.insurance &&
+      currentTime - this._cachedValues.lastUpdateTime < 100 &&
+      this._cachedValues.totalInsuranceCount === this.insuranceCards.length) {
       return this._cachedValues.insuranceBurden
     }
-    
+
     const burden = this.insuranceService.calculateInsuranceBurden(this)
-    
+
     // キャッシュを更新
     this._cachedValues.insuranceBurden = burden
     this._cachedValues.totalInsuranceCount = this.insuranceCards.length
     this._cachedValues.lastUpdateTime = currentTime
     this._dirtyFlags.insurance = false
-    
+
     return burden
   }
 
@@ -884,14 +887,14 @@ export class Game implements IGameState {
    */
   getSnapshot(): IGameState {
     const cardState = this.cardManager.getState()
-    
+
     // オブジェクトプールから再利用可能なオブジェクトを取得
     let snapshot = Game.OBJECT_POOLS.gameStates.pop()
-    
+
     if (!snapshot) {
       snapshot = {}
     }
-    
+
     // プロパティを設定（配列は適切にコピー）
     Object.assign(snapshot, {
       id: this.id,
@@ -917,7 +920,7 @@ export class Game implements IGameState {
       startedAt: this.startedAt,
       completedAt: this.completedAt
     })
-    
+
     return snapshot as IGameState
   }
 
@@ -947,7 +950,7 @@ export class Game implements IGameState {
     // ステータス変更の監視
     this.stateManager.addEventListener('status_change', (event) => {
       console.log(`📊 ステータス変更: ${event.previousValue} → ${event.newValue}`)
-      
+
       if (event.newValue === 'game_over' || event.newValue === 'victory') {
         this.completedAt = new Date()
       }
@@ -1121,7 +1124,7 @@ export class Game implements IGameState {
     const choice = this.aiStrategyService.autoSelectChallenge(availableChallenges, this)
     console.log(`AI戦略によるチャレンジ選択: ${choice.challenge.name} (成功確率: ${(choice.successProbability * 100).toFixed(1)}%)`)
     console.log(`選択理由: ${choice.reason}`)
-    
+
     return choice.challenge
   }
 
@@ -1135,11 +1138,11 @@ export class Game implements IGameState {
 
     const availableCards = this.cardManager.playerDeck.getCards()
     const choice = this.aiStrategyService.autoSelectCards(challenge, availableCards, this)
-    
+
     console.log(`AI戦略によるカード選択: ${choice.cards.map(c => c.name).join(', ')}`)
     console.log(`選択理由: ${choice.reason}`)
     console.log(`期待パワー: ${choice.expectedPower}`)
-    
+
     return choice.cards
   }
 
@@ -1167,7 +1170,7 @@ export class Game implements IGameState {
 
     // 3. カードを選択
     const selectedCards = this.aiSelectCards(selectedChallenge)
-    
+
     // 4. カードを選択状態にする
     selectedCards.forEach(card => {
       this.cardManager.selectCard(card)

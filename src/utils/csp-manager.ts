@@ -51,7 +51,7 @@ export class CSPManager {
     this.setupViolationReporting()
     this.updateCSPMetaTag()
     this.scheduleNonceRotation()
-    
+
     console.log('🛡️ CSP Manager initialized with dynamic nonce support')
   }
 
@@ -59,9 +59,19 @@ export class CSPManager {
    * デフォルトのCSPディレクティブを設定
    */
   private setupDefaultDirectives(): void {
+    const scriptSources = ["'self'", `'nonce-${this.generateNewNonce()}'`];
+
+    // In development: allow localhost for dynamic imports (Vite), but exclude 'strict-dynamic'
+    // In production: use 'strict-dynamic' for enhanced security
+    if (process.env['NODE_ENV'] === 'development') {
+      scriptSources.push('http://localhost:*');
+    } else {
+      scriptSources.push("'strict-dynamic'");
+    }
+
     this.directives = {
       'default-src': ["'self'"],
-      'script-src': ["'self'", `'nonce-${this.generateNewNonce()}'`, "'strict-dynamic'"],
+      'script-src': scriptSources,
       'style-src': ["'self'", "'unsafe-inline'"],
       'img-src': ["'self'", 'data:', 'blob:', 'https:'],
       'font-src': ["'self'", 'data:', 'https:'],
@@ -84,18 +94,18 @@ export class CSPManager {
   generateNewNonce(): string {
     this.currentNonce = generateSecureRandomString(32)
     this.nonceExpiry = Date.now() + (15 * 60 * 1000) // 15分間有効
-    
+
     SecurityMonitor.getInstance().logSuspiciousActivity({
       type: 'nonce_generated',
       description: 'New CSP nonce generated',
       severity: 'low',
       source: 'csp_manager',
-      metadata: { 
+      metadata: {
         nonceLength: this.currentNonce.length,
         expiryTime: new Date(this.nonceExpiry).toISOString()
       }
     })
-    
+
     return this.currentNonce
   }
 
@@ -108,7 +118,7 @@ export class CSPManager {
       this.generateNewNonce()
       this.updateCSPMetaTag()
     }
-    
+
     return this.currentNonce
   }
 
@@ -117,15 +127,15 @@ export class CSPManager {
    */
   validateNonce(providedNonce: string): boolean {
     const now = Date.now()
-    
+
     if (now > this.nonceExpiry) {
       SecurityMonitor.getInstance().logSuspiciousActivity({
         type: 'expired_nonce_used',
         description: 'Attempt to use expired nonce',
         severity: 'medium',
         source: 'csp_manager',
-        metadata: { 
-          providedNonce: `${providedNonce.slice(0, 8)  }...`,
+        metadata: {
+          providedNonce: `${providedNonce.slice(0, 8)}...`,
           expired: true,
           expiryTime: new Date(this.nonceExpiry).toISOString()
         }
@@ -134,16 +144,16 @@ export class CSPManager {
     }
 
     const isValid = providedNonce === this.currentNonce
-    
+
     if (!isValid) {
       SecurityMonitor.getInstance().logSuspiciousActivity({
         type: 'invalid_nonce_used',
         description: 'Invalid nonce provided',
         severity: 'high',
         source: 'csp_manager',
-        metadata: { 
-          providedNonce: `${providedNonce.slice(0, 8)  }...`,
-          expectedNonce: `${this.currentNonce.slice(0, 8)  }...`
+        metadata: {
+          providedNonce: `${providedNonce.slice(0, 8)}...`,
+          expectedNonce: `${this.currentNonce.slice(0, 8)}...`
         }
       })
     }
@@ -166,7 +176,7 @@ export class CSPManager {
     if (!this.directives[directive]) {
       this.directives[directive] = []
     }
-    
+
     if (!this.directives[directive].includes(value)) {
       this.directives[directive].push(value)
       this.updateCSPMetaTag()
@@ -188,31 +198,31 @@ export class CSPManager {
    */
   generateCSPHeader(forMetaTag = false): string {
     const policies: string[] = []
-    
+
     // メタタグ経由では無効なディレクティブ（すべて拡張）
     const metaTagInvalidDirectives = [
       'frame-ancestors',  // HTTP headerでのみ有効
-      'report-uri', 
-      'report-to', 
+      'report-uri',
+      'report-to',
       'sandbox'
     ]
-    
+
     for (const [directive, values] of Object.entries(this.directives)) {
       // メタタグ用の場合、無効なディレクティブをスキップ
       if (forMetaTag && metaTagInvalidDirectives.includes(directive)) {
         continue
       }
-      
+
       if (values && values.length > 0) {
         let policyValues = values.join(' ')
-        
+
         // nonce変数を現在のnonceで置換
         policyValues = policyValues.replace(/\$\{nonce\}/g, this.getCurrentNonce())
-        
+
         policies.push(`${directive} ${policyValues}`)
       }
     }
-    
+
     return policies.join('; ')
   }
 
@@ -248,9 +258,9 @@ export class CSPManager {
       description: 'CSP policy updated',
       severity: 'low',
       source: 'csp_manager',
-      metadata: { 
-        policy: `${cspMeta.content.slice(0, 200)  }...`,
-        nonce: `${this.currentNonce.slice(0, 8)  }...`
+      metadata: {
+        policy: `${cspMeta.content.slice(0, 200)}...`,
+        nonce: `${this.currentNonce.slice(0, 8)}...`
       }
     })
   }
@@ -278,7 +288,7 @@ export class CSPManager {
       }
 
       this.violations.push(violation)
-      
+
       // 最大100件まで保持
       if (this.violations.length > 100) {
         this.violations = this.violations.slice(-100)
@@ -305,10 +315,10 @@ export class CSPManager {
   private assessViolationSeverity(event: any): 'low' | 'medium' | 'high' | 'critical' {
     // スクリプト関連の違反は高リスク
     if (event.violatedDirective.startsWith('script-src')) {
-      return event.blockedURI.includes('javascript:') || 
-             event.blockedURI.includes('data:') ? 'critical' : 'high'
+      return event.blockedURI.includes('javascript:') ||
+        event.blockedURI.includes('data:') ? 'critical' : 'high'
     }
-    
+
     // インライン実行の試行
     if (event.sample && (
       event.sample.includes('eval(') ||
@@ -318,13 +328,13 @@ export class CSPManager {
     )) {
       return 'high'
     }
-    
+
     // 外部リソースの読み込み試行
-    if (event.effectiveDirective.includes('-src') && 
-        !event.blockedURI.startsWith(window.location.origin)) {
+    if (event.effectiveDirective.includes('-src') &&
+      !event.blockedURI.startsWith(window.location.origin)) {
       return 'medium'
     }
-    
+
     return 'low'
   }
 
@@ -368,10 +378,10 @@ export class CSPManager {
       const script = document.createElement('script')
       script.nonce = this.getCurrentNonce()
       script.textContent = code
-      
+
       document.head.appendChild(script)
       document.head.removeChild(script)
-      
+
       return true
     } catch (error) {
       SecurityMonitor.getInstance().logSuspiciousActivity({
@@ -398,9 +408,9 @@ export class CSPManager {
       const style = document.createElement('style')
       style.nonce = this.getCurrentNonce()
       style.textContent = css
-      
+
       document.head.appendChild(style)
-      
+
       return true
     } catch (error) {
       SecurityMonitor.getInstance().logSuspiciousActivity({
@@ -437,7 +447,7 @@ export class CSPManager {
     this.violations.forEach(violation => {
       const directive = violation.effectiveDirective || 'unknown'
       const source = violation.sourceFile || 'inline'
-      
+
       stats.byDirective[directive] = (stats.byDirective[directive] || 0) + 1
       stats.bySource[source] = (stats.bySource[source] || 0) + 1
     })
@@ -492,7 +502,7 @@ export class SecurityHeaderManager {
     this.setPermissionsPolicy()
     this.setStrictTransportSecurity()
     this.setCrossOriginPolicies()
-    
+
     console.log('🛡️ Security headers initialized (X-Frame-Options skipped for meta tag compatibility)')
   }
 
@@ -536,7 +546,7 @@ export class SecurityHeaderManager {
   private setPermissionsPolicy(): void {
     const policy = [
       'geolocation=()',
-      'microphone=()', 
+      'microphone=()',
       'camera=()',
       'fullscreen=(self)',
       'payment=()',
@@ -554,7 +564,7 @@ export class SecurityHeaderManager {
       'picture-in-picture=()',
       'display-capture=()'
     ].join(', ')
-    
+
     this.updateMetaTag('Permissions-Policy', policy)
   }
 
@@ -584,13 +594,13 @@ export class SecurityHeaderManager {
     if (typeof document === 'undefined') return
 
     let meta = document.querySelector(`meta[http-equiv="${httpEquiv}"]`) as HTMLMetaElement
-    
+
     if (!meta) {
       meta = document.createElement('meta')
       meta.httpEquiv = httpEquiv
       document.head.appendChild(meta)
     }
-    
+
     meta.content = content
   }
 

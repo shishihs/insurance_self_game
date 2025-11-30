@@ -42,6 +42,11 @@ const app = createApp(App)
 // 国際化システムを統合
 app.use(i18n)
 
+// Piniaの初期化
+import { createPinia } from 'pinia'
+const pinia = createPinia()
+app.use(pinia)
+
 // 遅延読み込みディレクティブを登録
 app.directive('lazy-load', vLazyLoad)
 
@@ -81,17 +86,17 @@ async function initializeApp() {
   try {
     // パフォーマンス監視開始
     performanceMonitor.markGameStart()
-    
+
     // セキュリティシステムを起動
     await initializeSecuritySystem()
     console.log('🛡️ セキュリティシステムが正常に初期化されました')
-    
+
     // PWAシステムを初期化
     console.log('🚀 PWAシステムを初期化中...')
     // PWA Managerは自動で初期化されるため、状態確認のみ
     const pwaStatus = pwaManager.getStatus()
     console.log('📱 PWA状態:', pwaStatus)
-    
+
     // SEOシステムを初期化
     console.log('📈 SEOシステムを初期化中...')
     seoManager.updatePageSEO({
@@ -108,29 +113,29 @@ async function initializeApp() {
         'x-default': 'https://shishihs.github.io/insurance_self_game/'
       }
     })
-    
+
     // パンくずリストを生成
     seoManager.generateBreadcrumbs([
       { name: 'ホーム', url: 'https://shishihs.github.io/insurance_self_game/' },
       { name: 'ゲーム', url: 'https://shishihs.github.io/insurance_self_game/#game' },
       { name: '統計', url: 'https://shishihs.github.io/insurance_self_game/#stats' }
     ])
-    
+
     console.log('📊 SEO設定が完了しました')
-    
+
     // アプリケーションをマウント
     app.mount('#app')
-    
+
     // パフォーマンス監視完了
     performanceMonitor.markGameLoaded()
-    
+
     // 開発環境でパフォーマンスレポート表示
     if (import.meta.env.DEV) {
       setTimeout(() => {
         console.log(performanceMonitor.generateReport());
       }, 3000);
     }
-    
+
   } catch (error) {
     console.error('アプリケーション初期化に失敗しました:', error)
     // エラーハンドラーに報告
@@ -139,7 +144,7 @@ async function initializeApp() {
       { component: 'app-initialization' },
       'system'
     )
-    
+
     // フォールバック: セキュリティなしでアプリケーションをマウント
     console.warn('⚠️ セキュリティシステムなしでアプリケーションを起動します')
     app.mount('#app')
@@ -179,12 +184,12 @@ registerServiceWorker({
 
 // 開発環境でのデバッグ用
 if (import.meta.env.DEV) {
-  (window as any).__errorHandling = errorHandlingSystem
-  (window as any).__performanceMonitor = performanceMonitor
-  (window as any).__lazyLoader = lazyLoader
-  (window as any).__pwaManager = pwaManager
-  (window as any).__seoManager = seoManager
-  
+  (window as any).__errorHandling = errorHandlingSystem;
+  (window as any).__performanceMonitor = performanceMonitor;
+  (window as any).__lazyLoader = lazyLoader;
+  (window as any).__pwaManager = pwaManager;
+  (window as any).__seoManager = seoManager;
+
   console.log('🚨 エラーハンドリングシステムが有効化されました')
   console.log('📊 エラー統計を確認: window.__errorHandling.getStatistics()')
   console.log('🩺 健全性を確認: window.__errorHandling.getHealthStatus()')

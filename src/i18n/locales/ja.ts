@@ -17,7 +17,7 @@ export default {
       accessibility: 'アクセシビリティ設定',
       feedback: 'フィードバック'
     },
-    
+
     // ボタン
     buttons: {
       start: '開始',
@@ -37,7 +37,7 @@ export default {
       save: '保存',
       load: '読み込み'
     },
-    
+
     // 一般的なメッセージ
     common: {
       loading: '読み込み中...',
@@ -53,14 +53,14 @@ export default {
       retry: 'もう一度'
     }
   },
-  
+
   // ゲーム関連
   game: {
     // ゲーム状態
     title: '人生充実ゲーム',
     subtitle: '戦略的ライフシミュレーション',
     description: '人生のさまざまな段階でリスクと保険のバランスを考えながら、充実した人生を目指すゲームです。',
-    
+
     // ライフステージ
     stages: {
       youth: '青年期',
@@ -68,7 +68,7 @@ export default {
       middleAge: '中年期',
       elderly: '高齢期'
     },
-    
+
     // ゲーム要素
     elements: {
       vitality: '生命力',
@@ -79,7 +79,7 @@ export default {
       score: 'スコア',
       level: 'レベル'
     },
-    
+
     // カード
     cards: {
       riskCard: 'リスクカード',
@@ -88,7 +88,7 @@ export default {
       actionCard: 'アクションカード',
       powerCard: 'パワーカード'
     },
-    
+
     // アクション
     actions: {
       draw: 'カードを引く',
@@ -99,7 +99,7 @@ export default {
       takeRisk: 'リスクを取る',
       avoidRisk: 'リスクを回避'
     },
-    
+
     // 保険タイプ
     insurance: {
       types: {
@@ -112,7 +112,7 @@ export default {
         disability: '傷害保険',
         longTermCare: '介護保険'
       },
-      
+
       terms: {
         premium: '保険料',
         coverage: '保障額',
@@ -124,7 +124,7 @@ export default {
         cancellation: '解約'
       }
     },
-    
+
     // リスク
     risks: {
       categories: {
@@ -135,7 +135,7 @@ export default {
         career: 'キャリアリスク',
         family: '家族リスク'
       },
-      
+
       levels: {
         low: '低リスク',
         medium: '中リスク',
@@ -144,7 +144,7 @@ export default {
       }
     }
   },
-  
+
   // チュートリアル
   tutorial: {
     title: 'ゲームチュートリアル',
@@ -172,7 +172,7 @@ export default {
       }
     }
   },
-  
+
   // 統計・分析
   statistics: {
     title: '統計ダッシュボード',
@@ -182,7 +182,7 @@ export default {
       trends: 'トレンド',
       detailed: '詳細分析'
     },
-    
+
     metrics: {
       gamesPlayed: 'プレイ回数',
       winRate: '勝率',
@@ -193,7 +193,7 @@ export default {
       survivalRate: '生存率',
       insuranceEfficiency: '保険効率'
     },
-    
+
     charts: {
       vitalityTrend: '生命力推移',
       stageAnalysis: 'ステージ別分析',
@@ -203,7 +203,7 @@ export default {
       insuranceCoverage: '保険カバレッジ'
     }
   },
-  
+
   // アクセシビリティ
   accessibility: {
     title: 'アクセシビリティ設定',
@@ -213,7 +213,7 @@ export default {
       interaction: '操作設定',
       display: '表示設定'
     },
-    
+
     options: {
       highContrast: 'ハイコントラスト',
       largeText: '大きな文字',
@@ -222,9 +222,10 @@ export default {
       keyboardNavigation: 'キーボードナビゲーション',
       audioCues: '音声キュー',
       subtitles: '字幕',
-      slowAnimations: 'ゆっくりアニメーション'
+      slowAnimations: 'ゆっくりアニメーション',
+      changeLanguage: '言語切り替え'
     },
-    
+
     keyboardShortcuts: {
       title: 'キーボードショートカット',
       homeScreen: 'ホーム画面に戻る (Alt+H)',
@@ -235,7 +236,7 @@ export default {
       help: 'ヘルプを表示 (F1)'
     }
   },
-  
+
   // フィードバック
   feedback: {
     title: 'フィードバック',
@@ -245,7 +246,7 @@ export default {
       general: '一般的な意見',
       rating: '評価'
     },
-    
+
     form: {
       subject: '件名',
       message: 'メッセージ',
@@ -256,7 +257,7 @@ export default {
       thankYou: 'フィードバックをありがとうございました！'
     }
   },
-  
+
   // エラーメッセージ
   errors: {
     general: 'エラーが発生しました。',
@@ -269,7 +270,7 @@ export default {
     insufficientFunds: '資金が不足しています。',
     insuranceNotActive: '保険が有効ではありません。'
   },
-  
+
   // 成功メッセージ
   success: {
     gameSaved: 'ゲームを保存しました。',
@@ -279,14 +280,14 @@ export default {
     levelCompleted: 'レベルをクリアしました！',
     achievementUnlocked: '実績を獲得しました！'
   },
-  
+
   // 地域固有設定（日本）
   region: {
     currency: '円',
     currencySymbol: '¥',
     dateFormat: 'YYYY年MM月DD日',
     numberFormat: '1,234',
-    
+
     // 日本の保険制度に関連する用語
     insuranceSystem: {
       nationalHealth: '国民健康保険',
@@ -297,7 +298,7 @@ export default {
       workersComp: '労災保険',
       unemployment: '雇用保険'
     },
-    
+
     // 日本特有のリスク
     risks: {
       earthquake: '地震',
@@ -308,7 +309,7 @@ export default {
       deflation: 'デフレ'
     }
   },
-  
+
   // 年齢層・世代別メッセージ
   ageGroups: {
     young: {

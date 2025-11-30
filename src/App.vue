@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref, h, defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 // import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
 import transitionAnimations from './components/animations/TransitionAnimations.vue'
@@ -35,7 +35,16 @@ const isMobile = ref(false)
 const StatisticsDashboard = defineAsyncComponent({
   loader: async () => import('./components/statistics/StatisticsDashboard.vue'),
   errorComponent: {
-    template: '<div></div>' // エラー時は空のコンポーネント
+    render: () => h('div') // エラー時は空のコンポーネント
+  },
+  delay: 200,
+  timeout: 10000
+})
+
+const MobileErrorHandler = defineAsyncComponent({
+  loader: async () => import('./components/error/MobileErrorHandler.vue'),
+  errorComponent: {
+    render: () => h('div')
   },
   delay: 200,
   timeout: 10000
@@ -48,28 +57,21 @@ const FeedbackButton = defineAsyncComponent({
     } catch (error) {
       console.warn('FeedbackButton could not be loaded:', error)
       // フォールバックコンポーネント
-      return {
+      return defineComponent({
         name: 'FeedbackButtonFallback',
-        template: '<div class="feedback-button-fallback" style="display: none;"></div>'
-      }
+        render: () => h('div', { class: 'feedback-button-fallback', style: { display: 'none' } })
+      }) as any
     }
   },
   errorComponent: {
     name: 'FeedbackButtonError',
-    template: '<div class="feedback-button-error" style="display: none;"></div>'
+    render: () => h('div', { class: 'feedback-button-error', style: { display: 'none' } })
   },
   delay: 200,
   timeout: 10000
 })
 
-const GameCanvas = defineAsyncComponent({
-  loader: async () => import('./components/game/GameCanvas.vue'),
-  errorComponent: {
-    template: '<div class="error-container"><p>ゲームの読み込みに失敗しました</p></div>'
-  },
-  delay: 200,
-  timeout: 30000
-})
+import GameCanvas from './components/game/GameBoard.vue'
 
 // コンポーネント参照
 const navigationRef = ref<InstanceType<typeof navigationActions>>()
@@ -400,7 +402,7 @@ onUnmounted(() => {
         @feedback-submitted="handleFeedbackSubmitted"
       />
       <template #fallback>
-        <!-- フィードバックボタンのフォールバック（非表示） -->
+        <div style="display: none;"></div>
       </template>
     </Suspense>
 

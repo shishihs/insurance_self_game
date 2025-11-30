@@ -6,14 +6,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI 
+  reporter: process.env.CI
     ? [['html'], ['json', { outputFile: 'test-results/playwright-results.json' }], ['junit', { outputFile: 'test-results/playwright-junit.xml' }]]
     : 'html',
   testMatch: '**/tests/e2e/**/*.spec.ts',
   use: {
-    baseURL: process.env.CI 
+    baseURL: process.env.CI
       ? 'https://shishihs.github.io/insurance_self_game/'
-      : 'http://localhost:5173',
+      : 'http://localhost:5173/insurance_self_game/',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

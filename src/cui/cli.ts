@@ -55,6 +55,7 @@ program
   .option('-t, --theme <theme>', 'UI theme', 'default')
   .option('--strategy <strategy>', 'AI strategy (smart, aggressive, conservative)', 'smart')
   .option('-g, --games <count>', 'Number of games to play', '1')
+  .option('-d, --difficulty <level>', 'Game difficulty (easy, normal, hard)', 'normal')
   .option('--pause', 'Allow pausing during demo')
   .action(async (options) => {
     try {
@@ -161,9 +162,9 @@ async function runInteractiveGame(options: any): Promise<void> {
   const controller = GameControllerFactory.create(gameConfig, renderer)
 
   console.log(chalk.green('🎮 Starting interactive game...'))
-  
+
   const stats = await controller.playGame()
-  
+
   console.log(chalk.blue('\n🎯 Final Statistics:'))
   console.log(`Games Played: 1`)
   console.log(`Outcome: ${stats.totalChallenges > 0 ? 'Completed' : 'Incomplete'}`)
@@ -176,14 +177,14 @@ async function runDemoMode(options: any): Promise<void> {
   const gamesCount = parseInt(options.games) || 1
 
   console.log(chalk.magenta('🎭 Starting demo mode...'))
-  
+
   for (let i = 0; i < gamesCount; i++) {
     if (gamesCount > 1) {
       console.log(chalk.cyan(`\n🎮 Game ${i + 1}/${gamesCount}`))
     }
 
     const renderer = new DemoModeRenderer(config, options.speed)
-    
+
     // Set strategy
     switch (options.strategy) {
       case 'aggressive':
@@ -197,18 +198,18 @@ async function runDemoMode(options: any): Promise<void> {
     }
 
     const controller = GameControllerFactory.create(gameConfig, renderer)
-    
+
     if (options.pause && i === 0) {
       console.log(chalk.yellow('Press Ctrl+C anytime to pause demo'))
     }
 
     await controller.playGame()
-    
+
     if (i < gamesCount - 1) {
       await new Promise(resolve => setTimeout(resolve, 2000))
     }
   }
-  
+
   console.log(chalk.green(`\n✅ Demo completed! Played ${gamesCount} game(s).`))
 }
 
@@ -217,7 +218,7 @@ async function runBenchmark(options: any): Promise<void> {
   const gameConfig = createGameConfig(options)
 
   console.log(chalk.cyan(`⚡ Starting benchmark: ${gamesCount} games`))
-  
+
   const renderer = new BenchmarkModeRenderer({
     theme: 'minimal',
     animationSpeed: 'off',
@@ -234,10 +235,10 @@ async function runBenchmark(options: any): Promise<void> {
   for (let i = 0; i < gamesCount; i++) {
     const controller = GameControllerFactory.create(gameConfig, renderer)
     const stats = await controller.playGame()
-    
+
     totalStats.totalChallenges += stats.totalChallenges
     totalStats.successfulChallenges += stats.successfulChallenges
-    
+
     // Simple progress indicator
     if (i % 10 === 0 && i > 0) {
       const progress = ((i / gamesCount) * 100).toFixed(0)
@@ -258,7 +259,7 @@ async function runTutorial(options: any): Promise<void> {
   const gameConfig = createGameConfig({ difficulty: 'easy' }) // Tutorial uses easy mode
 
   console.log(chalk.blue('🎓 Starting tutorial mode...'))
-  
+
   const renderer = new TutorialModeRenderer(config)
   const controller = GameControllerFactory.create(gameConfig, renderer)
 
@@ -268,7 +269,7 @@ async function runTutorial(options: any): Promise<void> {
   }
 
   await controller.playGame()
-  
+
   console.log(chalk.green('\n🎉 Tutorial completed! You\'re ready for the real game.'))
   console.log(chalk.dim('Try "pnpm cui:play" for a full game experience.'))
 }
@@ -278,10 +279,10 @@ async function runDebugMode(options: any): Promise<void> {
   const gameConfig = createGameConfig(options)
 
   console.log(chalk.red('🐛 Starting debug mode...'))
-  
+
   const renderer = new DebugModeRenderer(config)
   const controller = GameControllerFactory.create(gameConfig, renderer)
-  
+
   controller.setDebugMode(true)
 
   await controller.playGame()
@@ -294,13 +295,13 @@ async function manageConfig(options: any): Promise<void> {
     // Implementation would show saved config
     console.log(chalk.gray('(Configuration management not yet implemented)'))
   }
-  
+
   if (options.reset) {
     console.log(chalk.yellow('🔄 Resetting configuration to defaults...'))
     // Implementation would reset config
     console.log(chalk.green('✅ Configuration reset successfully'))
   }
-  
+
   // Other config options...
 }
 
@@ -319,20 +320,20 @@ function createCUIConfig(options: any): Partial<CUIConfig> {
 function createGameConfig(options: any): GameConfig {
   // ルールに基づいた年齢別活力設定（GAME_DESIGN.mdより）
   const difficultyMap = {
-    easy: { 
+    easy: {
       startingVitality: 35,  // 青年期の最大活力
-      startingHandSize: 6, 
-      maxHandSize: 8 
+      startingHandSize: 6,
+      maxHandSize: 8
     },
-    normal: { 
+    normal: {
       startingVitality: 30,  // 青年期と中年期の中間
-      startingHandSize: 5, 
-      maxHandSize: 7 
+      startingHandSize: 5,
+      maxHandSize: 7
     },
-    hard: { 
+    hard: {
       startingVitality: 25,  // 少し余裕を持たせた値
       startingHandSize: 5,   // 手札は5枚維持（4枚は厳しすぎる）
-      maxHandSize: 6 
+      maxHandSize: 6
     }
   }
 

@@ -19,7 +19,7 @@
     
     <!-- セキュリティヘッダー - 強化版 -->
     <!-- CSP: frame-ancestorsディレクティブを削除（metaタグでは無効） -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: http://localhost:*; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: http://localhost:* ws://localhost:* wss://localhost:*; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <!-- X-Frame-Options: HTTPヘッダーでのみ有効なため削除 -->
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">

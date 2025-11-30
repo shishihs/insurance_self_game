@@ -6,15 +6,7 @@ import UnoCSS from 'unocss/vite'
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
   plugins: [
-    vue({
-      // Vue最適化オプション
-      template: {
-        compilerOptions: {
-          // カスタム要素を無視（Phaserコンポーネント用） 
-          isCustomElement: (tag) => tag.startsWith('phaser-')
-        }
-      }
-    }),
+    vue(),
     UnoCSS(),
   ],
   server: {
@@ -30,9 +22,6 @@ export default defineConfig(({ command, mode }) => ({
   },
   // 依存関係の最適化
   optimizeDeps: {
-    include: [
-      'phaser' // Phaserを事前に最適化
-    ],
     exclude: [
       '@types/*', // 型定義ファイルを除外
       'vitest'    // テストライブラリを除外
@@ -89,19 +78,6 @@ export default defineConfig(({ command, mode }) => ({
             if (id.includes('vue')) {
               return 'vue-vendor'
             }
-            if (id.includes('phaser')) {
-              // Phaserを複数のチャンクに分割
-              if (id.includes('phaser/src/physics')) {
-                return 'phaser-physics'
-              }
-              if (id.includes('phaser/src/sound')) {
-                return 'phaser-sound'
-              }
-              if (id.includes('phaser/src/loader')) {
-                return 'phaser-loader'
-              }
-              return 'phaser-core'
-            }
             if (id.includes('@unocss') || id.includes('unocss')) {
               return 'css-vendor'
             }
@@ -110,37 +86,31 @@ export default defineConfig(({ command, mode }) => ({
             }
             return 'vendor'
           }
-          
+
           // 統計・分析系コンポーネントを分離（遅延読み込み）
-          if (id.includes('/src/components/statistics/') || 
-              id.includes('/src/analytics/') ||
-              id.includes('/src/benchmark/')) {
+          if (id.includes('/src/components/statistics/') ||
+            id.includes('/src/analytics/') ||
+            id.includes('/src/benchmark/')) {
             return 'analytics'
           }
-          
+
           // フィードバック系コンポーネントを分離
           if (id.includes('/src/components/feedback/')) {
             return 'feedback'
           }
-          
+
           // CUI/CLI系を除外（本番ビルドから完全除外）
-          if (id.includes('/src/cui/') || 
-              id.includes('/src/cli/') ||
-              id.includes('/src/controllers/') ||
-              id.includes('/src/benchmark/') ||
-              id.includes('/__tests__/') ||
-              id.includes('/test/')) {
+          if (id.includes('/src/cui/') ||
+            id.includes('/src/cli/') ||
+            id.includes('/src/controllers/') ||
+            id.includes('/src/benchmark/') ||
+            id.includes('/__tests__/') ||
+            id.includes('/test/')) {
             return 'dev-only' // 開発専用チャンク（実際にはビルドから除外）
           }
-          
-          // ゲーム関連のコードを分離
-          if (id.includes('/src/game/scenes/')) {
-            return 'game-scenes'
-          }
-          if (id.includes('/src/game/')) {
-            return 'game-engine'
-          }
-          
+
+
+
           // ドメインロジックを分離
           if (id.includes('/src/domain/')) {
             return 'game-logic'
@@ -197,7 +167,7 @@ export default defineConfig(({ command, mode }) => ({
     __VUE_PROD_DEVTOOLS__: JSON.stringify(false),
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: JSON.stringify(false)
   },
-  
+
   // ESBuild最適化設定
   esbuild: {
     drop: mode === 'production' ? ['console', 'debugger'] : [],

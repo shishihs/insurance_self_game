@@ -31,30 +31,30 @@ export class GameController {
     try {
       this.isGameRunning = true
       await this.renderer.initialize()
-      
+
       this.log('ゲーム開始')
       await this.initializeGame()
-      
+
       // メインゲームループ
       while (this.isGameRunning && this.game.status === 'in_progress') {
         await this.playTurn()
-        
+
         // ゲーム終了条件のチェック
         if (this.checkGameEndConditions()) {
           break
         }
       }
-      
+
       // 最終結果の表示
       await this.showFinalResult()
-      
+
     } catch (error) {
       this.handleGameError(error as Error)
     } finally {
       this.isGameRunning = false
       this.renderer.dispose()
     }
-    
+
     return this.game.stats
   }
 
@@ -63,16 +63,16 @@ export class GameController {
    */
   async playTurn(): Promise<void> {
     this.log(`=== ターン ${this.game.turn} 開始 ===`)
-    
+
     // フェーズごとの処理
     await this.handleDrawPhase()
     await this.handleChallengePhase()
     await this.handleInsuranceRenewalPhase()
-    
+
     // ターン終了処理
     this.game.nextTurn()
     this.updateDisplay()
-    
+
     this.log(`=== ターン ${this.game.turn - 1} 完了 ===`)
   }
 
@@ -107,7 +107,7 @@ export class GameController {
   private async initializeGame(): void {
     // ゲーム開始
     this.game.start()
-    
+
     // 初期手札ドロー
     this.game.drawCards(this.game.config.startingHandSize)
 
@@ -121,15 +121,15 @@ export class GameController {
   private async handleDrawPhase(): void {
     this.game.phase = 'draw'
     this.log('ドローフェーズ開始')
-    
+
     // 手札上限まで補充
     const currentHandSize = this.game.hand.length
     const cardsToDrawn = Math.max(0, this.game.config.maxHandSize - currentHandSize)
-    
+
     if (cardsToDrawn > 0) {
       this.game.drawCards(cardsToDrawn)
     }
-    
+
     this.updateDisplay()
     this.log(`手札を ${this.game.hand.length} 枚に補充`)
   }
@@ -138,9 +138,10 @@ export class GameController {
    * チャレンジフェーズ
    */
   private async handleChallengePhase(): void {
-    this.game.phase = 'challenge'
+    // Phase transition happens inside startChallenge, so we don't set it here manually
+    // to avoid validation errors in GameChallengeService
     this.log('チャレンジフェーズ開始')
-    
+
     // チャレンジカードドロー（3枚から選択）
     const challengeChoices = []
     for (let i = 0; i < 3; i++) {
@@ -149,28 +150,28 @@ export class GameController {
         challengeChoices.push(card)
       }
     }
-    
+
     if (challengeChoices.length === 0) {
       // チャレンジデッキ切れの場合、次のステージに進む
       await this.handleStageTransition()
       return
     }
-    
+
     // プレイヤーに選択してもらう（ここでは最初のカードを選択）
     const challengeCard = challengeChoices[0]
-    
+
     this.game.currentChallenge = challengeCard
     this.updateDisplay()
-    
+
     // プレイヤーの行動選択
     const action = await this.renderer.askChallengeAction(challengeCard)
-    
+
     if (action === 'skip') {
       await this.renderer.showMessage('チャレンジをスキップしました')
       this.game.currentChallenge = undefined
       return
     }
-    
+
     // チャレンジ実行
     await this.executeChallengeFlow(challengeCard)
   }
@@ -187,28 +188,28 @@ export class GameController {
       this.renderer.showChallengeResult(result)
       return
     }
-    
+
     const selectedCards = await this.askCardSelectionForChallenge(challengeCard)
-    
+
     // チャレンジ開始
     this.game.startChallenge(challengeCard)
-    
+
     // カードを選択
     for (const card of selectedCards) {
       this.game.toggleCardSelection(card)
     }
-    
+
     // チャレンジ実行
     const result = this.game.resolveChallenge()
     this.renderer.showChallengeResult(result)
-    
+
     // 結果に応じた処理
     if (result.success) {
       await this.handleChallengeSuccess(result)
     } else {
       await this.handleChallengeFailure(result)
     }
-    
+
     // チャレンジカードは一度使ったら終わり（再利用しない）
     this.game.currentChallenge = undefined
     this.updateDisplay()
@@ -219,7 +220,7 @@ export class GameController {
    */
   private async askCardSelectionForChallenge(challengeCard: Card): Promise<Card[]> {
     const message = `チャレンジ「${challengeCard.name}」（必要パワー: ${challengeCard.power}）に使用するカードを選択してください`
-    
+
     // すべての手札から選択可能
     return await this.renderer.askCardSelection(
       this.game.hand,
@@ -234,7 +235,7 @@ export class GameController {
    */
   private async handleChallengeSuccess(result: ChallengeResult): Promise<void> {
     this.game.stats.successfulChallenges++
-    
+
     // カード選択がある場合
     if (result.cardChoices && result.cardChoices.length > 0) {
       const selectedCard = await this.renderer.askCardSelection(
@@ -243,14 +244,14 @@ export class GameController {
         1,
         '報酬として受け取るカードを選択してください'
       )
-      
+
       if (selectedCard.length > 0) {
         this.game.addCardToPlayerDeck(selectedCard[0])
         this.game.stats.cardsAcquired++
         await this.renderer.showMessage(`「${selectedCard[0].name}」を獲得しました！`, 'success')
       }
     }
-    
+
     // 保険カード獲得の機会
     if (Math.random() < 0.3) { // 30%の確率
       await this.handleInsuranceAcquisition()
@@ -262,7 +263,7 @@ export class GameController {
    */
   private async handleChallengeFailure(_result: ChallengeResult): Promise<void> {
     this.game.stats.failedChallenges++
-    
+
     // 体力がなくなった場合はゲームオーバー
     if (this.game.vitality <= 0) {
       this.game.status = 'game_over'
@@ -276,16 +277,16 @@ export class GameController {
   private async handleInsuranceAcquisition(): Promise<void> {
     const availableTypes: ('whole_life' | 'term')[] = ['whole_life', 'term']
     const selectedType = await this.renderer.askInsuranceTypeChoice(availableTypes)
-    
+
     // 保険カードを生成
     const insuranceCards = CardFactory.createInsuranceCards(this.game.stage, selectedType, 3)
-    
+
     if (insuranceCards.length > 0) {
       const selectedInsurance = await this.renderer.askInsuranceChoice(
         insuranceCards,
         '獲得する保険を選択してください'
       )
-      
+
       this.game.insuranceCards.push(selectedInsurance)
       await this.renderer.showMessage(`「${selectedInsurance.name}」保険を獲得しました！`, 'success')
       this.updateDisplay()
@@ -299,14 +300,14 @@ export class GameController {
     if (this.game.insuranceCards.length === 0) {
       return
     }
-    
+
     this.log('保険更新フェーズ開始')
-    
+
     for (const insurance of [...this.game.insuranceCards]) {
       const renewalCost = this.calculateRenewalCost(insurance)
-      
+
       const choice = await this.renderer.askInsuranceRenewalChoice(insurance, renewalCost)
-      
+
       if (choice === 'renew') {
         if (this.game.vitality >= renewalCost) {
           this.game.vitality -= renewalCost
@@ -321,7 +322,7 @@ export class GameController {
         await this.renderer.showMessage(`「${insurance.name}」が失効しました`)
       }
     }
-    
+
     this.updateDisplay()
   }
 
@@ -357,18 +358,18 @@ export class GameController {
   private async handleStageTransition(): Promise<void> {
     this.game.status = 'stage_clear'
     this.renderer.showStageClear(this.game.stage, this.game.stats)
-    
+
     // 次のステージがある場合
     const nextStage = this.getNextStage(this.game.stage)
     if (nextStage) {
       this.game.stage = nextStage
       this.game.status = 'in_progress'
-      
+
       // 新しいチャレンジデッキ作成
       const challengeCards = CardFactory.createChallengeCards(nextStage)
       this.game.challengeDeck.addCards(challengeCards)
       this.game.challengeDeck.shuffle()
-      
+
       await this.renderer.showMessage(`ステージ ${nextStage} に進みました！`, 'success')
     } else {
       // 全ステージクリア
@@ -394,11 +395,11 @@ export class GameController {
       this.game.status = 'game_over'
       return true
     }
-    
+
     if (this.game.status === 'victory' || this.game.status === 'game_over') {
       return true
     }
-    
+
     return false
   }
 
@@ -423,7 +424,7 @@ export class GameController {
     this.renderer.displayInsuranceCards(this.game.insuranceCards)
     this.renderer.displayInsuranceBurden(this.game.insuranceBurden)
     this.renderer.displayProgress(this.game.stage, this.game.turn)
-    
+
     if (this.game.currentChallenge) {
       this.renderer.displayChallenge(this.game.currentChallenge)
     }
@@ -470,7 +471,7 @@ export class GameControllerFactory {
       maxHandSize: 7,
       dreamCardCount: 2
     }
-    
+
     return new GameController(defaultConfig, renderer)
   }
 }

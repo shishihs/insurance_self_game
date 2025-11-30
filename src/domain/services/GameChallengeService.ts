@@ -48,23 +48,26 @@ export interface PowerBreakdown {
 export class GameChallengeService {
   constructor(
     private readonly resolutionService: ChallengeResolutionService
-  ) {}
+  ) { }
 
   /**
    * チャレンジを開始
    */
   startChallenge(game: Game, challengeCard: Card): void {
     this.validatePhase(game, 'draw')
-    
+
     game.currentChallenge = challengeCard
     game.cardManager.clearSelection()
     game.phase = 'challenge'
-    
+
     // 経験学習システム: 同じチャレンジの失敗回数を取得
     const failureCount = (game as any)._learningHistory.get(challengeCard.name) || 0
     if (failureCount >= 2) {
       // 2回目以降の失敗で必要パワー-1（経験による効率化）
-      challengeCard.power = Math.max(1, challengeCard.power - 1)
+      // Card is immutable, so we create a copy with updated power
+      const newPower = Math.max(1, challengeCard.power - 1)
+      const updatedCard = challengeCard.copy({ power: newPower })
+      game.currentChallenge = updatedCard
     }
   }
 
@@ -73,7 +76,7 @@ export class GameChallengeService {
    */
   resolveChallenge(game: Game): ChallengeResult {
     this.validateChallenge(game)
-    
+
     // 新しいChallengeResolutionServiceを使用
     const result = this.resolutionService.resolveChallenge(
       game.currentChallenge!,
@@ -83,29 +86,29 @@ export class GameChallengeService {
       game.insuranceBurden,
       game
     )
-    
+
     // 統計更新
     this.updateStatistics(game, result.success)
-    
+
     // 活力更新
     this.updateVitality(game, result.vitalityChange)
-    
+
     // 経験学習システム: 失敗時に学習履歴を更新
     if (!result.success && game.currentChallenge) {
       const challengeName = game.currentChallenge.name
       const currentFailures = (game as any)._learningHistory.get(challengeName) || 0
-      ;(game as any)._learningHistory.set(challengeName, currentFailures + 1)
+        ; (game as any)._learningHistory.set(challengeName, currentFailures + 1)
     }
-    
+
     // 成功時は保険種類選択肢を追加
     if (result.success) {
       const choices = CardFactory.createInsuranceTypeChoices(game.stage)
       game.insuranceTypeChoices = choices
       result.insuranceTypeChoices = choices
     }
-    
+
     this.updateGameStateAfterChallenge(game, result)
-    
+
     return result
   }
 
@@ -124,7 +127,7 @@ export class GameChallengeService {
   calculateTotalPower(game: Game, cards: Card[]): PowerBreakdown {
     let basePower = 0
     let insurancePower = 0
-    
+
     for (const card of cards) {
       if (card.type === 'insurance') {
         insurancePower += card.calculateEffectivePower()
@@ -132,10 +135,10 @@ export class GameChallengeService {
         basePower += card.calculateEffectivePower()
       }
     }
-    
+
     const burden = game.insuranceBurden
     const total = Math.max(0, basePower + insurancePower + burden)
-    
+
     return { base: basePower, insurance: insurancePower, burden, total }
   }
 
@@ -150,20 +153,20 @@ export class GameChallengeService {
   ): ChallengeResult {
     const playerPower = powerBreakdown.total
     const success = playerPower >= challengePower
-    
+
     // 統計更新
     this.updateStatistics(game, success)
-    
+
     // 活力変更を計算
     const vitalityChange = this.calculateVitalityChange(
       success,
       playerPower,
       challengePower
     )
-    
+
     // 活力を更新
     this.updateVitality(game, vitalityChange)
-    
+
     const result: ChallengeResult = {
       success,
       playerPower,
@@ -172,14 +175,14 @@ export class GameChallengeService {
       message: this.createResultMessage(success, vitalityChange),
       powerBreakdown
     }
-    
+
     // 成功時は保険種類選択肢を追加
     if (success) {
       const choices = CardFactory.createInsuranceTypeChoices(game.stage)
       game.insuranceTypeChoices = choices
       result.insuranceTypeChoices = choices
     }
-    
+
     return result
   }
 
@@ -193,12 +196,12 @@ export class GameChallengeService {
   ): void {
     // 使用したカードを捨て札に
     game.cardManager.discardSelectedCards()
-    
+
     // フェーズ更新
-    game.phase = result.success 
-      ? 'insurance_type_selection' 
+    game.phase = result.success
+      ? 'insurance_type_selection'
       : 'resolution'
-    
+
     // チャレンジをクリア
     game.currentChallenge = undefined
     game.cardManager.clearSelection()
@@ -235,7 +238,7 @@ export class GameChallengeService {
     if (!game.currentChallenge) {
       throw new Error('No active challenge')
     }
-    
+
     // 夢カードの年齢調整を適用
     return game.getDreamRequiredPower(game.currentChallenge)
   }
@@ -275,24 +278,24 @@ export class GameChallengeService {
   ): number {
     if (success) {
       return Math.floor((playerPower - challengePower) / 2)
-    } 
-      // 失敗時のダメージ計算
-      const baseDamage = challengePower - playerPower
-      
-      // 防御型保険によるダメージ軽渚
-      const activeInsurances = game.getActiveInsurances()
-      let damageReduction = 0
-      
-      activeInsurances.forEach(insurance => {
-        if (insurance.isDefensiveInsurance()) {
-          damageReduction += insurance.calculateDamageReduction()
-        }
-      })
-      
-      const finalDamage = baseDamage - damageReduction
-      // 保険で完全にカバーできる場合はダメージ0、そうでなければ最低1ダメージ
-      return finalDamage <= 0 ? 0 : -Math.max(1, finalDamage)
-    
+    }
+    // 失敗時のダメージ計算
+    const baseDamage = challengePower - playerPower
+
+    // 防御型保険によるダメージ軽渚
+    const activeInsurances = game.getActiveInsurances()
+    let damageReduction = 0
+
+    activeInsurances.forEach(insurance => {
+      if (insurance.isDefensiveInsurance()) {
+        damageReduction += insurance.calculateDamageReduction()
+      }
+    })
+
+    const finalDamage = baseDamage - damageReduction
+    // 保険で完全にカバーできる場合はダメージ0、そうでなければ最低1ダメージ
+    return finalDamage <= 0 ? 0 : -Math.max(1, finalDamage)
+
   }
 
   /**
@@ -314,8 +317,8 @@ export class GameChallengeService {
   private createResultMessage(success: boolean, vitalityChange: number): string {
     if (success) {
       return `チャレンジ成功！ +${vitalityChange} 活力`
-    } 
-      return `チャレンジ失敗... ${vitalityChange} 活力`
-    
+    }
+    return `チャレンジ失敗... ${vitalityChange} 活力`
+
   }
 }
