@@ -9,8 +9,14 @@
   "theme_color": "#667eea",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "48x48",
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./favicon.ico",
+      "sizes": "48x48 32x32 16x16",
       "type": "image/x-icon",
       "purpose": "any"
     }
@@ -34,8 +40,9 @@
   "handle_links": "preferred",
   "capture_links": "existing-client-navigate",
   "share_target": {
-    "action": "/share",
+    "action": "./share",
     "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
     "params": {
       "title": "title",
       "text": "text",
@@ -47,10 +54,10 @@
       "name": "新しいゲームを開始",
       "short_name": "新規ゲーム",
       "description": "新しいゲームセッションを開始します",
-      "url": "/?action=new-game",
+      "url": "./?action=new-game",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "./favicon.ico",
           "sizes": "96x96"
         }
       ]
@@ -59,10 +66,10 @@
       "name": "統計を確認",
       "short_name": "統計",
       "description": "ゲームの統計とプログレスを確認します",
-      "url": "/?action=stats",
+      "url": "./?action=stats",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "./favicon.ico",
           "sizes": "96x96"
         }
       ]
@@ -71,12 +78,12 @@
   "protocol_handlers": [
     {
       "protocol": "web+lifegame",
-      "url": "/?action=%s"
+      "url": "./?action=%s"
     }
   ],
   "file_handlers": [
     {
-      "action": "/save-game",
+      "action": "./save-game",
       "accept": {
         "application/json": [".lifegame", ".json"]
       }
