@@ -102,7 +102,6 @@ export default defineConfig(({ command, mode }) => ({
           // CUI/CLI系を除外（本番ビルドから完全除外）
           if (id.includes('/src/cui/') ||
             id.includes('/src/cli/') ||
-            id.includes('/src/controllers/') ||
             id.includes('/src/benchmark/') ||
             id.includes('/__tests__/') ||
             id.includes('/test/')) {
