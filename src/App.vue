@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onMounted, onUnmounted, ref, h, defineComponent } from 'vue'
+import { defineAsyncComponent, onMounted, onUnmounted, ref, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 // import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
 import transitionAnimations from './components/animations/TransitionAnimations.vue'
@@ -16,30 +16,17 @@ import { ScreenReaderManager } from './components/accessibility/ScreenReaderMana
 // レイアウトコンポーネント
 import appHeader from './components/layout/AppHeader.vue'
 import navigationActions from './components/layout/NavigationActions.vue'
-import featureShowcase from './components/layout/FeatureShowcase.vue'
 
 // 国際化コンポーネント
 import languageSwitcher from './components/i18n/LanguageSwitcher.vue'
-
-// PWAコンポーネント
-import pwaInstallPrompt from './components/pwa/PWAInstallPrompt.vue'
-import pwaStatusIndicator from './components/pwa/PWAStatusIndicator.vue'
 
 // 国際化機能
 const { t } = useI18n()
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
-const showStatistics = ref(false)
 const isMobile = ref(false)
 // 動的インポートにエラーハンドリングを追加
-const StatisticsDashboard = defineAsyncComponent({
-  loader: async () => import('./components/statistics/StatisticsDashboard.vue'),
-  errorComponent: {
-    render: () => h('div') // エラー時は空のコンポーネント
-  },
-  delay: 200,
-  timeout: 10000
-})
+
 
 const MobileErrorHandler = defineAsyncComponent({
   loader: async () => import('./components/error/MobileErrorHandler.vue'),
@@ -50,26 +37,7 @@ const MobileErrorHandler = defineAsyncComponent({
   timeout: 10000
 })
 
-const FeedbackButton = defineAsyncComponent({
-  loader: async () => {
-    try {
-      return await import('./components/feedback/FeedbackButton.vue')
-    } catch (error) {
-      console.warn('FeedbackButton could not be loaded:', error)
-      // フォールバックコンポーネント
-      return defineComponent({
-        name: 'FeedbackButtonFallback',
-        render: () => h('div', { class: 'feedback-button-fallback', style: { display: 'none' } })
-      }) as any
-    }
-  },
-  errorComponent: {
-    name: 'FeedbackButtonError',
-    render: () => h('div', { class: 'feedback-button-error', style: { display: 'none' } })
-  },
-  delay: 200,
-  timeout: 10000
-})
+
 
 import GameCanvas from './components/game/GameBoard.vue'
 
@@ -79,13 +47,7 @@ const navigationRef = ref<InstanceType<typeof navigationActions>>()
 let keyboardManager: KeyboardManager | null = null
 let screenReaderManager: ScreenReaderManager | null = null
 
-// フィードバック用のゲーム状態
-const gameState = ref({
-  stage: 'youth',
-  turn: 1,
-  vitality: 100,
-  phase: 'setup'
-})
+
 
 const startGame = (): void => {
   showGame.value = true
@@ -108,32 +70,19 @@ const backToHome = (): void => {
   screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
 }
 
-const openStatistics = (): void => {
-  showStatistics.value = true
-  screenReaderManager?.announceScreenChange('統計ダッシュボード', '統計ダッシュボードを開きました')
-}
 
-const closeStatistics = (): void => {
-  showStatistics.value = false
-  screenReaderManager?.announceScreenChange('ホーム画面', 'ホーム画面に戻りました')
-}
 
 const handleAccessibilitySettingsChanged = (settings: Record<string, boolean | string | number>): void => {
   // アクセシビリティ設定が変更されたときの処理
   console.log('アクセシビリティ設定が更新されました:', settings)
   
   // スクリーンリーダーに通知
-  if (settings.screenReaderEnabled) {
+  if (settings['screenReaderEnabled']) {
     screenReaderManager?.announce('スクリーンリーダー対応が有効になりました', { priority: 'assertive' })
   }
 }
 
-const handleFeedbackSubmitted = (feedbackId: string, type: string): void => {
-  console.log(`フィードバック送信完了: ${type} (${feedbackId})`)
-  
-  // アナリティクスやログ送信（将来的に実装）
-  // trackFeedbackEvent(type, feedbackId)
-}
+
 
 // エラータイプを判定
 const getErrorType = (error: Error): 'network' | 'dynamic-import' | 'runtime' | 'permission' | 'unknown' => {
@@ -218,17 +167,6 @@ onMounted(() => {
     }
   })
   
-  keyboardManager.registerShortcut({
-    key: 's',
-    modifiers: ['alt'],
-    description: '統計ダッシュボードを開く',
-    action: () => {
-      if (!showGame.value && !showStatistics.value) {
-        openStatistics()
-      }
-    }
-  })
-  
   // フォーカス可能要素を登録（ホーム画面のボタン）
   setTimeout(() => {
     const gameButton = navigationRef.value?.gameButtonRef
@@ -261,7 +199,7 @@ onMounted(() => {
   }, 100)
   
   // 初期アナウンス
-  screenReaderManager.announceScreenChange('ホーム画面', '人生充実ゲーム へようこそ。Alt+Gでゲーム開始、Alt+Tでチュートリアル、Alt+Sで統計、Alt+Aでアクセシビリティ設定、F1でヘルプを表示できます')
+  screenReaderManager.announceScreenChange('ホーム画面', '人生充実ゲーム へようこそ。Alt+Gでゲーム開始、Alt+Tでチュートリアル、Alt+Aでアクセシビリティ設定、F1でヘルプを表示できます')
 })
 
 onUnmounted(() => {
@@ -313,12 +251,7 @@ onUnmounted(() => {
               ref="navigationRef"
               @start-game="startGame"
               @start-tutorial="startTutorial"
-              @open-statistics="openStatistics"
             />
-
-            <section class="info-section">
-              <featureShowcase />
-            </section>
           </div>
           
           <!-- カスタムエラーフォールバック（モバイル対応） -->
@@ -380,35 +313,6 @@ onUnmounted(() => {
         <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9H15L13.5 7.5C13 7 12.5 6.5 11.9 6.5H12.1C11.5 6.5 11 7 10.5 7.5L7.91 10.09C7.66 10.34 7.66 10.76 7.91 11.01L10.5 13.6C11 14.1 11.5 14.6 12.1 14.6H11.9C12.5 14.6 13 14.1 13.5 13.6L15 12.1H21C21.6 12.1 22 11.7 22 11.1V10C22 9.4 21.6 9 21 9ZM8.5 12.5L12 16L15.5 12.5L12 22L8.5 12.5Z" fill="currentColor"/>
       </svg>
     </button>
-
-    <!-- 統計ダッシュボード -->
-    <Teleport to="body">
-      <div v-if="showStatistics" class="modal-overlay" @click="closeStatistics">
-        <div class="modal-content" @click.stop>
-          <StatisticsDashboard 
-            :auto-refresh="true"
-            @close="closeStatistics"
-          />
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- フィードバックボタン -->
-    <Suspense>
-      <FeedbackButton
-        :game-state="gameState"
-        :show-stats="true"
-        :auto-survey="true"
-        @feedback-submitted="handleFeedbackSubmitted"
-      />
-      <template #fallback>
-        <div style="display: none;"></div>
-      </template>
-    </Suspense>
-
-    <!-- PWA機能 -->
-    <pwaInstallPrompt />
-    <pwaStatusIndicator />
   </div>
 </template>
 

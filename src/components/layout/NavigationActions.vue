@@ -28,24 +28,13 @@
         <span class="btn-text">チュートリアル</span>
       </button>
       
-      <button
-        class="btn btn-secondary ripple-container"
-        aria-label="統計ダッシュボードを開く (Alt+S)"
-        :aria-keyshortcuts="'Alt+S'"
-        aria-describedby="statistics-description"
-        @click="$emit('open-statistics')"
-      >
-        <span class="btn-bg-effect"></span>
-        <span class="btn-icon" aria-hidden="true">📊</span>
-        <span class="btn-text">統計</span>
-      </button>
+
     </div>
     
     <!-- ボタンの説明（スクリーンリーダー用） -->
     <div class="sr-only">
       <div id="game-description">保険をテーマにした人生シミュレーションゲームを開始します</div>
       <div id="tutorial-description">ゲームの遊び方を学習するチュートリアルを開始します</div>
-      <div id="statistics-description">プレイ統計とパフォーマンス分析を表示します</div>
     </div>
   </section>
 </template>
@@ -57,7 +46,6 @@ import { ref } from 'vue'
 defineEmits<{
   'start-game': []
   'start-tutorial': []
-  'open-statistics': []
 }>()
 
 // テンプレート参照
