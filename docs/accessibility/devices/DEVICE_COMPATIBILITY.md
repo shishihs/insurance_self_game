@@ -454,5 +454,4 @@ Joy-Con使用時は十字ボタン + Aボタンでの操作
 
 ### 📚 関連ドキュメント
 - **[アクセシビリティガイド](../ACCESSIBILITY_GUIDE.md)**: 基本的なアクセシビリティ機能
-- **[ブラウザ互換性ガイド](../browsers/BROWSER_COMPATIBILITY.md)**: ブラウザ固有の設定
-- **[パフォーマンス最適化](../PERFORMANCE_OPTIMIZATION.md)**: 動作改善の詳細方法
+- **[ユーザーマニュアル](../../manual/GAME_MANUAL.md)**: 基本的なゲーム操作方法

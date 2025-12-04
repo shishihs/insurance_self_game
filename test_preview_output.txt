@@ -1,0 +1,30 @@
+npm warn config cache-min This option has been deprecated in favor of `--prefer-offline`.
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game
+[1A[2K  1) [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/
+    Call log:
+    [2m  - navigating to "http://localhost:5173/", waiting until "load"[22m
+
+
+      27 |         page.on('pageerror', err => console.log(`BROWSER ERROR: ${err.message}`));
+      28 |
+    > 29 |         await page.goto('/');
+         |                    ^
+      30 |
+      31 |         // Click Start Game button using JS to avoid potential interception issues
+      32 |         await page.waitForTimeout(1000); // Wait for animation
+        at /Users/shishi/Workspace/insurance_self_game/tests/e2e/game-clear-verification.spec.ts:29:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-game-clear-verificatio-aa4df-l-stages-and-clear-the-game-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game 
+
+[36m  Serving HTML report at http://localhost:52520. Press Ctrl+C to quit.[39m

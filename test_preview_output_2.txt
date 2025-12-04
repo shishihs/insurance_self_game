@@ -1,0 +1,216 @@
+npm warn config cache-min This option has been deprecated in favor of `--prefer-offline`.
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game
+[1A[2K[chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game
+DEBUG: Button clicked via JS: true
+
+[1A[2KDEBUG: Home view is still visible after click
+
+[1A[2KPlaying turn 1
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 2
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 3
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 4
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 5
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 6
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 7
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 8
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 9
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 10
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 11
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 12
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 13
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 14
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 15
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 16
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 17
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 18
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 19
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 20
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 21
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 22
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 23
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 24
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 25
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 26
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 27
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 28
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 29
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 30
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 31
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 32
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 33
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 34
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 35
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 36
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 37
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 38
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 39
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 40
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 41
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 42
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 43
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 44
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 45
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 46
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 47
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 48
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 49
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KPlaying turn 50
+
+[1A[2KCurrent Stage: youth
+
+[1A[2K  1 passed (56.8s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m

@@ -90,6 +90,10 @@ export interface BalanceConfig {
   }
   progressionSettings?: {
     maxTurns?: number
+    stageTransitionTurns?: {
+      youthToMiddle: number
+      middleToFulfillment: number
+    }
     victoryConditions?: {
       minTurns?: number
       minVitality?: number

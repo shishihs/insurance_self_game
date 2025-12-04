@@ -40,10 +40,10 @@ export abstract class BaseActionProcessor<TInput, TOutput> {
 
       // メイン処理
       const result = await this.process(game, input)
-      
+
       // 後処理
       await this.postProcess(game, result)
-      
+
       return result
     } catch (error) {
       return {
@@ -81,18 +81,18 @@ export class DrawCardsProcessor extends BaseActionProcessor<number, Card[]> {
     if (count <= 0) {
       return { success: false, error: 'ドロー枚数は1以上である必要があります' }
     }
-    
+
     if (count > 10) {
       return { success: false, error: 'ドロー枚数は10枚以下である必要があります' }
     }
-    
+
     return { success: true }
   }
 
   protected async process(game: Game, count: number): Promise<ActionResult<Card[]>> {
     // CardManagerから直接カードをドロー
     const result = game.cardManager.drawCards(count)
-    
+
     return {
       success: true,
       data: result.drawnCards,
@@ -113,17 +113,17 @@ export class StartChallengeProcessor extends BaseActionProcessor<Card, void> {
     if (game.phase !== 'draw') {
       return { success: false, error: 'ドローフェーズでのみチャレンジを開始できます' }
     }
-    
+
     if (challengeCard.type !== 'challenge') {
       return { success: false, error: 'チャレンジカード以外は選択できません' }
     }
-    
+
     return { success: true }
   }
 
   protected async process(game: Game, challengeCard: Card): Promise<ActionResult<void>> {
     game.startChallenge(challengeCard)
-    
+
     return {
       success: true,
       effects: [{
@@ -142,19 +142,19 @@ export class ResolveChallengeProcessor extends BaseActionProcessor<void, Challen
     if (!game.currentChallenge) {
       return { success: false, error: 'アクティブなチャレンジがありません' }
     }
-    
+
     if (game.selectedCards.length === 0) {
       return { success: false, error: 'カードが選択されていません' }
     }
-    
+
     return { success: true }
   }
 
   protected async process(game: Game, input: void): Promise<ActionResult<ChallengeResult>> {
     const result = game.resolveChallenge()
-    
+
     const effects: GameEffect[] = []
-    
+
     if (result.success) {
       effects.push({
         type: 'vitality_change',
@@ -163,12 +163,12 @@ export class ResolveChallengeProcessor extends BaseActionProcessor<void, Challen
       })
     } else {
       effects.push({
-        type: 'vitality_change', 
+        type: 'vitality_change',
         description: 'チャレンジに失敗しました',
         value: result.vitalityChange
       })
     }
-    
+
     return {
       success: true,
       data: result,
@@ -185,17 +185,17 @@ export class SelectInsuranceProcessor extends BaseActionProcessor<
   InsuranceTypeSelectionResult
 > {
   protected async validate(
-    game: Game, 
+    game: Game,
     input: { insuranceType: string; durationType: 'term' | 'whole_life' }
   ): Promise<ActionResult<void>> {
     if (!input.insuranceType) {
       return { success: false, error: '保険種類が指定されていません' }
     }
-    
+
     if (!['term', 'whole_life'].includes(input.durationType)) {
       return { success: false, error: '無効な保険期間タイプです' }
     }
-    
+
     return { success: true }
   }
 
@@ -204,7 +204,7 @@ export class SelectInsuranceProcessor extends BaseActionProcessor<
     input: { insuranceType: string; durationType: 'term' | 'whole_life' }
   ): Promise<ActionResult<InsuranceTypeSelectionResult>> {
     const result = game.selectInsuranceType(input.insuranceType, input.durationType)
-    
+
     return {
       success: true,
       data: result,
@@ -248,16 +248,20 @@ export class GameActionProcessor {
     game: Game,
     input: TInput
   ): Promise<ActionResult<TOutput>> {
+    console.log('[GameActionProcessor] executeAction called', actionType)
     const processor = this.processors.get(actionType)
-    
+
     if (!processor) {
+      console.error('[GameActionProcessor] Unknown action type:', actionType)
       return {
         success: false,
         error: `未知のアクションタイプ: ${actionType}`
       }
     }
 
-    return await processor.execute(game, input)
+    const result = await processor.execute(game, input)
+    console.log('[GameActionProcessor] execution result:', result)
+    return result
   }
 
   /**

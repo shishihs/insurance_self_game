@@ -40,9 +40,9 @@ export default defineConfig(({ command, mode }) => ({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: mode === 'production',
+        drop_console: false, // Debugging: Enable console logs
         drop_debugger: true,
-        pure_funcs: mode === 'production' ? ['console.log', 'console.debug', 'console.info'] : [],
+        pure_funcs: [], // Debugging: Keep console functions
         passes: 2
       },
       mangle: {
@@ -89,8 +89,7 @@ export default defineConfig(({ command, mode }) => ({
 
           // 統計・分析系コンポーネントを分離（遅延読み込み）
           if (id.includes('/src/components/statistics/') ||
-            id.includes('/src/analytics/') ||
-            id.includes('/src/benchmark/')) {
+            id.includes('/src/analytics/')) {
             return 'analytics'
           }
 
@@ -169,7 +168,7 @@ export default defineConfig(({ command, mode }) => ({
 
   // ESBuild最適化設定
   esbuild: {
-    drop: mode === 'production' ? ['console', 'debugger'] : [],
+    drop: [], // Keep console logs for debugging
     legalComments: 'none',
     minifyIdentifiers: true,
     minifySyntax: true,

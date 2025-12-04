@@ -1,0 +1,355 @@
+npm warn config cache-min This option has been deprecated in favor of `--prefer-offline`.
+[1A[2K[2m[WebServer] [22mnpm warn config cache-min This option has been deprecated in favor of `--prefer-offline`.
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game
+[1A[2K[chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game
+BROWSER LOG: [vite] connecting...
+
+[1A[2KBROWSER LOG: [vite] connected.
+
+[1A[2KBROWSER LOG: [intlify] Not found 'accessibility.options.changeLanguage' key in 'en' locale messages.
+
+[1A[2KBROWSER LOG: [intlify] Fall back to translate 'accessibility.options.changeLanguage' key with 'ja' locale.
+
+[1A[2KBROWSER LOG: 🚀 アプリケーションが起動しました
+
+[1A[2KDEBUG: Button clicked via JS: true
+
+[1A[2KDEBUG: Home view is still visible after click
+
+[1A[2KBROWSER LOG: 📊 ステータス変更: not_started → in_progress
+
+[1A[2KBROWSER LOG: 🎯 フェーズ変更: setup → draw
+
+[1A[2KBROWSER LOG: ⏰ ターン変更: 0 → 1
+
+[1A[2KPlaying turn 1
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KPlaying turn 2
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KPlaying turn 3
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KPlaying turn 4
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(1), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 5
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 6
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 7
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 8
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 9
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 10
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KPlaying turn 11
+
+[1A[2KCurrent Stage: youth
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw called
+
+[1A[2KBROWSER LOG: [GameStore] drawCards called 1
+
+[1A[2KBROWSER LOG: [Game] drawCards called 1
+
+[1A[2KBROWSER LOG: [GameActionProcessor] executeAction called draw_cards
+
+[1A[2KBROWSER LOG: [GameActionProcessor] execution result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [Game] actionProcessor result: {success: true, data: Array(0), effects: Array(1)}
+
+[1A[2KBROWSER LOG: [GameStore] drawCards finished, triggering update
+
+[1A[2KBROWSER LOG: [GameBoard] onDraw completed
+
+[1A[2K  1) [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForTimeout: Test timeout of 30000ms exceeded.
+
+      82 |             if (await challengeButton.isVisible()) {
+      83 |                 await challengeButton.click();
+    > 84 |                 await page.waitForTimeout(500);
+         |                            ^
+      85 |             }
+      86 |
+      87 |             // 3. Resolve Phase
+        at playTurn (/Users/shishi/Workspace/insurance_self_game/tests/e2e/game-clear-verification.spec.ts:84:28)
+        at /Users/shishi/Workspace/insurance_self_game/tests/e2e/game-clear-verification.spec.ts:154:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-game-clear-verificatio-aa4df-l-stages-and-clear-the-game-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-game-clear-verificatio-aa4df-l-stages-and-clear-the-game-chromium/error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/game-clear-verification.spec.ts:70:5 › Game Clear Verification › should be able to play through all stages and clear the game 
+
+[36m  Serving HTML report at http://localhost:52231. Press Ctrl+C to quit.[39m

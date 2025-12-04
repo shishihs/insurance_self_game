@@ -406,9 +406,12 @@ export class Game implements IGameState {
    * @returns {Promise<Card[]>} ドローしたカードの配列
    */
   async drawCards(count: number): Promise<Card[]> {
+    console.log('[Game] drawCards called', count)
     const result = await this.actionProcessor.executeAction('draw_cards', this, count)
+    console.log('[Game] actionProcessor result:', result)
 
     if (!result.success) {
+      console.error('[Game] drawCards failed:', result.error)
       throw new Error(result.error || 'カードドローに失敗しました')
     }
 
@@ -434,6 +437,13 @@ export class Game implements IGameState {
    */
   startChallenge(challengeCard: Card): void {
     this.challengeService.startChallenge(this, challengeCard)
+  }
+
+  /**
+   * チャレンジカードを直接引く（状態更新あり）
+   */
+  drawChallengeCard(): Card | null {
+    return this.cardManager.drawChallengeCard()
   }
 
   /**
@@ -624,6 +634,17 @@ export class Game implements IGameState {
     } else if (advanceResult.newStage) {
       this.changeStage(advanceResult.newStage)
     }
+  }
+
+  /**
+   * チャレンジデッキを現在のステージ用のカードで補充する
+   */
+  refillChallengeDeck(): void {
+    const newCards = CardFactory.createChallengeCards(this.stage)
+    this.cardManager.getState().challengeDeck.clear()
+    this.cardManager.getState().challengeDeck.addCards(newCards)
+    this.cardManager.getState().challengeDeck.shuffle()
+    console.log(`[Game] Challenge deck refilled for stage ${this.stage}: ${newCards.length} cards`)
   }
 
   /**

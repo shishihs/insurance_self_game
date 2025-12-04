@@ -3,18 +3,28 @@ import { onMounted } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import Hand from './Hand.vue'
 import CardComponent from './Card.vue'
+import type { GameConfig } from '@/domain/types/game.types'
 
 const store = useGameStore()
 
 onMounted(() => {
   if (!store.game) {
-    store.initializeGame()
+    const config = (window as any).__GAME_CONFIG__ as GameConfig | undefined
+    store.initializeGame(config)
     store.startGame()
   }
 })
 
 async function onDraw() {
-  await store.drawCards(1)
+  console.log('[GameBoard] onDraw called')
+  // alert('Debug: Draw Clicked') // Temporary debug alert
+  try {
+    await store.drawCards(1)
+    console.log('[GameBoard] onDraw completed')
+  } catch (e) {
+    console.error('[GameBoard] onDraw error:', e)
+    alert(`Draw Error: ${e}`) // Visual feedback for debugging
+  }
 }
 
 async function onEndTurn() {
@@ -77,7 +87,7 @@ async function onChallenge() {
       </div>
 
       <!-- Actions -->
-      <div class="flex space-x-4 mt-4">
+      <div class="flex space-x-4 mt-4 relative z-[9999]">
         <button 
           v-if="store.currentPhase === 'draw'"
           @click="onDraw"

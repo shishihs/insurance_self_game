@@ -1,8 +1,8 @@
 # TECH_SPEC.md
 **一人用カードゲーム - 技術仕様書**
 
-> **最終更新**: 2025/08/02  
-> **バージョン**: v0.3.1  
+> **最終更新**: 2025/12/03
+> **バージョン**: v0.4.0 (Simplified)
 > **文書種別**: 正式仕様書
 
 ## 🎯 技術スタック概要
@@ -11,23 +11,18 @@
 ```
 Frontend: Vue 3.5 + TypeScript 5.8 + Vite 5
 Game Engine: Phaser 3.90 (カード操作・アニメーション・ドラッグ&ドロップ)
-Audio: Web Audio API (ファイル不要の高品質サウンド生成)
 State: Vue 3 Composition API + Domain Models
 Architecture: DDD (Domain-Driven Design) + サービスレイヤーパターン
 Styling: CSS Variables + レスポンシブデザイン
 Build: Vite + TypeScript (strict mode)
 Deploy: GitHub Pages + GitHub Actions
-Testing: Vitest (259テスト) + Playwright (E2E) + CUIテストシステム
-Development: CUIツール + パフォーマンス解析
-Security: CSP (Content Security Policy) + セキュリティ監査
-Issues: GitHub Issues (2025/01/31移行完了)
+Testing: Vitest + Playwright (E2E)
+Development: CUIツール (バランス調整・デバッグ)
 ```
 
-### 🚨 現在の技術的課題 (2025/08/02)
+### 🚨 現在の技術的課題 (2025/12/03)
 ```
-- SecurityAuditLogger環境変数エラー (6テスト失敗)
-- Vitestスタートアップエラー (patheパッケージ)
-- ESLint設定の最小化 (ワークフロー成功優先)
+- 特になし（コードベース軽量化完了）
 ```
 
 ## 📐 アーキテクチャ設計
@@ -75,8 +70,7 @@ src/
 │   │   └── AnimationManager.ts # アニメーション管理
 │   ├── ui/                    # ゲームUIコンポーネント
 │   │   ├── TutorialOverlay.ts # チュートリアルオーバーレイ
-│   │   ├── SaveLoadMenu.ts    # セーブ/ロードUI
-│   │   └── StatisticsPanel.ts # 統計表示
+│   │   └── SaveLoadMenu.ts    # セーブ/ロードUI
 │   ├── config/                # ゲーム設定
 │   │   └── gameConfig.ts      # Phaser設定
 │   └── renderers/             # レンダリング系
@@ -90,19 +84,12 @@ src/
 │   ├── PlaytestGameController.ts # テストコントローラー
 │   ├── modes/                 # CUIモード
 │   │   ├── DemoMode.ts        # デモモード
-│   │   ├── BenchmarkMode.ts   # ベンチマークモード
 │   │   └── DebugMode.ts       # デバッグモード
 │   └── renderers/             # CUIレンダラー
 │       └── InteractiveCUIRenderer.ts # インタラクティブレンダラー
 ├── controllers/               # コントローラー層
 │   ├── GameController.ts      # メインゲームコントローラー
 │   └── GameValidator.ts       # ゲーム状態検証
-├── analytics/                 # 解析・統計系
-│   ├── GameAnalytics.ts       # ゲーム解析
-│   └── StatisticalTests.ts    # 統計テスト
-├── performance/               # パフォーマンス系
-│   ├── GamePerformanceAnalyzer.ts # パフォーマンス解析
-│   └── MemoryProfiler.ts     # メモリプロファイラー
 └── common/                    # 共通ユーティリティ
     ├── IdGenerator.ts         # ID生成ユーティリティ
     └── types/                 # 共通型定義
@@ -421,7 +408,6 @@ export const useGameStore = defineStore('game', () => {
 
 #### 統合テスト（実装済み）
 - ✅ **CUI統合**: cui-playtest.mjs による実ゲームフロー確認
-- ✅ **GUI統合**: unified-game-launcher.mjs GUI モードでの動作確認
 - ✅ **依存関係**: GameController ⇄ GameRenderer ⇄ 各UI実装の接続確認
 - ✅ **ドメイン共有**: CUI/GUI両方で同一 Game.ts ロジック使用確認
 
@@ -538,7 +524,7 @@ jobs:
         run: npm install
         
       - name: Type check
-        run: npm type-check
+        run: npm run type-check
         
       - name: Run tests
         run: npm run test
@@ -632,10 +618,10 @@ npm install
 npm run dev
 
 # 型チェック（別ターミナル）
-npm type-check --watch
+npm run type-check
 
 # テスト実行（別ターミナル）
-npm run test:watch
+npm run test
 ```
 
 ---

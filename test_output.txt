@@ -1,0 +1,45 @@
+npm warn config cache-min This option has been deprecated in favor of `--prefer-offline`.
+[1A[2K[2m[WebServer] [22mnpm warn config cache-min This option has been deprecated in favor of `--prefer-offline`.
+
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/game-clear-verification.spec.ts:41:5 › Game Clear Verification › should be able to play through all stages and clear the game
+[1A[2K[chromium] › tests/e2e/game-clear-verification.spec.ts:41:5 › Game Clear Verification › should be able to play through all stages and clear the game
+BROWSER LOG: [vite] connecting...
+
+[1A[2KBROWSER LOG: [vite] connected.
+
+[1A[2KBROWSER LOG: [intlify] Not found 'accessibility.options.changeLanguage' key in 'en' locale messages.
+
+[1A[2KBROWSER LOG: [intlify] Fall back to translate 'accessibility.options.changeLanguage' key with 'ja' locale.
+
+[1A[2KBROWSER LOG: 🚀 アプリケーションが起動しました
+
+[1A[2K  1) [chromium] › tests/e2e/game-clear-verification.spec.ts:41:5 › Game Clear Verification › should be able to play through all stages and clear the game 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('.game-view')[22m
+
+
+      36 |
+      37 |         // Wait for game to be ready
+    > 38 |         await page.waitForSelector('.game-view', { state: 'attached', timeout: 10000 });
+         |                    ^
+      39 |     });
+      40 |
+      41 |     test('should be able to play through all stages and clear the game', async ({ page }) => {
+        at /Users/shishi/Workspace/insurance_self_game/tests/e2e/game-clear-verification.spec.ts:38:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-game-clear-verificatio-aa4df-l-stages-and-clear-the-game-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/e2e-game-clear-verificatio-aa4df-l-stages-and-clear-the-game-chromium/error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/game-clear-verification.spec.ts:41:5 › Game Clear Verification › should be able to play through all stages and clear the game 
+
+[36m  Serving HTML report at http://localhost:51614. Press Ctrl+C to quit.[39m

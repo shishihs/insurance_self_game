@@ -82,8 +82,13 @@ export const useGameStore = defineStore('game', () => {
     }
 
     async function drawCards(count: number) {
-        if (!game.value) return
+        console.log('[GameStore] drawCards called', count)
+        if (!game.value) {
+            console.error('[GameStore] Game instance is null')
+            return
+        }
         await game.value.drawCards(count)
+        console.log('[GameStore] drawCards finished, triggering update')
         triggerUpdate()
     }
 
@@ -97,9 +102,23 @@ export const useGameStore = defineStore('game', () => {
         if (!game.value) return
         if (game.value.currentChallenge) return
 
-        const challengeCard = game.value.challengeDeck.drawCard()
+        console.log('[GameStore] drawChallenge called. Deck size:', game.value.challengeDeck.size())
+
+        const challengeCard = game.value.drawChallengeCard()
         if (challengeCard) {
             game.value.startChallenge(challengeCard)
+            triggerUpdate()
+        } else {
+            // Deck is empty, advance stage
+            console.log('[GameStore] Challenge deck empty, advancing stage')
+            game.value.advanceStage()
+
+            if (game.value.status === 'victory') {
+                console.log('[GameStore] Victory!')
+            } else {
+                // Refill deck for new stage
+                game.value.refillChallengeDeck()
+            }
             triggerUpdate()
         }
     }
@@ -145,6 +164,11 @@ export const useGameStore = defineStore('game', () => {
     // Helper to force UI updates since Game entity mutations might not be deep-watched
     function triggerUpdate() {
         lastUpdate.value = Date.now()
+
+        // Expose for testing
+        if (typeof window !== 'undefined') {
+            (window as any)._gameStore = { game: game.value }
+        }
     }
 
     return {

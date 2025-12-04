@@ -531,5 +531,4 @@ BGM:     ■■■■■□□□□□ 50%
 
 ### 📚 関連ドキュメント
 - **[デバイス別操作ガイド](./devices/DEVICE_COMPATIBILITY.md)**: 各種デバイスでの詳細操作方法
-- **[ブラウザ互換性ガイド](./browsers/BROWSER_COMPATIBILITY.md)**: ブラウザ固有の設定方法
-- **[パフォーマンス最適化](./PERFORMANCE_OPTIMIZATION.md)**: 動作を軽くする設定方法
+- **[ユーザーマニュアル](../manual/GAME_MANUAL.md)**: 基本的なゲーム操作方法

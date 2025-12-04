@@ -94,7 +94,15 @@ export interface ICardManager {
   /**
    * 指定IDのカードを選択肢から取得
    */
+  /**
+   * 指定IDのカードを選択肢から取得
+   */
   getCardChoiceById(cardId: string): Card | undefined
+
+  /**
+   * チャレンジカードを引く
+   */
+  drawChallengeCard(): Card | null
 }
 
 /**
@@ -168,7 +176,7 @@ export class CardManager implements ICardManager {
     this.challengeDeck = state.challengeDeck.clone()
     this.selectedCards = [...state.selectedCards]
     this.cardChoices = state.cardChoices ? [...state.cardChoices] : undefined
-    
+
     // キャッシュを無効化
     this.invalidateCache()
   }
@@ -204,21 +212,21 @@ export class CardManager implements ICardManager {
       if (this.playerDeck.isEmpty() && this.discardPile.length > 0) {
         this.reshuffleDeck()
       }
-      
+
       const card = this.playerDeck.drawCard()
       if (card) {
         result.drawnCards.push(card)
         this.hand.push(card)
       }
     }
-    
+
     // 手札上限チェック
     const discardedCards = this.enforceHandLimit()
     result.discardedCards.push(...discardedCards)
-    
+
     // キャッシュを無効化
     this.invalidateCache()
-    
+
     return result
   }
 
@@ -227,7 +235,7 @@ export class CardManager implements ICardManager {
    */
   toggleCardSelection(card: Card): boolean {
     const cardId = card.id
-    
+
     // SetベースのIDチェックで高速化
     if (CardManager.CARD_POOLS.selectedIds.has(cardId)) {
       // 選択解除
@@ -238,13 +246,13 @@ export class CardManager implements ICardManager {
       }
       this.invalidateCache()
       return false // 選択解除
-    } 
-      // 選択
-      CardManager.CARD_POOLS.selectedIds.add(cardId)
-      this.selectedCards.push(card)
-      this.invalidateCache()
-      return true // 選択
-    
+    }
+    // 選択
+    CardManager.CARD_POOLS.selectedIds.add(cardId)
+    this.selectedCards.push(card)
+    this.invalidateCache()
+    return true // 選択
+
   }
 
   /**
@@ -261,7 +269,7 @@ export class CardManager implements ICardManager {
    */
   discardSelectedCards(): Card[] {
     const discardedCards: Card[] = []
-    
+
     this.selectedCards.forEach(card => {
       const index = this.hand.findIndex(c => c.id === card.id)
       if (index !== -1) {
@@ -270,7 +278,7 @@ export class CardManager implements ICardManager {
         discardedCards.push(removedCard)
       }
     })
-    
+
     this.selectedCards = []
     return discardedCards
   }
@@ -308,7 +316,7 @@ export class CardManager implements ICardManager {
     }
 
     const discardedCards: Card[] = []
-    
+
     // 手札上限チェック - 古いカードを捨て札に
     while (this.hand.length > this.config.maxHandSize) {
       const discarded = this.hand.shift()
@@ -317,7 +325,7 @@ export class CardManager implements ICardManager {
         discardedCards.push(discarded)
       }
     }
-    
+
     return discardedCards
   }
 
@@ -349,5 +357,16 @@ export class CardManager implements ICardManager {
     this.playerDeck.addCards(this.discardPile)
     this.playerDeck.shuffle()
     this.discardPile = []
+  }
+
+  /**
+   * チャレンジカードを引く
+   */
+  drawChallengeCard(): Card | null {
+    const card = this.challengeDeck.drawCard()
+    if (card) {
+      this.invalidateCache()
+    }
+    return card
   }
 }
