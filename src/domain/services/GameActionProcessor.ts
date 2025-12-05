@@ -93,28 +93,14 @@ export class DrawCardsProcessor extends BaseActionProcessor<number, Card[]> {
     // CardManagerから直接カードをドロー
     const result = game.cardManager.drawCards(count)
 
-    // ドロー完了後、チャレンジフェーズへ移行するか、次のアクションを促す
-    // ここではシンプルに、ドロー後はチャレンジフェーズへ移行するロジックを追加
-    // ただし、Gameクラスにフェーズ変更メソッドが必要
-    // Game.tsのchangePhaseはpublicではない可能性があるため、確認が必要だが
-    // GameActionProcessorはGameの内部ロジックの一部として機能するため、
-    // Gameクラスに `completeDrawPhase()` のようなメソッドを追加するのが理想的。
-    game.completeDrawPhase() // ドローフェーズ完了処理を呼び出す
-
     return {
       success: true,
       data: result.drawnCards,
-      effects: [
-        {
-          type: 'card_draw',
-          description: `${count}枚のカードをドローしました`,
-          cards: result.drawnCards
-        },
-        {
-          type: 'stage_advance', // フェーズ変更を通知
-          description: 'チャレンジフェーズへ移行しました'
-        }
-      ]
+      effects: [{
+        type: 'card_draw',
+        description: `${count}枚のカードをドローしました`,
+        cards: result.drawnCards
+      }]
     }
   }
 }
