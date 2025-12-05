@@ -149,6 +149,8 @@ export class CardManager implements ICardManager {
       return this._cachedState
     }
 
+    console.log('[CardManager] getState rebuilding cache. Hand size:', this.hand.length)
+
     // 新しい状態を作成
     const state: CardManagerState = {
       hand: [...this.hand],
@@ -217,12 +219,17 @@ export class CardManager implements ICardManager {
       if (card) {
         result.drawnCards.push(card)
         this.hand.push(card)
+        console.log('[CardManager] Added card to hand. Hand size:', this.hand.length, 'Card:', card.name)
+      } else {
+        console.warn('[CardManager] Failed to draw card (deck empty?)')
       }
     }
 
     // 手札上限チェック
     const discardedCards = this.enforceHandLimit()
     result.discardedCards.push(...discardedCards)
+
+    console.log('[CardManager] drawCards finished. Final hand size:', this.hand.length)
 
     // キャッシュを無効化
     this.invalidateCache()
