@@ -20,7 +20,7 @@ async function onDraw() {
   // alert('Debug: Draw Clicked') // Temporary debug alert
   try {
     await store.drawCards(1)
-    console.log('[GameBoard] onDraw completed')
+    console.log('[GameBoard] onDraw completed. Current hand size:', store.hand.length)
   } catch (e) {
     console.error('[GameBoard] onDraw error:', e)
     alert(`Draw Error: ${e}`) // Visual feedback for debugging

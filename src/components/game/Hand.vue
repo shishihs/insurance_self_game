@@ -6,7 +6,11 @@ import type { Card } from '@/domain/entities/Card'
 
 const store = useGameStore()
 
-const hand = computed(() => store.hand)
+const hand = computed(() => {
+  const h = store.hand
+  console.log('[Hand] computed hand updated:', h.length)
+  return h
+})
 
 function onCardClick(card: Card) {
   store.toggleCardSelection(card)
