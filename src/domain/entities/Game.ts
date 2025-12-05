@@ -419,6 +419,32 @@ export class Game implements IGameState {
   }
 
   /**
+   * ドローフェーズを完了し、次のフェーズへ移行する
+   */
+  completeDrawPhase(): void {
+    if (this.phase !== 'draw') {
+      console.warn('[Game] completeDrawPhase called but not in draw phase')
+      return
+    }
+
+    console.log('[Game] Completing draw phase, moving to challenge phase')
+    this.changePhase('challenge')
+  }
+
+  /**
+   * ドローフェーズを完了し、次のフェーズへ移行する
+   */
+  completeDrawPhase(): void {
+    if (this.phase !== 'draw') {
+      console.warn('[Game] completeDrawPhase called but not in draw phase')
+      return
+    }
+
+    console.log('[Game] Completing draw phase, moving to challenge phase')
+    this.changePhase('challenge')
+  }
+
+  /**
    * カードをドローする（後方互換版）
    * @param {number} count - ドローする枚数
    * @returns {Card[]} ドローしたカードの配列
