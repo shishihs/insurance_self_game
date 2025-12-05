@@ -116,6 +116,8 @@ const reportError = (error: Error) => {
 }
 
 onMounted(() => {
+  console.log('App Version: v2025.12.06.0230 - Debug Build')
+  
   // モバイル判定
   isMobile.value = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
   
@@ -278,8 +280,8 @@ onUnmounted(() => {
     </transitionAnimations>
 
     <!-- フッター -->
-    <footer id="footer" class="fixed bottom-1 right-1 text-[10px] text-white/30 z-[9999] pointer-events-none" role="contentinfo">
-      <p>v2025.12.06.0220 - Debug Build</p>
+    <footer id="footer" class="sr-only" role="contentinfo">
+      <p>人生充実ゲーム - アクセシブルなWebゲーム体験</p>
     </footer>
     
     <!-- アクセシビリティ設定モーダル -->
