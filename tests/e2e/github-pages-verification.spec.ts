@@ -9,6 +9,10 @@ const GITHUB_PAGES_URL = 'https://shishihs.github.io/insurance_self_game/'
 
 test.describe('GitHub Pages デプロイメント検証', () => {
     test('ページが正常に読み込まれる', async ({ page }) => {
+        // Capture console logs
+        page.on('console', msg => console.log(`BROWSER LOG: ${msg.text()}`));
+        page.on('pageerror', err => console.log(`BROWSER ERROR: ${err.message}`));
+
         // GitHub Pagesにアクセス
         const response = await page.goto(GITHUB_PAGES_URL, { waitUntil: 'domcontentloaded' })
 
@@ -17,11 +21,16 @@ test.describe('GitHub Pages デプロイメント検証', () => {
         expect(response?.status()).toBe(200)
 
         // タイトルが正しいことを確認
-        await expect(page).toHaveTitle(/Life Enrichment Game/i)
+        await expect(page).toHaveTitle(/Life Fulfillment/i)
     })
 
     test('ゲームボードが表示される', async ({ page }) => {
         await page.goto(GITHUB_PAGES_URL, { waitUntil: 'domcontentloaded' })
+
+        // ゲームを開始
+        // ゲームを開始 (アニメーション待ち)
+        await page.waitForTimeout(1000);
+        await page.getByRole('button', { name: /^ゲームを開始する/ }).click({ force: true });
 
         // ゲームボードコンポーネントが存在することを確認
         const gameBoard = page.locator('[data-testid="game-board"], .game-board, #game-board')
@@ -31,6 +40,11 @@ test.describe('GitHub Pages デプロイメント検証', () => {
     test('活力表示が存在する', async ({ page }) => {
         await page.goto(GITHUB_PAGES_URL, { waitUntil: 'domcontentloaded' })
 
+        // ゲームを開始
+        // ゲームを開始 (アニメーション待ち)
+        await page.waitForTimeout(1000);
+        await page.getByRole('button', { name: /^ゲームを開始する/ }).click({ force: true });
+
         // 活力バーまたは活力表示が存在することを確認
         const vitalityDisplay = page.locator('[data-testid="vitality"]').or(page.locator('.vitality')).or(page.getByText(/活力|体力|HP/i));
         await expect(vitalityDisplay.first()).toBeVisible({ timeout: 10000 })
@@ -39,7 +53,13 @@ test.describe('GitHub Pages デプロイメント検証', () => {
     test('カードが表示される', async ({ page }) => {
         await page.goto(GITHUB_PAGES_URL, { waitUntil: 'domcontentloaded' })
 
+        // ゲームを開始
+        // ゲームを開始 (アニメーション待ち)
+        await page.waitForTimeout(1000);
+        await page.getByRole('button', { name: /^ゲームを開始する/ }).click({ force: true });
+
         // カードコンポーネントが存在することを確認
+        // v2: First screen is Dream Selection, which has cards.
         const cards = page.locator('[data-testid="card"], .card, [class*="card"]')
 
         // 少なくとも1枚のカードが表示されるまで待つ
@@ -106,6 +126,10 @@ test.describe('GitHub Pages デプロイメント検証', () => {
         await page.setViewportSize({ width: 375, height: 667 })
         await page.goto(GITHUB_PAGES_URL, { waitUntil: 'domcontentloaded' })
 
+        // ゲームを開始
+        await page.waitForTimeout(1000);
+        await page.getByRole('button', { name: /^ゲームを開始する/ }).first().click({ force: true }); // Mobile might have different layout or same
+
         // ゲームボードが表示されることを確認
         const gameBoard = page.locator('[data-testid="game-board"], .game-board, #game-board')
         await expect(gameBoard.first()).toBeVisible({ timeout: 10000 })
@@ -113,6 +137,10 @@ test.describe('GitHub Pages デプロイメント検証', () => {
         // デスクトップビューポートでテスト
         await page.setViewportSize({ width: 1920, height: 1080 })
         await page.reload({ waitUntil: 'domcontentloaded' })
+
+        // リロード後はホームに戻るため、再度ゲーム開始が必要
+        await page.waitForTimeout(1000);
+        await page.getByRole('button', { name: /^ゲームを開始する/ }).click({ force: true });
 
         // 再度ゲームボードが表示されることを確認
         await expect(gameBoard.first()).toBeVisible({ timeout: 10000 })

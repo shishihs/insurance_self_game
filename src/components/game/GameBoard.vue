@@ -43,7 +43,7 @@ async function onChallenge() {
 </script>
 
 <template>
-  <div class="w-full h-screen bg-slate-900 text-white overflow-hidden relative font-sans">
+  <div data-testid="game-board" class="w-full h-screen bg-slate-900 text-white overflow-hidden relative font-sans">
     <!-- Header / Stats -->
     <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-slate-800/80 backdrop-blur-md z-20 shadow-md">
       <div class="flex items-center space-x-6">
@@ -55,7 +55,7 @@ async function onChallenge() {
           <span class="text-xs text-slate-400 uppercase">Stage</span>
           <span class="font-bold text-xl text-purple-400">{{ store.currentStage }}</span>
         </div>
-        <div class="flex flex-col">
+        <div data-testid="vitality" class="flex flex-col">
           <span class="text-xs text-slate-400 uppercase">Vitality</span>
           <div class="flex items-end">
             <span class="font-bold text-2xl text-green-400">{{ store.vitality }}</span>
