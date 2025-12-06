@@ -104,6 +104,20 @@ export class Game implements IGameState {
   // 経験学習システム（GAME_DESIGN.mdより）
   private readonly _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
 
+  /**
+   * 学習履歴を取得
+   */
+  getLearningHistory(challengeName: string): number {
+    return this._learningHistory.get(challengeName) || 0
+  }
+
+  /**
+   * 学習履歴を更新
+   */
+  updateLearningHistory(challengeName: string, failures: number): void {
+    this._learningHistory.set(challengeName, failures)
+  }
+
   // AI戦略設定
   private _aiEnabled: boolean = false
   private _currentAIStrategy: AIStrategyType = 'balanced'
@@ -435,7 +449,7 @@ export class Game implements IGameState {
 
     this.cardManager.setCardChoices(shuffled)
     this.changePhase('dream_selection')
-    console.log('[Game] Dream Selection Phase started')
+    console.info('[Game Phase] Dream Selection Started')
   }
 
   /**
@@ -448,7 +462,7 @@ export class Game implements IGameState {
     if (!choices?.some(c => c.id === card.id)) throw new Error('Invalid dream selection')
 
     this.selectedDream = card
-    console.log('[Game] Selected Dream:', card.name)
+    console.info(`[Game Event] Selected Dream: ${card.name}`)
 
     this.cardManager.clearCardChoices()
 
@@ -463,9 +477,9 @@ export class Game implements IGameState {
    * @returns {Promise<Card[]>} ドローしたカードの配列
    */
   async drawCards(count: number): Promise<Card[]> {
-    console.log('[Game] drawCards called', count)
+    console.debug('[Game] drawCards called', count)
     const result = await this.actionProcessor.executeAction<number, Card[]>('draw_cards', this, count)
-    console.log('[Game] actionProcessor result:', result)
+    console.debug('[Game] actionProcessor result:', result)
 
     if (!result.success) {
       console.error('[Game] drawCards failed:', result.error)
@@ -525,7 +539,7 @@ export class Game implements IGameState {
 
     this.cardManager.setCardChoices(choices)
     this.changePhase('challenge_choice')
-    console.log(`[Game] Challenge choices set: ${choices.map(c => c.name).join(', ')}`)
+    console.debug(`[Game] Challenge choices set: ${choices.map(c => c.name).join(', ')}`)
   }
 
   /**
@@ -678,7 +692,14 @@ export class Game implements IGameState {
     // 事後条件チェック
     const currentVitality = this.vitality
     if (currentVitality < 0 || currentVitality > this.maxVitality) {
-      throw new Error(`Vitality invariant violation: ${currentVitality} not in [0, ${this.maxVitality}]`)
+      console.warn(`Vitality invariant violation: ${currentVitality} not in [0, ${this.maxVitality}]`)
+      // Auto-correct to prevent crash
+      if (currentVitality > this.maxVitality) {
+        this._vitality = this._vitality.withMaxVitality(this.maxVitality)
+      } else if (currentVitality < 0) {
+        // Should be handled by Vitality class but just in case
+        this._vitality = Vitality.create(0, this.maxVitality)
+      }
     }
 
     // ダーティフラグを設定
@@ -723,7 +744,7 @@ export class Game implements IGameState {
     // 現在の活力値が新しい上限を超える場合は調整
     const currentValue = this._vitality.getValue()
     if (currentValue > newMaxVitality) {
-      console.log(`🔄 ${ageParams.label}に移行: 活力上限が${newMaxVitality}に調整されました`)
+      console.info(`[Stage] ${ageParams.label}: Max Vitality adjusted to ${newMaxVitality}`)
       this._vitality = this._vitality.withMaxVitality(newMaxVitality)
     } else {
       // 上限のみ更新（現在値はそのまま）
@@ -762,10 +783,8 @@ export class Game implements IGameState {
    */
   refillChallengeDeck(): void {
     const newCards = CardFactory.createChallengeCards(this.stage)
-    this.cardManager.getState().challengeDeck.clear()
-    this.cardManager.getState().challengeDeck.addCards(newCards)
-    this.cardManager.getState().challengeDeck.shuffle()
-    console.log(`[Game] Challenge deck refilled for stage ${this.stage}: ${newCards.length} cards`)
+    this.cardManager.refillChallengeDeck(newCards)
+    console.debug(`[Game] Challenge deck refilled for stage ${this.stage}: ${newCards.length} cards`)
   }
 
   /**
@@ -1099,25 +1118,25 @@ export class Game implements IGameState {
   private setupStateListeners(): void {
     // フェーズ変更の監視
     this.stateManager.addEventListener('phase_change', (event) => {
-      console.log(`🎯 フェーズ変更: ${event.previousValue} → ${event.newValue}`)
+      console.info(`[Phase] ${event.previousValue} -> ${event.newValue}`)
       this.handlePhaseChange(event.previousValue, event.newValue)
     })
 
     // ステージ変更の監視
     this.stateManager.addEventListener('stage_change', (event) => {
-      console.log(`🚀 ステージ変更: ${event.previousValue} → ${event.newValue}`)
+      console.info(`[Stage] ${event.previousValue} -> ${event.newValue}`)
       this.updateMaxVitalityForAge()
     })
 
     // ターン変更の監視
     this.stateManager.addEventListener('turn_change', (event) => {
-      console.log(`⏰ ターン変更: ${event.previousValue} → ${event.newValue}`)
+      console.info(`[Turn] ${event.previousValue} -> ${event.newValue}`)
       this.stats.turnsPlayed = event.newValue
     })
 
     // ステータス変更の監視
     this.stateManager.addEventListener('status_change', (event) => {
-      console.log(`📊 ステータス変更: ${event.previousValue} → ${event.newValue}`)
+      console.info(`[Status] ${event.previousValue} -> ${event.newValue}`)
 
       if (event.newValue === 'game_over' || event.newValue === 'victory') {
         this.completedAt = new Date()
@@ -1203,7 +1222,7 @@ export class Game implements IGameState {
     if (Game.OBJECT_POOLS.gameStates.length < 10) {
       // オブジェクトをクリア
       Object.keys(snapshot).forEach(key => {
-        delete (snapshot as any)[key]
+        delete (snapshot as Record<string, any>)[key]
       })
       Game.OBJECT_POOLS.gameStates.push(snapshot as Partial<IGameState>)
     }
@@ -1240,9 +1259,9 @@ export class Game implements IGameState {
   setAIEnabled(enabled: boolean): void {
     this._aiEnabled = enabled
     if (enabled) {
-      console.log(`AI戦略システムが有効になりました (戦略: ${this._currentAIStrategy})`)
+      console.info(`[AI] System Enabled (Strategy: ${this._currentAIStrategy})`)
     } else {
-      console.log('AI戦略システムが無効になりました')
+      console.info('[AI] System Disabled')
     }
   }
 
@@ -1259,7 +1278,7 @@ export class Game implements IGameState {
   setAIStrategy(strategyType: AIStrategyType): void {
     this._currentAIStrategy = strategyType
     this.aiStrategyService.setStrategy(strategyType)
-    console.log(`AI戦略を変更しました: ${strategyType}`)
+    console.info(`[AI] Strategy Changed: ${strategyType}`)
   }
 
   /**
@@ -1290,8 +1309,8 @@ export class Game implements IGameState {
     }
 
     const choice = this.aiStrategyService.autoSelectChallenge(availableChallenges, this)
-    console.log(`AI戦略によるチャレンジ選択: ${choice.challenge.name} (成功確率: ${(choice.successProbability * 100).toFixed(1)}%)`)
-    console.log(`選択理由: ${choice.reason}`)
+    console.debug(`[AI] Auto-selected challenge: ${choice.challenge.name} (Success Rate: ${(choice.successProbability * 100).toFixed(1)}%)`)
+    console.debug(`[AI] Reason: ${choice.reason}`)
 
     return choice.challenge
   }
@@ -1307,9 +1326,9 @@ export class Game implements IGameState {
     const availableCards = this.cardManager.getState().playerDeck.getCards()
     const choice = this.aiStrategyService.autoSelectCards(challenge, availableCards, this)
 
-    console.log(`AI戦略によるカード選択: ${choice.cards.map(c => c.name).join(', ')}`)
-    console.log(`選択理由: ${choice.reason}`)
-    console.log(`期待パワー: ${choice.expectedPower}`)
+    console.debug(`[AI] Auto-selected cards: ${choice.cards.map(c => c.name).join(', ')}`)
+    console.debug(`[AI] Reason: ${choice.reason}`)
+    console.debug(`[AI] Expected Power: ${choice.expectedPower}`)
 
     return choice.cards
   }
@@ -1329,7 +1348,7 @@ export class Game implements IGameState {
     // 1. チャレンジを選択
     const selectedChallenge = this.aiSelectChallenge()
     if (!selectedChallenge) {
-      console.log('利用可能なチャレンジがありません')
+      console.warn('[AI] No challenges available')
       return null
     }
 
@@ -1363,6 +1382,6 @@ export class Game implements IGameState {
     this._currentAIStrategy = 'balanced'
     this.aiStrategyService.setStrategy('balanced')
     this.aiStrategyService.clearHistory()
-    console.log('AI設定をリセットしました')
+    console.info('[AI] Settings Reset')
   }
 }

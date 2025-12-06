@@ -53,6 +53,15 @@ export class GameTurnManager {
     // ステージ進行の判定
     this.checkStageProgression(game)
 
+    // 勝利条件のチェック
+    this.checkVictoryCondition(game)
+    if (game.status === 'victory') {
+      return {
+        newExpiredCount: 0,
+        remainingInsuranceCount: game.getActiveInsurances().length
+      }
+    }
+
     // 保険期限の更新
     const expirationResult = this.updateInsuranceExpirations(game)
 
@@ -78,6 +87,33 @@ export class GameTurnManager {
       ...(expirationResult ? { insuranceExpirations: expirationResult } : {}),
       newExpiredCount: expirationResult?.expiredCards.length || 0,
       remainingInsuranceCount: game.getActiveInsurances().length
+    }
+  }
+
+  /**
+   * 勝利条件をチェック
+   * @private
+   */
+  private checkVictoryCondition(game: Game): void {
+    const settings = game.config.balanceConfig?.progressionSettings || {
+      maxTurns: 50,
+      victoryConditions: { minTurns: 20, minVitality: 50 }
+    }
+
+    const maxTurns = settings.maxTurns ?? 50
+    const minVitality = settings.victoryConditions?.minVitality ?? 50
+
+    // 勝利条件: 最大ターン数に到達 & 活力が最小値以上
+    if (game.turn >= maxTurns && game.vitality >= minVitality) {
+      game.status = 'victory'
+      game.completedAt = new Date()
+      console.log(`🎉 勝利！ ターン${game.turn}で活力${game.vitality}を維持してクリア！`)
+    }
+    // 代替勝利条件: 充実期で一定ターン生存
+    else if (game.stage === 'fulfillment' && game.turn >= 40 && game.vitality >= minVitality) {
+      game.status = 'victory'
+      game.completedAt = new Date()
+      console.log(`🎉 充実期クリア！ ターン${game.turn}で活力${game.vitality}を維持！`)
     }
   }
 

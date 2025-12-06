@@ -115,6 +115,8 @@ export interface ICardManager {
   addAgingCardToDiscard(): void
   getInsuranceMarket(): Card[]
   getActiveInsurances(): Card[]
+  refillChallengeDeck(cards: Card[]): void
+  getChallengeDeckSize(): number
 }
 
 /**
@@ -484,5 +486,22 @@ export class CardManager implements ICardManager {
       this.invalidateCache()
     }
     return card
+  }
+
+  /**
+   * チャレンジデッキを補充する
+   */
+  refillChallengeDeck(cards: Card[]): void {
+    this.challengeDeck.clear()
+    this.challengeDeck.addCards(cards)
+    this.challengeDeck.shuffle()
+    this.invalidateCache()
+  }
+
+  /**
+   * チャレンジデッキのカード数を取得
+   */
+  getChallengeDeckSize(): number {
+    return this.challengeDeck.getCards().length
   }
 }
