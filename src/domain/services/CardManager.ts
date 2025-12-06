@@ -135,9 +135,11 @@ export class CardManager implements ICardManager {
 
   // パフォーマンス最適化: オブジェクトプール
   private static readonly CARD_POOLS = {
-    drawResults: [] as DrawResult[],
-    selectedIds: new Set<string>() // IDベースの選択状態管理
+    drawResults: [] as DrawResult[]
   }
+
+  // IDベースの選択状態管理（インスタンスごと）
+  private selectedIdsSet = new Set<string>()
 
   // キャッシュ
   private _cachedState: CardManagerState | undefined
@@ -152,6 +154,7 @@ export class CardManager implements ICardManager {
     this.hand = []
     this.discardPile = []
     this.selectedCards = []
+    this.selectedIdsSet.clear()
     this.cardChoices = undefined
     this.config = config
     // v2 init
@@ -207,6 +210,10 @@ export class CardManager implements ICardManager {
 
     // キャッシュを無効化
     this.invalidateCache()
+
+    // selectedIdsSetを再構築
+    this.selectedIdsSet.clear()
+    this.selectedCards.forEach(c => this.selectedIdsSet.add(c.id))
   }
 
   /**
@@ -278,9 +285,9 @@ export class CardManager implements ICardManager {
     const cardId = card.id
 
     // SetベースのIDチェックで高速化
-    if (CardManager.CARD_POOLS.selectedIds.has(cardId)) {
+    if (this.selectedIdsSet.has(cardId)) {
       // 選択解除
-      CardManager.CARD_POOLS.selectedIds.delete(cardId)
+      this.selectedIdsSet.delete(cardId)
       const index = this.selectedCards.findIndex(c => c.id === cardId)
       if (index !== -1) {
         this.selectedCards.splice(index, 1)
@@ -289,7 +296,7 @@ export class CardManager implements ICardManager {
       return false // 選択解除
     }
     // 選択
-    CardManager.CARD_POOLS.selectedIds.add(cardId)
+    this.selectedIdsSet.add(cardId)
     this.selectedCards.push(card)
     this.invalidateCache()
     return true // 選択
@@ -301,7 +308,7 @@ export class CardManager implements ICardManager {
    */
   clearSelection(): void {
     this.selectedCards.length = 0
-    CardManager.CARD_POOLS.selectedIds.clear()
+    this.selectedIdsSet.clear()
     this.invalidateCache()
   }
 

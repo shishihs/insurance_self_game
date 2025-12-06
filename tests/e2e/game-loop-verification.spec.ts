@@ -74,7 +74,7 @@ test.describe('Game Loop Verification', () => {
         await expect(resolveBtn).toBeVisible({ timeout: 5000 });
 
         // Select a card from hand to play
-        const handCard = page.locator('.hand-container [data-testid="card"]').first();
+        const handCard = page.locator('[data-testid="hand-container"] [data-testid="card"]').first();
         if (await handCard.isVisible()) {
             await handCard.click();
         }

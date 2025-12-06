@@ -166,7 +166,7 @@ test.describe('GitHub Pages デプロイメント検証', () => {
 
         // 3. ドローフェーズ (Draw Phase)
         // Draw Cardボタンが表示されるまで待つ
-        const drawButton = page.getByRole('button', { name: /Draw Card/i });
+        const drawButton = page.getByRole('button', { name: /カードを引く/i });
         await expect(drawButton).toBeVisible({ timeout: 10000 });
 
         console.log('✅ ドローフェーズに遷移しました');
@@ -182,7 +182,7 @@ test.describe('GitHub Pages デプロイメント検証', () => {
 
         // 4. チャレンジ開始 (Start Challenge)
         // Start Challengeボタンが表示されるまで待つ
-        const startChallengeButton = page.getByRole('button', { name: /Start Challenge/i });
+        const startChallengeButton = page.getByRole('button', { name: /課題に取り組む/i });
         await expect(startChallengeButton).toBeVisible();
 
         await startChallengeButton.click({ force: true });
