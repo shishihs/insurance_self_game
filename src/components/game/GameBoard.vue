@@ -68,7 +68,7 @@ async function onChallenge() {
     </div>
 
     <!-- Main Game Area -->
-    <div class="absolute inset-0 flex flex-col items-center justify-center pt-20 pb-64 z-10">
+    <div class="absolute inset-0 flex flex-col items-center justify-center pt-20 pb-96 z-10">
       
       <!-- Challenge Area -->
       <div class="mb-8 flex flex-col items-center">

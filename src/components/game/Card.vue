@@ -62,8 +62,8 @@ const typeLabel = computed(() => {
     </div>
 
     <!-- Content -->
-    <h3 class="font-bold text-lg leading-tight mb-1 text-gray-800">{{ card.name }}</h3>
-    <p class="text-xs text-gray-600 flex-grow overflow-y-auto">{{ card.description }}</p>
+    <h3 class="font-bold text-lg leading-tight mb-1 text-gray-800 min-h-[3.5rem] flex items-center break-words line-clamp-2">{{ card.name }}</h3>
+    <p class="text-xs text-gray-600 flex-grow overflow-y-auto leading-snug break-words pr-1">{{ card.description }}</p>
 
     <!-- Footer -->
     <div class="mt-2 pt-2 border-t border-gray-200 flex justify-between items-center">

@@ -1184,7 +1184,61 @@ export default {
    grep "ERROR" logs/application.log | awk '{print $1, $2}' | uniq -c
    ```
 
-## まとめ
+## 11. Vue/Pinia 統合問題
+
+### リアクティビティ喪失
+
+#### 問題: 状態変更が画面に反映されない
+
+**症状**:
+ドメインオブジェクト（Entity）内部の状態は更新されているが、Vue コンポーネントが再描画されない。ログではデータが正しいのに画面が変わらない。
+
+**原因**:
+Pinia ストアで `shallowRef` を使用してドメインモデルを保持している場合、深い階層のプロパティ（`game.hand` 配列の変更など）は Vue のリアクティビティシステムによって検知されない。`triggerUpdate` パターンを使用していても、`computed` が依存している元のオブジェクトが `shallowRef` だと発火しない場合がある。
+
+**解決方法**:
+UI に必要な状態をストア内の**明示的な `ref`** として定義し、更新時に同期する。
+
+```typescript
+// store/gameStore.ts
+
+// 1. Explicit UI State
+const handState = ref<Card[]>([])
+
+// 2. Computed depends on explicit state
+const hand = computed(() => handState.value)
+
+// 3. Sync function
+function triggerUpdate() {
+  if (!game.value) return
+  // Create new array reference to guarantee reactivity
+  handState.value = [...game.value.hand] 
+}
+```
+
+## 12. デプロイメント検証
+
+### GitHub Pages キャッシュ問題
+
+#### 問題: 最新のデプロイが反映されているか不明
+
+**症状**:
+修正を push した後もバグが再現する場合、コードが間違っているのか、古いキャッシュが残っているのか判別できない。
+
+**解決方法**:
+アプリケーション起動時にバージョン情報をログ出力することで、実行中のコードを特定する。
+
+```typescript
+// App.vue
+onMounted(() => {
+  console.log('App Version: v2025.12.06.XXXX')
+})
+```
+
+**確認手順**:
+1. `git log -n 1` で最新のコミットハッシュを確認
+2. ブラウザのコンソールでバージョンログを確認
+3. 一致しない場合はキャッシュクリア（スーパーリロード）を行う
 
 本トラブルシューティングガイドは、以下の価値を提供します：
 
