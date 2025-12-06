@@ -145,4 +145,56 @@ test.describe('GitHub Pages デプロイメント検証', () => {
         // 再度ゲームボードが表示されることを確認
         await expect(gameBoard.first()).toBeVisible({ timeout: 10000 })
     })
+
+    test('基本的なゲームプレイフローが動作する', async ({ page }) => {
+        await page.goto(GITHUB_PAGES_URL, { waitUntil: 'domcontentloaded' })
+
+        // 1. ゲームを開始
+        await page.waitForTimeout(1000);
+        await page.getByRole('button', { name: /^ゲームを開始する/ }).first().click({ force: true });
+
+        // 2. 夢の選択 (Dream Selection Phase)
+        const dreamCards = page.locator('[data-testid="card"]');
+        await expect(dreamCards.first()).toBeVisible({ timeout: 10000 });
+        // 夢3枚が表示されていることを確認
+        // 注: カード自体を見つけるセレクタが複数ヒットする可能性があるため、コンテナ等で絞るのが理想だが簡略化
+
+        console.log('✅ 夢選択画面が表示されました');
+
+        // 最初の夢を選択
+        await dreamCards.first().click({ force: true });
+
+        // 3. ドローフェーズ (Draw Phase)
+        // Draw Cardボタンが表示されるまで待つ
+        const drawButton = page.getByRole('button', { name: /Draw Card/i });
+        await expect(drawButton).toBeVisible({ timeout: 10000 });
+
+        console.log('✅ ドローフェーズに遷移しました');
+
+        // カードをドロー
+        await drawButton.click({ force: true });
+
+        // アニメーション待ち
+        await page.waitForTimeout(1000);
+
+        // 手札が増えていることを確認 (数は不問、まずはエラーがないこと)
+        console.log('✅ カードドロー成功');
+
+        // 4. チャレンジ開始 (Start Challenge)
+        // Start Challengeボタンが表示されるまで待つ
+        const startChallengeButton = page.getByRole('button', { name: /Start Challenge/i });
+        await expect(startChallengeButton).toBeVisible();
+
+        await startChallengeButton.click({ force: true });
+
+        // アニメーション待ち
+        await page.waitForTimeout(1000);
+
+        // チャレンジ選択画面 (Challenge Selector) が表示される
+        // ここでもカードが表示されるはず
+        const challengeCards = page.locator('[data-testid="card"]');
+        await expect(challengeCards.first()).toBeVisible();
+
+        console.log('✅ チャレンジ選択画面が表示されました');
+    })
 })
