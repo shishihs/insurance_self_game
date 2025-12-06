@@ -8,51 +8,25 @@ export const useGameStore = defineStore('game', () => {
     // State - using shallowRef to avoid deep reactivity on Game instance
     const game = shallowRef<Game | null>(null)
     const isInitialized = ref(false)
-    const lastUpdate = ref(Date.now()) // Force reactivity when game state changes internally
+    const lastUpdate = ref(Date.now()) // Keep for other computeds if needed
 
-    // Getters
-    const vitality = computed(() => {
-        if (!game.value) return 0
-        // Dependency on lastUpdate forces re-evaluation
-        lastUpdate.value
-        return game.value.vitality
-    })
+    // Explicit reactive state for UI
+    const handState = ref<Card[]>([])
+    const vitalityState = ref(0)
+    const maxVitalityState = ref(100)
+    const currentStageState = ref<string>('youth')
+    const currentTurnState = ref(0)
+    const currentPhaseState = ref<string>('setup')
+    const currentChallengeState = ref<Card | null>(null)
 
-    const maxVitality = computed(() => {
-        if (!game.value) return 100
-        lastUpdate.value
-        return game.value.maxVitality
-    })
-
-    const hand = computed(() => {
-        if (!game.value) return []
-        lastUpdate.value
-        return game.value.hand
-    })
-
-    const currentStage = computed(() => {
-        if (!game.value) return 'youth'
-        lastUpdate.value
-        return game.value.stage
-    })
-
-    const currentTurn = computed(() => {
-        if (!game.value) return 0
-        lastUpdate.value
-        return game.value.turn
-    })
-
-    const currentPhase = computed(() => {
-        if (!game.value) return 'setup'
-        lastUpdate.value
-        return game.value.phase
-    })
-
-    const currentChallenge = computed(() => {
-        if (!game.value) return null
-        lastUpdate.value
-        return game.value.currentChallenge
-    })
+    // Getters - return the explicit state
+    const vitality = computed(() => vitalityState.value)
+    const maxVitality = computed(() => maxVitalityState.value)
+    const hand = computed(() => handState.value)
+    const currentStage = computed(() => currentStageState.value)
+    const currentTurn = computed(() => currentTurnState.value)
+    const currentPhase = computed(() => currentPhaseState.value)
+    const currentChallenge = computed(() => currentChallengeState.value)
 
     const insuranceTypeChoices = computed(() => {
         if (!game.value) return []
@@ -133,13 +107,7 @@ export const useGameStore = defineStore('game', () => {
 
     function selectInsurance(insuranceType: any) {
         if (!game.value) return
-        // Assuming Game entity has a method to handle insurance selection
-        // If not, we might need to implement it or use a service
-        // Checking Game.ts, it seems we might need to call a service or a method on Game
-        // Let's assume for now we just log it or need to implement it in Game.ts if missing
-        // Actually Game.ts likely has a method or we need to use GameInsuranceService
         console.log('Selected insurance:', insuranceType)
-        // For now, let's just move to next phase to unblock
         game.value.phase = 'end'
         triggerUpdate()
     }
@@ -163,7 +131,20 @@ export const useGameStore = defineStore('game', () => {
 
     // Helper to force UI updates since Game entity mutations might not be deep-watched
     function triggerUpdate() {
+        if (!game.value) return
+
         lastUpdate.value = Date.now()
+
+        // Sync explicit state
+        handState.value = [...game.value.hand] // Create new array reference
+        vitalityState.value = game.value.vitality
+        maxVitalityState.value = game.value.maxVitality
+        currentStageState.value = game.value.stage
+        currentTurnState.value = game.value.turn
+        currentPhaseState.value = game.value.phase
+        currentChallengeState.value = game.value.currentChallenge || null
+
+        console.log('[GameStore] State synced. Hand size:', handState.value.length)
 
         // Expose for testing
         if (typeof window !== 'undefined') {
