@@ -25,7 +25,15 @@ const mockGame = {
     setStage: vi.fn(),
     getActiveInsurances: vi.fn().mockReturnValue([]),
     heal: vi.fn(),
-    updateInsuranceBurden: vi.fn() // Called inside updateInsuranceExpirations logic via (game as any)
+    updateInsuranceBurden: vi.fn(), // Called inside updateInsuranceExpirations logic via (game as any)
+    config: {
+        balanceConfig: {
+            progressionSettings: {
+                maxTurns: 50,
+                victoryConditions: { minTurns: 20, minVitality: 50 }
+            }
+        }
+    }
 } as unknown as Game
 
 describe('GameTurnManager v2', () => {

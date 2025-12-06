@@ -63,7 +63,7 @@ describe('Game - Insurance Type Selection System', () => {
       const choices = CardFactory.createInsuranceTypeChoices('youth')
 
       expect(choices).toHaveLength(3)
-      
+
       choices.forEach(choice => {
         // 各選択肢が必要なプロパティを持つことを確認
         expect(choice.insuranceType).toBeDefined()
@@ -75,7 +75,7 @@ describe('Game - Insurance Type Selection System', () => {
 
         // 定期保険の方が安いことを確認
         expect(choice.termOption.cost).toBeLessThan(choice.wholeLifeOption.cost)
-        
+
         // 定期保険には期間が設定されていることを確認
         expect(choice.termOption.duration).toBeGreaterThan(0)
       })
@@ -91,7 +91,7 @@ describe('Game - Insurance Type Selection System', () => {
 
     it('should successfully select term insurance', () => {
       const firstChoice = game.insuranceTypeChoices![0]
-      
+
       const result = game.selectInsuranceType(firstChoice.insuranceType, 'term')
 
       expect(result.success).toBe(true)
@@ -104,7 +104,7 @@ describe('Game - Insurance Type Selection System', () => {
 
     it('should successfully select whole life insurance', () => {
       const firstChoice = game.insuranceTypeChoices![0]
-      
+
       const result = game.selectInsuranceType(firstChoice.insuranceType, 'whole_life')
 
       expect(result.success).toBe(true)
@@ -117,17 +117,17 @@ describe('Game - Insurance Type Selection System', () => {
 
     it('should add selected insurance to active insurance list', () => {
       const firstChoice = game.insuranceTypeChoices![0]
-      
-      const initialInsuranceCount = game.insuranceCards.length
+
+      const initialInsuranceCount = game.activeInsurances.length
       game.selectInsuranceType(firstChoice.insuranceType, 'term')
 
-      expect(game.insuranceCards.length).toBe(initialInsuranceCount + 1)
+      expect(game.activeInsurances.length).toBe(initialInsuranceCount + 1)
       expect(game.getActiveInsurances().length).toBe(initialInsuranceCount + 1)
     })
 
     it('should update insurance burden after selection', () => {
       const firstChoice = game.insuranceTypeChoices![0]
-      
+
       // const initialBurden = game.insuranceBurden
       game.selectInsuranceType(firstChoice.insuranceType, 'term')
 
@@ -184,9 +184,9 @@ describe('Game - Insurance Type Selection System', () => {
 
       // 残りターン数を2に設定
       termInsurance.remainingTurns = 2
-      game.insuranceCards.push(termInsurance)
+      game.activeInsurances.push(termInsurance)
 
-      expect(game.insuranceCards.length).toBe(1)
+      expect(game.activeInsurances.length).toBe(1)
       expect(termInsurance.isExpired()).toBe(false)
 
       // 1ターン経過
@@ -199,7 +199,7 @@ describe('Game - Insurance Type Selection System', () => {
       expect(termInsurance.remainingTurns).toBe(0)
       expect(termInsurance.isExpired()).toBe(true)
       expect(turnResult.newExpiredCount).toBe(1)
-      expect(game.insuranceCards.length).toBe(0) // アクティブリストから削除
+      expect(game.activeInsurances.length).toBe(0) // アクティブリストから削除
       expect(game.expiredInsurances.length).toBe(1) // 期限切れリストに移動
     })
   })

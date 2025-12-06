@@ -40,7 +40,7 @@ describe('Game - Simplified Insurance System', () => {
       })
 
       // 保険をアクティブリストに追加
-      game.insuranceCards.push(permanentInsurance)
+      game.activeInsurances.push(permanentInsurance)
 
       // 保険が永続的に有効であることを確認
       const activeInsurances = game.getActiveInsurances()
@@ -99,7 +99,7 @@ describe('Game - Simplified Insurance System', () => {
       ]
 
       insurances.forEach(insurance => {
-        game.insuranceCards.push(insurance)
+        game.activeInsurances.push(insurance)
       })
 
       // 3枚の保険で負担が-1になることを確認
@@ -147,7 +147,7 @@ describe('Game - Simplified Insurance System', () => {
       ]
 
       additionalInsurances.forEach(insurance => {
-        game.insuranceCards.push(insurance)
+        game.activeInsurances.push(insurance)
       })
 
       const newBurden = game.calculateInsuranceBurden()
