@@ -1,104 +1,108 @@
 <!DOCTYPE html>
 <html lang="ja" dir="ltr">
-  <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="./favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <title>人生充実ゲーム - Life Fulfillment</title>
-    <meta name="description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム。アクセシブルで多言語対応、すべての人が楽しめる教育的ゲーム体験。">
-    
-    <!-- アクセシビリティ強化 -->
-    <meta name="accessibility-features" content="keyboard-navigation,screen-reader-support,high-contrast-mode,text-scaling,skip-links,aria-labels">
-    <meta name="accessibility-standards" content="WCAG 2.1 AA">
-    <meta name="language-alternatives" content="ja,en">
-    <meta name="content-warnings" content="none">
-    <meta name="reading-level" content="general">
-    <link rel="alternate" hreflang="ja" href="https://shishihs.github.io/insurance_self_game/">
-    <link rel="alternate" hreflang="en" href="https://shishihs.github.io/insurance_self_game/?lang=en">
-    <link rel="alternate" hreflang="x-default" href="https://shishihs.github.io/insurance_self_game/">
-    
-    <!-- セキュリティヘッダー - 強化版 -->
-    <!-- CSP: frame-ancestorsディレクティブを削除（metaタグでは無効） -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: http://localhost:* ws://localhost:* wss://localhost:*; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self';">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <!-- X-Frame-Options: HTTPヘッダーでのみ有効なため削除 -->
-    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=(), fullscreen=(self), payment=(), usb=(), serial=(), hid=(), midi=(), clipboard-read=(), clipboard-write=(self)">
-    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
-    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
-    <meta http-equiv="Cross-Origin-Resource-Policy" content="same-origin">
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-    <meta name="format-detection" content="telephone=no, email=no">
-    
-    <!-- PWA対応 -->
-    <meta name="theme-color" content="#667eea">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="人生充実">
-    <link rel="manifest" href="./manifest.json">
-    
-    <!-- アイコン設定 -->
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <link rel="icon" type="image/x-icon" href="./favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="./favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="./favicon.ico">
-    
-    <!-- スプラッシュスクリーン（iOS） -->
-    <meta name="apple-mobile-web-app-title" content="人生充実">
-    <link rel="apple-touch-startup-image" href="./favicon.ico">
-    
-    <!-- SEO最適化 -->
-    <meta name="keywords" content="保険,ゲーム,人生,シミュレーション,一人用,ボードゲーム,デッキ構築,戦略,教育,PWA,アクセシビリティ">
-    <meta name="author" content="人生充実ゲーム 開発チーム">
-    <link rel="canonical" href="https://shishihs.github.io/insurance_self_game/">
-    <link rel="sitemap" type="application/xml" href="/insurance_self_game/sitemap.xml">
-    
-    <!-- 追加のSEO最適化 -->
-    <meta name="generator" content="Vite">
-    <meta name="distribution" content="global">
-    <meta name="rating" content="general">
-    <meta name="revisit-after" content="7 days">
-    <meta name="expires" content="never">
-    <meta name="cache-control" content="public, max-age=31536000">
-    
-    <!-- 地域・言語設定 -->
-    <meta name="geo.region" content="JP">
-    <meta name="geo.country" content="JP">
-    <meta name="language" content="Japanese">
-    <meta name="content-language" content="ja">
-    
-    <!-- アプリケーション情報 -->
-    <meta name="application-name" content="人生充実ゲーム">
-    <meta name="msapplication-tooltip" content="生命保険をテーマにした教育的ボードゲーム">
-    <meta name="msapplication-starturl" content="/">
-    <meta name="msapplication-navbutton-color" content="#667eea">
-    <meta name="msapplication-window" content="width=1024;height=768">
-    
-    <!-- パフォーマンスヒント -->
-    <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
-    <meta name="skype_toolbar" content="skype_toolbar_parser_compatible">
-    <meta name="IE=edge" http-equiv="X-UA-Compatible">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://shishihs.github.io/insurance_self_game/">
-    <meta property="og:title" content="人生充実ゲーム - Life Fulfillment">
-    <meta property="og:description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム">
-    <meta property="og:image" content="https://shishihs.github.io/insurance_self_game/favicon.ico">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://shishihs.github.io/insurance_self_game/">
-    <meta property="twitter:title" content="人生充実ゲーム - Life Fulfillment">
-    <meta property="twitter:description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム">
-    <meta property="twitter:image" content="https://shishihs.github.io/insurance_self_game/favicon.ico">
-    
-    <!-- 構造化データ - 強化版 -->
-    <script type="application/ld+json">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="./favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <title>人生充実ゲーム - Life Fulfillment</title>
+  <meta name="description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム。アクセシブルで多言語対応、すべての人が楽しめる教育的ゲーム体験。">
+
+  <!-- アクセシビリティ強化 -->
+  <meta name="accessibility-features"
+    content="keyboard-navigation,screen-reader-support,high-contrast-mode,text-scaling,skip-links,aria-labels">
+  <meta name="accessibility-standards" content="WCAG 2.1 AA">
+  <meta name="language-alternatives" content="ja,en">
+  <meta name="content-warnings" content="none">
+  <meta name="reading-level" content="general">
+  <link rel="alternate" hreflang="ja" href="https://shishihs.github.io/insurance_self_game/">
+  <link rel="alternate" hreflang="en" href="https://shishihs.github.io/insurance_self_game/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://shishihs.github.io/insurance_self_game/">
+
+  <!-- セキュリティヘッダー - 強化版 -->
+  <!-- CSP: frame-ancestorsディレクティブを削除（metaタグでは無効） -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: http://localhost:*; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: http://localhost:* ws://localhost:* wss://localhost:*; media-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <!-- X-Frame-Options: HTTPヘッダーでのみ有効なため削除 -->
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Permissions-Policy"
+    content="geolocation=(), microphone=(), camera=(), fullscreen=(self), payment=(), usb=(), serial=(), hid=(), midi=(), clipboard-read=(), clipboard-write=(self)">
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+  <meta http-equiv="Cross-Origin-Resource-Policy" content="same-origin">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="format-detection" content="telephone=no, email=no">
+
+  <!-- PWA対応 -->
+  <meta name="theme-color" content="#667eea">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="人生充実">
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- アイコン設定 -->
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="./favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon.ico">
+
+  <!-- スプラッシュスクリーン（iOS） -->
+  <meta name="apple-mobile-web-app-title" content="人生充実">
+  <link rel="apple-touch-startup-image" href="./favicon.ico">
+
+  <!-- SEO最適化 -->
+  <meta name="keywords" content="保険,ゲーム,人生,シミュレーション,一人用,ボードゲーム,デッキ構築,戦略,教育,PWA,アクセシビリティ">
+  <meta name="author" content="人生充実ゲーム 開発チーム">
+  <link rel="canonical" href="https://shishihs.github.io/insurance_self_game/">
+  <link rel="sitemap" type="application/xml" href="./sitemap.xml">
+
+  <!-- 追加のSEO最適化 -->
+  <meta name="generator" content="Vite">
+  <meta name="distribution" content="global">
+  <meta name="rating" content="general">
+  <meta name="revisit-after" content="7 days">
+  <meta name="expires" content="never">
+  <!-- <meta name="cache-control" content="public, max-age=31536000"> -->
+
+  <!-- 地域・言語設定 -->
+  <meta name="geo.region" content="JP">
+  <meta name="geo.country" content="JP">
+  <meta name="language" content="Japanese">
+  <meta name="content-language" content="ja">
+
+  <!-- アプリケーション情報 -->
+  <meta name="application-name" content="人生充実ゲーム">
+  <meta name="msapplication-tooltip" content="生命保険をテーマにした教育的ボードゲーム">
+  <meta name="msapplication-starturl" content="/">
+  <meta name="msapplication-navbutton-color" content="#667eea">
+  <meta name="msapplication-window" content="width=1024;height=768">
+
+  <!-- パフォーマンスヒント -->
+  <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
+  <meta name="skype_toolbar" content="skype_toolbar_parser_compatible">
+  <meta name="IE=edge" http-equiv="X-UA-Compatible">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shishihs.github.io/insurance_self_game/">
+  <meta property="og:title" content="人生充実ゲーム - Life Fulfillment">
+  <meta property="og:description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム">
+  <meta property="og:image" content="https://shishihs.github.io/insurance_self_game/favicon.ico">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://shishihs.github.io/insurance_self_game/">
+  <meta property="twitter:title" content="人生充実ゲーム - Life Fulfillment">
+  <meta property="twitter:description" content="生命保険を「人生の味方」として描く、革新的な一人用デッキ構築ゲーム">
+  <meta property="twitter:image" content="https://shishihs.github.io/insurance_self_game/favicon.ico">
+
+  <!-- 構造化データ - 強化版 -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": ["Game", "SoftwareApplication", "WebApplication"],
@@ -166,9 +170,9 @@
       }
     }
     </script>
-    
-    <!-- BreadcrumbList 構造化データ -->
-    <script type="application/ld+json">
+
+  <!-- BreadcrumbList 構造化データ -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -194,9 +198,9 @@
       ]
     }
     </script>
-    
-    <!-- WebSite 構造化データ -->
-    <script type="application/ld+json">
+
+  <!-- WebSite 構造化データ -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -211,74 +215,99 @@
       }
     }
     </script>
-    
-    <!-- パフォーマンス最適化 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- フォントのプリロード - 削除: 404エラーを回避 -->
-    <!-- <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/notosansjp/v52/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEi75vY0rw-oME.woff2" crossorigin> -->
-    
-    <!-- Resource Hints でパフォーマンス向上 -->
-    <link rel="prefetch" href="/insurance_self_game/manifest.json">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    
-    <!-- コアWeb Vitals最適化 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="color-scheme" content="light dark">
-    
-    <!-- Critical CSS インライン化 -->
-    <style>
-      /* Critical rendering path optimization */
-      html { font-display: swap; }
-      body { 
-        margin: 0; 
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: #1F2937;
-        color: #F9FAFB;
-        overflow-x: hidden;
+
+  <!-- パフォーマンス最適化 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- フォントのプリロード - 削除: 404エラーを回避 -->
+  <!-- <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/notosansjp/v52/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEi75vY0rw-oME.woff2" crossorigin> -->
+
+  <!-- Resource Hints でパフォーマンス向上 -->
+  <link rel="prefetch" href="./manifest.json">
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+
+  <!-- コアWeb Vitals最適化 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- Critical CSS インライン化 -->
+  <style>
+    /* Critical rendering path optimization */
+    html {
+      font-display: swap;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1F2937;
+      color: #F9FAFB;
+      overflow-x: hidden;
+    }
+
+    #app {
+      min-height: 100vh;
+    }
+
+    /* Loading skeleton */
+    .loading-skeleton {
+      background: linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%);
+      background-size: 200% 100%;
+      animation: loading 2s infinite;
+    }
+
+    @keyframes loading {
+      0% {
+        background-position: 200% 0;
       }
-      #app { min-height: 100vh; }
-      
-      /* Loading skeleton */
-      .loading-skeleton {
-        background: linear-gradient(90deg, #374151 25%, #4B5563 50%, #374151 75%);
-        background-size: 200% 100%;
-        animation: loading 2s infinite;
+
+      100% {
+        background-position: -200% 0;
       }
-      @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-      }
-      
-      /* Reduce layout shift */
-      img, video { max-width: 100%; height: auto; }
-      .fade-in { opacity: 0; transition: opacity 0.3s ease; }
-      .fade-in.loaded { opacity: 1; }
-    </style>
-    <script type="module" crossorigin src="/insurance_self_game/js/index-DwxMhSkg.js"></script>
-    <link rel="modulepreload" crossorigin href="/insurance_self_game/js/vendor-Dqt18Tvp.js">
-    <link rel="modulepreload" crossorigin href="/insurance_self_game/js/vue-vendor-CRR1GGXG.js">
-    <link rel="modulepreload" crossorigin href="/insurance_self_game/js/game-logic-C83FUEgCdczH.js">
-    <link rel="stylesheet" crossorigin href="/insurance_self_game/css/index-DNdxIVyt.css">
-    <link rel="stylesheet" crossorigin href="/insurance_self_game/css/css-vendor-bSBXe4IY.css">
-  </head>
-  <body>
-    <!-- ローディングスケルトン -->
-    <div id="app">
-      <div class="loading-skeleton" style="width: 100%; height: 4px; position: fixed; top: 0; z-index: 9999;"></div>
-      <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column;">
-        <div class="loading-skeleton" style="width: 60px; height: 60px; border-radius: 50%; margin-bottom: 20px;"></div>
-        <div class="loading-skeleton" style="width: 200px; height: 20px; border-radius: 10px; margin-bottom: 10px;"></div>
-        <div class="loading-skeleton" style="width: 150px; height: 16px; border-radius: 8px;"></div>
-      </div>
+    }
+
+    /* Reduce layout shift */
+    img,
+    video {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .fade-in {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .fade-in.loaded {
+      opacity: 1;
+    }
+  </style>
+  <script type="module" crossorigin src="./js/index-B3EWEJZm.js"></script>
+  <link rel="modulepreload" crossorigin href="./js/vendor-Dqt18Tvp.js">
+  <link rel="modulepreload" crossorigin href="./js/vue-vendor-CRR1GGXG.js">
+  <link rel="modulepreload" crossorigin href="./js/game-logic-BXDevuye-AQp.js">
+  <link rel="stylesheet" crossorigin href="./css/index-XwVb71tN.css">
+  <link rel="stylesheet" crossorigin href="./css/css-vendor-bSBXe4IY.css">
+</head>
+
+<body>
+  <!-- ローディングスケルトン -->
+  <div id="app">
+    <div class="loading-skeleton" style="width: 100%; height: 4px; position: fixed; top: 0; z-index: 9999;"></div>
+    <div
+      style="display: flex; justify-content: center; align-items: center; min-height: 100vh; flex-direction: column;">
+      <div class="loading-skeleton" style="width: 60px; height: 60px; border-radius: 50%; margin-bottom: 20px;"></div>
+      <div class="loading-skeleton" style="width: 200px; height: 20px; border-radius: 10px; margin-bottom: 10px;"></div>
+      <div class="loading-skeleton" style="width: 150px; height: 16px; border-radius: 8px;"></div>
     </div>
-    
-    <!-- メインスクリプト -->
-    
-    <!-- パフォーマンス監視はmain.tsで実行されます -->
-    <!-- <script>
+  </div>
+
+  <!-- メインスクリプト -->
+
+  <!-- パフォーマンス監視はmain.tsで実行されます -->
+  <!-- <script>
       // Core Web Vitals 計測
       if ('performance' in window && 'PerformanceObserver' in window) {
         // First Contentful Paint
@@ -334,5 +363,6 @@
         }
       });
     </script> -->
-  </body>
+</body>
+
 </html>
