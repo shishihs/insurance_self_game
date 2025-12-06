@@ -29,7 +29,7 @@ import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
-import { RiskProfile } from '../valueObjects/RiskFactor'
+import { RiskProfile } from '../valueObjects/RiskProfile'
 import type { PlayerHistory } from '../services/InsurancePremiumCalculationService'
 import { GameConstantsAccessor } from '../constants/GameConstants'
 
@@ -78,7 +78,7 @@ export class Game implements IGameState {
   private readonly stateManager: GameStateManager
   private readonly actionProcessor: GameActionProcessor
 
-  currentChallenge?: Card
+  currentChallenge: Card | undefined = undefined
 
   stats: PlayerStats
   config: GameConfig
@@ -87,15 +87,19 @@ export class Game implements IGameState {
   private readonly _riskProfile: RiskProfile
   private readonly _playerHistory: PlayerHistory
 
-  // Phase 2-4: 保険カード管理
-  insuranceCards: Card[]
-  expiredInsurances: Card[]
-
-  // Phase 3: 保険料負担
+  // Phase 2-4:  // 保険関連
+  activeInsurances: Card[] = []
+  expiredInsurances: Card[] = []
   private readonly _insuranceBurden: InsurancePremium
 
-  // 保険種類選択
-  insuranceTypeChoices?: InsuranceTypeChoice[]
+  // v2: 新要素
+  agingDeck: Deck
+  score: number = 0
+  insuranceMarket: Card[] = []
+  selectedDream: Card | undefined = undefined
+
+  // 選択肢
+  insuranceTypeChoices: InsuranceTypeChoice[] | undefined = undefined
 
   // 経験学習システム（GAME_DESIGN.mdより）
   private readonly _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
@@ -149,7 +153,8 @@ export class Game implements IGameState {
 
     // 値オブジェクトで初期化（年齢別最大活力を適用）
     const startingVitality = config?.startingVitality ?? 100
-    const ageParams = AGE_PARAMETERS[this.stage] || AGE_PARAMETERS.youth
+    const ageParams = AGE_PARAMETERS[this.stage] || AGE_PARAMETERS['youth']
+    if (!ageParams) throw new Error('Invalid stage parameters')
     const maxVitality = ageParams.maxVitality
     this._vitality = Vitality.create(Math.min(startingVitality, maxVitality), maxVitality)
 
@@ -223,8 +228,23 @@ export class Game implements IGameState {
     }
 
     // Phase 2-4: 保険カード管理の初期化
-    this.insuranceCards = []
+    this.activeInsurances = []
     this.expiredInsurances = []
+    this.insuranceMarket = []
+
+    // v2: 初期化
+    this.agingDeck = new Deck('Aging Deck') // Keeps explicit reference if needed, but CardManager also has one.
+    // Sync logic: CardManager has its own. We should populate CardManager's deck.
+    // Or if this.agingDeck is intended to be the same, Game should use CardManager's deck reference?
+    // Accessing CardManager's state for population
+    const agingCards = CardFactory.createAgingCards(20)
+    // We need to access CardManager's aging deck.
+    // Since Game.ts doesn't expose cardManager.agingDeck directly but via getState():
+    // But we are in constructor, cardManager is just initialized.
+    this.cardManager.getState().agingDeck.addCards(agingCards)
+    this.cardManager.getState().agingDeck.shuffle()
+
+    this.score = 0
 
     // Phase 3: 保険料負担の初期化
     this._insuranceBurden = InsurancePremium.create(0)
@@ -396,6 +416,43 @@ export class Game implements IGameState {
 
     this.changeStatus('in_progress')
     this.startedAt = new Date()
+
+    // v2: Start with Dream Selection
+    this.startDreamSelectionPhase()
+    // turn starts after dream selection? Or turn 1 involves dream selection?
+    // Usually Setup -> Dream Selection -> Turn 1
+    // So turn remains 0 or 1?
+    // Let's keep turn 0 until actual play starts.
+  }
+
+  /**
+   * 夢選択フェーズを開始
+   */
+  startDreamSelectionPhase(): void {
+    const dreams = CardFactory.createDreamCards()
+    // random 3
+    const shuffled = dreams.sort(() => Math.random() - 0.5).slice(0, 3)
+
+    this.cardManager.setCardChoices(shuffled)
+    this.changePhase('dream_selection')
+    console.log('[Game] Dream Selection Phase started')
+  }
+
+  /**
+   * 夢カードを選択
+   */
+  selectDream(card: Card): void {
+    if (this.phase !== 'dream_selection') throw new Error('Not in dream selection phase')
+
+    const choices = this.cardManager.getState().cardChoices
+    if (!choices?.some(c => c.id === card.id)) throw new Error('Invalid dream selection')
+
+    this.selectedDream = card
+    console.log('[Game] Selected Dream:', card.name)
+
+    this.cardManager.clearCardChoices()
+
+    // Start actual game loop
     this.changePhase('draw')
     this.changeTurn(1)
   }
@@ -407,7 +464,7 @@ export class Game implements IGameState {
    */
   async drawCards(count: number): Promise<Card[]> {
     console.log('[Game] drawCards called', count)
-    const result = await this.actionProcessor.executeAction('draw_cards', this, count)
+    const result = await this.actionProcessor.executeAction<number, Card[]>('draw_cards', this, count)
     console.log('[Game] actionProcessor result:', result)
 
     if (!result.success) {
@@ -431,11 +488,74 @@ export class Game implements IGameState {
 
 
   /**
+   * チャレンジフェーズを開始する (v2)
+   * 2枚引いて選択肢を提示する
+   */
+  startChallengePhase(): void {
+    // Phase check
+    if (this.phase !== 'draw') {
+      // Allow re-roll or other special cases? For now strict.
+      throw new Error('Can only start challenge phase from draw phase')
+    }
+
+    const choices: Card[] = []
+
+    // 2枚引く - refill if needed
+    let card1 = this.cardManager.drawChallengeCard()
+    if (!card1) {
+      this.refillChallengeDeck()
+      card1 = this.cardManager.drawChallengeCard()
+    }
+    if (card1) choices.push(card1)
+
+    let card2 = this.cardManager.drawChallengeCard()
+    if (!card2) {
+      // Should rely on Deck implementation but refilling if 1st was null likely refilled enough
+      // If deck was size 1, maybe need refill again?
+      if (this.challengeDeck.getCards().length === 0) { // Check deck size
+        this.refillChallengeDeck()
+      }
+      card2 = this.cardManager.drawChallengeCard()
+    }
+    if (card2) choices.push(card2)
+
+    if (choices.length === 0) {
+      throw new Error('No challenge cards available')
+    }
+
+    this.cardManager.setCardChoices(choices)
+    this.changePhase('challenge_choice')
+    console.log(`[Game] Challenge choices set: ${choices.map(c => c.name).join(', ')}`)
+  }
+
+  /**
    * チャレンジを開始する
    * @param {Card} challengeCard - 挑戦するチャレンジカード
-   * @throws {Error} ドローフェーズ以外で実行された場合
+   * @throws {Error} 適切なフェーズ以外で実行された場合
    */
   startChallenge(challengeCard: Card): void {
+    // v2: If in challenge_choice phase, validate selection
+    if (this.phase === 'challenge_choice') {
+      const choices = this.cardManager.getState().cardChoices
+      if (!choices || !choices.some(c => c.id === challengeCard.id)) {
+        throw new Error('Selected card is not in current choices')
+      }
+      // 他の選択肢は破棄される（チャレンジデッキに戻すルール? 捨て札? discard usually）
+      // Rulebook check: "Draw 2, Choose 1. The other goes to discard pile."
+      choices.forEach(c => {
+        if (c.id !== challengeCard.id) {
+          this.cardManager.addToDiscardPile(c) // Or explicitly challenge discard?
+          // ChallengeDeck uses discard? Usually challenges are discarded to bottom or separate pile?
+          // CardManager has discardPile (player's).
+          // ChallengeDeck might need its own discard or shuffle back.
+          // Assuming simple flow: unused challenge goes back to bottom or discarded.
+          // For now, let's assume discard pile (shared?) or just ignored (lost). 
+          // Actual rule: "Discard the other".
+        }
+      })
+      this.cardManager.clearCardChoices()
+    }
+
     this.challengeService.startChallenge(this, challengeCard)
   }
 
@@ -506,7 +626,7 @@ export class Game implements IGameState {
 
     // Phase 2-4: 保険カードの場合は管理リストに追加
     if (selectedCard.type === 'insurance') {
-      this.insuranceCards.push(selectedCard)
+      this.activeInsurances.push(selectedCard)
       // Phase 3: 保険料負担を更新
       this.updateInsuranceBurden()
     }
@@ -618,6 +738,7 @@ export class Game implements IGameState {
    * 次のターンへ
    */
   nextTurn(): TurnResult {
+    this.updateScore()
     return this.turnManager.nextTurn(this)
   }
 
@@ -750,14 +871,14 @@ export class Game implements IGameState {
    * 期限が近い保険カードを取得（残り2ターン以下）
    */
   getExpiringsSoonInsurances(): Card[] {
-    return this.expirationManager.getExpiringSoonInsurances(this.insuranceCards)
+    return this.expirationManager.getExpiringSoonInsurances(this.activeInsurances)
   }
 
   /**
    * 保険期限切れの警告メッセージを取得
    */
   getExpirationWarnings(): string[] {
-    return this.expirationManager.getExpirationWarnings(this.insuranceCards)
+    return this.expirationManager.getExpirationWarnings(this.activeInsurances)
   }
 
   /**
@@ -771,7 +892,25 @@ export class Game implements IGameState {
    * Phase 2-4: 現在有効な保険カードを取得
    */
   getActiveInsurances(): Card[] {
-    return [...this.insuranceCards]
+    return [...this.activeInsurances]
+  }
+
+  /**
+   * スコア計算
+   */
+  private updateScore(): void {
+    // Basic score calculation
+    // Vitality * 1
+    // Active Insurance: Coverage * 0.1? Or just a flat bonus per active card?
+    // Let's go with Rulebook v2 approximation: Vitality + (Total Coverage / 10)
+    let insuranceScore = 0
+    this.activeInsurances.forEach(card => {
+      if (card.coverage) {
+        insuranceScore += Math.floor(card.coverage / 10)
+      }
+    })
+
+    this.score = this.vitality + insuranceScore
   }
 
   /**
@@ -813,15 +952,15 @@ export class Game implements IGameState {
     // キャッシュが有効で保険状態が変わっていない場合は再計算をスキップ
     if (!this._dirtyFlags.insurance &&
       currentTime - this._cachedValues.lastUpdateTime < 100 &&
-      this._cachedValues.totalInsuranceCount === this.insuranceCards.length) {
+      this._cachedValues.totalInsuranceCount === this.activeInsurances.length) {
       return this._cachedValues.insuranceBurden
     }
 
     const burden = this.insuranceService.calculateInsuranceBurden(this)
 
-    // キャッシュを更新
+    // キャッシュ更新
     this._cachedValues.insuranceBurden = burden
-    this._cachedValues.totalInsuranceCount = this.insuranceCards.length
+    this._cachedValues.totalInsuranceCount = this.activeInsurances.length
     this._cachedValues.lastUpdateTime = currentTime
     this._dirtyFlags.insurance = false
 
@@ -933,15 +1072,15 @@ export class Game implements IGameState {
       turn: this.turn,
       vitality: this.vitality,
       maxVitality: this.maxVitality,
-      playerDeck: cardState.playerDeck,
-      hand: [...cardState.hand], // 配列をコピー
-      discardPile: [...cardState.discardPile], // 配列をコピー
-      challengeDeck: cardState.challengeDeck,
+      playerDeck: this.playerDeck, // Getter uses getState()
+      hand: [...this.hand], // Getter uses getState()
+      discardPile: [...this.discardPile], // Getter uses getState()
+      challengeDeck: this.challengeDeck, // Getter uses getState()
       currentChallenge: this.currentChallenge,
       selectedCards: [...cardState.selectedCards], // 配列をコピー
       cardChoices: cardState.cardChoices ? [...cardState.cardChoices] : undefined, // 配列をコピー
       insuranceTypeChoices: this.insuranceTypeChoices,
-      insuranceCards: [...this.insuranceCards],
+      activeInsurances: [...this.activeInsurances],
       expiredInsurances: [...this.expiredInsurances],
       insuranceBurden: this.insuranceBurden,
       stats: { ...this.stats },
@@ -1145,7 +1284,7 @@ export class Game implements IGameState {
       throw new Error('AI is not enabled')
     }
 
-    const availableChallenges = this.cardManager.challengeDeck.getCards()
+    const availableChallenges = this.cardManager.getState().challengeDeck.getCards()
     if (availableChallenges.length === 0) {
       return null
     }
@@ -1165,7 +1304,7 @@ export class Game implements IGameState {
       throw new Error('AI is not enabled')
     }
 
-    const availableCards = this.cardManager.playerDeck.getCards()
+    const availableCards = this.cardManager.getState().playerDeck.getCards()
     const choice = this.aiStrategyService.autoSelectCards(challenge, availableCards, this)
 
     console.log(`AI戦略によるカード選択: ${choice.cards.map(c => c.name).join(', ')}`)
@@ -1202,7 +1341,7 @@ export class Game implements IGameState {
 
     // 4. カードを選択状態にする
     selectedCards.forEach(card => {
-      this.cardManager.selectCard(card)
+      this.cardManager.toggleCardSelection(card)
     })
 
     // 5. チャレンジを解決

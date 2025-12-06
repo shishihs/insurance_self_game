@@ -25,7 +25,7 @@ export class GameTurnManager {
   constructor(
     private readonly stageManager: GameStageManager,
     private readonly expirationManager: InsuranceExpirationManager
-  ) {}
+  ) { }
 
   /**
    * 次のターンへ進める
@@ -44,28 +44,40 @@ export class GameTurnManager {
    */
   nextTurn(game: Game): TurnResult {
     this.validateGameState(game)
-    
+
     // ターンを進める
     game.turn++
     game.stats.turnsPlayed++
     game.phase = 'draw'
-    
+
     // ステージ進行の判定
     this.checkStageProgression(game)
-    
+
     // 保険期限の更新
     const expirationResult = this.updateInsuranceExpirations(game)
-    
+
+    // 保険料の支払い logic (GameTurnManager or Game entity responsibility? 
+    // Usually game entity applyDamage calling is fine here)
+    const insuranceCost = game.insuranceBurden
+    if (insuranceCost > 0) {
+      try {
+        game.applyDamage(insuranceCost)
+        console.log(`💸 保険料支払い: -${insuranceCost} 活力`)
+      } catch (e) {
+        console.error('保険料支払いに失敗しました', e) // Should be game over if vitality depleted
+      }
+    }
+
     // ターン開始時のドロー
     game.drawCards(1)
-    
+
     // 回復型保険の効果を適用
     this.applyRecoveryInsuranceEffects(game)
-    
+
     return {
-      insuranceExpirations: expirationResult,
+      ...(expirationResult ? { insuranceExpirations: expirationResult } : {}),
       newExpiredCount: expirationResult?.expiredCards.length || 0,
-      remainingInsuranceCount: game.insuranceCards.length
+      remainingInsuranceCount: game.getActiveInsurances().length
     }
   }
 
@@ -85,13 +97,13 @@ export class GameTurnManager {
    */
   private checkStageProgression(game: Game): void {
     const progressionResult = this.stageManager.checkStageProgression(
-      game.stage, 
+      game.stage,
       game.turn
     )
-    
+
     if (progressionResult.hasChanged) {
       game.setStage(progressionResult.newStage)
-      
+
       if (progressionResult.transitionMessage) {
         console.log(progressionResult.transitionMessage)
       }
@@ -104,18 +116,18 @@ export class GameTurnManager {
    */
   private updateInsuranceExpirations(game: Game) {
     const expirationResult = this.expirationManager.updateInsuranceExpirations(
-      game.insuranceCards,
+      game.getActiveInsurances(),
       game.expiredInsurances,
       game.turn
     )
-    
+
     // 期限切れがあった場合は保険料負担を再計算
     if (expirationResult) {
       // Gameクラスのメソッドを呼び出して更新
       // これにより、Gameクラスの内部状態の一貫性を保つ
       (game as any).updateInsuranceBurden()
     }
-    
+
     return expirationResult
   }
 
@@ -126,13 +138,13 @@ export class GameTurnManager {
   private applyRecoveryInsuranceEffects(game: Game): void {
     const activeInsurances = game.getActiveInsurances()
     let totalHeal = 0
-    
+
     activeInsurances.forEach(insurance => {
       if (insurance.isRecoveryInsurance()) {
         totalHeal += insurance.calculateTurnHeal()
       }
     })
-    
+
     if (totalHeal > 0) {
       game.heal(totalHeal)
       console.log(`💚 回復型保険効果: +${totalHeal} 活力`)

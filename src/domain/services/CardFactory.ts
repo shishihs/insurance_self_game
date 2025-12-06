@@ -1,12 +1,14 @@
 import { Card } from '../entities/Card'
-import type { 
-  CardEffect, 
-  DreamCategory, 
+import type {
+  CardEffect,
+  DreamCategory,
   GameStage,
   InsuranceType,
   LifeCardCategory,
   RewardType,
-  SkillRarity
+  SkillRarity,
+  InsuranceEffectType,
+  IAdvancedCard
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -22,7 +24,7 @@ export class CardFactory {
    * 年齢ボーナスを計算
    */
   private static calculateAgeBonus(stage: GameStage): number {
-    switch(stage) {
+    switch (stage) {
       case 'middle': return 0.5
       case 'fulfillment': return 1.0
       default: return 0
@@ -63,14 +65,14 @@ export class CardFactory {
    */
   static createBasicInsuranceCards(stage: GameStage = 'youth'): Card[] {
     const ageBonus = this.calculateAgeBonus(stage)
-    
+
     const basicInsuranceDefinitions = [
       { name: '医療保険', description: '病気やケガに備える永続保障', insuranceType: 'medical' as InsuranceType, power: 4, cost: 3, coverage: 100 },
       { name: '生命保険', description: '家族を守る永続保障', insuranceType: 'life' as InsuranceType, power: 5, cost: 4, coverage: 200 },
       { name: '収入保障保険', description: '働けなくなった時の永続保障', insuranceType: 'income' as InsuranceType, power: 4, cost: 3, coverage: 150 }
     ]
 
-    return this.createCardsFromDefinitions(basicInsuranceDefinitions, def => 
+    return this.createCardsFromDefinitions(basicInsuranceDefinitions, def =>
       this.createInsuranceCard({ ...def, ageBonus })
     )
   }
@@ -80,19 +82,19 @@ export class CardFactory {
    */
   static createExtendedInsuranceCards(stage: GameStage = 'youth'): Card[] {
     const extendedCards: Card[] = []
-    
+
     // 年齢ボーナスの設定
     const ageBonus = this.calculateAgeBonus(stage)
-    
+
     // 基本保険カード
     const baseInsurances = [
       { name: '医療保険', insuranceType: 'medical' as InsuranceType, power: 5, cost: 4, coverage: 100 },
       { name: '生命保険', insuranceType: 'life' as InsuranceType, power: 6, cost: 5, coverage: 200 },
       { name: '収入保障保険', insuranceType: 'income' as InsuranceType, power: 5, cost: 4, coverage: 150 }
     ]
-    
+
     // 基本保険カードを追加
-    const baseCards = this.createCardsFromDefinitions(baseInsurances, insurance => 
+    const baseCards = this.createCardsFromDefinitions(baseInsurances, insurance =>
       this.createInsuranceCard({
         name: insurance.name,
         description: `${insurance.name}の永続保障`,
@@ -114,9 +116,9 @@ export class CardFactory {
       { name: '個人年金保険', insuranceType: 'income' as InsuranceType, power: 4, cost: 4, coverage: 100 },
       { name: '学資保険', insuranceType: 'life' as InsuranceType, power: 4, cost: 3, coverage: 90 }
     ]
-    
+
     // 追加保険カードを追加
-    const additionalCards = this.createCardsFromDefinitions(additionalInsurances, insurance => 
+    const additionalCards = this.createCardsFromDefinitions(additionalInsurances, insurance =>
       this.createInsuranceCard({
         name: insurance.name,
         description: `${insurance.name}の永続保障`,
@@ -256,36 +258,36 @@ export class CardFactory {
    */
   static createInsuranceTypeChoices(stage: GameStage = 'youth'): InsuranceTypeChoice[] {
     const choices: InsuranceTypeChoice[] = []
-    
+
     // 年齢ボーナスの設定
     const ageBonus = this.calculateAgeBonus(stage)
-    
+
     // 多様な保険タイプの定義（効果タイプ付き）
     const baseInsuranceTypes = [
-      { 
-        type: 'medical' as InsuranceType, 
-        name: '医療保険', 
+      {
+        type: 'medical' as InsuranceType,
+        name: '医療保険',
         description: '病気やケガに備える保障',
-        power: 5, 
-        baseCost: 4, 
+        power: 5,
+        baseCost: 4,
         coverage: 100,
         effectType: 'offensive' as InsuranceEffectType
       },
-      { 
-        type: 'life' as InsuranceType, 
-        name: '生命保険', 
+      {
+        type: 'life' as InsuranceType,
+        name: '生命保険',
         description: '家族を守る保障',
-        power: 6, 
-        baseCost: 5, 
+        power: 6,
+        baseCost: 5,
         coverage: 200,
         effectType: 'offensive' as InsuranceEffectType
       },
-      { 
-        type: 'income' as InsuranceType, 
-        name: '収入保障保険', 
+      {
+        type: 'income' as InsuranceType,
+        name: '収入保障保険',
         description: '働けなくなった時の保障',
-        power: 5, 
-        baseCost: 4, 
+        power: 5,
+        baseCost: 4,
         coverage: 150,
         effectType: 'offensive' as InsuranceEffectType
       },
@@ -308,22 +310,22 @@ export class CardFactory {
         effectType: 'recovery' as InsuranceEffectType
       }
     ]
-    
+
     // 3つからランダムに選択（重複なし）
     const availableTypes = [...baseInsuranceTypes]
     for (let i = 0; i < 3 && availableTypes.length > 0; i++) {
       const randomIndex = Math.floor(Math.random() * availableTypes.length)
-      const selectedType = availableTypes.splice(randomIndex, 1)[0]
-      
+      const selectedType = availableTypes.splice(randomIndex, 1)[0]!
+
       // 定期保険の期間設定（10ターン）
       const termDuration = 10
-      
+
       // 定期保険のコスト（基本コストの70%）
       const termCost = Math.ceil(selectedType.baseCost * 0.7)
-      
+
       // 終身保険のコスト（基本コスト）
       const wholeLifeCost = selectedType.baseCost
-      
+
       const choice: InsuranceTypeChoice = {
         insuranceType: selectedType.type,
         name: selectedType.name,
@@ -354,10 +356,10 @@ export class CardFactory {
           description: '生涯にわたる永続保障（高コスト）'
         }
       }
-      
+
       choices.push(choice)
     }
-    
+
     return choices
   }
 
@@ -379,7 +381,7 @@ export class CardFactory {
       insuranceEffectType: choice.baseCard.insuranceEffectType,
       durationType: 'term',
       remainingTurns: choice.termOption.duration
-    })
+    } as any)
   }
 
   /**
@@ -399,7 +401,7 @@ export class CardFactory {
       ageBonus: choice.baseCard.ageBonus,
       insuranceEffectType: choice.baseCard.insuranceEffectType,
       durationType: 'whole_life'
-    })
+    } as any)
   }
 
   /**
@@ -440,19 +442,34 @@ export class CardFactory {
     }
 
     const definitions = challengeDefinitionsByStage[stage] || challengeDefinitionsByStage.fulfillment
-    
+
     // ステージごとに適切な難易度のチャレンジを選択
     // ランダムに3-4枚選ぶが、難易度のバランスを考慮
     const shuffled = [...definitions].sort(() => Math.random() - 0.5)
     const selectedCount = 3 + Math.floor(Math.random() * 2) // 3-4枚
     const selected = shuffled.slice(0, selectedCount)
-    
+
     const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard(def))
-    
+
     // リスク・リワードチャレンジを追加（20%の確率）
     const riskChallenges = this.createRiskRewardChallenges(stage)
-    
+
     return [...normalChallenges, ...riskChallenges]
+  }
+
+  /**
+   * 夢カード（最終目標）を生成
+   */
+  static createDreamCards(): Card[] {
+    const dreamDefinitions = [
+      { name: '世界一周旅行', description: '未知の世界を体験する', power: 50, dreamCategory: 'physical' as DreamCategory },
+      { name: '本の出版', description: '自分の知識を世に残す', power: 50, dreamCategory: 'intellectual' as DreamCategory },
+      { name: '幸せな家庭', description: '愛に満ちた生活', power: 50, dreamCategory: 'mixed' as DreamCategory },
+      { name: '起業して成功', description: '自分のビジネスを持つ', power: 60, dreamCategory: 'mixed' as DreamCategory },
+      { name: '隠居生活', description: '静かで穏やかな余生', power: 45, dreamCategory: 'physical' as DreamCategory }
+    ]
+
+    return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard(def))
   }
 
   /**
@@ -460,23 +477,23 @@ export class CardFactory {
    */
   static createRiskRewardChallenges(stage: GameStage): Card[] {
     const challenges: Card[] = []
-    
+
     // ステージに応じたリスクレベルの分布
     const riskDistribution = {
       youth: { low: 0.5, medium: 0.3, high: 0.15, extreme: 0.05 },
       middle: { low: 0.3, medium: 0.4, high: 0.2, extreme: 0.1 },
       fulfillment: { low: 0.2, medium: 0.3, high: 0.3, extreme: 0.2 }
     }
-    
+
     const distribution = riskDistribution[stage as 'youth' | 'middle' | 'fulfillment'] || riskDistribution.youth
-    
+
     // 各リスクレベルのチャレンジを生成（確率に基づく）
     const random = Math.random()
-    
+
     if (random < 0.2) { // 20%の確率でリスクチャレンジを追加
       let riskLevel: 'low' | 'medium' | 'high' | 'extreme'
       const levelRandom = Math.random()
-      
+
       if (levelRandom < distribution.low) {
         riskLevel = 'low'
       } else if (levelRandom < distribution.low + distribution.medium) {
@@ -486,15 +503,15 @@ export class CardFactory {
       } else {
         riskLevel = 'extreme'
       }
-      
+
       const riskChallenge = RiskRewardChallenge.createRiskChallenge(
         stage as 'youth' | 'middle' | 'fulfillment',
         riskLevel
       )
-      
+
       challenges.push(riskChallenge)
     }
-    
+
     return challenges
   }
 
@@ -591,7 +608,7 @@ export class CardFactory {
   }): Card {
     // チャレンジの難易度に基づいて報酬タイプを決定
     const rewardType = this.determineRewardType(params.power, params.dreamCategory)
-    
+
     return new Card({
       id: IdGenerator.generateCardId(),
       type: params.dreamCategory ? 'dream' : 'challenge', // 夢カテゴリがある場合はdreamタイプ
@@ -602,7 +619,7 @@ export class CardFactory {
       effects: [],
       dreamCategory: params.dreamCategory,
       rewardType // 報酬タイプを追加
-    })
+    } as any)
   }
 
   /**
@@ -613,15 +630,15 @@ export class CardFactory {
     if (dreamCategory) {
       return 'vitality'
     }
-    
+
     // パワーレベルに基づいて報酬を決定
     if (power <= 3) {
       return 'insurance' // 低難易度：保険獲得
     } if (power <= 6) {
       return 'insurance' // 中難易度：保険獲得（基本）
-    } 
-      return 'card' // 高難易度：追加カード獲得
-    
+    }
+    return 'card' // 高難易度：追加カード獲得
+
   }
 
   /**
@@ -635,12 +652,72 @@ export class CardFactory {
   }): Card {
     return new Card({
       id: IdGenerator.generateCardId(),
-      type: 'pitfall',
+      type: 'trouble',
       name: params.name,
       description: params.description,
       power: params.power,
       cost: 0,
       penalty: params.penalty,
+      effects: []
+    })
+  }
+
+
+
+  /**
+   * 汎用カード作成（テスト用）
+   */
+  static createCard(params: {
+    base: { name: string, type: string, description: string, id?: string },
+    variant: string,
+    effects?: any[]
+  }): Card {
+    const { base, effects } = params
+    return new Card({
+      id: base.id || IdGenerator.generateCardId(),
+      type: base.type as any,
+      name: base.name,
+      description: base.description,
+      power: 0,
+      cost: 0,
+      effects: effects || []
+    } as any)
+  }
+
+  /**
+   * 老化カードを作成
+   */
+  static createAgingCards(count: number): Card[] {
+    const cards: Card[] = []
+    for (let i = 0; i < count; i++) {
+      cards.push(new Card({
+        id: IdGenerator.generateCardId(),
+        type: 'aging',
+        name: '老化',
+        description: '年齢による衰え。使用不可。',
+        power: 0,
+        cost: 0,
+        effects: [{
+          type: 'aging_penalty',
+          value: 0,
+          description: '手札にあると活力が減少する可能性がある'
+        }]
+      }))
+    }
+    return cards
+  }
+
+  /**
+   * 最終試練カードを作成
+   */
+  static createFinalChallengeCard(): Card {
+    return new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'final_challenge',
+      name: '人生の総決算',
+      description: 'これまでの人生のすべてを賭けた最後の挑戦',
+      power: 0, // Dynamic power based on calculation
+      cost: 0,
       effects: []
     })
   }
@@ -670,7 +747,7 @@ export class CardFactory {
     }
 
     const definitions = skillDefinitionsByStage[stage] || skillDefinitionsByStage.youth
-    return this.createCardsFromDefinitions(definitions, def => 
+    return this.createCardsFromDefinitions(definitions, def =>
       Card.createSkillCard(def.name, def.rarity, def.power, def.cooldown)
     )
   }
@@ -680,30 +757,30 @@ export class CardFactory {
    */
   static createComboCards(): Card[] {
     const comboDefinitions = [
-      { 
-        name: 'ワークライフバランス', 
-        power: 2, 
-        requiredCards: ['career', 'family'], 
+      {
+        name: 'ワークライフバランス',
+        power: 2,
+        requiredCards: ['career', 'family'],
         comboBonus: 4,
-        description: 'キャリアと家族の調和' 
+        description: 'キャリアと家族の調和'
       },
-      { 
-        name: '健康的な成功', 
-        power: 3, 
-        requiredCards: ['health', 'finance'], 
+      {
+        name: '健康的な成功',
+        power: 3,
+        requiredCards: ['health', 'finance'],
         comboBonus: 5,
-        description: '健康と経済的安定の両立' 
+        description: '健康と経済的安定の両立'
       },
-      { 
-        name: '充実した人生', 
-        power: 4, 
-        requiredCards: ['hobby', 'family', 'career'], 
+      {
+        name: '充実した人生',
+        power: 4,
+        requiredCards: ['hobby', 'family', 'career'],
         comboBonus: 8,
-        description: '趣味・家族・キャリアの三位一体' 
+        description: '趣味・家族・キャリアの三位一体'
       }
     ]
 
-    return this.createCardsFromDefinitions(comboDefinitions, def => 
+    return this.createCardsFromDefinitions(comboDefinitions, def =>
       Card.createComboCard(def.name, def.power, def.requiredCards, def.comboBonus)
     )
   }
@@ -730,7 +807,7 @@ export class CardFactory {
     }
 
     const definitions = eventDefinitionsByStage[stage] || eventDefinitionsByStage.youth
-    return this.createCardsFromDefinitions(definitions, def => 
+    return this.createCardsFromDefinitions(definitions, def =>
       Card.createEventCard(def.name, def.power, def.duration, def.globalEffect)
     )
   }
@@ -740,27 +817,27 @@ export class CardFactory {
    */
   static createLegendaryCards(): Card[] {
     const legendaryDefinitions = [
-      { 
-        name: '人生の達人', 
-        power: 20, 
+      {
+        name: '人生の達人',
+        power: 20,
         unlockCondition: '全ステージで50回以上成功',
         description: '人生経験の集大成'
       },
-      { 
-        name: '運命を変える決断', 
-        power: 25, 
+      {
+        name: '運命を変える決断',
+        power: 25,
         unlockCondition: '連続10回チャレンジ成功',
         description: '人生を劇的に変える瞬間'
       },
-      { 
-        name: '完璧な調和', 
-        power: 30, 
+      {
+        name: '完璧な調和',
+        power: 30,
         unlockCondition: '全カテゴリのカードを50枚以上獲得',
         description: 'すべての側面が完璧にバランスした状態'
       }
     ]
 
-    return this.createCardsFromDefinitions(legendaryDefinitions, def => 
+    return this.createCardsFromDefinitions(legendaryDefinitions, def =>
       Card.createLegendaryCard(def.name, def.power, def.unlockCondition)
     )
   }

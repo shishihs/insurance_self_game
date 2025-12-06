@@ -143,80 +143,20 @@ export class GameChallengeService {
   }
 
   /**
-   * チャレンジ結果を作成
-   * @private
-   */
-  private createChallengeResult(
-    game: Game,
-    powerBreakdown: PowerBreakdown,
-    challengePower: number
-  ): ChallengeResult {
-    const playerPower = powerBreakdown.total
-    const success = playerPower >= challengePower
-
-    // 統計更新
-    this.updateStatistics(game, success)
-
-    // 活力変更を計算
-    const vitalityChange = this.calculateVitalityChange(
-      success,
-      playerPower,
-      challengePower
-    )
-
-    // 活力を更新
-    this.updateVitality(game, vitalityChange)
-
-    const result: ChallengeResult = {
-      success,
-      playerPower,
-      challengePower,
-      vitalityChange,
-      message: this.createResultMessage(success, vitalityChange),
-      powerBreakdown
-    }
-
-    // 成功時は保険種類選択肢を追加
-    if (success) {
-      const choices = CardFactory.createInsuranceTypeChoices(game.stage)
-      game.insuranceTypeChoices = choices
-      result.insuranceTypeChoices = choices
-    }
-
-    return result
-  }
-
-  /**
-   * チャレンジ後のゲーム状態更新
-   * @private
-   */
-  private updateGameStateAfterChallenge(
-    game: Game,
-    result: ChallengeResult
-  ): void {
-    // 使用したカードを捨て札に
-    game.cardManager.discardSelectedCards()
-
-    // フェーズ更新
-    game.phase = result.success
-      ? 'insurance_type_selection'
-      : 'resolution'
-
-    // チャレンジをクリア
-    game.currentChallenge = undefined
-    game.cardManager.clearSelection()
-  }
-
-  /**
    * バリデーション: フェーズチェック
    * @private
    */
   private validatePhase(game: Game, expectedPhase: string): void {
+    // v2: allow challenge_choice phase
+    if (game.phase === 'challenge_choice' && expectedPhase === 'draw') {
+      return
+    }
+
     if (game.phase !== expectedPhase) {
       if (expectedPhase === 'draw') {
-        throw new Error('Can only start challenge during draw phase')
+        throw new Error(`Can only start challenge during draw or challenge_choice phase (Current: ${game.phase})`)
       }
-      throw new Error(`Can only perform this action during ${expectedPhase} phase`)
+      throw new Error(`Can only perform this action during ${expectedPhase} phase (Current: ${game.phase})`)
     }
   }
 
@@ -228,19 +168,6 @@ export class GameChallengeService {
     if (!game.currentChallenge || game.phase !== 'challenge') {
       throw new Error('No active challenge to resolve')
     }
-  }
-
-  /**
-   * チャレンジの必要パワーを取得
-   * @private
-   */
-  private getChallengePower(game: Game): number {
-    if (!game.currentChallenge) {
-      throw new Error('No active challenge')
-    }
-
-    // 夢カードの年齢調整を適用
-    return game.getDreamRequiredPower(game.currentChallenge)
   }
 
   /**
@@ -267,38 +194,6 @@ export class GameChallengeService {
   }
 
   /**
-   * 活力変更量を計算（保険効果を考慮）
-   * @private
-   */
-  private calculateVitalityChange(
-    game: Game,
-    success: boolean,
-    playerPower: number,
-    challengePower: number
-  ): number {
-    if (success) {
-      return Math.floor((playerPower - challengePower) / 2)
-    }
-    // 失敗時のダメージ計算
-    const baseDamage = challengePower - playerPower
-
-    // 防御型保険によるダメージ軽渚
-    const activeInsurances = game.getActiveInsurances()
-    let damageReduction = 0
-
-    activeInsurances.forEach(insurance => {
-      if (insurance.isDefensiveInsurance()) {
-        damageReduction += insurance.calculateDamageReduction()
-      }
-    })
-
-    const finalDamage = baseDamage - damageReduction
-    // 保険で完全にカバーできる場合はダメージ0、そうでなければ最低1ダメージ
-    return finalDamage <= 0 ? 0 : -Math.max(1, finalDamage)
-
-  }
-
-  /**
    * 活力を更新
    * @private
    */
@@ -311,14 +206,23 @@ export class GameChallengeService {
   }
 
   /**
-   * 結果メッセージを作成
+   * チャレンジ後のゲーム状態更新
    * @private
    */
-  private createResultMessage(success: boolean, vitalityChange: number): string {
-    if (success) {
-      return `チャレンジ成功！ +${vitalityChange} 活力`
-    }
-    return `チャレンジ失敗... ${vitalityChange} 活力`
+  private updateGameStateAfterChallenge(
+    game: Game,
+    result: ChallengeResult
+  ): void {
+    // 使用したカードを捨て札に
+    game.cardManager.discardSelectedCards()
 
+    // フェーズ更新
+    game.phase = result.success
+      ? 'insurance_type_selection'
+      : 'resolution'
+
+    // チャレンジをクリア
+    game.currentChallenge = undefined
+    game.cardManager.clearSelection()
   }
 }

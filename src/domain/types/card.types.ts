@@ -1,12 +1,12 @@
 /**
  * カード種別
  */
-export type CardType = 'life' | 'insurance' | 'pitfall' | 'challenge' | 'dream' | 'skill' | 'combo' | 'event' | 'legendary'
+export type CardType = 'life' | 'insurance' | 'trouble' | 'challenge' | 'dream' | 'skill' | 'combo' | 'event' | 'legendary' | 'aging' | 'final_challenge'
 
 /**
  * カードカテゴリー（人生カード用）
  */
-export type LifeCardCategory = 
+export type LifeCardCategory =
   | 'health'    // 健康
   | 'career'    // キャリア
   | 'family'    // 家族
@@ -16,7 +16,7 @@ export type LifeCardCategory =
 /**
  * 保険種別（保険カード用）
  */
-export type InsuranceType = 
+export type InsuranceType =
   | 'life'      // 生命保険
   | 'medical'   // 医療保険
   | 'accident'  // 傷害保険
@@ -31,7 +31,7 @@ export type InsuranceType =
 /**
  * 保険期間種別
  */
-export type InsuranceDurationType = 
+export type InsuranceDurationType =
   | 'term'       // 定期保険（期限あり）
   | 'whole_life' // 終身保険（期限なし）
 
@@ -49,7 +49,7 @@ export type RewardType = 'insurance' | 'vitality' | 'card'
 /**
  * カード効果タイプ
  */
-export type CardEffectType = 
+export type CardEffectType =
   | 'power_boost'       // パワー増加
   | 'draw_cards'        // カードドロー
   | 'heal'              // 活力回復
@@ -70,6 +70,7 @@ export type CardEffectType =
   | 'challenge_bonus'    // 特定チャレンジへのボーナス
   | 'risk_mitigation'    // リスク軽減
   | 'insurance_coverage' // 保険補償
+  | 'aging_penalty'      // 老化ペナルティ
 
 /**
  * ゲームステージ
@@ -103,33 +104,62 @@ export interface ICard {
   cost: number
   effects: CardEffect[]
   imageUrl?: string
-  
+
   // 人生カード固有
   category?: LifeCardCategory
-  
+
   // 保険カード固有
   insuranceType?: InsuranceType
   coverage?: number // 保障額
   durationType?: InsuranceDurationType // 保険期間種別
   remainingTurns?: number // 定期保険の残りターン数（定期保険のみ）
   insuranceEffectType?: InsuranceEffectType // 保険効果タイプ
-  
+
   // 落とし穴カード固有
   penalty?: number // ペナルティ値
-  
+
   // 保険カード用年齢ボーナス
   ageBonus?: number
-  
+
   // Phase 4: 夢カード固有
   dreamCategory?: DreamCategory
+
+  // v2: 老化カード固有
+  agingEffects?: CardEffect[]
 }
+
+/**
+ * 老化カードインターフェース
+ */
+export interface AgingCard extends ICard {
+  type: 'aging'
+  // 老化カードはコストを払って除外できるなどの特殊ルールがあるため
+  removalCost?: number
+}
+
+/**
+ * トラブルカードインターフェース
+ */
+export interface TroubleCard extends ICard {
+  type: 'trouble'
+  immediateEffect?: CardEffect
+}
+
+/**
+ * 最終試練カードインターフェース
+ */
+export interface FinalChallengeCard extends ICard {
+  type: 'final_challenge'
+  specialCondition?: string
+}
+
 
 
 /**
  * 夢カードインターフェース
  */
 export interface DreamCard extends ICard {
-  category: DreamCategory
+  dreamCategory: DreamCategory
   baseRequiredPower: number
   ageAdjustment: number // 年齢調整値
 }
@@ -173,7 +203,7 @@ export interface EventCardProperties {
 /**
  * 保険効果タイプ
  */
-export type InsuranceEffectType = 
+export type InsuranceEffectType =
   | 'offensive'   // 攻撃型（パワー提供）
   | 'defensive'   // 防御型（ダメージ軽減）
   | 'recovery'    // 回復型（体力回復）

@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Card } from '@/domain/entities/Card'
+import type { ICard } from '@/domain/types/game.types'
 
 const props = defineProps<{
-  card: Card
+  card: ICard
   isSelected?: boolean
   isPlayable?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'click', card: Card): void
+  (e: 'click', card: ICard): void
 }>()
 
 const cardClasses = computed(() => {
@@ -39,6 +39,7 @@ const typeLabel = computed(() => {
 
 <template>
   <div 
+    data-testid="card"
     class="w-48 h-72 rounded-xl border-2 shadow-lg flex flex-col p-4 transition-all duration-200 relative bg-white"
     :class="cardClasses"
     @click="emit('click', card)"

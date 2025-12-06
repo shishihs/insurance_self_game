@@ -13,7 +13,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.CI
       ? 'https://shishihs.github.io/insurance_self_game/'
-      : 'http://localhost:5173/',
+      : 'http://localhost:4173/',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -44,8 +44,8 @@ export default defineConfig({
 
   // Local development server
   webServer: process.env.CI ? undefined : {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: 'npm run preview',
+    url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
   },
 });

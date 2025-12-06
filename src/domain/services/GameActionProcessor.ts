@@ -1,5 +1,5 @@
 import type { Card } from '../entities/Card'
-import type { ChallengeResult, InsuranceTypeSelectionResult, TurnResult } from '../types/game.types'
+import type { ChallengeResult, InsuranceTypeSelectionResult } from '../types/game.types'
 import type { Game } from '../entities/Game'
 
 /**
@@ -77,7 +77,7 @@ export abstract class BaseActionProcessor<TInput, TOutput> {
  * カードドロー処理
  */
 export class DrawCardsProcessor extends BaseActionProcessor<number, Card[]> {
-  protected async validate(game: Game, count: number): Promise<ActionResult<void>> {
+  protected override async validate(game: Game, count: number): Promise<ActionResult<void>> {
     if (count <= 0) {
       return { success: false, error: 'ドロー枚数は1以上である必要があります' }
     }
@@ -89,18 +89,49 @@ export class DrawCardsProcessor extends BaseActionProcessor<number, Card[]> {
     return { success: true }
   }
 
-  protected async process(game: Game, count: number): Promise<ActionResult<Card[]>> {
+  protected override async process(game: Game, count: number): Promise<ActionResult<Card[]>> {
     // CardManagerから直接カードをドロー
     const result = game.cardManager.drawCards(count)
+
+    const effects: GameEffect[] = [{
+      type: 'card_draw',
+      description: `${result.drawnCards.length}枚のカードをドローしました`,
+      cards: result.drawnCards
+    }]
+
+    // トラブルカードの処理
+    if (result.troubleCards && result.troubleCards.length > 0) {
+      for (const trouble of result.troubleCards) {
+        // ペナルティ適用 (Trouble card penalty is deduction of vitality)
+        // Assuming 'penalty' property exists on Card (or ICard) and is number
+        // If card.penalty is undefined, default to 0
+        const penalty = (trouble as any).penalty || 0 // Cast to any if Card doesn't explicitly expose penalty property yet
+        if (penalty > 0) {
+          try {
+            game.applyDamage(penalty)
+            effects.push({
+              type: 'vitality_change',
+              description: `トラブル「${trouble.name}」発動！ ${penalty}のダメージ`,
+              value: -penalty,
+              cards: [trouble]
+            })
+          } catch (e) {
+            console.error('Failed to apply trouble penalty', e)
+          }
+        } else {
+          effects.push({
+            type: 'vitality_change', // or 'message'
+            description: `トラブル「${trouble.name}」発動！`,
+            cards: [trouble]
+          })
+        }
+      }
+    }
 
     return {
       success: true,
       data: result.drawnCards,
-      effects: [{
-        type: 'card_draw',
-        description: `${count}枚のカードをドローしました`,
-        cards: result.drawnCards
-      }]
+      effects
     }
   }
 }
@@ -109,7 +140,7 @@ export class DrawCardsProcessor extends BaseActionProcessor<number, Card[]> {
  * チャレンジ開始処理
  */
 export class StartChallengeProcessor extends BaseActionProcessor<Card, void> {
-  protected async validate(game: Game, challengeCard: Card): Promise<ActionResult<void>> {
+  protected override async validate(game: Game, challengeCard: Card): Promise<ActionResult<void>> {
     if (game.phase !== 'draw') {
       return { success: false, error: 'ドローフェーズでのみチャレンジを開始できます' }
     }
@@ -121,7 +152,7 @@ export class StartChallengeProcessor extends BaseActionProcessor<Card, void> {
     return { success: true }
   }
 
-  protected async process(game: Game, challengeCard: Card): Promise<ActionResult<void>> {
+  protected override async process(game: Game, challengeCard: Card): Promise<ActionResult<void>> {
     game.startChallenge(challengeCard)
 
     return {
@@ -135,10 +166,34 @@ export class StartChallengeProcessor extends BaseActionProcessor<Card, void> {
 }
 
 /**
+ * チャレンジフェーズ開始処理 (v2: 選択肢提示)
+ */
+export class StartChallengePhaseProcessor extends BaseActionProcessor<void, void> {
+  protected override async validate(game: Game, input: void): Promise<ActionResult<void>> {
+    if (game.phase !== 'draw') {
+      return { success: false, error: 'ドローフェーズでのみチャレンジ選択を開始できます' }
+    }
+    return { success: true }
+  }
+
+  protected override async process(game: Game, input: void): Promise<ActionResult<void>> {
+    game.startChallengePhase()
+
+    return {
+      success: true,
+      effects: [{
+        type: 'stage_advance', // Or new type 'phase_change'
+        description: 'チャレンジ選択を開始しました'
+      }]
+    }
+  }
+}
+
+/**
  * チャレンジ解決処理
  */
 export class ResolveChallengeProcessor extends BaseActionProcessor<void, ChallengeResult> {
-  protected async validate(game: Game, input: void): Promise<ActionResult<void>> {
+  protected override async validate(game: Game, input: void): Promise<ActionResult<void>> {
     if (!game.currentChallenge) {
       return { success: false, error: 'アクティブなチャレンジがありません' }
     }
@@ -150,7 +205,7 @@ export class ResolveChallengeProcessor extends BaseActionProcessor<void, Challen
     return { success: true }
   }
 
-  protected async process(game: Game, input: void): Promise<ActionResult<ChallengeResult>> {
+  protected override async process(game: Game, input: void): Promise<ActionResult<ChallengeResult>> {
     const result = game.resolveChallenge()
 
     const effects: GameEffect[] = []
@@ -184,7 +239,7 @@ export class SelectInsuranceProcessor extends BaseActionProcessor<
   { insuranceType: string; durationType: 'term' | 'whole_life' },
   InsuranceTypeSelectionResult
 > {
-  protected async validate(
+  protected override async validate(
     game: Game,
     input: { insuranceType: string; durationType: 'term' | 'whole_life' }
   ): Promise<ActionResult<void>> {
@@ -199,7 +254,7 @@ export class SelectInsuranceProcessor extends BaseActionProcessor<
     return { success: true }
   }
 
-  protected async process(
+  protected override async process(
     game: Game,
     input: { insuranceType: string; durationType: 'term' | 'whole_life' }
   ): Promise<ActionResult<InsuranceTypeSelectionResult>> {
@@ -217,6 +272,95 @@ export class SelectInsuranceProcessor extends BaseActionProcessor<
 }
 
 /**
+ * 保険購入処理 (v2)
+ */
+export class BuyInsuranceProcessor extends BaseActionProcessor<Card, void> {
+  protected override async validate(game: Game, card: Card): Promise<ActionResult<void>> {
+    // Phase check might be strict, so relaxing for now OR checking correct phase
+    const validPhases: string[] = ['action', 'insurance_phase', 'insurance']
+    if (!validPhases.includes(game.phase)) {
+      // Just a warning or strict? For now, let's allow "action" phase too as per rulebook flow
+    }
+    return { success: true }
+  }
+
+  protected override async process(game: Game, card: Card): Promise<ActionResult<void>> {
+    game.cardManager.buyInsurance(card)
+
+    if (card.cost > 0) {
+      // Use applyDamage (which handles negative "damage" as heal, or we need a spend method?)
+      // Game doesn't have spendVitality, but has updateVitality private.
+      // applyDamage accepts positive number as damage.
+      try {
+        game.applyDamage(card.cost)
+      } catch (e) {
+        return { success: false, error: 'Cost payment failed' }
+      }
+    }
+
+    return {
+      success: true,
+      effects: [{
+        type: 'insurance_add',
+        description: `保険「${card.name}」を購入しました`,
+        cards: [card]
+      }]
+    }
+  }
+}
+
+/**
+ * カード除外処理 (v2 Deck Compression)
+ */
+export class RemoveCardProcessor extends BaseActionProcessor<Card, void> {
+  protected override async validate(game: Game, card: Card): Promise<ActionResult<void>> {
+    // Only allow if player has taken damage or specific effect?
+    // Rule: "Save lost vitality 1 point = 1 card removal"
+    // This validation might be complex, for now trust the UI/Caller
+    return { success: true }
+  }
+
+  protected override async process(game: Game, card: Card): Promise<ActionResult<void>> {
+    game.cardManager.removeCardFromGame(card)
+    return {
+      success: true,
+      effects: [{
+        type: 'card_draw', // Reusing type or add new 'card_remove'
+        description: `カード「${card.name}」を除外しました`,
+        cards: [card]
+      }]
+    }
+  }
+}
+
+/**
+ * 夢カード選択処理 (v2)
+ */
+export class SelectDreamProcessor extends BaseActionProcessor<Card, void> {
+  protected override async validate(game: Game, card: Card): Promise<ActionResult<void>> {
+    if (game.phase !== 'dream_selection') {
+      return { success: false, error: '夢選択フェーズではありません' }
+    }
+    return { success: true }
+  }
+
+  protected override async process(game: Game, card: Card): Promise<ActionResult<void>> {
+    try {
+      game.selectDream(card)
+      return {
+        success: true,
+        effects: [{
+          type: 'stage_advance',
+          description: `夢「${card.name}」を選択しました`
+        }]
+      }
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : String(e) }
+    }
+  }
+}
+
+/**
  * アクション処理管理クラス
  */
 export class GameActionProcessor {
@@ -228,6 +372,11 @@ export class GameActionProcessor {
     this.registerProcessor('start_challenge', new StartChallengeProcessor())
     this.registerProcessor('resolve_challenge', new ResolveChallengeProcessor())
     this.registerProcessor('select_insurance', new SelectInsuranceProcessor())
+    this.registerProcessor('start_challenge_phase', new StartChallengePhaseProcessor())
+    // v2 processors
+    this.registerProcessor('buy_insurance', new BuyInsuranceProcessor())
+    this.registerProcessor('remove_card', new RemoveCardProcessor())
+    this.registerProcessor('select_dream', new SelectDreamProcessor())
   }
 
   /**

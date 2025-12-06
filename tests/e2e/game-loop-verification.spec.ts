@@ -2,73 +2,93 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Game Loop Verification', () => {
     test.beforeEach(async ({ page }) => {
-        // Go to the home page
-        await page.goto('/');
+        // Capture console logs
+        page.on('console', msg => console.log(`BROWSER LOG: ${msg.text()}`));
+        page.on('pageerror', err => console.log(`BROWSER ERROR: ${err.message}`));
 
-        // Wait for the app to load
-        await expect(page.locator('.app-container')).toBeVisible();
+        // Go to the home page
+        await page.goto('/', { waitUntil: 'commit' });
+
+        // Wait for the app wrapper
+        await expect(page.locator('#app')).toBeVisible({ timeout: 5000 });
+
+        // Wait for the Vue app to mount and show content
+        await expect(page.locator('.app-container')).toBeVisible({ timeout: 20000 });
     });
 
-    test('should play through a basic turn', async ({ page }) => {
+    test('should play through a basic turn v2', async ({ page }) => {
         // 1. Start Game
-        // Look for the start game button with exact text "ゲームをプレイ"
-        const startGameBtn = page.getByRole('button', { name: 'ゲームをプレイ' });
+        // Look for the start game button with exact accessible name
+        const startGameBtn = page.getByRole('button', { name: 'ゲームを開始する (Alt+G)' });
         await expect(startGameBtn).toBeVisible({ timeout: 5000 });
         await startGameBtn.click();
 
+        // 2. Dream Selection (v2)
+        // Wait for Dream Selector to appear (Look for "Choose Your Dream" text)
+        await expect(page.getByText('Choose Your Dream')).toBeVisible({ timeout: 10000 });
+
+        // Wait for Dream Selector animations to finish
+        await page.waitForTimeout(2000);
+
+        // Debug: Log page content
+        const content = await page.content();
+        console.log('DEBUG: Page Content Snippet:', content.substring(0, 500));
+        console.log('DEBUG: Visible text:', await page.innerText('body'));
+
+        // Select the first dream card
+        const dreamCards = page.locator('[data-testid="card"]');
+        await expect(dreamCards.first()).toBeVisible();
+
+        // Force click just in case of overlay issues, or ensure it's stable
+        await dreamCards.first().click({ force: true });
+
+        // 3. Draw Phase
         // Wait for GameBoard to be visible
         await expect(page.locator('.game-view')).toBeVisible({ timeout: 10000 });
 
-        // Wait for game initialization - check that phase is 'draw'
-        await page.waitForTimeout(1000); // Give time for store initialization
-
-        // 2. Draw Phase
-        // Check for "Draw Card" button
+        // In v2, Draw Phase might be automated or manual.
+        // If there is a manual "Draw Card" button:
         const drawBtn = page.getByRole('button', { name: /Draw Card/i });
-        await expect(drawBtn).toBeVisible({ timeout: 5000 });
-        await drawBtn.click();
+        if (await drawBtn.isVisible()) {
+            await drawBtn.click();
+        }
 
-        // Wait a bit for the card to be drawn
-        await page.waitForTimeout(500);
+        // 4. Challenge Selection Phase (v2)
+        // Check for "Start Challenge" button which triggers the choice phase
+        const startChallengeBtn = page.getByRole('button', { name: /Start Challenge/i });
+        await expect(startChallengeBtn).toBeVisible({ timeout: 5000 });
+        await startChallengeBtn.click();
 
-        // 3. Challenge Phase
-        // Check for "Start Challenge" button
-        const challengeBtn = page.getByRole('button', { name: /Start Challenge/i });
-        await expect(challengeBtn).toBeVisible({ timeout: 5000 });
-        await challengeBtn.click();
+        // Wait for Challenge Selector overlay
+        await expect(page.getByText('Confront a Challenge')).toBeVisible({ timeout: 5000 });
 
-        // Wait for challenge to be set
-        await page.waitForTimeout(500);
+        // Select first challenge option
+        // Assuming dream selector cards are gone, these are the new ones
+        const challengeOption = page.locator('[data-testid="card"]').first();
+        await expect(challengeOption).toBeVisible();
+        await challengeOption.click();
 
-        // 4. Resolution Phase
-        // Check for "Resolve Challenge" button
+        // 5. Challenge Active Phase
+        // Now "Resolve Challenge" should be visible
         const resolveBtn = page.getByRole('button', { name: /Resolve Challenge/i });
         await expect(resolveBtn).toBeVisible({ timeout: 5000 });
 
-        // Try to select a card from hand if available
-        const cards = page.locator('.hand-container .card');
-        const count = await cards.count();
-        if (count > 0) {
-            // Click the first card to select it
-            await cards.first().click();
-            await page.waitForTimeout(300);
+        // Select a card from hand to play
+        const handCard = page.locator('.hand-container [data-testid="card"]').first();
+        if (await handCard.isVisible()) {
+            await handCard.click();
         }
 
         await resolveBtn.click();
 
-        // Wait for resolution
-        await page.waitForTimeout(500);
-
-        // 5. End Turn Phase
-        // After resolve, we should see End Turn button
+        // 6. End Turn / Next Phase
+        // After resolution, either End Turn or Result
         const endTurnBtn = page.getByRole('button', { name: /End Turn/i });
         await expect(endTurnBtn).toBeVisible({ timeout: 5000 });
         await endTurnBtn.click();
 
-        // Wait for turn to end
-        await page.waitForTimeout(500);
-
-        // Verify we're back to draw phase (Draw Card button should be visible again)
-        await expect(drawBtn).toBeVisible({ timeout: 5000 });
+        // Verify back to Draw or Start Challenge
+        // In v2 loop, next turn starts.
+        await expect(startChallengeBtn).toBeVisible({ timeout: 10000 }); // Or draw btn
     });
 });

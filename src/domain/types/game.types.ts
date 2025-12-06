@@ -1,4 +1,5 @@
-import type { Difficulty, GameStage, InsuranceType } from './card.types'
+import type { Difficulty, GameStage, InsuranceType, ICard } from './card.types'
+export type { ICard }
 import type { Card } from '../entities/Card'
 import type { Deck } from '../entities/Deck'
 
@@ -17,7 +18,9 @@ export type GameStatus =
  */
 export type GamePhase =
   | 'setup'                    // セットアップ
+  | 'dream_selection'          // 夢選択 (v2)
   | 'draw'                     // ドロー
+  | 'challenge_choice'         // チャレンジ選択 (v2)
   | 'challenge'                // チャレンジ
   | 'resolution'               // 結果処理
   | 'card_selection'           // カード選択（チャレンジ成功時）
@@ -108,7 +111,7 @@ export interface InsuranceTypeChoice {
   insuranceType: InsuranceType
   name: string
   description: string
-  baseCard: Omit<Card, 'id' | 'durationType' | 'remainingTurns'>
+  baseCard: Omit<ICard, 'id' | 'durationType' | 'remainingTurns'>
   termOption: {
     cost: number
     duration: number // ターン数
@@ -234,18 +237,23 @@ export interface IGameState {
   challengeDeck: Deck
 
   // チャレンジ関連
-  currentChallenge?: Card
+  currentChallenge: Card | undefined
   selectedCards: Card[]
-  cardChoices?: Card[]  // 現在の選択肢カード
-  insuranceTypeChoices?: InsuranceTypeChoice[]  // 現在の保険種類選択肢
+  cardChoices: Card[] | undefined  // 現在の選択肢カード
+  insuranceTypeChoices: InsuranceTypeChoice[] | undefined  // 現在の保険種類選択肢
 
   // Phase 2-4: 保険カード管理
-  insuranceCards?: Card[]  // 現在有効な保険カード
-  expiredInsurances?: Card[]  // 期限切れになった保険カード
+  activeInsurances: Card[]  // 現在有効な保険カード (renamed from insuranceCards)
+  expiredInsurances: Card[] | undefined  // 期限切れになった保険カード
+  insuranceMarket: Card[]     // 保険市場（販売中の保険）
 
   // Phase 3: 保険料負担
   insuranceBurden?: number  // 保険料による負担（負の値）
 
+  // v2: 新要素
+  agingDeck: Deck
+  score: number             // 現在のスコア
+  selectedDream: Card | undefined      // 選択した夢カード (DreamCard)
 
   // 統計
   stats: PlayerStats

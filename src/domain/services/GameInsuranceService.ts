@@ -14,7 +14,7 @@ import type { InsurancePremiumCalculationService } from './InsurancePremiumCalcu
 export class GameInsuranceService {
   constructor(
     private readonly premiumService: InsurancePremiumCalculationService
-  ) {}
+  ) { }
 
   /**
    * 保険を追加
@@ -23,8 +23,8 @@ export class GameInsuranceService {
     if (!card.isInsurance()) {
       throw new Error('Only insurance cards can be added')
     }
-    
-    game.insuranceCards.push(card)
+
+    game.activeInsurances.push(card)
     this.updateInsuranceBurden(game)
   }
 
@@ -37,7 +37,7 @@ export class GameInsuranceService {
     durationType: 'term' | 'whole_life'
   ): InsuranceTypeSelectionResult {
     this.validateInsuranceSelection(game)
-    
+
     const choice = this.findInsuranceChoice(game, insuranceType)
     if (!choice) {
       return {
@@ -45,14 +45,14 @@ export class GameInsuranceService {
         message: 'Invalid insurance type selection'
       }
     }
-    
+
     const selectedCard = this.createInsuranceCard(choice, durationType)
-    
+
     this.addInsuranceCard(game, selectedCard)
     this.updatePlayerHistory(game, insuranceType)
     this.updateRiskProfile(game)
     this.completeInsuranceSelection(game)
-    
+
     return this.createSelectionResult(selectedCard, choice, durationType)
   }
 
@@ -60,27 +60,27 @@ export class GameInsuranceService {
    * 保険料負担を計算
    */
   calculateInsuranceBurden(game: Game): number {
-    if (game.insuranceCards.length === 0) {
+    if (game.activeInsurances.length === 0) {
       return 0
     }
 
     // テスト環境またはシンプルモードでは常にfallback計算を使用
-    if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+    if (process.env['NODE_ENV'] === 'test' || process.env['VITEST']) {
       return this.fallbackBurdenCalculation(game)
     }
 
     try {
       const totalBurden = this.premiumService.calculateTotalInsuranceBurden(
-        game.insuranceCards,
+        game.activeInsurances,
         game.stage,
         game.getRiskProfile()
       )
-      
+
       // 負の値として返す（活力から差し引かれるため）
       return -totalBurden.getValue()
     } catch (error) {
       // テスト環境では期待される挙動なのでエラーログを抑制
-      if (process.env.NODE_ENV !== 'test') {
+      if (process.env['NODE_ENV'] !== 'test') {
         console.warn('保険料計算でエラーが発生しました:', error)
       }
       return this.fallbackBurdenCalculation(game)
@@ -95,12 +95,12 @@ export class GameInsuranceService {
     // Gameクラスの内部プロパティを更新
     // 保険料負担は負の値として計算されるため、符号を反転させて保存
     const burdenValue = Math.abs(burden)
-    ;(game as any)._insuranceBurden = InsurancePremium.create(burdenValue)
-    
+      ; (game as any)._insuranceBurden = InsurancePremium.create(burdenValue)
+
     // ダーティフラグを更新
     if ((game as any)._dirtyFlags) {
       (game as any)._dirtyFlags.insurance = true
-      ;(game as any)._dirtyFlags.burden = true
+        ; (game as any)._dirtyFlags.burden = true
     }
   }
 
@@ -139,7 +139,7 @@ export class GameInsuranceService {
     if (game.phase !== 'insurance_type_selection') {
       throw new Error('Not in insurance type selection phase')
     }
-    
+
     if (!game.insuranceTypeChoices) {
       throw new Error('No insurance type choices available')
     }
@@ -162,9 +162,9 @@ export class GameInsuranceService {
   private createInsuranceCard(choice: any, durationType: 'term' | 'whole_life'): Card {
     if (durationType === 'term') {
       return CardFactory.createTermInsuranceCard(choice)
-    } 
-      return CardFactory.createWholeLifeInsuranceCard(choice)
-    
+    }
+    return CardFactory.createWholeLifeInsuranceCard(choice)
+
   }
 
   /**
@@ -174,7 +174,7 @@ export class GameInsuranceService {
   private addInsuranceCard(game: Game, card: Card): void {
     game.cardManager.addToPlayerDeck(card)
     game.stats.cardsAcquired++
-    game.insuranceCards.push(card)
+    game.activeInsurances.push(card)
     this.updateInsuranceBurden(game)
   }
 
@@ -196,10 +196,10 @@ export class GameInsuranceService {
     choice: any,
     durationType: 'term' | 'whole_life'
   ): InsuranceTypeSelectionResult {
-    const durationText = durationType === 'term' 
-      ? `定期保険（${choice.termOption.duration}ターン）` 
+    const durationText = durationType === 'term'
+      ? `定期保険（${choice.termOption.duration}ターン）`
       : '終身保険'
-    
+
     return {
       success: true,
       selectedCard: card,
@@ -212,7 +212,7 @@ export class GameInsuranceService {
    * @private
    */
   private fallbackBurdenCalculation(game: Game): number {
-    const activeInsuranceCount = game.insuranceCards.length
+    const activeInsuranceCount = game.activeInsurances.length
     const burden = Math.floor(activeInsuranceCount / 3)
     return burden === 0 ? 0 : -burden
   }
@@ -224,15 +224,15 @@ export class GameInsuranceService {
   private updatePlayerHistory(game: Game, insuranceType: string): void {
     const history = game.getPlayerHistory()
     history.totalInsurancePurchased++
-    
+
     // リスクの高い保険種類を選んだ場合
     if (insuranceType === 'life' || insuranceType === 'cancer') {
       history.riskyChoiceCount++
     }
     history.totalChoiceCount++
-    
-    // Gameの内部プロパティを更新
-    ;(game as any)._playerHistory = history
+
+      // Gameの内部プロパティを更新
+      ; (game as any)._playerHistory = history
   }
 
   /**
@@ -244,6 +244,6 @@ export class GameInsuranceService {
       game.getPlayerHistory(),
       game.stage
     )
-    ;(game as any)._riskProfile = newProfile
+      ; (game as any)._riskProfile = newProfile
   }
 }

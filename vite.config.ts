@@ -27,7 +27,7 @@ export default defineConfig(({ command, mode }) => ({
       'vitest'    // テストライブラリを除外
     ]
   },
-  base: '/insurance_self_game/', // GitHub Pages用のベースパス（正しい形式）
+  base: './', // 相対パスに変更してローカル/GH Pages両対応
   build: {
     outDir: 'dist',
     sourcemap: true,

@@ -17,7 +17,12 @@ export const useGameStore = defineStore('game', () => {
     const currentStageState = ref<string>('youth')
     const currentTurnState = ref(0)
     const currentPhaseState = ref<string>('setup')
+    const currentStatusState = ref<string>('not_started')
     const currentChallengeState = ref<Card | null>(null)
+    const activeInsurancesState = ref<Card[]>([])
+    const insuranceMarketState = ref<Card[]>([])
+    const scoreState = ref(0)
+    const cardChoicesState = ref<Card[]>([])
 
     // Getters - return the explicit state
     const vitality = computed(() => vitalityState.value)
@@ -26,6 +31,7 @@ export const useGameStore = defineStore('game', () => {
     const currentStage = computed(() => currentStageState.value)
     const currentTurn = computed(() => currentTurnState.value)
     const currentPhase = computed(() => currentPhaseState.value)
+    const currentStatus = computed(() => currentStatusState.value)
     const currentChallenge = computed(() => currentChallengeState.value)
 
     const insuranceTypeChoices = computed(() => {
@@ -34,11 +40,11 @@ export const useGameStore = defineStore('game', () => {
         return game.value.insuranceTypeChoices
     })
 
-    const cardChoices = computed(() => {
-        if (!game.value) return []
-        lastUpdate.value
-        return game.value.cardChoices
-    })
+    const activeInsurances = computed(() => activeInsurancesState.value)
+    const insuranceMarket = computed(() => insuranceMarketState.value)
+    const score = computed(() => scoreState.value)
+    const cardChoices = computed(() => cardChoicesState.value)
+
 
     const lastMessage = ref<string>('')
 
@@ -69,6 +75,43 @@ export const useGameStore = defineStore('game', () => {
     function startChallenge(card: Card) {
         if (!game.value) return
         game.value.startChallenge(card)
+        triggerUpdate()
+    }
+
+    function startChallengePhase() {
+        if (!game.value) return
+        game.value.startChallengePhase()
+        triggerUpdate()
+    }
+
+    function selectChallengeChoice(card: any) {
+        if (!game.value) return
+        game.value.startChallenge(card as Card)
+        triggerUpdate()
+    }
+
+    function selectDream(card: any) {
+        if (!game.value) return
+        game.value.selectDream(card as Card)
+        triggerUpdate()
+    }
+
+    function buyInsurance(card: any) {
+        if (!game.value) return
+        // Use processor if possible, or direct method
+        game.value.cardManager.buyInsurance(card as Card)
+        // Also apply cost
+        // game.value.applyDamage(card.cost) // Should be part of buy logic? 
+        // Processor does this. Let's assume store calls processor or Game method that handles it?
+        // Game.ts doesn't have buyInsurance directly in the Entity, it has CardManager.buyInsurance
+        // GameActionProcessor.ts has BuyInsuranceProcessor which applies cost.
+        // For simplicity and directness in store (bypassing processor validation for now or calling executeAction):
+        // Ideally: game.value.actionProcessor.executeAction('buy_insurance', game.value, card)
+        // But actionProcessor is private in Game (I think).
+        // Let's use direct cardManager + damage for now, or assume this logic is refactored later.
+        // Actually, let's look at GameActionProcessor logic.
+        // Calling cardManager.buyInsurance removes from market and adds to active.
+        if (card.cost > 0) game.value.applyDamage(card.cost)
         triggerUpdate()
     }
 
@@ -142,7 +185,14 @@ export const useGameStore = defineStore('game', () => {
         currentStageState.value = game.value.stage
         currentTurnState.value = game.value.turn
         currentPhaseState.value = game.value.phase
+        currentStatusState.value = game.value.status
         currentChallengeState.value = game.value.currentChallenge || null
+
+        // v2 sync
+        activeInsurancesState.value = [...game.value.activeInsurances]
+        insuranceMarketState.value = [...game.value.insuranceMarket]
+        scoreState.value = game.value.score
+        cardChoicesState.value = game.value.cardChoices ? [...game.value.cardChoices] : []
 
         console.log('[GameStore] State synced. Hand size:', handState.value.length)
 
@@ -161,6 +211,7 @@ export const useGameStore = defineStore('game', () => {
         currentStage,
         currentTurn,
         currentPhase,
+        currentStatus,
         currentChallenge,
         insuranceTypeChoices,
         lastMessage,
@@ -173,6 +224,15 @@ export const useGameStore = defineStore('game', () => {
         selectInsurance,
         endTurn,
         toggleCardSelection,
-        triggerUpdate
+        triggerUpdate,
+        // v2
+        activeInsurances,
+        insuranceMarket,
+        score,
+        cardChoices,
+        startChallengePhase,
+        selectChallengeChoice,
+        selectDream,
+        buyInsurance
     }
 })

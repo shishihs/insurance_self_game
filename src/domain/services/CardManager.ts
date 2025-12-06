@@ -11,7 +11,11 @@ export interface CardManagerState {
   playerDeck: Deck
   challengeDeck: Deck
   selectedCards: Card[]
-  cardChoices?: Card[]
+  cardChoices: Card[] | undefined
+  // v2 new fields
+  agingDeck: Deck
+  insuranceMarket: Card[]
+  activeInsurances: Card[]
 }
 
 /**
@@ -20,6 +24,7 @@ export interface CardManagerState {
 export interface DrawResult {
   drawnCards: Card[]
   discardedCards: Card[] // 手札上限により捨てられたカード
+  troubleCards: Card[] // 即時発動するトラブルカード
 }
 
 /**
@@ -103,6 +108,13 @@ export interface ICardManager {
    * チャレンジカードを引く
    */
   drawChallengeCard(): Card | null
+
+  // v2 methods
+  buyInsurance(card: Card): void
+  removeCardFromGame(card: Card): void
+  addAgingCardToDiscard(): void
+  getInsuranceMarket(): Card[]
+  getActiveInsurances(): Card[]
 }
 
 /**
@@ -114,8 +126,12 @@ export class CardManager implements ICardManager {
   private playerDeck: Deck = new Deck('Player Deck')
   private challengeDeck: Deck = new Deck('Challenge Deck')
   private selectedCards: Card[] = []
-  private cardChoices?: Card[]
+  private cardChoices: Card[] | undefined
   private config?: GameConfig
+  // v2 fields
+  private agingDeck: Deck = new Deck('Aging Deck')
+  private insuranceMarket: Card[] = []
+  private activeInsurances: Card[] = []
 
   // パフォーマンス最適化: オブジェクトプール
   private static readonly CARD_POOLS = {
@@ -124,7 +140,7 @@ export class CardManager implements ICardManager {
   }
 
   // キャッシュ
-  private _cachedState?: CardManagerState
+  private _cachedState: CardManagerState | undefined
   private _stateVersion = 0
 
   /**
@@ -138,6 +154,10 @@ export class CardManager implements ICardManager {
     this.selectedCards = []
     this.cardChoices = undefined
     this.config = config
+    // v2 init
+    this.agingDeck = new Deck('Aging Deck') // Should be populated from outside or config in real app
+    this.insuranceMarket = []
+    this.activeInsurances = []
   }
 
   /**
@@ -158,7 +178,10 @@ export class CardManager implements ICardManager {
       playerDeck: this.playerDeck.clone(),
       challengeDeck: this.challengeDeck.clone(),
       selectedCards: [...this.selectedCards],
-      cardChoices: this.cardChoices ? [...this.cardChoices] : undefined
+      cardChoices: this.cardChoices ? [...this.cardChoices] : undefined,
+      agingDeck: this.agingDeck.clone(),
+      insuranceMarket: [...this.insuranceMarket],
+      activeInsurances: [...this.activeInsurances]
     }
 
     // キャッシュに保存
@@ -178,6 +201,9 @@ export class CardManager implements ICardManager {
     this.challengeDeck = state.challengeDeck.clone()
     this.selectedCards = [...state.selectedCards]
     this.cardChoices = state.cardChoices ? [...state.cardChoices] : undefined
+    this.agingDeck = state.agingDeck.clone()
+    this.insuranceMarket = [...state.insuranceMarket]
+    this.activeInsurances = [...state.activeInsurances]
 
     // キャッシュを無効化
     this.invalidateCache()
@@ -202,11 +228,12 @@ export class CardManager implements ICardManager {
     // オブジェクトプールからDrawResultを取得
     let result = CardManager.CARD_POOLS.drawResults.pop()
     if (!result) {
-      result = { drawnCards: [], discardedCards: [] }
+      result = { drawnCards: [], discardedCards: [], troubleCards: [] }
     } else {
       // 配列をクリア
       result.drawnCards.length = 0
       result.discardedCards.length = 0
+      result.troubleCards.length = 0
     }
 
     for (let i = 0; i < count; i++) {
@@ -217,9 +244,16 @@ export class CardManager implements ICardManager {
 
       const card = this.playerDeck.drawCard()
       if (card) {
-        result.drawnCards.push(card)
-        this.hand.push(card)
-        console.log('[CardManager] Added card to hand. Hand size:', this.hand.length, 'Card:', card.name)
+        if (card.type === 'trouble') {
+          // トラブルカードは手札に入らず即時発動用に分離
+          result.troubleCards.push(card)
+          this.discardPile.push(card) // 即座に捨て札へ (効果は別途処理)
+          console.log('[CardManager] Drawn Trouble card:', card.name)
+        } else {
+          result.drawnCards.push(card)
+          this.hand.push(card)
+          console.log('[CardManager] Added card to hand. Hand size:', this.hand.length, 'Card:', card.name)
+        }
       } else {
         console.warn('[CardManager] Failed to draw card (deck empty?)')
       }
@@ -281,8 +315,10 @@ export class CardManager implements ICardManager {
       const index = this.hand.findIndex(c => c.id === card.id)
       if (index !== -1) {
         const removedCard = this.hand.splice(index, 1)[0]
-        this.discardPile.push(removedCard)
-        discardedCards.push(removedCard)
+        if (removedCard) {
+          this.discardPile.push(removedCard)
+          discardedCards.push(removedCard)
+        }
       }
     })
 
@@ -341,6 +377,7 @@ export class CardManager implements ICardManager {
    */
   setCardChoices(choices: Card[]): void {
     this.cardChoices = [...choices]
+    this.invalidateCache()
   }
 
   /**
@@ -348,6 +385,7 @@ export class CardManager implements ICardManager {
    */
   clearCardChoices(): void {
     this.cardChoices = undefined
+    this.invalidateCache()
   }
 
   /**
@@ -364,6 +402,70 @@ export class CardManager implements ICardManager {
     this.playerDeck.addCards(this.discardPile)
     this.playerDeck.shuffle()
     this.discardPile = []
+
+    // v2: Reshuffle Penalty (Aging Card)
+    this.addAgingCardToDiscard()
+  }
+
+  // v2 Methods
+
+  /**
+   * 保険を購入
+   */
+  buyInsurance(card: Card): void {
+    // Remove from market
+    const index = this.insuranceMarket.findIndex(c => c.id === card.id)
+    if (index !== -1) {
+      this.insuranceMarket.splice(index, 1)
+      this.activeInsurances.push(card)
+      this.invalidateCache()
+    }
+  }
+
+  /**
+   * カードをゲームから除外 (Deck Compression)
+   */
+  removeCardFromGame(card: Card): void {
+    // Check hand
+    let index = this.hand.findIndex(c => c.id === card.id)
+    if (index !== -1) {
+      this.hand.splice(index, 1)
+      this.invalidateCache()
+      return
+    }
+    // Check discard
+    index = this.discardPile.findIndex(c => c.id === card.id)
+    if (index !== -1) {
+      this.discardPile.splice(index, 1)
+      this.invalidateCache()
+      return
+    }
+    // Check deck (expensive but needed)
+    if (this.playerDeck.removeCard(card.id)) {
+      this.invalidateCache()
+      return
+    }
+  }
+
+  /**
+   * 老化カードを捨て札に追加
+   */
+  addAgingCardToDiscard(): void {
+    const agingCard = this.agingDeck.drawCard()
+    if (agingCard) {
+      this.discardPile.push(agingCard)
+      console.log('[CardManager] Aging card added to discard pile due to reshuffle')
+    } else {
+      console.warn('[CardManager] No aging cards left! (Game Over Condition usually)')
+    }
+  }
+
+  getInsuranceMarket(): Card[] {
+    return this.insuranceMarket
+  }
+
+  getActiveInsurances(): Card[] {
+    return this.activeInsurances
   }
 
   /**

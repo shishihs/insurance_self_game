@@ -3,6 +3,10 @@ import { onMounted } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import Hand from './Hand.vue'
 import CardComponent from './Card.vue'
+import DreamSelector from './DreamSelector.vue'
+import ChallengeSelector from './ChallengeSelector.vue'
+import InsuranceMarket from './InsuranceMarket.vue'
+import GameResult from './GameResult.vue'
 import type { GameConfig } from '@/domain/types/game.types'
 
 const store = useGameStore()
@@ -32,7 +36,8 @@ async function onEndTurn() {
 }
 
 async function onChallenge() {
-  await store.drawChallenge()
+  // v2: Start Challenge Phase (Draw 2, Select 1)
+  store.startChallengePhase()
 }
 
 </script>
@@ -42,6 +47,10 @@ async function onChallenge() {
     <!-- Header / Stats -->
     <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-slate-800/80 backdrop-blur-md z-20 shadow-md">
       <div class="flex items-center space-x-6">
+        <div class="flex flex-col">
+          <span class="text-xs text-slate-400 uppercase">Score</span>
+          <span class="font-bold text-xl text-yellow-400">{{ store.score }}</span>
+        </div>
         <div class="flex flex-col">
           <span class="text-xs text-slate-400 uppercase">Stage</span>
           <span class="font-bold text-xl text-purple-400">{{ store.currentStage }}</span>
@@ -138,6 +147,20 @@ async function onChallenge() {
           </div>
         </div>
       </div>
+
+
+      <!-- v2 Components -->
+      <DreamSelector />
+      <ChallengeSelector />
+      <GameResult />
+      
+      <!-- Market Area (Bottom Right or toggleable) -->
+      <!-- For now, we put it in the main area but maybe conditional? -->
+      <!-- Let's put it fixed at bottom right for access -->
+      <div v-if="store.currentPhase === 'draw'" class="fixed bottom-32 right-8 z-40 max-w-xl">
+         <InsuranceMarket />
+      </div>
+
     </div>
 
     <!-- Player Hand -->
