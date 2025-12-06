@@ -25,7 +25,7 @@ test.describe('Game Loop Verification', () => {
 
         // 2. Dream Selection (v2)
         // Wait for Dream Selector to appear (Look for "Choose Your Dream" text)
-        await expect(page.getByText('Choose Your Dream')).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText('夢を選択してください')).toBeVisible({ timeout: 10000 });
 
         // Wait for Dream Selector animations to finish
         await page.waitForTimeout(2000);
@@ -48,19 +48,19 @@ test.describe('Game Loop Verification', () => {
 
         // In v2, Draw Phase might be automated or manual.
         // If there is a manual "Draw Card" button:
-        const drawBtn = page.getByRole('button', { name: /Draw Card/i });
+        const drawBtn = page.getByRole('button', { name: /カードを引く/i });
         if (await drawBtn.isVisible()) {
             await drawBtn.click();
         }
 
         // 4. Challenge Selection Phase (v2)
         // Check for "Start Challenge" button which triggers the choice phase
-        const startChallengeBtn = page.getByRole('button', { name: /Start Challenge/i });
+        const startChallengeBtn = page.getByRole('button', { name: /課題に取り組む/i });
         await expect(startChallengeBtn).toBeVisible({ timeout: 5000 });
         await startChallengeBtn.click();
 
         // Wait for Challenge Selector overlay
-        await expect(page.getByText('Confront a Challenge')).toBeVisible({ timeout: 5000 });
+        await expect(page.getByText('課題に立ち向かう')).toBeVisible({ timeout: 5000 });
 
         // Select first challenge option
         // Assuming dream selector cards are gone, these are the new ones
@@ -70,7 +70,7 @@ test.describe('Game Loop Verification', () => {
 
         // 5. Challenge Active Phase
         // Now "Resolve Challenge" should be visible
-        const resolveBtn = page.getByRole('button', { name: /Resolve Challenge/i });
+        const resolveBtn = page.getByRole('button', { name: /課題を解決する/i });
         await expect(resolveBtn).toBeVisible({ timeout: 5000 });
 
         // Select a card from hand to play
@@ -83,7 +83,7 @@ test.describe('Game Loop Verification', () => {
 
         // 6. End Turn / Next Phase
         // After resolution, either End Turn or Result
-        const endTurnBtn = page.getByRole('button', { name: /End Turn/i });
+        const endTurnBtn = page.getByRole('button', { name: /ターン終了/i });
         await expect(endTurnBtn).toBeVisible({ timeout: 5000 });
         await endTurnBtn.click();
 

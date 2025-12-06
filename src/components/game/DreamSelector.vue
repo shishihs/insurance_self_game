@@ -17,10 +17,12 @@ function select(card: ICard) {
 <template>
   <div v-if="isOpen" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-8 backdrop-blur-sm animate-fade-in">
     <div class="text-center mb-10 max-w-2xl">
-      <h2 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-4">Choose Your Dream</h2>
+      <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-8">
+      夢を選択してください
+    </h2>
       <p class="text-lg text-slate-300">
-        Your dream defines your life's purpose. Each dream provides unique bonuses during specific life stages.
-        Choose wisely, for it will guide your path.
+        夢は人生の目的を定義します。それぞれの夢は特定のライフステージで独自のボーナスを提供します。
+        あなたの道を導くものとして、慎重に選んでください。
       </p>
     </div>
     

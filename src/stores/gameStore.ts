@@ -24,6 +24,12 @@ export const useGameStore = defineStore('game', () => {
     const scoreState = ref(0)
     const cardChoicesState = ref<Card[]>([])
 
+    // Tutorial State
+    const isTutorialMode = ref(true)
+    function toggleTutorialMode() {
+        isTutorialMode.value = !isTutorialMode.value
+    }
+
     // Getters - return the explicit state
     const vitality = computed(() => vitalityState.value)
     const maxVitality = computed(() => maxVitalityState.value)
@@ -233,6 +239,8 @@ export const useGameStore = defineStore('game', () => {
         startChallengePhase,
         selectChallengeChoice,
         selectDream,
-        buyInsurance
+        buyInsurance,
+        isTutorialMode,
+        toggleTutorialMode
     }
 })

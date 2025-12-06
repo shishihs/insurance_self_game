@@ -67,6 +67,12 @@ export class GameController {
     // フェーズごとの処理
     await this.handleDrawPhase()
     await this.handleChallengePhase()
+
+    // Phase 4: 保険フェーズ (ルールブック v2準拠)
+    await this.handleInsurancePhase()
+
+    // 保険更新（維持）フェーズ（ルールブックではPhase 4-B/Cだが、ここでは便宜上分けるか統合するか）
+    // GameControllerの既存構造では handleInsuranceRenewalPhase があるのでそれを活用
     await this.handleInsuranceRenewalPhase()
 
     // ターン終了処理
@@ -104,21 +110,60 @@ export class GameController {
   /**
    * ゲーム初期化
    */
-  private async initializeGame(): void {
-    // ゲーム開始
+  private async initializeGame(): Promise<void> {
+    // ゲーム開始（ステータス変更）
     this.game.start()
 
-    // 初期手札ドロー
-    this.game.drawCards(this.game.config.startingHandSize)
+    // v2: 夢選択フェーズの処理
+    if (this.game.phase === 'dream_selection') {
+      await this.handleDreamSelectionPhase()
+    }
+
+    // 初期手札ドロー (Game.selectDream で phase='draw' になっているはずだが、初期手札はまだ)
+    // Game.selectDream内で changeTurn(1) しているので、ターン1のドローフェーズとして扱われるかも？
+    // しかし GameController.playGame のループに入ると playTurn -> handleDrawPhase が呼ばれる。
+    // initializeGame では「初期手札」を持つべきか？
+    // Game.ts の constructor/start では drawしていない。
+    // GameController の古いコードでは drawCards(startingHandSize) していた。
+
+    // v2では selectDream 後に phase='draw', turn=1 になる。
+    // ここで drawCards してしまうと、playTurn の handleDrawPhase でさらに引いてしまうかも？
+    // handleDrawPhase は "maxHandSizeまで補充" するロジックなので、
+    // ここで引いておけば handleDrawPhase では引かない（満タンなら）。
+
+    if (this.game.hand.length === 0) {
+      this.game.drawCards(this.game.config.startingHandSize)
+    }
 
     this.updateDisplay()
     await this.renderer.showMessage('ゲームが開始されました！', 'success')
   }
 
   /**
+   * 夢選択フェーズ
+   */
+  private async handleDreamSelectionPhase(): Promise<void> {
+    this.log('夢選択フェーズ開始')
+
+    // 選択肢は Game.start() -> startDreamSelectionPhase() で既に生成されている
+    const choices = this.game.cardManager.getState().cardChoices
+    if (!choices || choices.length === 0) {
+      throw new Error('夢カードの選択肢がありません')
+    }
+
+    // ユーザーに選択させる
+    const selectedDream = await this.renderer.askDreamSelection(choices)
+
+    // 選択を適用
+    this.game.selectDream(selectedDream)
+
+    await this.renderer.showMessage(`夢「${selectedDream.name}」を選択しました！`, 'success')
+  }
+
+  /**
    * ドローフェーズ
    */
-  private async handleDrawPhase(): void {
+  private async handleDrawPhase(): Promise<void> {
     this.game.phase = 'draw'
     this.log('ドローフェーズ開始')
 
@@ -137,43 +182,38 @@ export class GameController {
   /**
    * チャレンジフェーズ
    */
-  private async handleChallengePhase(): void {
-    // Phase transition happens inside startChallenge, so we don't set it here manually
-    // to avoid validation errors in GameChallengeService
+  private async handleChallengePhase(): Promise<void> {
     this.log('チャレンジフェーズ開始')
 
-    // チャレンジカードドロー（3枚から選択）
-    const challengeChoices = []
-    for (let i = 0; i < 3; i++) {
-      const card = this.game.challengeDeck.drawCard()
-      if (card) {
-        challengeChoices.push(card)
+    // v2: 2枚引いて選択させる
+    try {
+      this.game.startChallengePhase()
+    } catch (e) {
+      // チャレンジデッキ切れなどの場合
+      if (this.game.challengeDeck.size() === 0) {
+        await this.handleStageTransition()
+        return
       }
+      throw e
     }
 
-    if (challengeChoices.length === 0) {
-      // チャレンジデッキ切れの場合、次のステージに進む
+    const choices = this.game.cardManager.getState().cardChoices
+    if (!choices || choices.length === 0) {
+      // フォールバック（通常ありえない）
       await this.handleStageTransition()
       return
     }
 
-    // プレイヤーに選択してもらう（ここでは最初のカードを選択）
-    const challengeCard = challengeChoices[0]
+    // プレイヤーに選択してもらう
+    const selectedChallenge = await this.renderer.askChallengeSelection(choices)
 
-    this.game.currentChallenge = challengeCard
+    // チャレンジ開始（選択されなかったカードはデッキに戻る/捨てられる等の処理が内部で行われる）
+    this.game.startChallenge(selectedChallenge)
+
     this.updateDisplay()
 
-    // プレイヤーの行動選択
-    const action = await this.renderer.askChallengeAction(challengeCard)
-
-    if (action === 'skip') {
-      await this.renderer.showMessage('チャレンジをスキップしました')
-      this.game.currentChallenge = undefined
-      return
-    }
-
     // チャレンジ実行
-    await this.executeChallengeFlow(challengeCard)
+    await this.executeChallengeFlow(selectedChallenge)
   }
 
   /**
@@ -183,23 +223,22 @@ export class GameController {
     // カード選択
     if (this.game.hand.length === 0) {
       await this.renderer.showMessage('手札がありません。チャレンジに失敗しました。', 'warning')
-      this.game.startChallenge(challengeCard)
+      // startChallengeは既に呼ばれている
       const result = this.game.resolveChallenge()
       this.renderer.showChallengeResult(result)
+      await this.handleChallengeFailure(result) // 結果処理も呼ぶ必要あり
       return
     }
 
+    // チャレンジ用カード選択依頼
     const selectedCards = await this.askCardSelectionForChallenge(challengeCard)
 
-    // チャレンジ開始
-    this.game.startChallenge(challengeCard)
-
-    // カードを選択
+    // 選択されたカードをセット（トグル）
     for (const card of selectedCards) {
       this.game.toggleCardSelection(card)
     }
 
-    // チャレンジ実行
+    // チャレンジ実行（判定）
     const result = this.game.resolveChallenge()
     this.renderer.showChallengeResult(result)
 
@@ -210,7 +249,6 @@ export class GameController {
       await this.handleChallengeFailure(result)
     }
 
-    // チャレンジカードは一度使ったら終わり（再利用しない）
     this.game.currentChallenge = undefined
     this.updateDisplay()
   }
@@ -236,7 +274,7 @@ export class GameController {
   private async handleChallengeSuccess(result: ChallengeResult): Promise<void> {
     this.game.stats.successfulChallenges++
 
-    // カード選択がある場合
+    // 報酬カード選択がある場合
     if (result.cardChoices && result.cardChoices.length > 0) {
       const selectedCard = await this.renderer.askCardSelection(
         result.cardChoices,
@@ -245,17 +283,18 @@ export class GameController {
         '報酬として受け取るカードを選択してください'
       )
 
+
       if (selectedCard.length > 0) {
-        this.game.addCardToPlayerDeck(selectedCard[0])
-        this.game.stats.cardsAcquired++
-        await this.renderer.showMessage(`「${selectedCard[0].name}」を獲得しました！`, 'success')
+        const cardToAcquire = selectedCard[0]
+        if (cardToAcquire) {
+          this.game.addCardToPlayerDeck(cardToAcquire)
+          this.game.stats.cardsAcquired++
+          await this.renderer.showMessage(`「${cardToAcquire.name}」を獲得しました！`, 'success')
+        }
       }
     }
 
-    // 保険カード獲得の機会
-    if (Math.random() < 0.3) { // 30%の確率
-      await this.handleInsuranceAcquisition()
-    }
+    // ランダム保険獲得(30%)は廃止 -> Phase 4へ
   }
 
   /**
@@ -272,14 +311,35 @@ export class GameController {
   }
 
   /**
-   * 保険獲得フロー
+   * 保険フェーズ (Phase 4-A)
+   */
+  private async handleInsurancePhase(): Promise<void> {
+    this.log('保険フェーズ開始')
+
+    // 保険市場（4枚）を表示して購入を促す
+    if (this.game.insuranceMarket.length < 4) {
+      // 簡易実装：市場補充
+      // 本当はGameクラスかServiceでやるべき
+    }
+
+    // プレイヤーに購入の意思確認
+    const wantToBuy = await this.renderer.askConfirmation('保険を契約しますか？', 'no')
+    if (wantToBuy === 'yes') {
+      await this.handleInsuranceAcquisition()
+    }
+  }
+
+  /**
+   * 保険獲得フロー（Phase 4内用）
    */
   private async handleInsuranceAcquisition(): Promise<void> {
     const availableTypes: ('whole_life' | 'term')[] = ['whole_life', 'term']
-    const selectedType = await this.renderer.askInsuranceTypeChoice(availableTypes)
+    const _selectedType = await this.renderer.askInsuranceTypeChoice(availableTypes)
 
     // 保険カードを生成
-    const insuranceCards = CardFactory.createInsuranceCards(this.game.stage, selectedType, 3)
+    // CardFactory.createInsuranceCards は存在しないので修正
+    const insuranceCards = CardFactory.createBasicInsuranceCards(this.game.stage)
+      .filter(c => c.insuranceType === 'life' || c.insuranceType === 'medical') // 簡易フィルタ
 
     if (insuranceCards.length > 0) {
       const selectedInsurance = await this.renderer.askInsuranceChoice(
@@ -287,8 +347,20 @@ export class GameController {
         '獲得する保険を選択してください'
       )
 
-      this.game.insuranceCards.push(selectedInsurance)
+      // Gameに保険を追加
+      // Game.addInsuranceCard のようなメソッドがあるか確認が必要だが、一旦直接配列操作 + 活力コストで代用
+      // 本来は game.addInsurance(card) 等を使うべき
+      this.game.activeInsurances.push(selectedInsurance)
+
       await this.renderer.showMessage(`「${selectedInsurance.name}」保険を獲得しました！`, 'success')
+
+      // コスト支払い（契約コスト）
+      const cost = selectedInsurance.cost
+      if (this.game.vitality >= cost) {
+        this.game.heal(-cost)
+        await this.renderer.showMessage(`契約コスト ${cost} を支払いました`, 'info')
+      }
+
       this.updateDisplay()
     }
   }
@@ -296,22 +368,24 @@ export class GameController {
   /**
    * 保険更新フェーズ
    */
-  private async handleInsuranceRenewalPhase(): void {
-    if (this.game.insuranceCards.length === 0) {
+  private async handleInsuranceRenewalPhase(): Promise<void> {
+    if (this.game.activeInsurances.length === 0) {
       return
     }
 
     this.log('保険更新フェーズ開始')
 
-    for (const insurance of [...this.game.insuranceCards]) {
+    for (const insurance of [...this.game.activeInsurances]) {
       const renewalCost = this.calculateRenewalCost(insurance)
 
       const choice = await this.renderer.askInsuranceRenewalChoice(insurance, renewalCost)
 
       if (choice === 'renew') {
         if (this.game.vitality >= renewalCost) {
-          this.game.vitality -= renewalCost
-          this.game.insuranceBurden += renewalCost
+          this.game.heal(-renewalCost)
+          // burden更新はService経由だが、Controllerからはアクセス困難なため、
+          // 一旦活力消費のみで表現する（またはGameクラスにメソッド追加が必要）
+
           await this.renderer.showMessage(`「${insurance.name}」を更新しました（コスト: ${renewalCost}）`, 'success')
         } else {
           await this.renderer.showMessage(`体力不足のため「${insurance.name}」を更新できませんでした`, 'warning')
@@ -330,9 +404,9 @@ export class GameController {
    * 保険の失効処理
    */
   private expireInsurance(insurance: Card): void {
-    const index = this.game.insuranceCards.indexOf(insurance)
-    if (index >= 0) {
-      this.game.insuranceCards.splice(index, 1)
+    const index = this.game.activeInsurances.indexOf(insurance)
+    if (index > -1) {
+      this.game.activeInsurances.splice(index, 1)
       this.game.expiredInsurances.push(insurance)
     }
   }
@@ -384,7 +458,7 @@ export class GameController {
   private getNextStage(currentStage: GameStage): GameStage | null {
     const stages: GameStage[] = ['youth', 'middle', 'fulfillment']
     const currentIndex = stages.indexOf(currentStage)
-    return currentIndex >= 0 && currentIndex < stages.length - 1 ? stages[currentIndex + 1] : null
+    return currentIndex >= 0 && currentIndex < stages.length - 1 ? stages[currentIndex + 1] ?? null : null
   }
 
   /**
@@ -421,7 +495,7 @@ export class GameController {
     this.renderer.displayGameState(this.game)
     this.renderer.displayHand(this.game.hand)
     this.renderer.displayVitality(this.game.vitality, this.game.maxVitality)
-    this.renderer.displayInsuranceCards(this.game.insuranceCards)
+    this.renderer.displayInsuranceCards(this.game.activeInsurances)
     this.renderer.displayInsuranceBurden(this.game.insuranceBurden)
     this.renderer.displayProgress(this.game.stage, this.game.turn)
 

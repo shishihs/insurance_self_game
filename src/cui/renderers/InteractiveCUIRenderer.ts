@@ -20,9 +20,9 @@ import inquirer from 'inquirer'
  */
 export class InteractiveCUIRenderer implements GameRenderer {
   private configManager: CUIConfigManager
-  private cardRenderer: CardRenderer
-  private progressDisplay: ProgressDisplay
-  private animationHelper: AnimationHelper
+  protected cardRenderer!: CardRenderer
+  protected progressDisplay!: ProgressDisplay
+  protected animationHelper!: AnimationHelper
   private isWaitingInput: boolean = false
   private isInitialized: boolean = false
 
@@ -34,7 +34,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   private updateUtilities(): void {
     const config = this.configManager.getConfig()
     const theme = this.configManager.getAccessibleColors()
-    
+
     this.cardRenderer = new CardRenderer(config, theme)
     this.progressDisplay = new ProgressDisplay(config, theme)
     this.animationHelper = new AnimationHelper(config, theme)
@@ -46,10 +46,10 @@ export class InteractiveCUIRenderer implements GameRenderer {
     if (this.isInitialized) return
 
     this.clear()
-    
+
     // Show animated title
     await this.showGameTitle()
-    
+
     // Matrix effect for matrix theme
     if (this.configManager.getConfig().theme === 'matrix') {
       await this.animationHelper.matrixRain(1500)
@@ -80,8 +80,8 @@ export class InteractiveCUIRenderer implements GameRenderer {
     lines.push(chalk.cyan(statusText))
 
     // Game status indicator
-    const statusColor = game.status === 'in_progress' ? 'green' : 
-                       game.status === 'game_over' ? 'red' : 'yellow'
+    const statusColor = game.status === 'in_progress' ? 'green' :
+      game.status === 'game_over' ? 'red' : 'yellow'
     lines.push(chalk[statusColor as keyof typeof chalk](`📊 Status: ${game.status}`))
 
     console.log('\n' + lines.join('\n'))
@@ -256,7 +256,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
       ])
 
       const parsed = InputValidator.parseCardSelection(selection, cards, minSelection, maxSelection)
-      
+
       if (parsed.selectedCards.length > 0) {
         // Show selected cards with animation
         console.log('\n' + chalk.green('✅ Selected:'))
@@ -279,7 +279,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
     try {
       console.log('\n' + chalk.bold.yellow('⚔️ Challenge Decision:'))
-      
+
       const { action } = await inquirer.prompt([
         {
           type: 'list',
@@ -334,10 +334,10 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
     try {
       console.log('\n' + chalk.bold.cyan('🛡️ Insurance Renewal:'))
-      
-      const insuranceDisplay = this.cardRenderer.renderCard(insurance, { 
+
+      const insuranceDisplay = this.cardRenderer.renderCard(insurance, {
         style: 'detailed',
-        selected: true 
+        selected: true
       })
       console.log(insuranceDisplay)
 
@@ -358,6 +358,16 @@ export class InteractiveCUIRenderer implements GameRenderer {
     } finally {
       this.isWaitingInput = false
     }
+  }
+
+  async askDreamSelection(cards: Card[]): Promise<Card> {
+    const selected = await this.askCardSelection(cards, 1, 1, '🌠 Choose your Dream:')
+    return selected[0]
+  }
+
+  async askChallengeSelection(challenges: Card[]): Promise<Card> {
+    const selected = await this.askCardSelection(challenges, 1, 1, '⚔️ Choose a Challenge to face:')
+    return selected[0]
   }
 
   async askConfirmation(message: string, defaultChoice: 'yes' | 'no' = 'no'): Promise<'yes' | 'no'> {
@@ -387,16 +397,16 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
   showChallengeResult(result: ChallengeResult): void {
     if (!result) return
-    
+
     console.log('\n' + chalk.bold.white('⚔️ Challenge Result:'))
     console.log(chalk.gray('═'.repeat(50)))
 
     // Result header with animation
     const resultEmoji = result.success ? '✅' : '❌'
-    const resultText = result.success ? 
-      chalk.bold.green('SUCCESS!') : 
+    const resultText = result.success ?
+      chalk.bold.green('SUCCESS!') :
       chalk.bold.red('FAILED!')
-    
+
     console.log(`${resultEmoji} ${resultText}`)
 
     // Power comparison
@@ -441,11 +451,11 @@ export class InteractiveCUIRenderer implements GameRenderer {
         info: 'blue',
         success: 'green',
         warning: 'yellow'
-    }
+      }
 
       const icon = icons[level]
       const color = colors[level] as keyof typeof chalk
-      
+
       console.log(`\n${icon} ${chalk[color](message)}`)
     } catch (e) {
       // Ignore console errors
@@ -454,7 +464,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
   showError(error: string): void {
     console.log(`\n❌ ${chalk.red.bold('Error:')} ${chalk.red(error)}`)
-    
+
     if (this.configManager.getConfig().visualEffects) {
       this.animationHelper.shakeEffect(error)
     }
@@ -462,9 +472,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
   showGameOver(stats: PlayerStats): void {
     if (!stats) return
-    
+
     console.log('\n')
-    
+
     // Animated game over
     if (this.configManager.getConfig().visualEffects) {
       this.animationHelper.pulseText(chalk.red.bold('💀 GAME OVER 💀'))
@@ -477,9 +487,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
   showVictory(stats: PlayerStats): void {
     if (!stats) return
-    
+
     console.log('\n')
-    
+
     // Animated victory
     if (this.configManager.getConfig().visualEffects) {
       this.animationHelper.celebrateAnimation('🎉 VICTORY! 🎉')
@@ -492,10 +502,10 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
   showStageClear(stage: string, stats: PlayerStats): void {
     console.log('\n')
-    
+
     const stageEmoji = this.getStageEmoji(stage)
     const message = `${stageEmoji} Stage "${stage}" Cleared!`
-    
+
     if (this.configManager.getConfig().visualEffects) {
       this.animationHelper.pulseText(chalk.yellow.bold(message))
     } else {
@@ -503,7 +513,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
     }
 
     console.log(chalk.gray('─'.repeat(40)))
-    
+
     const statsDisplay = this.progressDisplay.renderStatsDashboard(stats)
     console.log(statsDisplay)
   }
@@ -525,9 +535,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
   setDebugMode(enabled: boolean): void {
     const config = this.configManager.getConfig()
     this.configManager.updateConfig({ showDebugInfo: enabled })
-    
+
     console.log(chalk.gray(`🔧 Debug mode: ${enabled ? 'ON' : 'OFF'}`))
-    
+
     if (enabled) {
       console.log(chalk.dim('Debug info will be shown during gameplay'))
     }
@@ -545,7 +555,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
       const theme = this.configManager.getAccessibleColors()
       const coloredTitle = chalk.hex(theme.accent)(title)
-      
+
       if (this.configManager.shouldShowAnimations()) {
         await this.animationHelper.typewriterEffect(coloredTitle + '\n', { delay: 10 })
       } else {
@@ -565,9 +575,9 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
   private displayFinalStats(stats: PlayerStats, context: string): void {
     const theme = this.configManager.getAccessibleColors()
-    
+
     const content = this.progressDisplay.renderStatsDashboard(stats)
-    
+
     const boxOptions = {
       title: `📊 ${context} Statistics`,
       titleAlignment: 'center' as const,
@@ -584,7 +594,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   private getStageEmoji(stage: string): string {
     const stageEmojis: Record<string, string> = {
       youth: '🌱',
-      adult: '💪', 
+      adult: '💪',
       middle_age: '👔',
       elderly: '👴'
     }

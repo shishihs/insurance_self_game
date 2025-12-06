@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onMounted, onUnmounted, ref, h } from 'vue'
-import { useI18n } from 'vue-i18n'
+// import { useI18n } from 'vue-i18n'
 // import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
 import transitionAnimations from './components/animations/TransitionAnimations.vue'
 import accessibilitySettings from './components/accessibility/AccessibilitySettings.vue'
@@ -18,10 +18,10 @@ import appHeader from './components/layout/AppHeader.vue'
 import navigationActions from './components/layout/NavigationActions.vue'
 
 // 国際化コンポーネント
-import languageSwitcher from './components/i18n/LanguageSwitcher.vue'
+// import languageSwitcher from './components/i18n/LanguageSwitcher.vue'
 
 // 国際化機能
-const { t } = useI18n()
+// const { t } = useI18n()
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
 const isMobile = ref(false)
@@ -295,20 +295,20 @@ onUnmounted(() => {
     <visualIndicators :enabled="true" />
     
     <!-- 言語切り替えボタン -->
-    <div class="language-switcher-container">
-      <languageSwitcher 
+    <!-- <div class="language-switcher-container"> -->
+    <!-- <languageSwitcher 
         mode="dropdown" 
         :compact="true"
         :aria-label="t('accessibility.options.changeLanguage', 'Change Language')"
-      />
-    </div>
+      /> -->
+    <!-- </div> -->
 
     <!-- アクセシビリティ設定ボタン -->
     <button
       class="accessibility-button"
-      :aria-label="t('accessibility.keyboardShortcuts.openAccessibility', 'アクセシビリティ設定を開く (Alt+A)')"
+      aria-label="アクセシビリティ設定を開く (Alt+A)"
       :aria-keyshortcuts="'Alt+A'"
-      :title="t('accessibility.title', 'アクセシビリティ設定')"
+      title="アクセシビリティ設定"
       @click="showAccessibilitySettings = true"
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -390,9 +390,9 @@ onUnmounted(() => {
 
 .back-to-home-btn {
   position: absolute;
-  top: var(--space-md);
+  bottom: var(--space-md);
   left: var(--space-md);
-  z-index: var(--z-fixed);
+  z-index: 9999;
   
   display: flex;
   align-items: center;

@@ -8,14 +8,8 @@ import './styles/brand-elements.css'
 import './styles/rtl-support.css'
 import App from './App.vue'
 
-// 国際化システムの導入
-import i18n from './i18n'
-
 // Vueアプリケーションを作成
 const app = createApp(App)
-
-// 国際化システムを統合
-app.use(i18n)
 
 // Piniaの初期化
 import { createPinia } from 'pinia'

@@ -8,7 +8,7 @@ import type { ChallengeResult, PlayerStats } from '@/domain/types/game.types'
  */
 export interface GameRenderer {
   // === ゲーム状態表示 ===
-  
+
   /**
    * ゲーム全体の状態を表示
    * @param game ゲーム状態
@@ -64,9 +64,9 @@ export interface GameRenderer {
    * @returns 選択されたカード一覧
    */
   askCardSelection(
-    cards: Card[], 
-    minSelection?: number, 
-    maxSelection?: number, 
+    cards: Card[],
+    minSelection?: number,
+    maxSelection?: number,
     message?: string
   ): Promise<Card[]>
 
@@ -99,6 +99,20 @@ export interface GameRenderer {
    * @returns 更新('renew')か失効('expire')
    */
   askInsuranceRenewalChoice(insurance: Card, cost: number): Promise<'renew' | 'expire'>
+
+  /**
+   * 夢カードの選択を要求
+   * @param cards 選択可能な夢カード一覧
+   * @returns 選択された夢カード
+   */
+  askDreamSelection(cards: Card[]): Promise<Card>
+
+  /**
+   * 挑戦する試練カードの選択を要求
+   * @param challenges 選択可能な試練カード一覧（通常2枚）
+   * @returns 選択された試練カード
+   */
+  askChallengeSelection(challenges: Card[]): Promise<Card>
 
   /**
    * Yes/No の確認を要求

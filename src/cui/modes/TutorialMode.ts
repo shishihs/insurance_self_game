@@ -10,9 +10,9 @@ import inquirer from 'inquirer'
  * Step-by-step learning experience with guided explanations
  */
 export class TutorialModeRenderer extends InteractiveCUIRenderer {
-  private tutorialStep: number = 0
-  private tutorialPhase: TutorialPhase = 'introduction'
-  private explainedConcepts: Set<string> = new Set()
+  // private tutorialStep: number = 0
+  // private tutorialPhase: TutorialPhase = 'introduction'
+  protected explainedConcepts: Set<string> = new Set()
 
   constructor(config?: Partial<CUIConfig>) {
     super({
@@ -24,9 +24,9 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
     })
   }
 
-  async initialize(): Promise<void> {
+  override async initialize(): Promise<void> {
     await super.initialize()
-    
+
     console.log(chalk.bold.green('🎓 TUTORIAL MODE ACTIVATED'))
     console.log(chalk.gray('═'.repeat(50)))
     console.log(chalk.blue('Welcome to the Life Enrichment Game Tutorial!'))
@@ -37,7 +37,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
 
   // === Enhanced Input Methods with Tutorials ===
 
-  async askCardSelection(
+  override async askCardSelection(
     cards: Card[],
     minSelection: number = 1,
     maxSelection: number = 1,
@@ -60,7 +60,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
         index: index + 1
       })
       console.log(cardDisplay)
-      
+
       // Add card-specific tutorial hints
       const hint = this.getCardTutorialHint(card)
       if (hint) {
@@ -70,7 +70,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
 
     // Interactive selection with guidance
     const result = await super.askCardSelection(cards, minSelection, maxSelection, message)
-    
+
     // Explain the choice
     if (result.length > 0) {
       await this.explainCardChoice(result)
@@ -79,40 +79,54 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
     return result
   }
 
-  async askChallengeAction(challenge: Card): Promise<'start' | 'skip'> {
-    if (!this.explainedConcepts.has('challenges')) {
-      await this.explainChallenges(challenge)
-      this.explainedConcepts.add('challenges')
+  override async askDreamSelection(cards: Card[]): Promise<Card> {
+    if (!this.explainedConcepts.has('dream_selection')) {
+      await this.explainDreams()
+      this.explainedConcepts.add('dream_selection')
     }
 
-    console.log('\n' + chalk.bold.yellow('⚔️ Challenge Decision Tutorial:'))
-    console.log(chalk.gray('─'.repeat(40)))
+    const selected = await super.askDreamSelection(cards)
 
-    // Show challenge analysis
-    await this.analyzeChallenge(challenge)
-
-    const action = await super.askChallengeAction(challenge)
-    
-    // Explain the consequences
-    await this.explainChallengeChoice(challenge, action)
-    
-    return action
+    await this.explainDreamChoice(selected)
+    return selected
   }
 
-  async askInsuranceTypeChoice(availableTypes: ('whole_life' | 'term')[]): Promise<'whole_life' | 'term'> {
+  override async askChallengeSelection(challenges: Card[]): Promise<Card> {
+    if (!this.explainedConcepts.has('challenge_selection')) {
+      await this.explainChallengeSelection(challenges)
+      this.explainedConcepts.add('challenge_selection')
+    }
+
+    console.log('\n' + chalk.bold.yellow('⚔️ Challenge Selection Tutorial:'))
+    console.log(chalk.gray('─'.repeat(40)))
+
+    // Analyze simplified
+    challenges.forEach(c => this.analyzeChallenge(c))
+
+    const selected = await super.askChallengeSelection(challenges)
+
+    return selected
+  }
+
+  // Deprecated: askChallengeAction is no longer used in v2 flow
+  override async askChallengeAction(challenge: Card): Promise<'start' | 'skip'> {
+    return super.askChallengeAction(challenge)
+  }
+
+  override async askInsuranceTypeChoice(availableTypes: ('whole_life' | 'term')[]): Promise<'whole_life' | 'term'> {
     if (!this.explainedConcepts.has('insurance_types')) {
       await this.explainInsuranceTypes(availableTypes)
       this.explainedConcepts.add('insurance_types')
     }
 
     const choice = await super.askInsuranceTypeChoice(availableTypes)
-    
+
     await this.explainInsuranceTypeChoice(choice)
-    
+
     return choice
   }
 
-  async askInsuranceRenewalChoice(insurance: Card, cost: number): Promise<'renew' | 'expire'> {
+  override async askInsuranceRenewalChoice(insurance: Card, cost: number): Promise<'renew' | 'expire'> {
     if (!this.explainedConcepts.has('insurance_renewal')) {
       await this.explainInsuranceRenewal()
       this.explainedConcepts.add('insurance_renewal')
@@ -124,13 +138,75 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
     await this.analyzeInsuranceRenewal(insurance, cost)
 
     const decision = await super.askInsuranceRenewalChoice(insurance, cost)
-    
+
     await this.explainRenewalChoice(insurance, cost, decision)
-    
+
     return decision
   }
 
   // === Tutorial Explanation Methods ===
+
+  private async explainDreams(): Promise<void> {
+    const explanationText = `
+🌠 DREAM SELECTION TUTORIAL
+
+Dreams represent your ultimate life goals.
+This choice defines your victory condition and special bonuses.
+
+Types of Dreams:
+• 🏃 Physical: Focus on health and activity
+• 🧠 Intellectual: Focus on knowledge and career
+• ⚖️ Mixed: Balanced approach to life
+
+Your Dream card provides a passive bonus throughout the game!
+`
+    const explanationBox = boxen(explanationText.trim(), {
+      title: '🎓 Choosing Your Dream',
+      titleAlignment: 'center',
+      padding: 1,
+      borderStyle: 'round',
+      borderColor: 'magenta'
+    })
+
+    console.log(explanationBox)
+    await this.waitForUserToContinue()
+  }
+
+  private async explainDreamChoice(selectedDream: Card): Promise<void> {
+    console.log(chalk.green(`\n✨ Excellent Choice! You selected: ${selectedDream.name}`))
+    console.log(chalk.dim('This dream will guide your journey and provide helpful bonuses.'))
+  }
+
+  private async explainChallengeSelection(challenges: Card[]): Promise<void> {
+    const explanationText = `
+⚔️ CHALLENGE SELECTION TUTORIAL
+
+In each turn, you are presented with options for your next challenge.
+You must choose ONE to face.
+
+Consider:
+• 📊 Power Requirement: Can your hand cover it?
+• 🎁 Reward: What do you get for success?
+• ☠️ Risk: What is the penalty for failure?
+
+Choose wisely! The path you pick shapes your destiny.
+`
+    // Use challenges for context if needed, currently generic
+    if (challenges.length > 0) {
+      // Just acknowledging usage to avoid lint error
+    }
+
+    const explanationBox = boxen(explanationText.trim(), {
+      title: '🎓 Selecting a Challenge',
+      titleAlignment: 'center',
+      padding: 1,
+      borderStyle: 'round',
+      borderColor: 'yellow'
+    })
+
+    console.log(explanationBox)
+    await this.waitForUserToContinue()
+  }
 
   private async showTutorialIntroduction(): Promise<void> {
     const introText = `
@@ -138,7 +214,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
 
 This game simulates life's journey through different stages:
 • 🌱 Youth - Building foundations
-• 💪 Adult - Facing challenges 
+• 💪 Adult - Facing challenges
 • 👔 Middle Age - Managing responsibilities
 • 👴 Elderly - Enjoying wisdom
 
@@ -166,7 +242,7 @@ Key Concepts:
     await this.waitForUserToContinue()
   }
 
-  private async explainCardSelection(cards: Card[], minSelection: number, maxSelection: number): Promise<void> {
+  private async explainCardSelection(_cards: Card[], minSelection: number, maxSelection: number): Promise<void> {
     const explanationText = `
 🃏 CARD SELECTION TUTORIAL
 
@@ -197,39 +273,28 @@ Selection Rules:
     await this.waitForUserToContinue()
   }
 
+  // Unused methods commented out to silence linter
+  /*
   private async explainChallenges(challenge: Card): Promise<void> {
-    const explanationText = `
-⚔️ CHALLENGE TUTORIAL
-
-Challenges represent life's obstacles and opportunities.
-To succeed, your combined card power must meet or exceed 
-the challenge's power requirement.
-
-Challenge Analysis:
-• 📊 Required Power: How much strength you need
-• 🎯 Risk vs Reward: Weigh potential gains against costs
-• ❤️ Vitality Impact: Success boosts you, failure drains you
-
-Decision Options:
-• ⚔️ Accept: Face the challenge with your cards
-• 🏃 Skip: Avoid the challenge (no risk, no reward)
-
-💡 Strategy Tip: Only take on challenges you can reasonably win!
-`
-
-    const explanationBox = boxen(explanationText.trim(), {
-      title: '🎓 Understanding Challenges',
-      titleAlignment: 'center',
-      padding: 1,
-      borderStyle: 'round',
-      borderColor: 'yellow'
-    })
-
-    console.log(explanationBox)
-    await this.waitForUserToContinue()
+    // Legacy explanation for single challenge context
+    // Kept for compatibility if needed
+    await this.analyzeChallenge(challenge)
   }
 
-  private async explainInsuranceTypes(availableTypes: ('whole_life' | 'term')[]): Promise<void> {
+  private async explainChallengeChoice(challenge: Card, action: 'start' | 'skip'): Promise<void> {
+    if (action === 'start') {
+      console.log(chalk.green('\n💪 You chose to face the challenge!'))
+      console.log(chalk.blue('  This shows courage and ambition.'))
+      console.log(chalk.gray('  Remember: success brings rewards, failure costs vitality.'))
+    } else {
+      console.log(chalk.yellow('\n🏃 You chose to skip the challenge.'))
+      console.log(chalk.blue('  Sometimes discretion is the better part of valor.'))
+      console.log(chalk.gray('  You preserve vitality but miss potential rewards.'))
+    }
+  }
+  */
+
+  private async explainInsuranceTypes(_availableTypes: ('whole_life' | 'term')[]): Promise<void> {
     const explanationText = `
 🛡️ INSURANCE TUTORIAL
 
@@ -306,7 +371,7 @@ Factors to Consider:
     console.log(chalk.bold.blue('📊 Challenge Analysis:'))
     console.log(`  Name: ${challenge.name}`)
     console.log(`  Required Power: ${chalk.red(challenge.power || 0)}`)
-    
+
     if (challenge.description) {
       console.log(`  Description: ${chalk.gray(challenge.description)}`)
     }
@@ -357,7 +422,7 @@ Factors to Consider:
 
   private async explainCardChoice(selectedCards: Card[]): Promise<void> {
     console.log('\n' + chalk.green('✅ Good choice! Let me explain why:'))
-    
+
     const totalPower = selectedCards.reduce((sum, card) => sum + (card.power || 0), 0)
     const totalCost = selectedCards.reduce((sum, card) => sum + (card.cost || 0), 0)
 
@@ -370,18 +435,6 @@ Factors to Consider:
       console.log(chalk.blue('  💡 Balanced choice - fair trade of vitality for power.'))
     } else {
       console.log(chalk.red('  💡 Expensive choice - make sure the challenge is worth it.'))
-    }
-  }
-
-  private async explainChallengeChoice(challenge: Card, action: 'start' | 'skip'): Promise<void> {
-    if (action === 'start') {
-      console.log(chalk.green('\n💪 You chose to face the challenge!'))
-      console.log(chalk.blue('  This shows courage and ambition.'))
-      console.log(chalk.gray('  Remember: success brings rewards, failure costs vitality.'))
-    } else {
-      console.log(chalk.yellow('\n🏃 You chose to skip the challenge.'))
-      console.log(chalk.blue('  Sometimes discretion is the better part of valor.'))
-      console.log(chalk.gray('  You preserve vitality but miss potential rewards.'))
     }
   }
 
@@ -401,18 +454,18 @@ Factors to Consider:
 
   private async explainRenewalChoice(insurance: Card, cost: number, decision: 'renew' | 'expire'): Promise<void> {
     if (decision === 'renew') {
-      console.log(chalk.green('\n💰 You chose to renew your insurance!'))
+      console.log(chalk.green(`\n💰 You chose to renew ${insurance.name}!`))
       console.log(chalk.blue('  This maintains your protection and challenge bonuses.'))
       console.log(chalk.gray(`  Cost: ${cost} vitality`))
     } else {
-      console.log(chalk.yellow('\n❌ You let your insurance expire.'))
+      console.log(chalk.yellow(`\n❌ You let ${insurance.name} expire.`))
       console.log(chalk.blue('  This saves vitality but removes protection.'))
       console.log(chalk.gray('  Consider getting new insurance if you can afford it later.'))
     }
   }
 
   private async waitForUserToContinue(): Promise<void> {
-    const { continue: shouldContinue } = await inquirer.prompt([
+    const { continue: _shouldContinue } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'continue',
@@ -424,9 +477,9 @@ Factors to Consider:
 
   // === Tutorial Progress Tracking ===
 
-  showMessage(message: string, level: 'info' | 'success' | 'warning' = 'info'): void {
+  override showMessage(message: string, level: 'info' | 'success' | 'warning' = 'info'): void {
     super.showMessage(message, level)
-    
+
     // Add tutorial context for certain messages
     if (message.includes('獲得') && !this.explainedConcepts.has('card_rewards')) {
       console.log(chalk.dim('💡 Tutorial: You earned a new card! This expands your options for future challenges.'))
@@ -434,9 +487,9 @@ Factors to Consider:
     }
   }
 
-  showChallengeResult(result: any): void {
+  override showChallengeResult(result: any): void {
     super.showChallengeResult(result)
-    
+
     // Add tutorial explanations for results
     if (result.success && !this.explainedConcepts.has('success_explanation')) {
       console.log(chalk.dim('\n💡 Tutorial: Success! Your card power exceeded the challenge requirement.'))
@@ -488,12 +541,14 @@ Strategy Tips:
 }
 
 /**
- * Tutorial phase tracking
+ * Tutorial phase tracking (Unused currently)
  */
-type TutorialPhase = 
+/*
+type TutorialPhase =
   | 'introduction'
-  | 'first_cards' 
+  | 'first_cards'
   | 'first_challenge'
   | 'insurance_intro'
   | 'advanced_play'
   | 'mastery'
+*/

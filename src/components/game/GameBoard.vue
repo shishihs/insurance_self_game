@@ -7,6 +7,7 @@ import DreamSelector from './DreamSelector.vue'
 import ChallengeSelector from './ChallengeSelector.vue'
 import InsuranceMarket from './InsuranceMarket.vue'
 import GameResult from './GameResult.vue'
+import TutorialOverlay from './TutorialOverlay.vue'
 import type { GameConfig } from '@/domain/types/game.types'
 
 const store = useGameStore()
@@ -48,15 +49,15 @@ async function onChallenge() {
     <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-slate-800/80 backdrop-blur-md z-20 shadow-md">
       <div class="flex items-center space-x-6">
         <div class="flex flex-col">
-          <span class="text-xs text-slate-400 uppercase">Score</span>
+          <span class="text-xs text-slate-400 uppercase">スコア</span>
           <span class="font-bold text-xl text-yellow-400">{{ store.score }}</span>
         </div>
         <div class="flex flex-col">
-          <span class="text-xs text-slate-400 uppercase">Stage</span>
+          <span class="text-xs text-slate-400 uppercase">ステージ</span>
           <span class="font-bold text-xl text-purple-400">{{ store.currentStage }}</span>
         </div>
         <div data-testid="vitality" class="flex flex-col">
-          <span class="text-xs text-slate-400 uppercase">Vitality</span>
+          <span class="text-xs text-slate-400 uppercase">バイタリティ</span>
           <div class="flex items-end">
             <span class="font-bold text-2xl text-green-400">{{ store.vitality }}</span>
             <span class="text-sm text-slate-500 mb-1 ml-1">/ {{ store.maxVitality }}</span>
@@ -66,13 +67,28 @@ async function onChallenge() {
 
       <div class="flex items-center space-x-4">
         <div class="flex flex-col items-end">
-          <span class="text-xs text-slate-400 uppercase">Turn</span>
+          <span class="text-xs text-slate-400 uppercase">ターン</span>
           <span class="font-bold text-xl">{{ store.currentTurn }}</span>
         </div>
         <div class="flex flex-col items-end">
-          <span class="text-xs text-slate-400 uppercase">Phase</span>
+          <span class="text-xs text-slate-400 uppercase">フェーズ</span>
           <span class="font-bold text-lg text-blue-300">{{ store.currentPhase }}</span>
         </div>
+        
+        <!-- Tutorial Toggle -->
+        <button 
+          @click="store.toggleTutorialMode()"
+          class="p-2 rounded-full hover:bg-slate-700 transition-colors relative group"
+          :title="store.isTutorialMode ? 'チュートリアルを無効化' : 'チュートリアルを有効化'"
+        >
+          <span v-if="store.isTutorialMode" class="text-xl">🎓</span>
+          <span v-else class="text-xl opacity-50 grayscale">🎓</span>
+          
+          <!-- Tooltip -->
+          <span class="absolute right-0 top-full mt-2 w-max px-2 py-1 bg-black text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            {{ store.isTutorialMode ? 'チュートリアル ON' : 'チュートリアル OFF' }}
+          </span>
+        </button>
       </div>
     </div>
 
@@ -81,12 +97,12 @@ async function onChallenge() {
       
       <!-- Challenge Area -->
       <div class="mb-8 flex flex-col items-center">
-        <h2 class="text-slate-400 uppercase tracking-widest text-sm mb-4">Current Challenge</h2>
+        <h2 class="text-slate-400 uppercase tracking-widest text-sm mb-4">現在の課題</h2>
         <div v-if="store.currentChallenge" class="transform scale-110">
           <CardComponent :card="store.currentChallenge" />
         </div>
         <div v-else class="w-48 h-72 border-2 border-dashed border-slate-600 rounded-xl flex items-center justify-center bg-slate-800/50">
-          <span class="text-slate-500">No Active Challenge</span>
+          <span class="text-slate-500">課題なし</span>
         </div>
       </div>
 
@@ -102,7 +118,7 @@ async function onChallenge() {
           @click="onDraw"
           class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-lg transition-colors flex items-center"
         >
-          Draw Card
+          カードを引く
         </button>
         
         <button 
@@ -110,7 +126,7 @@ async function onChallenge() {
           @click="onChallenge"
           class="px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg font-bold shadow-lg transition-colors"
         >
-          Start Challenge
+          課題に取り組む
         </button>
 
         <button 
@@ -118,7 +134,7 @@ async function onChallenge() {
           @click="store.resolveChallenge()"
           class="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold shadow-lg transition-colors"
         >
-          Resolve Challenge
+          課題を解決する
         </button>
 
         <button 
@@ -126,14 +142,14 @@ async function onChallenge() {
           @click="onEndTurn"
           class="px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold shadow-lg transition-colors"
         >
-          End Turn
+          ターン終了
         </button>
       </div>
 
       <!-- Insurance Selection Overlay -->
       <div v-if="store.insuranceTypeChoices && store.insuranceTypeChoices.length > 0" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-8">
         <div class="bg-white rounded-xl p-8 max-w-4xl w-full">
-          <h2 class="text-2xl font-bold text-gray-800 mb-4">Choose Insurance</h2>
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">保険を選択</h2>
           <div class="grid grid-cols-3 gap-4">
             <div 
               v-for="choice in store.insuranceTypeChoices" 
@@ -171,5 +187,8 @@ async function onChallenge() {
       <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
       <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
     </div>
+
+    <!-- Tutorial Overlay -->
+    <TutorialOverlay />
   </div>
 </template>
