@@ -252,6 +252,7 @@ defineExpose({
   background: linear-gradient(135deg, var(--primary-400), var(--secondary-400));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity var(--transition-normal);
@@ -263,8 +264,9 @@ defineExpose({
 
 /* アニメーション */
 .bounce-in {
-  animation: bounce-in 0.8s ease-out forwards;
-  opacity: 0;
+  animation: bounce-in 0.8s ease-out both;
+  /* フォールバック: アニメーションがサポートされない場合は表示 */
+  opacity: 1;
 }
 
 @keyframes bounce-in {
@@ -338,10 +340,10 @@ defineExpose({
 @media (prefers-reduced-motion: reduce) {
   .btn,
   .bounce-in {
-    transition: none;
-    animation: none;
-    opacity: 1;
-    transform: none;
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
   
   .btn:hover {

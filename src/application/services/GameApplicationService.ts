@@ -3,7 +3,10 @@ import type { Card } from '../../domain/entities/Card'
 import { Challenge } from '../../domain/aggregates/challenge'
 import { Insurance } from '../../domain/aggregates/insurance'
 import type { ChallengeResult } from '../../domain/aggregates/challenge/types'
-import type { DomainEvent } from '../../domain/aggregates/challenge/events'
+import type { DomainEvent as ChallengeEvent } from '../../domain/aggregates/challenge/events'
+import { InsuranceUsedEvent, type DomainEvent as InsuranceEvent } from '../../domain/aggregates/insurance/events'
+
+type DomainEvent = ChallengeEvent | InsuranceEvent
 // import { Vitality } from '../../domain/valueObjects/Vitality' // 未使用のためコメントアウト
 import type { InsurancePremium } from '../../domain/valueObjects/InsurancePremium'
 
@@ -14,14 +17,14 @@ import type { InsurancePremium } from '../../domain/valueObjects/InsurancePremiu
  * このサービスはドメインロジックを含まず、純粋に集約の調整のみを行います。
  */
 export class GameApplicationService {
-  private currentChallenge?: Challenge
+  private currentChallenge: Challenge | undefined
   private readonly activeInsurances: Map<string, Insurance> = new Map()
   private domainEvents: DomainEvent[] = []
 
   constructor(
     private readonly game: Game,
     private readonly eventPublisher?: (event: DomainEvent) => void
-  ) {}
+  ) { }
 
   /**
    * ゲームを開始
@@ -29,7 +32,7 @@ export class GameApplicationService {
   startGame(): void {
     this.game.start()
     // テスト期待値に合わせてフェーズを準備段階に設定
-    this.game.phase = 'preparation'
+    this.game.phase = 'setup'
   }
 
   /**
@@ -42,10 +45,10 @@ export class GameApplicationService {
 
     // Game集約でフェーズを更新
     this.game.startChallenge(challengeCard)
-    
+
     // Challenge集約を作成
     this.currentChallenge = Challenge.create(challengeCard)
-    
+
     return this.currentChallenge
   }
 
@@ -83,7 +86,7 @@ export class GameApplicationService {
 
     // チャレンジを解決
     const result = this.currentChallenge.resolve()
-    
+
     // ダメージ処理
     if (!result.isSuccess()) {
       const damage = result.calculateDamage()
@@ -92,7 +95,7 @@ export class GameApplicationService {
 
     // チャレンジをクリア
     this.currentChallenge = undefined
-    
+
     // Game集約に結果を反映
     this.game.recordChallengeResult(
       result.getTotalPower().getValue(),
@@ -108,14 +111,14 @@ export class GameApplicationService {
   activateInsurance(insuranceCard: Card): Insurance {
     const insurance = Insurance.create(insuranceCard)
     this.activeInsurances.set(insurance.getId().getValue(), insurance)
-    
+
     // 保険料負担を更新
     this.updateInsuranceBurden()
-    
+
     const events = insurance.getUncommittedEvents()
-    this.publishEvents(events)
+    this.publishEvents([...events])
     insurance.markEventsAsCommitted()
-    
+
     return insurance
   }
 
@@ -124,19 +127,23 @@ export class GameApplicationService {
    */
   private applyDamageWithInsurance(damage: number): void {
     let remainingDamage = damage
-    
+
     // アクティブな保険でダメージを吸収
     for (const insurance of this.activeInsurances.values()) {
       if (remainingDamage <= 0 || !insurance.isActive()) continue
-      
+
       const events = insurance.use(remainingDamage)
       if (events.length > 0) {
-        const absorbed = events[0].damageAbsorbed
+        const event = events[0]
+        let absorbed = 0
+        if (event instanceof InsuranceUsedEvent) {
+          absorbed = event.damageAbsorbed
+        }
         remainingDamage -= absorbed
         this.publishEvents(events)
       }
     }
-    
+
     // 残りのダメージをゲームに適用
     if (remainingDamage > 0) {
       this.game.applyDamage(remainingDamage)
@@ -151,16 +158,16 @@ export class GameApplicationService {
     for (const insurance of this.activeInsurances.values()) {
       const events = insurance.decrementTurn()
       this.publishEvents(events)
-      
+
       // 期限切れの保険を削除
       if (insurance.isExpired()) {
         this.activeInsurances.delete(insurance.getId().getValue())
       }
     }
-    
+
     // 保険料負担を更新
     this.updateInsuranceBurden()
-    
+
     // ゲームのターンを進める
     this.game.nextTurn()
   }
@@ -177,10 +184,10 @@ export class GameApplicationService {
         premiums.push(adjustedPremium)
       }
     }
-    
+
     // 合計保険料を計算
-    // const totalPremium = InsurancePremium.sum(premiums) // TODO: 将来的に実装
-    
+    // const totalPremium = InsurancePremium.sum(premiums)
+
     // Game集約に反映（簡略化のため、直接設定）
     // 本来はGame集約のメソッドを通じて更新すべき
   }

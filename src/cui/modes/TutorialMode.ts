@@ -27,10 +27,10 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
   override async initialize(): Promise<void> {
     await super.initialize()
 
-    console.log(chalk.bold.green('🎓 TUTORIAL MODE ACTIVATED'))
+    console.log(chalk.bold.green('🎓 チュートリアルモード開始'))
     console.log(chalk.gray('═'.repeat(50)))
-    console.log(chalk.blue('Welcome to the Life Enrichment Game Tutorial!'))
-    console.log(chalk.gray('I\'ll guide you through each step of the gameplay.\n'))
+    console.log(chalk.blue('人生充実ゲームのチュートリアルへようこそ！'))
+    console.log(chalk.gray('ゲームプレイの各ステップを案内します。\n'))
 
     await this.showTutorialIntroduction()
   }
@@ -50,7 +50,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
     }
 
     // Show cards with detailed explanations
-    console.log('\n' + chalk.bold.blue('🃏 Available Cards:'))
+    console.log('\n' + chalk.bold.blue('🃏 利用可能なカード：'))
     console.log(chalk.gray('─'.repeat(40)))
 
     cards.forEach((card, index) => {
@@ -97,7 +97,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
       this.explainedConcepts.add('challenge_selection')
     }
 
-    console.log('\n' + chalk.bold.yellow('⚔️ Challenge Selection Tutorial:'))
+    console.log('\n' + chalk.bold.yellow('⚔️ 課題選択 チュートリアル：'))
     console.log(chalk.gray('─'.repeat(40)))
 
     // Analyze simplified
@@ -132,7 +132,7 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
       this.explainedConcepts.add('insurance_renewal')
     }
 
-    console.log('\n' + chalk.bold.cyan('🛡️ Insurance Renewal Tutorial:'))
+    console.log('\n' + chalk.bold.cyan('🛡️ 保険更新 チュートリアル：'))
     console.log(chalk.gray('─'.repeat(40)))
 
     await this.analyzeInsuranceRenewal(insurance, cost)
@@ -148,20 +148,20 @@ export class TutorialModeRenderer extends InteractiveCUIRenderer {
 
   private async explainDreams(): Promise<void> {
     const explanationText = `
-🌠 DREAM SELECTION TUTORIAL
+🌠 夢の選択 チュートリアル
 
-Dreams represent your ultimate life goals.
-This choice defines your victory condition and special bonuses.
+夢はあなたの人生の究極の目標を表します。
+この選択は勝利条件と特別なボーナスを決定します。
 
-Types of Dreams:
-• 🏃 Physical: Focus on health and activity
-• 🧠 Intellectual: Focus on knowledge and career
-• ⚖️ Mixed: Balanced approach to life
+夢の種類：
+• 🏃 身体的：健康と活動に重点
+• 🧠 知的：知識とキャリアに重点
+• ⚖️ 複合：バランスの取れた人生
 
-Your Dream card provides a passive bonus throughout the game!
+選択した夢カードは、ゲーム全体を通してパッシブボーナスを提供します！
 `
     const explanationBox = boxen(explanationText.trim(), {
-      title: '🎓 Choosing Your Dream',
+      title: '🎓 夢を選ぼう',
       titleAlignment: 'center',
       padding: 1,
       borderStyle: 'round',
@@ -173,23 +173,23 @@ Your Dream card provides a passive bonus throughout the game!
   }
 
   private async explainDreamChoice(selectedDream: Card): Promise<void> {
-    console.log(chalk.green(`\n✨ Excellent Choice! You selected: ${selectedDream.name}`))
-    console.log(chalk.dim('This dream will guide your journey and provide helpful bonuses.'))
+    console.log(chalk.green(`\n✨ 素晴らしい選択です！あなたは「${selectedDream.name}」を選びました。`))
+    console.log(chalk.dim('この夢はあなたの旅を導き、役立つボーナスをもたらすでしょう。'))
   }
 
   private async explainChallengeSelection(challenges: Card[]): Promise<void> {
     const explanationText = `
-⚔️ CHALLENGE SELECTION TUTORIAL
+⚔️ 課題選択 チュートリアル
 
-In each turn, you are presented with options for your next challenge.
-You must choose ONE to face.
+各ターン、次に直面する課題の選択肢が提示されます。
+その中から1つを選んで挑戦しなければなりません。
 
-Consider:
-• 📊 Power Requirement: Can your hand cover it?
-• 🎁 Reward: What do you get for success?
-• ☠️ Risk: What is the penalty for failure?
+考慮事項：
+• 📊 必要パワー：手札でカバーできますか？
+• 🎁 報酬：成功すると何が得られますか？
+• ☠️ リスク：失敗した場合のペナルティは？
 
-Choose wisely! The path you pick shapes your destiny.
+賢明な選択を！選んだ道があなたの運命を形作ります。
 `
     // Use challenges for context if needed, currently generic
     if (challenges.length > 0) {
@@ -197,7 +197,7 @@ Choose wisely! The path you pick shapes your destiny.
     }
 
     const explanationBox = boxen(explanationText.trim(), {
-      title: '🎓 Selecting a Challenge',
+      title: '🎓 課題の選択',
       titleAlignment: 'center',
       padding: 1,
       borderStyle: 'round',
@@ -210,26 +210,26 @@ Choose wisely! The path you pick shapes your destiny.
 
   private async showTutorialIntroduction(): Promise<void> {
     const introText = `
-🎮 Welcome to the Life Enrichment Game!
+🎮 人生充実ゲームへようこそ！
 
-This game simulates life's journey through different stages:
-• 🌱 Youth - Building foundations
-• 💪 Adult - Facing challenges
-• 👔 Middle Age - Managing responsibilities
-• 👴 Elderly - Enjoying wisdom
+このゲームは、さまざまなライフステージを通じた人生の旅をシミュレートします：
+• 🌱 青年期 - 基礎を築く
+• 💪 壮年期 - 課題に立ち向かう
+• 👔 中年期 - 責任を管理する
+• 👴 高齢期 - 知恵を楽しむ
 
-Your goal is to navigate challenges, make smart decisions,
-and build a fulfilling life while managing your vitality.
+目的は、課題を乗り越え、賢明な判断を下し、
+活力を管理しながら充実した人生を築くことです。
 
-Key Concepts:
-• ❤️ Vitality: Your life energy (health, motivation)
-• 🃏 Cards: Represent life skills and experiences
-• ⚔️ Challenges: Life obstacles to overcome
-• 🛡️ Insurance: Protection against setbacks
+重要な概念：
+• ❤️ 活力（Vitality）：生命エネルギー（健康、意欲）
+• 🃏 カード：人生のスキルや経験
+• ⚔️ 課題：克服すべき人生の障害
+• 🛡️ 保険：不測の事態への備え
 `
 
     const tutorialBox = boxen(introText.trim(), {
-      title: '🎓 Game Overview',
+      title: '🎓 ゲーム概要',
       titleAlignment: 'center',
       padding: 1,
       margin: 1,
@@ -244,25 +244,25 @@ Key Concepts:
 
   private async explainCardSelection(_cards: Card[], minSelection: number, maxSelection: number): Promise<void> {
     const explanationText = `
-🃏 CARD SELECTION TUTORIAL
+🃏 カード選択 チュートリアル
 
-Cards represent your life skills, experiences, and resources.
-Each card has different properties:
+カードはあなたの人生のスキル、経験、リソースを表します。
+各カードには異なる特性があります：
 
-• 💪 Power: How much this card helps in challenges
-• 💰 Cost: Vitality required to use this card
-• 🏷️ Category: What aspect of life this represents
+• 💪 パワー：課題に対してどれだけ役立つか
+• 💰 コスト：カードを使用するために必要な活力
+• 🏷️ カテゴリ：人生のどの側面を表しているか
 
-Selection Rules:
-• You must select ${minSelection === maxSelection ? 'exactly' : 'between'} ${minSelection}${minSelection !== maxSelection ? `-${maxSelection}` : ''} card(s)
-• Higher power cards are usually better for challenges
-• Consider the cost - don't exhaust your vitality!
+選択ルール：
+• ${minSelection === maxSelection ? '正確に' : ''} ${minSelection}${minSelection !== maxSelection ? `〜${maxSelection}` : ''}枚のカードを選択してください
+• パワーの高いカードは通常、課題に対して有利です
+• コストを考慮してください - 活力を使い果たさないように！
 
-💡 Strategy Tip: Balance high-power cards with your current vitality.
+💡 戦略のヒント：高いパワーと現在の活力のバランスを取りましょう。
 `
 
     const explanationBox = boxen(explanationText.trim(), {
-      title: '🎓 How to Select Cards',
+      title: '🎓 カードの選び方',
       titleAlignment: 'center',
       padding: 1,
       borderStyle: 'round',
@@ -296,29 +296,29 @@ Selection Rules:
 
   private async explainInsuranceTypes(_availableTypes: ('whole_life' | 'term')[]): Promise<void> {
     const explanationText = `
-🛡️ INSURANCE TUTORIAL
+🛡️ 保険 チュートリアル
 
-Insurance protects you from life's setbacks and provides
-additional power for challenges.
+保険は人生の挫折からあなたを守り、
+課題に対して追加のパワーを提供します。
 
-Types Available:
+利用可能な種類：
 
-🛡️ Whole Life Insurance:
-• Permanent protection throughout life
-• Higher cost but lasting benefits
-• Provides consistent power bonus
+🛡️ 終身保険：
+• 生涯にわたる永続的な保障
+• コストは高いが、利益が長く続く
+• 一貫したパワーボーナスを提供
 
-⏳ Term Insurance:
-• Temporary protection for specific periods
-• Lower cost but must be renewed
-• May become more expensive over time
+⏳ 定期保険：
+• 特定の期間のみの一時的な保障
+• コストは低いが、更新が必要
+• 時間とともに高くなる可能性がある
 
-💡 Strategy Tip: Whole life is more stable, term is more flexible.
-Choose based on your current situation and long-term plans.
+💡 戦略のヒント：終身保険は安定的、定期保険は柔軟です。
+現在の状況と長期的な計画に基づいて選びましょう。
 `
 
     const explanationBox = boxen(explanationText.trim(), {
-      title: '🎓 Insurance Types Explained',
+      title: '🎓 保険の種類について',
       titleAlignment: 'center',
       padding: 1,
       borderStyle: 'round',
@@ -331,32 +331,32 @@ Choose based on your current situation and long-term plans.
 
   private async explainInsuranceRenewal(): Promise<void> {
     const explanationText = `
-🔄 INSURANCE RENEWAL TUTORIAL
+🔄 保険更新 チュートリアル
 
-As you age, insurance becomes more expensive to maintain.
-Each turn, you must decide whether to:
+年齢を重ねるにつれて、保険の維持費は高くなります。
+各ターン、以下の決定をする必要があります：
 
-💰 Renew:
-• Pay the renewal cost (vitality)
-• Keep the insurance protection
-• Maintain power bonuses for challenges
+💰 更新する：
+• 更新料（活力）を支払う
+• 保険の保障を維持する
+• 課題ボーナスを維持する
 
-❌ Let Expire:
-• Save the renewal cost
-• Lose insurance protection
-• May be harder to get insurance later
+❌ 失効させる：
+• 更新料を節約する
+• 保険の保障を失う
+• 後で再加入するのが難しくなる可能性がある
 
-Factors to Consider:
-• Current vitality level
-• Upcoming challenges
-• Age-related cost increases
-• Alternative protection options
+考慮すべき要素：
+• 現在の活力レベル
+• 今後の課題
+• 年齢によるコスト増加
+• 代わりの保障オプション
 
-💡 Strategy Tip: Renewal costs increase with age, so plan ahead!
+💡 戦略のヒント：更新料は年齢とともに増加するので、先を見越して計画しましょう！
 `
 
     const explanationBox = boxen(explanationText.trim(), {
-      title: '🎓 Insurance Renewal Guide',
+      title: '🎓 保険更新ガイド',
       titleAlignment: 'center',
       padding: 1,
       borderStyle: 'round',
@@ -368,38 +368,38 @@ Factors to Consider:
   }
 
   private async analyzeChallenge(challenge: Card): Promise<void> {
-    console.log(chalk.bold.blue('📊 Challenge Analysis:'))
-    console.log(`  Name: ${challenge.name}`)
-    console.log(`  Required Power: ${chalk.red(challenge.power || 0)}`)
+    console.log(chalk.bold.blue('📊 課題分析：'))
+    console.log(`  名前：${challenge.name}`)
+    console.log(`  必要パワー：${chalk.red(challenge.power || 0)}`)
 
     if (challenge.description) {
-      console.log(`  Description: ${chalk.gray(challenge.description)}`)
+      console.log(`  説明：${chalk.gray(challenge.description)}`)
     }
 
     // Provide strategic advice
     const powerRequired = challenge.power || 0
     if (powerRequired <= 3) {
-      console.log(chalk.green('  💡 This looks like an easy challenge!'))
+      console.log(chalk.green('  💡 これは簡単な課題のようです！'))
     } else if (powerRequired <= 6) {
-      console.log(chalk.yellow('  💡 This is a moderate challenge. Choose your cards wisely.'))
+      console.log(chalk.yellow('  💡 これは中程度の課題です。カードを慎重に選びましょう。'))
     } else {
-      console.log(chalk.red('  💡 This is a difficult challenge. Make sure you have strong cards!'))
+      console.log(chalk.red('  💡 これは難しい課題です。強力なカードを用意してください！'))
     }
   }
 
   private async analyzeInsuranceRenewal(insurance: Card, cost: number): Promise<void> {
-    console.log(chalk.bold.blue('📊 Renewal Analysis:'))
-    console.log(`  Insurance: ${insurance.name}`)
-    console.log(`  Renewal Cost: ${chalk.yellow(cost)} vitality`)
-    console.log(`  Insurance Type: ${insurance.type}`)
+    console.log(chalk.bold.blue('📊 更新分析：'))
+    console.log(`  保険：${insurance.name}`)
+    console.log(`  更新料：活力 ${chalk.yellow(cost)}`)
+    console.log(`  保険タイプ：${insurance.type}`)
 
     // Provide strategic advice
     if (cost <= 2) {
-      console.log(chalk.green('  💡 Very affordable renewal - generally worth keeping'))
+      console.log(chalk.green('  💡 とても手頃な更新料です - 更新する価値があります'))
     } else if (cost <= 4) {
-      console.log(chalk.yellow('  💡 Moderate cost - consider your current vitality'))
+      console.log(chalk.yellow('  💡 中程度のコストです - 現在の活力を考慮しましょう'))
     } else {
-      console.log(chalk.red('  💡 Expensive renewal - carefully weigh the benefits'))
+      console.log(chalk.red('  💡 高額な更新料です - 利益を慎重に検討しましょう'))
     }
   }
 
@@ -408,59 +408,59 @@ Factors to Consider:
     const cost = card.cost || 0
 
     if (power >= 5) {
-      return 'Strong card - great for difficult challenges'
+      return '強力なカード - 難しい課題に最適です'
     } else if (power >= 3) {
-      return 'Balanced card - good for most situations'
+      return 'バランスの取れたカード - 多くの状況で役立ちます'
     } else if (power >= 1) {
-      return 'Basic card - useful for easy challenges'
+      return '基本カード - 簡単な課題に使えます'
     } else if (cost === 0) {
-      return 'Free to use - no vitality cost'
+      return 'コストなし - 活力を使わずに使用できます'
     } else {
-      return 'Consider the power-to-cost ratio'
+      return 'パワーとコストの比率を考慮しましょう'
     }
   }
 
   private async explainCardChoice(selectedCards: Card[]): Promise<void> {
-    console.log('\n' + chalk.green('✅ Good choice! Let me explain why:'))
+    console.log('\n' + chalk.green('✅ 良い選択です！理由を説明しましょう：'))
 
     const totalPower = selectedCards.reduce((sum, card) => sum + (card.power || 0), 0)
     const totalCost = selectedCards.reduce((sum, card) => sum + (card.cost || 0), 0)
 
-    console.log(chalk.cyan(`  Total Power: ${totalPower}`))
-    console.log(chalk.yellow(`  Total Cost: ${totalCost}`))
+    console.log(chalk.cyan(`  合計パワー：${totalPower}`))
+    console.log(chalk.yellow(`  合計コスト：${totalCost}`))
 
     if (totalPower > totalCost) {
-      console.log(chalk.green('  💡 Great value! You get more power than you spend.'))
+      console.log(chalk.green('  💡 お得です！使用する活力以上のパワーを得られます。'))
     } else if (totalPower === totalCost) {
-      console.log(chalk.blue('  💡 Balanced choice - fair trade of vitality for power.'))
+      console.log(chalk.blue('  💡 バランスが良い - 活力とパワーの等価交換です。'))
     } else {
-      console.log(chalk.red('  💡 Expensive choice - make sure the challenge is worth it.'))
+      console.log(chalk.red('  💡 高コスト - 課題に見合う価値があるか確認しましょう。'))
     }
   }
 
   private async explainInsuranceTypeChoice(choice: 'whole_life' | 'term'): Promise<void> {
     if (choice === 'whole_life') {
-      console.log(chalk.blue('\n🛡️ You chose Whole Life Insurance!'))
-      console.log(chalk.green('  ✅ Permanent protection'))
-      console.log(chalk.green('  ✅ Stable costs'))
-      console.log(chalk.red('  ❌ Higher initial cost'))
+      console.log(chalk.blue('\n🛡️ 終身保険を選びました！'))
+      console.log(chalk.green('  ✅ 永続的な保障'))
+      console.log(chalk.green('  ✅ 安定したコスト'))
+      console.log(chalk.red('  ❌ 初期のコストが高い'))
     } else {
-      console.log(chalk.blue('\n⏳ You chose Term Insurance!'))
-      console.log(chalk.green('  ✅ Lower initial cost'))
-      console.log(chalk.green('  ✅ Flexibility to change'))
-      console.log(chalk.red('  ❌ Costs may increase with age'))
+      console.log(chalk.blue('\n⏳ 定期保険を選びました！'))
+      console.log(chalk.green('  ✅ 初期のコストが低い'))
+      console.log(chalk.green('  ✅ 変更の柔軟性がある'))
+      console.log(chalk.red('  ❌ 年齢とともにコストが増加する'))
     }
   }
 
   private async explainRenewalChoice(insurance: Card, cost: number, decision: 'renew' | 'expire'): Promise<void> {
     if (decision === 'renew') {
-      console.log(chalk.green(`\n💰 You chose to renew ${insurance.name}!`))
-      console.log(chalk.blue('  This maintains your protection and challenge bonuses.'))
-      console.log(chalk.gray(`  Cost: ${cost} vitality`))
+      console.log(chalk.green(`\n💰 「${insurance.name}」を更新しました！`))
+      console.log(chalk.blue('  これにより、保障と課題ボーナスが維持されます。'))
+      console.log(chalk.gray(`  コスト：活力 ${cost}`))
     } else {
-      console.log(chalk.yellow(`\n❌ You let ${insurance.name} expire.`))
-      console.log(chalk.blue('  This saves vitality but removes protection.'))
-      console.log(chalk.gray('  Consider getting new insurance if you can afford it later.'))
+      console.log(chalk.yellow(`\n❌ 「${insurance.name}」を失効させました。`))
+      console.log(chalk.blue('  活力を節約できますが、保障はなくなります。'))
+      console.log(chalk.gray('  後で余裕ができたら、新しい保険への加入を検討してください。'))
     }
   }
 
@@ -469,7 +469,7 @@ Factors to Consider:
       {
         type: 'confirm',
         name: 'continue',
-        message: 'Press Enter to continue...',
+        message: 'Enterキーを押して続行...',
         default: true
       }
     ])
@@ -482,7 +482,7 @@ Factors to Consider:
 
     // Add tutorial context for certain messages
     if (message.includes('獲得') && !this.explainedConcepts.has('card_rewards')) {
-      console.log(chalk.dim('💡 Tutorial: You earned a new card! This expands your options for future challenges.'))
+      console.log(chalk.dim('💡 チュートリアル：新しいカードを獲得しました！これにより、今後の課題に対する選択肢が広がります。'))
       this.explainedConcepts.add('card_rewards')
     }
   }
@@ -492,12 +492,12 @@ Factors to Consider:
 
     // Add tutorial explanations for results
     if (result.success && !this.explainedConcepts.has('success_explanation')) {
-      console.log(chalk.dim('\n💡 Tutorial: Success! Your card power exceeded the challenge requirement.'))
-      console.log(chalk.dim('This boosts your vitality and may provide additional rewards.'))
+      console.log(chalk.dim('\n💡 チュートリアル：成功！カードのパワーが課題の要件を上回りました。'))
+      console.log(chalk.dim('これにより活力が向上し、追加の報酬が得られる可能性があります。'))
       this.explainedConcepts.add('success_explanation')
     } else if (!result.success && !this.explainedConcepts.has('failure_explanation')) {
-      console.log(chalk.dim('\n💡 Tutorial: Challenge failed. Your card power was insufficient.'))
-      console.log(chalk.dim('Failure reduces vitality, but you learn from the experience.'))
+      console.log(chalk.dim('\n💡 チュートリアル：課題失敗。カードのパワーが不足していました。'))
+      console.log(chalk.dim('失敗すると活力が減少しますが、経験から学ぶことができます。'))
       this.explainedConcepts.add('failure_explanation')
     }
   }
@@ -507,29 +507,29 @@ Factors to Consider:
    */
   async showHelp(): Promise<void> {
     const helpText = `
-🎓 TUTORIAL HELP
+🎓 チュートリアルヘルプ
 
-Commands you can use:
-• Answer prompts with numbers or text as requested
-• Use 'help' anytime to see this message
-• Use 'explain <concept>' for specific explanations
+使用可能なコマンド：
+• 要求に応じて数字またはテキストで回答してください
+• 「help」と入力すると、通常いつでもこのメッセージを表示できます
+• 「explain <項目>」で特定の項目の説明を表示します（実装されている場合）
 
-Key Concepts:
-• vitality: Your life energy and health
-• power: Strength for overcoming challenges  
-• cost: Vitality required to use cards
-• insurance: Protection and bonus power
-• stages: Different phases of life
+重要な概念：
+• 活力 (vitality)：生命エネルギーと健康
+• パワー (power)：課題を克服するための強さ
+• コスト (cost)：カードを使用するために必要な活力
+• 保険 (insurance)：保護とボーナスパワー
+• ステージ (stages)：人生のさまざまな段階
 
-Strategy Tips:
-• Don't exhaust all your vitality at once
-• Balance risk and reward in challenges
-• Insurance is an investment in your future
-• Learn from both successes and failures
+戦略のヒント：
+• 一度にすべての活力を使い果たさないようにしましょう
+• 課題のリスクと報酬のバランスを考えましょう
+• 保険は未来への投資です
+• 成功と失敗の両方から学びましょう
 `
 
     const helpBox = boxen(helpText.trim(), {
-      title: '🆘 Tutorial Help',
+      title: '🆘 チュートリアルヘルプ',
       titleAlignment: 'center',
       padding: 1,
       borderStyle: 'double',

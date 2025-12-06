@@ -49,6 +49,7 @@ export interface ICardService {
   drawCards(gameId: GameId, count: number): Promise<CardDto[]>
   shuffleDeck(gameId: GameId): Promise<void>
   validateCardPlay(gameId: GameId, cardIds: string[]): Promise<boolean>
+  playCards(gameId: GameId, cardIds: string[]): Promise<void>
 }
 
 /**

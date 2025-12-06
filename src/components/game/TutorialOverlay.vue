@@ -10,28 +10,28 @@ const explainedTopics = ref(new Set<string>())
 
 const explanations: Record<string, { title: string; content: string; icon: string }> = {
   dream_selection: {
-    title: 'Choose Your Dream',
-    content: 'Dreams represent your ultimate life goals. This choice defines your victory condition and provides passive bonuses throughout the game. Choose the one that matches your playstyle!',
+    title: '夢を選ぼう',
+    content: '人生の目標となる「夢」を選んでください。これは勝利条件となり、ゲーム中にボーナスをもたらします。自分のプレイスタイルに合ったものを選びましょう！',
     icon: '🌠'
   },
   draw: {
-    title: 'Draw Phase',
-    content: 'Start your turn by drawing cards to fill your hand. Your cards represent your life skills, resources, and experiences. Use them to overcome challenges!',
+    title: 'ドローフェーズ',
+    content: '手札を補充してターンを開始します。カードはあなたの生活スキル、リソース、経験を表します。これらを使って課題を克服しましょう！',
     icon: '🃏'
   },
   challenge_phase: { // v2 phase name
-    title: 'Challenge Phase',
-    content: 'Life is full of challenges. You must select one challenge to face this turn. Look at the Power requirement and the Reward. Weigh the risks carefully!',
+    title: '課題フェーズ',
+    content: '人生は試練の連続です。立ち向かう課題を1つ選んでください。必要パワーと報酬を確認し、リスクを見極めましょう！',
     icon: '⚔️'
   },
   challenge_resolution: { // logic for resolving
-    title: 'Resolving Challenges',
-    content: 'Select cards from your hand to meet the Power requirement of the challenge. Be careful not to spend too much Vitality (Cost). If your elected cards have enough Power, you succeed!',
+    title: '課題の解決',
+    content: '手札からカードを選んで、課題の必要パワーを満たしてください。活力（コスト）の使いすぎに注意！十分なパワーがあれば成功です！',
     icon: '💪'
   },
   insurance_phase: {
-    title: 'Insurance Phase',
-    content: 'Insurance protects you from life\'s setbacks. You can purchase insurance to gain protection and bonuses. It costs Vitality but can save you in the long run.',
+    title: '保険フェーズ',
+    content: '保険は人生の不測の事態に備えるものです。活力を消費して保険に加入することで、守りとボーナスを得られます。将来のリスクを軽減しましょう。',
     icon: '🛡️'
   }
 }
@@ -113,13 +113,13 @@ function disableTutorial() {
             @click="disableTutorial"
             class="text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
-            Don't show hints
+            ヒントを表示しない
           </button>
           <button 
             @click="dismiss"
             class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-sm font-semibold rounded-lg shadow-lg shadow-blue-500/20 transition-all transform hover:scale-105"
           >
-            Got it
+            わかった
           </button>
         </div>
       </div>

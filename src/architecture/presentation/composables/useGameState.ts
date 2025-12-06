@@ -1,7 +1,7 @@
-import { computed, type ComputedRef, readonly, type Ref, ref, watch } from 'vue'
-import type { GameAggregate} from '../../domain/aggregates/GameAggregate';
-import { GameId, GamePhase, GameStatus, Vitality } from '../../domain/aggregates/GameAggregate'
-import type { CommandBus} from '../../application/commands/GameCommands';
+import { computed, type ComputedRef, type Ref, ref, watch } from 'vue'
+import type { GameAggregate } from '../../domain/aggregates/GameAggregate';
+import { GameId, GamePhase, GameStatus } from '../../domain/aggregates/GameAggregate'
+import type { CommandBus, Command } from '../../application/commands/GameCommands';
 import { ApplyDamageCommand, HealCommand, StartGameCommand } from '../../application/commands/GameCommands'
 import type { IEventPublisher, IGameRepository } from '../../application/services/interfaces'
 
@@ -60,20 +60,20 @@ export interface GameConfiguration {
 export interface UseGameStateReturn {
   // Reactive state (readonly)
   state: ComputedRef<GameState>
-  
+
   // Computed properties
   canStartGame: ComputedRef<boolean>
   canPauseGame: ComputedRef<boolean>
   canResumeGame: ComputedRef<boolean>
   healthStatus: ComputedRef<'critical' | 'low' | 'good' | 'excellent'>
-  
+
   // Actions
   actions: GameActions
-  
+
   // Loading and error states
   isLoading: Ref<boolean>
   error: Ref<string | null>
-  
+
   // Event handlers
   onGameEvent: (callback: (event: GameEvent) => void) => () => void
 }
@@ -96,26 +96,26 @@ export function useGameState(
   eventPublisher: IEventPublisher,
   commandBus: CommandBus
 ): UseGameStateReturn {
-  
+
   // ============================================================================
   // REACTIVE STATE
   // ============================================================================
-  
+
   const currentGame = ref<GameAggregate | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const eventCallbacks = ref<((event: GameEvent) => void)[]>([])
-  
+
   // ============================================================================
   // COMPUTED STATE
   // ============================================================================
-  
+
   /**
    * Computed game state for UI consumption
    */
   const state = computed<GameState>(() => {
     const game = currentGame.value
-    
+
     if (!game) {
       return {
         id: null,
@@ -129,51 +129,51 @@ export function useGameState(
         vitalityPercentage: 0
       }
     }
-    
+
     return {
       id: game.id.getValue(),
       status: game.status,
       phase: game.phase,
       vitality: game.vitality.getValue(),
-      maxVitality: game.vitality.getValue(), // TODO: Get max from vitality object
+      maxVitality: game.vitality.getValue(),
       currentTurn: game.currentTurn,
       isActive: game.isActive(),
       isFinished: game.isFinished(),
       vitalityPercentage: game.vitality.getPercentage()
     }
   })
-  
+
   /**
    * Game action conditions
    */
-  const canStartGame = computed(() => 
+  const canStartGame = computed(() =>
     !currentGame.value || currentGame.value.status === GameStatus.NOT_STARTED
   )
-  
-  const canPauseGame = computed(() => 
+
+  const canPauseGame = computed(() =>
     currentGame.value?.status === GameStatus.IN_PROGRESS
   )
-  
-  const canResumeGame = computed(() => 
+
+  const canResumeGame = computed(() =>
     currentGame.value?.status === GameStatus.PAUSED
   )
-  
+
   /**
    * Health status indicator
    */
   const healthStatus = computed<'critical' | 'low' | 'good' | 'excellent'>(() => {
     const percentage = state.value.vitalityPercentage
-    
+
     if (percentage <= 10) return 'critical'
     if (percentage <= 30) return 'low'
     if (percentage <= 70) return 'good'
     return 'excellent'
   })
-  
+
   // ============================================================================
   // ACTIONS
   // ============================================================================
-  
+
   /**
    * Start a new game
    */
@@ -181,27 +181,27 @@ export function useGameState(
     try {
       isLoading.value = true
       error.value = null
-      
+
       const command = new StartGameCommand({
         difficulty: config.difficulty,
         startingVitality: config.startingVitality ?? 100,
         maxHandSize: config.maxHandSize ?? 7,
         turnsPerStage: config.turnsPerStage ?? 10
-      })
-      
+      }) as unknown as Command
+
       const result = await commandBus.dispatch(command)
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Failed to start game')
       }
-      
+
       // Refresh the current game state
       if (result.data?.gameId) {
         await loadGame(GameId.fromString(result.data.gameId))
       }
-      
+
       emitEvent('gameStarted', { gameId: result.data?.gameId })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Unknown error occurred'
       throw err
@@ -209,7 +209,7 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Pause the current game
    */
@@ -217,16 +217,16 @@ export function useGameState(
     if (!currentGame.value) {
       throw new Error('No active game to pause')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       currentGame.value.pause()
-      await gameRepository.save(currentGame.value)
-      
+      await gameRepository.save(currentGame.value as GameAggregate)
+
       emitEvent('gamePaused', { gameId: currentGame.value.id.getValue() })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to pause game'
       throw err
@@ -234,7 +234,7 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Resume the current game
    */
@@ -242,16 +242,16 @@ export function useGameState(
     if (!currentGame.value) {
       throw new Error('No paused game to resume')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       currentGame.value.resume()
-      await gameRepository.save(currentGame.value)
-      
+      await gameRepository.save(currentGame.value as GameAggregate)
+
       emitEvent('gameResumed', { gameId: currentGame.value.id.getValue() })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to resume game'
       throw err
@@ -259,7 +259,7 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   /**
    * End the current game
    */
@@ -267,26 +267,26 @@ export function useGameState(
     if (!currentGame.value) {
       throw new Error('No active game to end')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       if (reason === 'victory') {
         currentGame.value.complete()
       } else {
         // For other reasons, we might need different handling
         currentGame.value.complete() // Simplification for now
       }
-      
-      await gameRepository.save(currentGame.value)
-      
-      emitEvent('gameEnded', { 
+
+      await gameRepository.save(currentGame.value as GameAggregate)
+
+      emitEvent('gameEnded', {
         gameId: currentGame.value.id.getValue(),
         reason,
         finalState: state.value
       })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to end game'
       throw err
@@ -294,7 +294,7 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Apply damage to the game
    */
@@ -302,34 +302,34 @@ export function useGameState(
     if (!currentGame.value) {
       throw new Error('No active game')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       const command = new ApplyDamageCommand(
-        currentGame.value.id,
+        currentGame.value.id as unknown as GameId,
         amount,
         'game_action',
         reason
-      )
-      
+      ) as unknown as Command
+
       const result = await commandBus.dispatch(command)
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Failed to apply damage')
       }
-      
+
       // Refresh game state
-      await loadGame(currentGame.value.id)
-      
-      emitEvent('damageApplied', { 
+      await loadGame(currentGame.value.id as unknown as GameId)
+
+      emitEvent('damageApplied', {
         gameId: currentGame.value.id.getValue(),
         amount,
         reason,
         newVitality: state.value.vitality
       })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to apply damage'
       throw err
@@ -337,7 +337,7 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Heal the game
    */
@@ -345,34 +345,34 @@ export function useGameState(
     if (!currentGame.value) {
       throw new Error('No active game')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       const command = new HealCommand(
-        currentGame.value.id,
+        currentGame.value.id as unknown as GameId,
         amount,
         'game_action',
         reason
-      )
-      
+      ) as unknown as Command
+
       const result = await commandBus.dispatch(command)
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Failed to heal')
       }
-      
+
       // Refresh game state
-      await loadGame(currentGame.value.id)
-      
-      emitEvent('healed', { 
+      await loadGame(currentGame.value.id as unknown as GameId)
+
+      emitEvent('healed', {
         gameId: currentGame.value.id.getValue(),
         amount,
         reason,
         newVitality: state.value.vitality
       })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to heal'
       throw err
@@ -380,7 +380,7 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Advance to next turn
    */
@@ -388,19 +388,19 @@ export function useGameState(
     if (!currentGame.value) {
       throw new Error('No active game')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       currentGame.value.nextTurn()
-      await gameRepository.save(currentGame.value)
-      
-      emitEvent('turnAdvanced', { 
+      await gameRepository.save(currentGame.value as GameAggregate)
+
+      emitEvent('turnAdvanced', {
         gameId: currentGame.value.id.getValue(),
         newTurn: currentGame.value.currentTurn
       })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to advance turn'
       throw err
@@ -408,11 +408,11 @@ export function useGameState(
       isLoading.value = false
     }
   }
-  
+
   // ============================================================================
   // HELPER FUNCTIONS
   // ============================================================================
-  
+
   /**
    * Load a game by ID
    */
@@ -422,7 +422,7 @@ export function useGameState(
       currentGame.value = game
     }
   }
-  
+
   /**
    * Emit game events to subscribers
    */
@@ -433,7 +433,7 @@ export function useGameState(
       data,
       timestamp: new Date()
     }
-    
+
     eventCallbacks.value.forEach(callback => {
       try {
         callback(event)
@@ -442,13 +442,13 @@ export function useGameState(
       }
     })
   }
-  
+
   /**
    * Subscribe to game events
    */
   const onGameEvent = (callback: (event: GameEvent) => void): (() => void) => {
     eventCallbacks.value.push(callback)
-    
+
     // Return unsubscribe function
     return () => {
       const index = eventCallbacks.value.indexOf(callback)
@@ -457,11 +457,11 @@ export function useGameState(
       }
     }
   }
-  
+
   // ============================================================================
   // WATCHERS
   // ============================================================================
-  
+
   /**
    * Watch for game over conditions
    */
@@ -476,11 +476,11 @@ export function useGameState(
       }
     }
   )
-  
+
   // ============================================================================
   // RETURN INTERFACE
   // ============================================================================
-  
+
   const actions: GameActions = {
     startGame,
     pauseGame,
@@ -490,13 +490,13 @@ export function useGameState(
     heal,
     nextTurn
   }
-  
+
   return {
-    state: readonly(state),
-    canStartGame: readonly(canStartGame),
-    canPauseGame: readonly(canPauseGame),
-    canResumeGame: readonly(canResumeGame),
-    healthStatus: readonly(healthStatus),
+    state,
+    canStartGame,
+    canPauseGame,
+    canResumeGame,
+    healthStatus,
     actions,
     isLoading,
     error,

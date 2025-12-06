@@ -18,137 +18,137 @@ export class DemoModeRenderer extends InteractiveCUIRenderer {
       confirmActions: false,
       animationSpeed: speed === 'turbo' ? 'fast' : speed
     })
-    
+
     this.demoSpeed = speed
     this.demoStrategy = new SmartDemoStrategy()
   }
 
-  async initialize(): Promise<void> {
+  override async initialize(): Promise<void> {
     await super.initialize()
-    
-    console.log(chalk.bold.magenta('🎭 DEMO MODE ACTIVATED'))
-    console.log(chalk.gray(`Speed: ${this.demoSpeed.toUpperCase()}`))
-    console.log(chalk.gray('Watch as the AI plays the game automatically...\n'))
-    
+
+    console.log(chalk.bold.magenta('🎭 デモモード開始'))
+    console.log(chalk.gray(`速度: ${this.demoSpeed.toUpperCase()}`))
+    console.log(chalk.gray('AIが自動的にゲームをプレイする様子をご覧ください...\n'))
+
     await this.delay(this.getDemoDelay() * 3)
   }
 
   // === Automated Input Methods ===
 
-  async askCardSelection(
+  override async askCardSelection(
     cards: Card[],
     minSelection: number = 1,
     maxSelection: number = 1,
     message?: string
   ): Promise<Card[]> {
     // Show the selection process
-    console.log('\n' + chalk.bold.blue('🤖 AI is thinking...'))
-    console.log(chalk.gray(message || 'Selecting cards...'))
-    
+    console.log('\n' + chalk.bold.blue('🤖 AIが思考中...'))
+    console.log(chalk.gray(message || 'カードを選択中...'))
+
     // Display available cards
     await super.displayHand(cards)
-    
+
     await this.delay(this.getDemoDelay())
-    
+
     // Use strategy to select cards
     const selectedCards = this.demoStrategy.selectCards(cards, minSelection, maxSelection)
-    
+
     // Show selection process
     if (selectedCards.length > 0) {
-      console.log(chalk.green(`✅ AI selected ${selectedCards.length} card(s):`))
+      console.log(chalk.green(`✅ AIは${selectedCards.length}枚のカードを選択しました:`))
       selectedCards.forEach((card, index) => {
         console.log(chalk.cyan(`  ${index + 1}. ${card.name}`))
       })
     } else {
-      console.log(chalk.yellow('🤖 AI chose not to select any cards'))
+      console.log(chalk.yellow('🤖 AIはカードを選択しませんでした'))
     }
 
     await this.delay(this.getDemoDelay())
     return selectedCards
   }
 
-  async askChallengeAction(challenge: Card): Promise<'start' | 'skip'> {
-    console.log('\n' + chalk.bold.yellow('🤖 AI is evaluating challenge...'))
-    
+  override async askChallengeAction(challenge: Card): Promise<'start' | 'skip'> {
+    console.log('\n' + chalk.bold.yellow('🤖 AIが課題を評価中...'))
+
     await this.delay(this.getDemoDelay())
-    
+
     const action = this.demoStrategy.decideChallengeAction(challenge)
-    
-    const actionText = action === 'start' ? 
-      chalk.green('⚔️ AI decides to ACCEPT the challenge!') :
-      chalk.yellow('🏃 AI decides to SKIP the challenge')
-    
+
+    const actionText = action === 'start' ?
+      chalk.green('⚔️ AIは課題への挑戦を決定しました！') :
+      chalk.yellow('🏃 AIは課題のスキップを決定しました')
+
     console.log(actionText)
     await this.delay(this.getDemoDelay())
-    
+
     return action
   }
 
-  async askInsuranceTypeChoice(availableTypes: ('whole_life' | 'term')[]): Promise<'whole_life' | 'term'> {
-    console.log('\n' + chalk.bold.cyan('🤖 AI is choosing insurance type...'))
-    
+  override async askInsuranceTypeChoice(availableTypes: ('whole_life' | 'term')[]): Promise<'whole_life' | 'term'> {
+    console.log('\n' + chalk.bold.cyan('🤖 AIが保険の種類を選択中...'))
+
     await this.delay(this.getDemoDelay())
-    
+
     const choice = this.demoStrategy.chooseInsuranceType(availableTypes)
-    const typeName = choice === 'whole_life' ? 'Whole Life Insurance' : 'Term Insurance'
-    
-    console.log(chalk.cyan(`🛡️ AI selected: ${typeName}`))
+    const typeName = choice === 'whole_life' ? '終身保険' : '定期保険'
+
+    console.log(chalk.cyan(`🛡️ AIの選択: ${typeName}`))
     await this.delay(this.getDemoDelay())
-    
+
     return choice
   }
 
-  async askInsuranceRenewalChoice(insurance: Card, cost: number): Promise<'renew' | 'expire'> {
-    console.log('\n' + chalk.bold.cyan('🤖 AI is deciding on insurance renewal...'))
-    console.log(chalk.gray(`Insurance: ${insurance.name}, Cost: ${cost}`))
-    
+  override async askInsuranceRenewalChoice(insurance: Card, cost: number): Promise<'renew' | 'expire'> {
+    console.log('\n' + chalk.bold.cyan('🤖 AIが保険の更新を決断中...'))
+    console.log(chalk.gray(`保険: ${insurance.name}, コスト: ${cost}`))
+
     await this.delay(this.getDemoDelay())
-    
+
     const decision = this.demoStrategy.decideInsuranceRenewal(insurance, cost)
-    
+
     const decisionText = decision === 'renew' ?
-      chalk.green(`💰 AI decides to RENEW insurance (Cost: ${cost})`) :
-      chalk.yellow('❌ AI decides to let insurance EXPIRE')
-    
+      chalk.green(`💰 AIは保険の更新を決定しました (コスト: ${cost})`) :
+      chalk.yellow('❌ AIは保険の失効を決定しました')
+
     console.log(decisionText)
     await this.delay(this.getDemoDelay())
-    
+
     return decision
   }
 
-  async askConfirmation(message: string, defaultChoice: 'yes' | 'no' = 'no'): Promise<'yes' | 'no'> {
-    console.log('\n' + chalk.bold.gray('🤖 AI is making a decision...'))
-    console.log(chalk.gray(`Question: ${message}`))
-    
+  override async askConfirmation(message: string, defaultChoice: 'yes' | 'no' = 'no'): Promise<'yes' | 'no'> {
+    console.log('\n' + chalk.bold.gray('🤖 AIが決定を下しています...'))
+    console.log(chalk.gray(`質問: ${message}`))
+
     await this.delay(this.getDemoDelay())
-    
+
     const decision = this.demoStrategy.makeConfirmationChoice(message, defaultChoice)
-    const responseText = decision === 'yes' ? 
-      chalk.green('✅ AI answers: YES') :
-      chalk.red('❌ AI answers: NO')
-    
+    const responseText = decision === 'yes' ?
+      chalk.green('✅ AIの回答: はい') :
+      chalk.red('❌ AIの回答: いいえ')
+
     console.log(responseText)
     await this.delay(this.getDemoDelay())
-    
+
     return decision
   }
 
   // === Enhanced Display Methods ===
 
-  showMessage(message: string, level: 'info' | 'success' | 'warning' = 'info'): void {
+  override showMessage(message: string, level: 'info' | 'success' | 'warning' = 'info'): void {
     super.showMessage(message, level)
-    
+
     // Add a pause in demo mode to let viewers read
     if (this.demoSpeed !== 'turbo') {
-      setTimeout(() => {}, this.getDemoDelay())
+      setTimeout(() => { }, this.getDemoDelay())
     }
   }
 
-  showChallengeResult(result: any): void {
+  override showChallengeResult(result: any): void {
     super.showChallengeResult(result)
-    
+
     // Extended pause for important results
-    setTimeout(() => {}, this.getDemoDelay() * 2)
+    setTimeout(() => { }, this.getDemoDelay() * 2)
   }
 
   // === Demo Control Methods ===
@@ -172,7 +172,7 @@ export class DemoModeRenderer extends InteractiveCUIRenderer {
    */
   setDemoSpeed(speed: 'slow' | 'normal' | 'fast' | 'turbo'): void {
     this.demoSpeed = speed
-    console.log(chalk.gray(`🎭 Demo speed changed to: ${speed.toUpperCase()}`))
+    console.log(chalk.gray(`🎭 デモ速度変更: ${speed.toUpperCase()}`))
   }
 
   /**
@@ -180,18 +180,18 @@ export class DemoModeRenderer extends InteractiveCUIRenderer {
    */
   setDemoStrategy(strategy: DemoStrategy): void {
     this.demoStrategy = strategy
-    console.log(chalk.gray('🎭 Demo strategy updated'))
+    console.log(chalk.gray('🎭 デモ戦略更新'))
   }
 
   /**
    * Pause demo (wait for user input to continue)
    */
   async pauseDemo(): Promise<void> {
-    console.log(chalk.yellow('\n⏸️ Demo paused - Press Enter to continue...'))
-    
+    console.log(chalk.yellow('\n⏸️ デモ一時停止 - Enterキーで再開...'))
+
     return new Promise(resolve => {
       process.stdin.once('data', () => {
-        console.log(chalk.green('▶️ Demo resumed'))
+        console.log(chalk.green('▶️ デモ再開'))
         resolve()
       })
     })
@@ -238,7 +238,7 @@ export class SmartDemoStrategy implements DemoStrategy {
 
   chooseInsuranceType(availableTypes: ('whole_life' | 'term')[]): 'whole_life' | 'term' {
     // Prefer whole life insurance if available
-    return availableTypes.includes('whole_life') ? 'whole_life' : availableTypes[0]
+    return availableTypes.includes('whole_life') ? 'whole_life' : availableTypes[0]!
   }
 
   decideInsuranceRenewal(insurance: Card, cost: number): 'renew' | 'expire' {
@@ -269,7 +269,7 @@ export class AggressiveDemoStrategy implements DemoStrategy {
 
   chooseInsuranceType(availableTypes: ('whole_life' | 'term')[]): 'whole_life' | 'term' {
     // Prefer term insurance (cheaper, more risk)
-    return availableTypes.includes('term') ? 'term' : availableTypes[0]
+    return availableTypes.includes('term') ? 'term' : availableTypes[0]!
   }
 
   decideInsuranceRenewal(insurance: Card, cost: number): 'renew' | 'expire' {
@@ -301,7 +301,7 @@ export class ConservativeDemoStrategy implements DemoStrategy {
 
   chooseInsuranceType(availableTypes: ('whole_life' | 'term')[]): 'whole_life' | 'term' {
     // Always prefer whole life for security
-    return availableTypes.includes('whole_life') ? 'whole_life' : availableTypes[0]
+    return availableTypes.includes('whole_life') ? 'whole_life' : availableTypes[0]!
   }
 
   decideInsuranceRenewal(insurance: Card, cost: number): 'renew' | 'expire' {

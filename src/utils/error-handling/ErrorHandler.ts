@@ -33,6 +33,7 @@ export interface ErrorInfo {
       screenSize: string
       connection?: string
     }
+    [key: string]: any
   }
   fingerprint?: string
   tags?: string[]
@@ -94,12 +95,13 @@ export class GlobalErrorHandler {
    * Vueアプリケーションにエラーハンドラーを設定
    */
   setupVueErrorHandler(app: App): void {
-    app.config.errorHandler = (error, instance, info) => {
+    app.config.errorHandler = (err, instance, info) => {
+      const error = err as any
       this.handleError({
         message: error.message || 'Unknown Vue error',
-        stack: error.stack,
+        stack: error.stack || '',
         component: instance?.$options.name || 'Unknown',
-        props: instance?.$props,
+        props: instance?.$props || {},
         info,
         timestamp: Date.now(),
         userAgent: navigator.userAgent,
@@ -134,7 +136,7 @@ export class GlobalErrorHandler {
     // window.onerrorハンドラー
     window.onerror = (message, source, lineno, colno, error) => {
       const messageStr = typeof message === 'string' ? message : 'Unknown error'
-      
+
       // Phaserの既知の問題をフィルタリング
       if (messageStr.includes('setMaxTextures is not a function')) {
         if (import.meta.env.DEV) {
@@ -142,13 +144,13 @@ export class GlobalErrorHandler {
         }
         return true // エラーを無視
       }
-      
+
       this.handleError({
         message: messageStr,
-        stack: error?.stack,
-        url: source,
-        line: lineno,
-        column: colno,
+        stack: error?.stack || '',
+        url: typeof source === 'string' ? source : String(source),
+        line: lineno || 0,
+        column: colno || 0,
         timestamp: Date.now(),
         userAgent: navigator.userAgent,
         severity: this.determineSeverity(error),
@@ -160,7 +162,7 @@ export class GlobalErrorHandler {
     // unhandledrejectionハンドラー
     window.addEventListener('unhandledrejection', (event) => {
       const reason = String(event.reason)
-      
+
       // Phaserの既知の問題をフィルタリング
       if (reason.includes('setMaxTextures is not a function')) {
         if (import.meta.env.DEV) {
@@ -169,7 +171,7 @@ export class GlobalErrorHandler {
         event.preventDefault()
         return
       }
-      
+
       this.handleError({
         message: `Unhandled Promise rejection: ${reason}`,
         stack: event.reason?.stack,
@@ -185,9 +187,9 @@ export class GlobalErrorHandler {
     if ('PerformanceObserver' in window) {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'resource' && 
-              'responseStatus' in entry && 
-              (entry as any).responseStatus >= 400) {
+          if (entry.entryType === 'resource' &&
+            'responseStatus' in entry &&
+            (entry as any).responseStatus >= 400) {
             this.handleError({
               message: `Network error: ${(entry as any).name}`,
               url: (entry as any).name,
@@ -199,7 +201,7 @@ export class GlobalErrorHandler {
           }
         }
       })
-      
+
       try {
         observer.observe({ entryTypes: ['resource'] })
       } catch (e) {
@@ -216,7 +218,7 @@ export class GlobalErrorHandler {
   handleError(errorInfo: ErrorInfo): void {
     // エラーの前処理と拡張
     const enhancedErrorInfo = this.enhanceErrorInfo(errorInfo)
-    
+
     // レート制限チェック
     if (!this.checkRateLimit()) {
       console.error('Error rate limit exceeded')
@@ -227,7 +229,7 @@ export class GlobalErrorHandler {
 
     // エラーフィンガープリントの生成
     enhancedErrorInfo.fingerprint = this.generateFingerprint(enhancedErrorInfo)
-    
+
     // 重複エラーのチェック
     if (this.isDuplicateError(enhancedErrorInfo)) {
       console.log('Duplicate error detected, skipping notification')
@@ -265,15 +267,15 @@ export class GlobalErrorHandler {
             }
           })
           window.dispatchEvent(recoveryEvent)
-          
+
           if (result.success) {
             console.log(`[ErrorHandler] Auto-recovery successful using ${result.strategyUsed}`)
-            
+
             // 成功した復旧を通知
             const successEvent = new CustomEvent('app:error', {
               detail: {
                 message: `エラーから自動復旧しました (${result.strategyUsed})`,
-                severity: 'info',
+                severity: 'low',
                 category: 'system',
                 timestamp: Date.now(),
                 userAgent: navigator.userAgent,
@@ -288,7 +290,7 @@ export class GlobalErrorHandler {
         })
         .catch(error => {
           console.error('[ErrorHandler] Recovery failed:', error)
-          
+
           // 復旧失敗を記録
           this.handleError({
             message: `Recovery system failure: ${error.message}`,
@@ -322,7 +324,7 @@ export class GlobalErrorHandler {
 
     const message = error.message || error.toString()
     const stack = error.stack || ''
-    
+
     // 致命的なエラーパターン（システム停止レベル）
     if (
       message.includes('Cannot read property') ||
@@ -380,7 +382,7 @@ export class GlobalErrorHandler {
 
     // 1分以上前のタイムスタンプを削除
     this.errorTimestamps = this.errorTimestamps.filter(ts => ts > oneMinuteAgo)
-    
+
     if (this.errorTimestamps.length >= this.options.maxErrorsPerMinute) {
       return false
     }
@@ -395,7 +397,7 @@ export class GlobalErrorHandler {
   private notifyUser(errorInfo: ErrorInfo): void {
     // エラーの種類に応じたメッセージを生成
     let userMessage = 'エラーが発生しました'
-    
+
     switch (errorInfo.category) {
       case 'network':
         userMessage = 'ネットワーク接続に問題が発生しました'
@@ -420,8 +422,8 @@ export class GlobalErrorHandler {
   private showErrorNotification(message: string, severity: ErrorInfo['severity']): void {
     // 一時的にconsoleに出力
     console.warn(`[User Notification] ${severity.toUpperCase()}: ${message}`)
-    
-    // TODO: 実際のUI通知コンポーネントと連携
+
+    // 実際のUI通知コンポーネントと連携
     const event = new CustomEvent('app:error', {
       detail: { message, severity }
     })
@@ -501,7 +503,7 @@ export class GlobalErrorHandler {
       errorInfo.category,
       errorInfo.context?.route || 'unknown'
     ].join('|')
-    
+
     // 簡易ハッシュ関数
     let hash = 0
     for (let i = 0; i < key.length; i++) {
@@ -518,16 +520,16 @@ export class GlobalErrorHandler {
   private readonly duplicateErrors = new Map<string, number>()
   private isDuplicateError(errorInfo: ErrorInfo): boolean {
     if (!errorInfo.fingerprint) return false
-    
+
     const now = Date.now()
     const lastSeen = this.duplicateErrors.get(errorInfo.fingerprint) || 0
     const timeDiff = now - lastSeen
-    
+
     // 同じエラーが1分以内に発生した場合は重複とみなす
     if (timeDiff < 60000) {
       return true
     }
-    
+
     this.duplicateErrors.set(errorInfo.fingerprint, now)
     return false
   }
@@ -587,7 +589,7 @@ export class GlobalErrorHandler {
    */
   private triggerSystemAlert(message: string): void {
     console.error(`🚀 SYSTEM ALERT: ${message}`)
-    
+
     // カスタムイベントを発火
     const event = new CustomEvent('app:system-alert', {
       detail: { message, timestamp: Date.now() }
@@ -632,7 +634,7 @@ export class GlobalErrorHandler {
    */
   destroy(): void {
     window.onerror = null
-    window.removeEventListener('unhandledrejection', () => {})
+    window.removeEventListener('unhandledrejection', () => { })
     this.duplicateErrors.clear()
     this.errorPerformanceHistory = []
     this.reset()

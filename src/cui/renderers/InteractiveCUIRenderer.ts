@@ -61,7 +61,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   dispose(): void {
     // Clean up any resources
     this.isInitialized = false
-    console.log(chalk.gray('\n👋 Thanks for playing! Goodbye!'))
+    console.log(chalk.gray('\n👋 遊んでくれてありがとう！またね！'))
   }
 
   displayGameState(game: Game): void {
@@ -82,7 +82,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
     // Game status indicator
     const statusColor = game.status === 'in_progress' ? 'green' :
       game.status === 'game_over' ? 'red' : 'yellow'
-    lines.push(chalk[statusColor as keyof typeof chalk](`📊 Status: ${game.status}`))
+    lines.push(chalk[statusColor as keyof typeof chalk](`📊 ステータス: ${game.status}`))
 
     console.log('\n' + lines.join('\n'))
 
@@ -91,11 +91,11 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   displayHand(cards: Card[]): void {
-    console.log('\n' + chalk.bold.blue('🃏 Your Hand:'))
+    console.log('\n' + chalk.bold.blue('🃏 あなたの手札:'))
     console.log(chalk.gray('─'.repeat(40)))
 
     if (cards.length === 0) {
-      console.log(chalk.dim('  (No cards in hand)'))
+      console.log(chalk.dim('  (手札なし)'))
       return
     }
 
@@ -121,7 +121,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   displayChallenge(challenge: Card): void {
-    console.log('\n' + chalk.bold.red('⚔️ Current Challenge:'))
+    console.log('\n' + chalk.bold.red('⚔️ 現在の課題:'))
     console.log(chalk.gray('─'.repeat(40)))
 
     const challengeCard = this.cardRenderer.renderCard(challenge, {
@@ -148,33 +148,33 @@ export class InteractiveCUIRenderer implements GameRenderer {
     const theme = this.configManager.getAccessibleColors()
     const lines: string[] = []
 
-    lines.push(chalk.bold.hex(theme.primary)('📊 Card Information'))
+    lines.push(chalk.bold.hex(theme.primary)('📊 カード情報'))
     lines.push(chalk.gray('─'.repeat(40)))
 
     // 手札枚数
     const handCount = game.hand.length
-    const handText = `🃏 Hand: ${handCount} card${handCount !== 1 ? 's' : ''}`
+    const handText = `🃏 手札: ${handCount} 枚`
     lines.push(chalk.cyan(handText))
 
     // デッキ枚数
     const deckCount = game.playerDeck.getCards().length
-    const deckText = `🎴 Deck: ${deckCount} card${deckCount !== 1 ? 's' : ''}`
+    const deckText = `🎴 デッキ: ${deckCount} 枚`
     lines.push(chalk.blue(deckText))
 
     // 捨て札枚数
     const discardCount = game.discardPile.length
-    const discardText = `🗑️ Discard: ${discardCount} card${discardCount !== 1 ? 's' : ''}`
+    const discardText = `🗑️ 捨て札: ${discardCount} 枚`
     lines.push(chalk.gray(discardText))
 
     console.log('\n' + lines.join('\n'))
   }
 
   displayInsuranceCards(insurances: Card[]): void {
-    console.log('\n' + chalk.bold.cyan('🛡️ Insurance Coverage:'))
+    console.log('\n' + chalk.bold.cyan('🛡️ 保険状況:'))
     console.log(chalk.gray('─'.repeat(40)))
 
     if (insurances.length === 0) {
-      console.log(chalk.dim('  (No insurance coverage)'))
+      console.log(chalk.dim('  (加入保険なし)'))
       return
     }
 
@@ -214,7 +214,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
     message?: string
   ): Promise<Card[]> {
     if (cards.length === 0) {
-      console.log(chalk.yellow('⚠️ No cards available for selection.'))
+      console.log(chalk.yellow('⚠️ 選択可能なカードがありません。'))
       return []
     }
 
@@ -222,7 +222,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
     try {
       // Show available cards
-      console.log('\n' + chalk.bold.green(message || '🃏 Select cards:'))
+      console.log('\n' + chalk.bold.green(message || '🃏 カードを選択:'))
       console.log(chalk.gray('─'.repeat(40)))
 
       const cardGrid = this.cardRenderer.renderCardGrid(cards, {
@@ -234,11 +234,11 @@ export class InteractiveCUIRenderer implements GameRenderer {
       // Selection constraints info
       let constraintText = ''
       if (minSelection === 0 && maxSelection === 1) {
-        constraintText = '(Optional: select 1 card or enter "0" for none)'
+        constraintText = '(任意: 1枚選ぶか、\'0\'を入力してスキップ)'
       } else if (minSelection === maxSelection) {
-        constraintText = `(Select exactly ${minSelection} card${minSelection > 1 ? 's' : ''})`
+        constraintText = `(正確に${minSelection}枚選んでください)`
       } else {
-        constraintText = `(Select ${minSelection}-${maxSelection} cards)`
+        constraintText = `(${minSelection}〜${maxSelection}枚選んでください)`
       }
       console.log(chalk.dim(constraintText))
 
@@ -247,7 +247,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
         {
           type: 'input',
           name: 'selection',
-          message: 'Enter card numbers (comma-separated):',
+          message: 'カード番号を入力 (カンマ区切り):',
           validate: (input: string) => {
             const parsed = InputValidator.parseCardSelection(input, cards, minSelection, maxSelection)
             return parsed.isValid || parsed.errorMessage
@@ -259,7 +259,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
       if (parsed.selectedCards.length > 0) {
         // Show selected cards with animation
-        console.log('\n' + chalk.green('✅ Selected:'))
+        console.log('\n' + chalk.green('✅ 選択済み:'))
         for (const card of parsed.selectedCards) {
           await this.animationHelper.cardRevealAnimation(
             this.cardRenderer.renderCard(card, { style: 'compact', selected: true })
@@ -278,16 +278,16 @@ export class InteractiveCUIRenderer implements GameRenderer {
     this.isWaitingInput = true
 
     try {
-      console.log('\n' + chalk.bold.yellow('⚔️ Challenge Decision:'))
+      console.log('\n' + chalk.bold.yellow('⚔️ 課題への決断:'))
 
       const { action } = await inquirer.prompt([
         {
           type: 'list',
           name: 'action',
-          message: `Face the challenge "${challenge.name}"?`,
+          message: `課題「${challenge.name}」に挑戦しますか？`,
           choices: [
-            { name: '⚔️ Accept Challenge', value: 'start' },
-            { name: '🏃 Skip Challenge', value: 'skip' }
+            { name: '⚔️ 挑戦する', value: 'start' },
+            { name: '🏃 スキップする', value: 'skip' }
           ]
         }
       ])
@@ -312,7 +312,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
         {
           type: 'list',
           name: 'type',
-          message: '🏥 Choose insurance type:',
+          message: '🏥 保険の種類を選択:',
           choices
         }
       ])
@@ -325,7 +325,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   async askInsuranceChoice(cards: Card[], message?: string): Promise<Card> {
-    const selected = await this.askCardSelection(cards, 1, 1, message || '🛡️ Choose insurance:')
+    const selected = await this.askCardSelection(cards, 1, 1, message || '🛡️ 保険を選択:')
     return selected[0] || cards[0]
   }
 
@@ -333,7 +333,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
     this.isWaitingInput = true
 
     try {
-      console.log('\n' + chalk.bold.cyan('🛡️ Insurance Renewal:'))
+      console.log('\n' + chalk.bold.cyan('🛡️ 保険の更新:'))
 
       const insuranceDisplay = this.cardRenderer.renderCard(insurance, {
         style: 'detailed',
@@ -345,10 +345,10 @@ export class InteractiveCUIRenderer implements GameRenderer {
         {
           type: 'list',
           name: 'choice',
-          message: `Renew "${insurance.name}" for ${cost} vitality?`,
+          message: `「${insurance.name}」を活力 ${cost} で更新しますか？`,
           choices: [
-            { name: `💰 Renew (Cost: ${cost})`, value: 'renew' },
-            { name: '❌ Let Expire', value: 'expire' }
+            { name: `💰 更新する (コスト: ${cost})`, value: 'renew' },
+            { name: '❌ 失効させる', value: 'expire' }
           ]
         }
       ])
@@ -361,12 +361,12 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   async askDreamSelection(cards: Card[]): Promise<Card> {
-    const selected = await this.askCardSelection(cards, 1, 1, '🌠 Choose your Dream:')
+    const selected = await this.askCardSelection(cards, 1, 1, '🌠 夢を選択してください:')
     return selected[0]
   }
 
   async askChallengeSelection(challenges: Card[]): Promise<Card> {
-    const selected = await this.askCardSelection(challenges, 1, 1, '⚔️ Choose a Challenge to face:')
+    const selected = await this.askCardSelection(challenges, 1, 1, '⚔️ 挑戦する課題を選択:')
     return selected[0]
   }
 
@@ -398,43 +398,43 @@ export class InteractiveCUIRenderer implements GameRenderer {
   showChallengeResult(result: ChallengeResult): void {
     if (!result) return
 
-    console.log('\n' + chalk.bold.white('⚔️ Challenge Result:'))
+    console.log('\n' + chalk.bold.white('⚔️ 課題の結果:'))
     console.log(chalk.gray('═'.repeat(50)))
 
     // Result header with animation
     const resultEmoji = result.success ? '✅' : '❌'
     const resultText = result.success ?
-      chalk.bold.green('SUCCESS!') :
-      chalk.bold.red('FAILED!')
+      chalk.bold.green('成功！') :
+      chalk.bold.red('失敗...')
 
     console.log(`${resultEmoji} ${resultText}`)
 
     // Power comparison
     const powerComparison = `${result.playerPower} vs ${result.challengePower}`
-    console.log(`⚖️  Power: ${powerComparison}`)
+    console.log(`⚖️  パワー: ${powerComparison}`)
 
     // Vitality change
     const vitalityChange = result.vitalityChange
     const changeColor = vitalityChange > 0 ? 'green' : vitalityChange < 0 ? 'red' : 'gray'
     const changeSign = vitalityChange > 0 ? '+' : ''
-    console.log(`❤️  Vitality: ${chalk[changeColor as keyof typeof chalk](`${changeSign}${vitalityChange}`)}`)
+    console.log(`❤️  活力: ${chalk[changeColor as keyof typeof chalk](`${changeSign}${vitalityChange}`)}`)
 
     // Message
     console.log(`💬 ${result.message}`)
 
     // Power breakdown if available
     if (result.powerBreakdown) {
-      console.log('\n' + chalk.dim('📊 Power Breakdown:'))
-      console.log(chalk.dim(`  Base: ${result.powerBreakdown.base}`))
-      console.log(chalk.dim(`  Insurance: ${result.powerBreakdown.insurance}`))
-      console.log(chalk.dim(`  Burden: ${result.powerBreakdown.burden}`))
-      console.log(chalk.dim(`  Total: ${result.powerBreakdown.total}`))
+      console.log('\n' + chalk.dim('📊 パワー内訳:'))
+      console.log(chalk.dim(`  基本: ${result.powerBreakdown.base}`))
+      console.log(chalk.dim(`  保険: ${result.powerBreakdown.insurance}`))
+      console.log(chalk.dim(`  負担: ${result.powerBreakdown.burden}`))
+      console.log(chalk.dim(`  合計: ${result.powerBreakdown.total}`))
     }
 
     // Celebration animation for success
     if (result.success && this.configManager.getConfig().visualEffects) {
       setTimeout(() => {
-        this.animationHelper.celebrateAnimation('Challenge Completed!')
+        this.animationHelper.celebrateAnimation('課題クリア！')
       }, 500)
     }
   }
@@ -463,7 +463,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
   }
 
   showError(error: string): void {
-    console.log(`\n❌ ${chalk.red.bold('Error:')} ${chalk.red(error)}`)
+    console.log(`\n❌ ${chalk.red.bold('エラー:')} ${chalk.red(error)}`)
 
     if (this.configManager.getConfig().visualEffects) {
       this.animationHelper.shakeEffect(error)
@@ -477,12 +477,12 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
     // Animated game over
     if (this.configManager.getConfig().visualEffects) {
-      this.animationHelper.pulseText(chalk.red.bold('💀 GAME OVER 💀'))
+      this.animationHelper.pulseText(chalk.red.bold('💀 ゲームオーバー 💀'))
     } else {
-      console.log(chalk.red.bold('💀 GAME OVER 💀'))
+      console.log(chalk.red.bold('💀 ゲームオーバー 💀'))
     }
 
-    this.displayFinalStats(stats, 'Game Over')
+    this.displayFinalStats(stats, 'ゲームオーバー')
   }
 
   showVictory(stats: PlayerStats): void {
@@ -492,19 +492,19 @@ export class InteractiveCUIRenderer implements GameRenderer {
 
     // Animated victory
     if (this.configManager.getConfig().visualEffects) {
-      this.animationHelper.celebrateAnimation('🎉 VICTORY! 🎉')
+      this.animationHelper.celebrateAnimation('🎉 勝利！ 🎉')
     } else {
-      console.log(chalk.green.bold('🎉 VICTORY! 🎉'))
+      console.log(chalk.green.bold('🎉 勝利！ 🎉'))
     }
 
-    this.displayFinalStats(stats, 'Victory')
+    this.displayFinalStats(stats, '勝利')
   }
 
   showStageClear(stage: string, stats: PlayerStats): void {
     console.log('\n')
 
     const stageEmoji = this.getStageEmoji(stage)
-    const message = `${stageEmoji} Stage "${stage}" Cleared!`
+    const message = `${stageEmoji} ステージ「${stage}」クリア！`
 
     if (this.configManager.getConfig().visualEffects) {
       this.animationHelper.pulseText(chalk.yellow.bold(message))
@@ -536,10 +536,10 @@ export class InteractiveCUIRenderer implements GameRenderer {
     const config = this.configManager.getConfig()
     this.configManager.updateConfig({ showDebugInfo: enabled })
 
-    console.log(chalk.gray(`🔧 Debug mode: ${enabled ? 'ON' : 'OFF'}`))
+    console.log(chalk.gray(`🔧 デバッグモード: ${enabled ? 'ON' : 'OFF'}`))
 
     if (enabled) {
-      console.log(chalk.dim('Debug info will be shown during gameplay'))
+      console.log(chalk.dim('ゲームプレイ中にデバッグ情報が表示されます'))
     }
   }
 
@@ -563,13 +563,13 @@ export class InteractiveCUIRenderer implements GameRenderer {
       }
 
       // Subtitle
-      const subtitle = chalk.italic.gray('Your journey to a fulfilling life starts here...')
+      const subtitle = chalk.italic.gray('充実した人生への旅がここから始まります...')
       console.log('\n' + subtitle + '\n')
 
     } catch (error) {
       // Fallback if figlet fails
       console.log(chalk.bold.blue('🎮 LIFE GAME 🎮'))
-      console.log(chalk.italic.gray('Your journey to a fulfilling life starts here...'))
+      console.log(chalk.italic.gray('充実した人生への旅がここから始まります...'))
     }
   }
 
@@ -579,7 +579,7 @@ export class InteractiveCUIRenderer implements GameRenderer {
     const content = this.progressDisplay.renderStatsDashboard(stats)
 
     const boxOptions = {
-      title: `📊 ${context} Statistics`,
+      title: `📊 ${context} 統計`,
       titleAlignment: 'center' as const,
       padding: 1,
       margin: 1,

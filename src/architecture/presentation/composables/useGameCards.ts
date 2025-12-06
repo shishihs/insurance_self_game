@@ -1,6 +1,6 @@
-import { computed, type ComputedRef, readonly, type Ref, ref } from 'vue'
+import { computed, type ComputedRef, type Ref, ref } from 'vue'
 import type { GameId } from '../../domain/aggregates/GameAggregate'
-import type { CardDto } from '../../application/services/interfaces'
+import type { CardDto, ICardService } from '../../application/services/interfaces'
 
 /**
  * Card management composable with pure functional approach
@@ -22,7 +22,7 @@ export interface UICard extends CardDto {
   isHighlighted: boolean
   isDragging: boolean
   position: { x: number; y: number }
-  animation?: string
+  animation?: string | undefined
 }
 
 /**
@@ -48,12 +48,12 @@ export interface CardActions {
   playSelectedCards: () => Promise<void>
   discardCard: (cardId: string) => void
   shuffleDeck: () => Promise<void>
-  
+
   // Drag & Drop
   startDrag: (cardId: string, position: { x: number; y: number }) => void
   updateDragPosition: (cardId: string, position: { x: number; y: number }) => void
   endDrag: (cardId: string) => void
-  
+
   // Animations
   animateCard: (cardId: string, animation: string) => void
   highlightCard: (cardId: string, highlight: boolean) => void
@@ -65,7 +65,7 @@ export interface CardActions {
 export interface UseGameCardsReturn {
   // State
   state: ComputedRef<CardCollectionState>
-  
+
   // Computed properties
   handSize: ComputedRef<number>
   deckSize: ComputedRef<number>
@@ -73,10 +73,10 @@ export interface UseGameCardsReturn {
   canDrawCards: ComputedRef<boolean>
   canPlayCards: ComputedRef<boolean>
   totalCardPower: ComputedRef<number>
-  
+
   // Actions
   actions: CardActions
-  
+
   // Loading states
   isLoading: Ref<boolean>
   error: Ref<string | null>
@@ -88,30 +88,30 @@ export interface UseGameCardsReturn {
 export function useGameCards(
   gameId: Ref<GameId | null>,
   maxHandSize: Ref<number>,
-  cardService: any // TODO: Type properly
+  cardService: ICardService
 ): UseGameCardsReturn {
-  
+
   // ============================================================================
   // REACTIVE STATE
   // ============================================================================
-  
+
   const hand = ref<UICard[]>([])
   const deck = ref<CardDto[]>([])
   const discardPile = ref<CardDto[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-  
+
   // ============================================================================
   // COMPUTED STATE
   // ============================================================================
-  
+
   /**
    * Combined card collection state
    */
   const state = computed<CardCollectionState>(() => {
     const selectedCards = hand.value.filter(card => card.isSelected)
     const playableCards = hand.value.filter(card => card.isPlayable)
-    
+
     return {
       hand: hand.value,
       deck: deck.value,
@@ -120,40 +120,40 @@ export function useGameCards(
       playableCards
     }
   })
-  
+
   /**
    * Collection size metrics
    */
   const handSize = computed(() => hand.value.length)
   const deckSize = computed(() => deck.value.length)
-  const selectedCount = computed(() => 
+  const selectedCount = computed(() =>
     hand.value.filter(card => card.isSelected).length
   )
-  
+
   /**
    * Action conditions
    */
-  const canDrawCards = computed(() => 
+  const canDrawCards = computed(() =>
     deckSize.value > 0 && handSize.value < maxHandSize.value
   )
-  
-  const canPlayCards = computed(() => 
+
+  const canPlayCards = computed(() =>
     selectedCount.value > 0 && gameId.value !== null
   )
-  
+
   /**
    * Total power of selected cards
    */
-  const totalCardPower = computed(() => 
+  const totalCardPower = computed(() =>
     hand.value
       .filter(card => card.isSelected)
       .reduce((total, card) => total + card.power, 0)
   )
-  
+
   // ============================================================================
   // PURE HELPER FUNCTIONS
   // ============================================================================
-  
+
   /**
    * Convert CardDto to UICard (pure function)
    */
@@ -165,7 +165,7 @@ export function useGameCards(
     isDragging: false,
     position: { x: 0, y: 0 }
   })
-  
+
   /**
    * Update card in collection (pure function)
    */
@@ -174,23 +174,23 @@ export function useGameCards(
     cardId: string,
     updater: (card: UICard) => Partial<UICard>
   ): UICard[] => {
-    return cards.map(card => 
-      card.id === cardId 
+    return cards.map(card =>
+      card.id === cardId
         ? { ...card, ...updater(card) }
         : card
     )
   }
-  
+
   /**
    * Find card by ID (pure function)
    */
-  const findCard = (cards: UICard[], cardId: string): UICard | undefined => 
+  const findCard = (cards: UICard[], cardId: string): UICard | undefined =>
     cards.find(card => card.id === cardId)
-  
+
   // ============================================================================
   // ACTIONS
   // ============================================================================
-  
+
   /**
    * Draw cards from deck
    */
@@ -198,22 +198,22 @@ export function useGameCards(
     if (!gameId.value) {
       throw new Error('No active game')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       const drawnCards = await cardService.drawCards(gameId.value, count)
       const uiCards = drawnCards.map(createUICard)
-      
+
       // Immutable update
       hand.value = [...hand.value, ...uiCards]
-      
+
       // Animate newly drawn cards
       uiCards.forEach(card => {
         animateCard(card.id, 'draw')
       })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to draw cards'
       throw err
@@ -221,7 +221,7 @@ export function useGameCards(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Select a card
    */
@@ -230,7 +230,7 @@ export function useGameCards(
       isSelected: true
     }))
   }
-  
+
   /**
    * Deselect a card
    */
@@ -239,21 +239,21 @@ export function useGameCards(
       isSelected: false
     }))
   }
-  
+
   /**
    * Toggle card selection
    */
   const toggleCardSelection = (cardId: string): void => {
     const card = findCard(hand.value, cardId)
     if (!card) return
-    
+
     if (card.isSelected) {
       deselectCard(cardId)
     } else {
       selectCard(cardId)
     }
   }
-  
+
   /**
    * Clear all selections
    */
@@ -263,7 +263,7 @@ export function useGameCards(
       isSelected: false
     }))
   }
-  
+
   /**
    * Play selected cards
    */
@@ -271,19 +271,19 @@ export function useGameCards(
     if (!gameId.value) {
       throw new Error('No active game')
     }
-    
+
     const selectedCards = hand.value.filter(card => card.isSelected)
     if (selectedCards.length === 0) {
       throw new Error('No cards selected')
     }
-    
+
     try {
       isLoading.value = true
       error.value = null
-      
+
       const cardIds = selectedCards.map(card => card.id)
       await cardService.playCards(gameId.value, cardIds)
-      
+
       // Remove played cards from hand and add to discard pile
       const remainingCards = hand.value.filter(card => !card.isSelected)
       const playedCards = selectedCards.map(card => ({
@@ -294,15 +294,15 @@ export function useGameCards(
         cost: card.cost,
         description: card.description
       }))
-      
+
       hand.value = remainingCards
       discardPile.value = [...discardPile.value, ...playedCards]
-      
+
       // Animate card play
       selectedCards.forEach(card => {
         animateCard(card.id, 'play')
       })
-      
+
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to play cards'
       throw err
@@ -310,17 +310,17 @@ export function useGameCards(
       isLoading.value = false
     }
   }
-  
+
   /**
    * Discard a card
    */
   const discardCard = (cardId: string): void => {
     const card = findCard(hand.value, cardId)
     if (!card) return
-    
+
     // Remove from hand
     hand.value = hand.value.filter(c => c.id !== cardId)
-    
+
     // Add to discard pile
     const discardedCard: CardDto = {
       id: card.id,
@@ -331,17 +331,17 @@ export function useGameCards(
       description: card.description
     }
     discardPile.value = [...discardPile.value, discardedCard]
-    
+
     // Animate discard
     animateCard(cardId, 'discard')
   }
-  
+
   /**
    * Shuffle deck
    */
   const shuffleDeck = async (): Promise<void> => {
     if (!gameId.value) return
-    
+
     try {
       isLoading.value = true
       await cardService.shuffleDeck(gameId.value)
@@ -352,11 +352,11 @@ export function useGameCards(
       isLoading.value = false
     }
   }
-  
+
   // ============================================================================
   // DRAG & DROP ACTIONS
   // ============================================================================
-  
+
   /**
    * Start dragging a card
    */
@@ -366,7 +366,7 @@ export function useGameCards(
       position: { ...position }
     }))
   }
-  
+
   /**
    * Update drag position
    */
@@ -375,7 +375,7 @@ export function useGameCards(
       position: { ...position }
     }))
   }
-  
+
   /**
    * End dragging
    */
@@ -385,11 +385,11 @@ export function useGameCards(
       position: { x: 0, y: 0 }
     }))
   }
-  
+
   // ============================================================================
   // ANIMATION ACTIONS
   // ============================================================================
-  
+
   /**
    * Animate a card
    */
@@ -397,7 +397,7 @@ export function useGameCards(
     hand.value = updateCardInCollection(hand.value, cardId, () => ({
       animation
     }))
-    
+
     // Clear animation after delay
     setTimeout(() => {
       hand.value = updateCardInCollection(hand.value, cardId, () => ({
@@ -405,7 +405,7 @@ export function useGameCards(
       }))
     }, 500)
   }
-  
+
   /**
    * Highlight a card
    */
@@ -414,11 +414,11 @@ export function useGameCards(
       isHighlighted: highlight
     }))
   }
-  
+
   // ============================================================================
   // RETURN INTERFACE
   // ============================================================================
-  
+
   const actions: CardActions = {
     drawCards,
     selectCard,
@@ -434,15 +434,15 @@ export function useGameCards(
     animateCard,
     highlightCard
   }
-  
+
   return {
-    state: readonly(state),
-    handSize: readonly(handSize),
-    deckSize: readonly(deckSize),
-    selectedCount: readonly(selectedCount),
-    canDrawCards: readonly(canDrawCards),
-    canPlayCards: readonly(canPlayCards),
-    totalCardPower: readonly(totalCardPower),
+    state,
+    handSize,
+    deckSize,
+    selectedCount,
+    canDrawCards,
+    canPlayCards,
+    totalCardPower,
     actions,
     isLoading,
     error

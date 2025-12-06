@@ -137,7 +137,7 @@ const copyErrorDetails = async () => {
   
   try {
     await navigator.clipboard.writeText(details)
-    alert('エラー詳細をクリップボードにコピーしました')
+    console.info('エラー詳細をクリップボードにコピーしました')
   } catch (e) {
     console.error('Failed to copy error details:', e)
   }
@@ -157,7 +157,7 @@ const sendErrorReport = () => {
   })
   window.dispatchEvent(event)
   
-  alert('エラーレポートを送信しました')
+  console.info('エラーレポートを送信しました')
 }
 </script>
 

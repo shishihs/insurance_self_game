@@ -12,24 +12,24 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  
+
   padding: var(--space-3) var(--space-6);
   min-height: var(--touch-target-comfortable);
-  
+
   border: none;
   border-radius: var(--rounded-lg);
-  
+
   font-family: inherit;
   font-size: var(--text-base);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-normal);
   text-decoration: none;
   white-space: nowrap;
-  
+
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  
+
   transition: all var(--duration-200) var(--ease-out);
   transform-origin: center;
   overflow: hidden;
@@ -120,10 +120,10 @@
   border: 1px solid var(--border-gray);
   border-radius: var(--rounded-2xl);
   padding: var(--space-6);
-  
+
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow-sm);
-  
+
   transition: all var(--duration-300) var(--ease-out);
   cursor: pointer;
   overflow: hidden;
@@ -176,15 +176,15 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   min-height: var(--touch-target-comfortable);
-  
+
   background: var(--bg-card);
   border: 2px solid var(--border-gray);
   border-radius: var(--rounded-lg);
-  
+
   color: rgba(255, 255, 255, 0.9);
   font-size: var(--text-base);
   font-family: inherit;
-  
+
   transition: all var(--duration-200) var(--ease-out);
   outline: none;
 }
@@ -226,8 +226,8 @@
   padding: 0 var(--space-1);
 }
 
-.input-floating .input:focus + .label,
-.input-floating .input:not(:placeholder-shown) + .label {
+.input-floating .input:focus+.label,
+.input-floating .input:not(:placeholder-shown)+.label {
   top: 0;
   font-size: var(--text-xs);
   color: var(--primary-400);
@@ -276,17 +276,17 @@
   transition: all var(--duration-200) var(--ease-back-out);
 }
 
-.toggle-input:checked + .toggle-slider {
+.toggle-input:checked+.toggle-slider {
   background: var(--primary-600);
   border-color: var(--primary-400);
 }
 
-.toggle-input:checked + .toggle-slider::before {
+.toggle-input:checked+.toggle-slider::before {
   transform: translateX(24px);
   box-shadow: var(--shadow-md);
 }
 
-.toggle-input:focus-visible + .toggle-slider {
+.toggle-input:focus-visible+.toggle-slider {
   outline: 2px solid var(--primary-400);
   outline-offset: 2px;
 }
@@ -319,12 +319,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent);
   animation: progress-shimmer 2s infinite;
 }
 
@@ -332,6 +330,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -351,17 +350,17 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%) translateY(-8px);
-  
+
   padding: var(--space-2) var(--space-3);
   background: var(--bg-secondary);
   color: white;
   font-size: var(--text-sm);
   border-radius: var(--rounded-md);
   box-shadow: var(--shadow-lg);
-  
+
   white-space: nowrap;
   z-index: var(--z-tooltip);
-  
+
   opacity: 0;
   pointer-events: none;
   transition: all var(--duration-200) var(--ease-out);
@@ -452,7 +451,8 @@
 }
 
 .accordion-item[data-expanded="true"] .accordion-content {
-  max-height: 500px; /* 十分に大きな値 */
+  max-height: 500px;
+  /* 十分に大きな値 */
 }
 
 /* =====================================================
@@ -498,7 +498,7 @@
 }
 
 .glow-on-hover:hover {
-  box-shadow: 
+  box-shadow:
     var(--shadow-lg),
     0 0 30px rgba(100, 116, 139, 0.3),
     0 0 60px rgba(100, 116, 139, 0.1);
@@ -513,9 +513,12 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -526,7 +529,9 @@
    ===================================================== */
 
 .bounce-in {
-  animation: bounce-in var(--duration-500) var(--ease-back-out);
+  animation: bounce-in var(--duration-500) var(--ease-back-out) both;
+  /* フォールバック: アニメーションが動かなくても表示 */
+  opacity: 1;
 }
 
 @keyframes bounce-in {
@@ -534,14 +539,17 @@
     transform: scale(0.3) translateY(100px);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.05) translateY(-10px);
     opacity: 0.8;
   }
+
   70% {
     transform: scale(0.95) translateY(0);
     opacity: 0.9;
   }
+
   100% {
     transform: scale(1) translateY(0);
     opacity: 1;
@@ -554,6 +562,7 @@
 
 /* モーション削減設定を尊重 */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -561,13 +570,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   .pulse,
   .bounce-in,
   .ripple {
     animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
-  
+
   .parallax-element {
     transform: none !important;
   }
@@ -578,11 +589,11 @@
   .btn {
     border: 2px solid currentColor;
   }
-  
+
   .interactive-card {
     border-width: 2px;
   }
-  
+
   .input {
     border-width: 3px;
   }

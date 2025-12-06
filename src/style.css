@@ -21,41 +21,65 @@
   /* ========================
      レスポンシブデザイン変数
      ======================== */
-  
+
   /* ブレークポイント（JS側でも使用） */
-  --bp-xs: 375px;  /* モバイル（小） */
-  --bp-sm: 640px;  /* モバイル（大） */
-  --bp-md: 768px;  /* タブレット */
-  --bp-lg: 1024px; /* デスクトップ（小） */
-  --bp-xl: 1280px; /* デスクトップ（大） */
-  --bp-2xl: 1536px; /* デスクトップ（特大） */
+  --bp-xs: 375px;
+  /* モバイル（小） */
+  --bp-sm: 640px;
+  /* モバイル（大） */
+  --bp-md: 768px;
+  /* タブレット */
+  --bp-lg: 1024px;
+  /* デスクトップ（小） */
+  --bp-xl: 1280px;
+  /* デスクトップ（大） */
+  --bp-2xl: 1536px;
+  /* デスクトップ（特大） */
 
   /* スペーシングシステム */
-  --space-xs: 0.25rem;  /* 4px */
-  --space-sm: 0.5rem;   /* 8px */
-  --space-md: 1rem;     /* 16px */
-  --space-lg: 1.5rem;   /* 24px */
-  --space-xl: 2rem;     /* 32px */
-  --space-2xl: 3rem;    /* 48px */
-  --space-3xl: 4rem;    /* 64px */
+  --space-xs: 0.25rem;
+  /* 4px */
+  --space-sm: 0.5rem;
+  /* 8px */
+  --space-md: 1rem;
+  /* 16px */
+  --space-lg: 1.5rem;
+  /* 24px */
+  --space-xl: 2rem;
+  /* 32px */
+  --space-2xl: 3rem;
+  /* 48px */
+  --space-3xl: 4rem;
+  /* 64px */
 
   /* =====================================================
      タイポグラフィシステム - 読みやすさと美しさを兼ね備えた設計
      ===================================================== */
-  
+
   /* フォントサイズ - モジュラースケール */
-  --text-xs: 0.75rem;   /* 12px - キャプション、ラベル */
-  --text-sm: 0.875rem;  /* 14px - ボタン、フォーム */
-  --text-base: 1rem;    /* 16px - ベースサイズ（本文） */
-  --text-lg: 1.125rem;  /* 18px - リードテキスト */
-  --text-xl: 1.25rem;   /* 20px - サブタイトル */
-  --text-2xl: 1.5rem;   /* 24px - セクションタイトル */
-  --text-3xl: 1.875rem; /* 30px - ヘッダーレベル3 */
-  --text-4xl: 2.25rem;  /* 36px - ヘッダーレベル2 */
-  --text-5xl: 3rem;     /* 48px - ヘッダーレベル1 */
-  --text-6xl: 3.75rem;  /* 60px - ヒーロータイトル */
-  --text-7xl: 4.5rem;   /* 72px - メガタイトル */
-  
+  --text-xs: 0.75rem;
+  /* 12px - キャプション、ラベル */
+  --text-sm: 0.875rem;
+  /* 14px - ボタン、フォーム */
+  --text-base: 1rem;
+  /* 16px - ベースサイズ（本文） */
+  --text-lg: 1.125rem;
+  /* 18px - リードテキスト */
+  --text-xl: 1.25rem;
+  /* 20px - サブタイトル */
+  --text-2xl: 1.5rem;
+  /* 24px - セクションタイトル */
+  --text-3xl: 1.875rem;
+  /* 30px - ヘッダーレベル3 */
+  --text-4xl: 2.25rem;
+  /* 36px - ヘッダーレベル2 */
+  --text-5xl: 3rem;
+  /* 48px - ヘッダーレベル1 */
+  --text-6xl: 3.75rem;
+  /* 60px - ヒーロータイトル */
+  --text-7xl: 4.5rem;
+  /* 72px - メガタイトル */
+
   /* フォントウェイト - 階層化された重要度表現 */
   --font-weight-light: 300;
   --font-weight-normal: 400;
@@ -63,7 +87,7 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --font-weight-extrabold: 800;
-  
+
   /* ラインハイト - 読みやすさ最適化 */
   --line-height-tight: 1.25;
   --line-height-snug: 1.375;
@@ -71,13 +95,15 @@
   --line-height-relaxed: 1.625;
 
   /* タッチターゲットサイズ */
-  --touch-target-min: 44px; /* iOS Human Interface Guidelines */
-  --touch-target-comfortable: 48px; /* Android Material Design */
+  --touch-target-min: 44px;
+  /* iOS Human Interface Guidelines */
+  --touch-target-comfortable: 48px;
+  /* Android Material Design */
 
   /* =====================================================
      ブランドカラーパレット - 「人生充実」をテーマにした配色
      ===================================================== */
-  
+
   /* 基調カラー：深い藍色をベースとした上品なグラデーション */
   --primary-hue: 240;
   --primary-50: hsl(var(--primary-hue), 68%, 96%);
@@ -91,24 +117,24 @@
   --primary-800: hsl(var(--primary-hue), 60%, 28%);
   --primary-900: hsl(var(--primary-hue), 65%, 22%);
   --primary-950: hsl(var(--primary-hue), 70%, 16%);
-  
+
   /* セカンダリカラー：温かみのある紫 */
   --secondary-hue: 280;
   --secondary-400: hsl(var(--secondary-hue), 45%, 65%);
   --secondary-500: hsl(var(--secondary-hue), 50%, 55%);
   --secondary-600: hsl(var(--secondary-hue), 55%, 45%);
-  
+
   /* ブランドグラデーション */
   --brand-gradient-primary: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%);
   --brand-gradient-soft: linear-gradient(135deg, var(--primary-400) 0%, var(--secondary-400) 100%);
   --brand-gradient-hero: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 50%, var(--primary-600) 100%);
-  
+
   /* 感情的な色彩 - 活力・エネルギーを表現 */
   --vitality-high: linear-gradient(135deg, hsl(158, 74%, 45%) 0%, hsl(158, 80%, 38%) 100%);
   --vitality-medium: linear-gradient(135deg, hsl(43, 93%, 55%) 0%, hsl(43, 85%, 48%) 100%);
   --vitality-low: linear-gradient(135deg, hsl(0, 75%, 60%) 0%, hsl(0, 82%, 52%) 100%);
   --vitality-critical: linear-gradient(135deg, hsl(0, 90%, 50%) 0%, hsl(0, 95%, 42%) 100%);
-  
+
   /* 背景システム - 深みと温かみのバランス */
   --bg-primary: hsl(var(--primary-hue), 25%, 12%);
   --bg-secondary: hsl(var(--primary-hue), 30%, 8%);
@@ -116,52 +142,52 @@
   --bg-card: hsla(var(--primary-hue), 15%, 95%, 0.04);
   --bg-card-hover: hsla(var(--primary-hue), 15%, 95%, 0.08);
   --bg-overlay: hsla(var(--primary-hue), 30%, 5%, 0.85);
-  
+
   /* サクセス・エラー・警告カラー */
   --success-50: hsl(158, 68%, 95%);
   --success-500: hsl(158, 70%, 51%);
   --success-600: hsl(158, 75%, 42%);
   --success-gradient: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
-  
+
   --warning-50: hsl(43, 92%, 95%);
   --warning-500: hsl(43, 93%, 58%);
   --warning-600: hsl(43, 87%, 48%);
   --warning-gradient: linear-gradient(135deg, var(--warning-500) 0%, var(--warning-600) 100%);
-  
+
   --error-50: hsl(0, 86%, 97%);
   --error-500: hsl(0, 84%, 60%);
   --error-600: hsl(0, 87%, 52%);
   --error-gradient: linear-gradient(135deg, var(--error-500) 0%, var(--error-600) 100%);
-  
+
   /* アクセントカラー */
   --accent-gold: hsl(45, 93%, 64%);
   --accent-gold-light: hsl(45, 95%, 72%);
   --accent-silver: hsl(210, 11%, 85%);
   --accent-copper: hsl(25, 76%, 63%);
-  
+
   /* 互換性のための従来の変数（段階的に廃止予定） */
   --primary-gradient: var(--brand-gradient-primary);
   --primary-dark: var(--primary-700);
   --primary-light: var(--primary-400);
-  
+
   /* 影とエフェクト */
   --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.3);
   --shadow-glow: 0 0 20px rgba(129, 140, 248, 0.4);
-  
+
   /* アニメーション設定 */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --transition-smooth: 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  
+
   /* ドラッグ&ドロップアニメーション */
   --drag-scale: 1.05;
   --drag-rotation: 3deg;
   --drag-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   --drop-zone-highlight: rgba(129, 140, 248, 0.2);
   --drop-zone-border: 2px solid rgba(129, 140, 248, 0.6);
-  
+
   /* Z-index レイヤー管理 */
   --z-dropdown: 1000;
   --z-sticky: 1020;
@@ -178,6 +204,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -185,8 +212,8 @@ a:hover {
 /* Body optimized for Core Web Vitals */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* display: flex; REMOVED to prevent overflow handling issues */
+  /* place-items: center; REMOVED */
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh;
@@ -213,6 +240,7 @@ body {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
@@ -238,7 +266,7 @@ body {
 /* ドラッグ開始時のアニメーション */
 .game-card.dragging {
   transform: scale(var(--drag-scale)) rotate(var(--drag-rotation));
-  box-shadow: 
+  box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.5),
     0 0 40px rgba(129, 140, 248, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -262,10 +290,13 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.6;
     transform: scale(1.05);
@@ -290,7 +321,7 @@ body {
 .drop-zone.highlight {
   background-color: var(--drop-zone-highlight);
   border: 2px dashed rgba(129, 140, 248, 0.8);
-  box-shadow: 
+  box-shadow:
     inset 0 0 20px rgba(129, 140, 248, 0.3),
     0 0 30px rgba(129, 140, 248, 0.2);
   animation: pulse-highlight 1s ease-in-out infinite alternate;
@@ -309,6 +340,7 @@ body {
     transform: scale(0.8);
     opacity: 1;
   }
+
   100% {
     transform: scale(2);
     opacity: 0;
@@ -320,7 +352,7 @@ body {
   background-color: rgba(239, 68, 68, 0.15);
   border: 2px solid rgba(239, 68, 68, 0.8);
   animation: shake 300ms ease-in-out;
-  box-shadow: 
+  box-shadow:
     inset 0 0 20px rgba(239, 68, 68, 0.2),
     0 0 20px rgba(239, 68, 68, 0.1);
 }
@@ -343,6 +375,7 @@ body {
     opacity: 0.8;
     filter: brightness(1);
   }
+
   100% {
     transform: scale(1.02);
     opacity: 1;
@@ -363,9 +396,12 @@ body {
 }
 
 @keyframes bounce-arrow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate(-50%, -50%) translateY(0);
   }
+
   50% {
     transform: translate(-50%, -50%) translateY(10px);
   }
@@ -373,9 +409,19 @@ body {
 
 /* シェイクアニメーション（無効なドロップ時） */
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 /* カードドロップ時のバウンス */
@@ -388,12 +434,15 @@ body {
     transform: scale(1.1) rotate(0deg) translateY(-10px);
     filter: brightness(1.2);
   }
+
   40% {
     transform: scale(0.95) rotate(0deg) translateY(0);
   }
+
   70% {
     transform: scale(1.02) rotate(0deg) translateY(-2px);
   }
+
   100% {
     transform: scale(1) rotate(0deg) translateY(0);
     filter: brightness(1);
@@ -416,6 +465,7 @@ body {
     transform: translate(0, 0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translate(var(--tx), var(--ty)) scale(0);
     opacity: 0;
@@ -425,7 +475,7 @@ body {
 /* ホバー効果 */
 .game-card:hover:not(.dragging) {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.2),
     0 0 20px rgba(129, 140, 248, 0.2);
   transition: all var(--transition-normal);
@@ -462,10 +512,12 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(0.98);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -478,9 +530,17 @@ body {
 }
 
 @keyframes score-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* 新しいカード表示アニメーション */
@@ -493,6 +553,7 @@ body {
     opacity: 0;
     transform: translateY(20px) scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -509,6 +570,7 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+
   100% {
     opacity: 0;
     transform: scale(0.8) translateY(-20px);
@@ -528,46 +590,46 @@ body {
     min-height: var(--touch-target-comfortable);
     padding: var(--space-sm);
   }
-  
+
   .game-card.dragging {
     /* モバイルでの控えめなドラッグ効果 */
     transform: scale(1.05) rotate(2deg);
-    box-shadow: 
+    box-shadow:
       0 15px 30px rgba(0, 0, 0, 0.3),
       0 0 20px rgba(129, 140, 248, 0.3);
     /* 振動フィードバック（対応デバイスのみ） */
     -webkit-tap-highlight-color: transparent;
   }
-  
+
   .game-card:hover {
     /* モバイルではホバーを無効化 */
     transform: none;
     box-shadow: var(--shadow-card);
   }
-  
+
   /* タッチフィードバック */
   .game-card:active {
     transform: scale(0.95);
     transition: transform 100ms ease-out;
-    box-shadow: 
+    box-shadow:
       0 2px 8px rgba(0, 0, 0, 0.2),
       inset 0 1px 0 rgba(0, 0, 0, 0.1);
   }
-  
+
   /* ドロップゾーンのモバイル調整 */
   .drop-zone {
     /* タッチターゲットを大きく */
     min-height: 80px;
     padding: var(--space-md);
   }
-  
+
   .drop-zone.highlight {
     border-width: 3px;
-    box-shadow: 
+    box-shadow:
       inset 0 0 30px rgba(129, 140, 248, 0.4),
       0 0 40px rgba(129, 140, 248, 0.3);
   }
-  
+
   /* モバイル用スワイプインジケーター */
   .swipe-indicator {
     position: absolute;
@@ -579,12 +641,15 @@ body {
     pointer-events: none;
     animation: swipe-hint 2s ease-in-out infinite;
   }
-  
+
   @keyframes swipe-hint {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateX(-50%) translateY(0);
       opacity: 0.6;
     }
+
     50% {
       transform: translateX(-50%) translateY(-5px);
       opacity: 1;
@@ -604,19 +669,19 @@ body {
     padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
     padding-left: max(var(--space-md), env(safe-area-inset-left));
   }
-  
+
   .safe-area-top {
     padding-top: max(var(--space-md), env(safe-area-inset-top));
   }
-  
+
   .safe-area-bottom {
     padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
   }
-  
+
   .safe-area-left {
     padding-left: max(var(--space-md), env(safe-area-inset-left));
   }
-  
+
   .safe-area-right {
     padding-right: max(var(--space-md), env(safe-area-inset-right));
   }
@@ -633,12 +698,12 @@ body {
     --card-scale: 0.85;
     --ui-scale: 1;
   }
-  
+
   .game-container {
     flex-direction: column;
     gap: var(--space-md);
   }
-  
+
   .game-ui-bottom {
     position: fixed;
     bottom: env(safe-area-inset-bottom, 0);
@@ -649,7 +714,7 @@ body {
     backdrop-filter: blur(10px);
     z-index: var(--z-sticky);
   }
-  
+
   /* カード配置の調整 */
   .hand-container {
     display: flex;
@@ -662,21 +727,21 @@ body {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  
+
   .hand-container::-webkit-scrollbar {
     display: none;
   }
-  
+
   /* カードのオーバーラップ */
   .hand-container .game-card {
     flex-shrink: 0;
     margin: 0 -15px;
   }
-  
+
   .hand-container .game-card:first-child {
     margin-left: 0;
   }
-  
+
   .hand-container .game-card:last-child {
     margin-right: 0;
   }
@@ -689,11 +754,11 @@ body {
     --card-scale: 0.8;
     --ui-scale: 0.9;
   }
-  
+
   .game-container {
     flex-direction: row;
   }
-  
+
   .game-ui-side {
     position: fixed;
     right: env(safe-area-inset-right, 0);
@@ -703,7 +768,7 @@ body {
     padding: var(--space-md);
     background: linear-gradient(to left, rgba(0, 0, 0, 0.8), transparent);
   }
-  
+
   /* 横持ちで画面高さが低い場合 */
   @media (max-height: 500px) {
     :root {
@@ -726,7 +791,7 @@ body {
     --touch-target-min: 40px;
     --touch-target-comfortable: 44px;
   }
-  
+
   .game-card {
     width: calc(var(--card-width) * 0.8);
     height: calc(var(--card-height) * 0.8);
@@ -761,7 +826,7 @@ body {
     --touch-target-min: 44px;
     --touch-target-comfortable: 52px;
   }
-  
+
   /* iPad Pro等の大型タブレット */
   @media (min-width: 1024px) {
     :root {
@@ -784,6 +849,7 @@ body {
 
 /* モバイルブラウザのアドレスバー対応 */
 @supports (height: 100dvh) {
+
   .game-view,
   .fullscreen-modal {
     height: 100dvh;
@@ -809,14 +875,14 @@ body {
     box-shadow: none !important;
     text-shadow: none !important;
   }
-  
+
   /* 必要な影のみ復活 */
   .game-card,
   .primary-action-btn,
   .secondary-action-btn {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
   }
-  
+
   /* グラデーションを単色に */
   .gradient-heavy {
     background-image: none !important;
@@ -829,8 +895,13 @@ body {
    ==================================== */
 
 /* タッチ遅延の除去 */
-a, button, input, select, textarea, 
-[role="button"], [tabindex]:not([tabindex="-1"]) {
+a,
+button,
+input,
+select,
+textarea,
+[role="button"],
+[tabindex]:not([tabindex="-1"]) {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -839,7 +910,9 @@ a, button, input, select, textarea,
 
 /* モバイル用ボタンスタイル */
 @media (max-width: 768px) {
-  button, .btn {
+
+  button,
+  .btn {
     min-height: var(--touch-target-comfortable);
     min-width: var(--touch-target-comfortable);
     padding: var(--space-md) var(--space-lg);
@@ -849,9 +922,10 @@ a, button, input, select, textarea,
     position: relative;
     overflow: hidden;
   }
-  
+
   /* タッチリップル効果 */
-  button::after, .btn::after {
+  button::after,
+  .btn::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -863,24 +937,30 @@ a, button, input, select, textarea,
     transform: translate(-50%, -50%);
     transition: width 0.6s, height 0.6s;
   }
-  
-  button:active::after, .btn:active::after {
+
+  button:active::after,
+  .btn:active::after {
     width: 200px;
     height: 200px;
   }
-  
+
   /* モバイル用フォーム要素 */
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     min-height: var(--touch-target-comfortable);
     padding: var(--space-sm) var(--space-md);
-    font-size: 16px; /* iOSのズーム防止 */
+    font-size: 16px;
+    /* iOSのズーム防止 */
     border-radius: 8px;
     border: 2px solid transparent;
     background: rgba(255, 255, 255, 0.05);
     transition: all var(--transition-fast);
   }
-  
-  input:focus, select:focus, textarea:focus {
+
+  input:focus,
+  select:focus,
+  textarea:focus {
     border-color: var(--primary-400);
     background: rgba(255, 255, 255, 0.1);
     box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
@@ -889,6 +969,7 @@ a, button, input, select, textarea,
 
 /* iOS固有の問題対応 */
 @supports (-webkit-touch-callout: none) {
+
   /* iOS Safari のバウンススクロール無効化 */
   body {
     position: fixed;
@@ -896,13 +977,14 @@ a, button, input, select, textarea,
     width: 100%;
     height: 100%;
   }
-  
+
   /* iOSのズーム無効化 */
   input[type="text"],
   input[type="number"],
   select,
   textarea {
-    font-size: 16px; /* 16px未満だとiOSがズームする */
+    font-size: 16px;
+    /* 16px未満だとiOSがズームする */
   }
 }
 
@@ -912,6 +994,7 @@ a, button, input, select, textarea,
 
 /* モーション削減設定 */
 @media (prefers-reduced-motion: reduce) {
+
   .game-card,
   .drop-zone,
   .game-phase-transition,
@@ -921,17 +1004,17 @@ a, button, input, select, textarea,
     animation: none !important;
     transition: opacity var(--transition-fast) !important;
   }
-  
+
   .game-card.dragging {
     transform: none !important;
     opacity: 0.7;
   }
-  
+
   .game-card:hover {
     transform: none !important;
     box-shadow: var(--shadow-card);
   }
-  
+
   .drop-zone.highlight {
     animation: none !important;
     background-color: var(--drop-zone-highlight);
@@ -944,12 +1027,12 @@ a, button, input, select, textarea,
   .game-card {
     border: 2px solid rgba(255, 255, 255, 0.8);
   }
-  
+
   .game-card.dragging {
     border-color: var(--primary-light);
     box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.5);
   }
-  
+
   .drop-zone.highlight {
     border: 3px solid var(--primary-light);
     background-color: rgba(129, 140, 248, 0.3);
@@ -965,6 +1048,7 @@ a, button, input, select, textarea,
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -974,6 +1058,7 @@ a, button, input, select, textarea,
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -985,6 +1070,7 @@ a, button, input, select, textarea,
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -996,6 +1082,7 @@ a, button, input, select, textarea,
     transform: translateY(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -1007,6 +1094,7 @@ a, button, input, select, textarea,
     transform: translateX(20px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1018,6 +1106,7 @@ a, button, input, select, textarea,
     transform: translateX(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1030,6 +1119,7 @@ a, button, input, select, textarea,
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -1041,6 +1131,7 @@ a, button, input, select, textarea,
     transform: scale(1);
     opacity: 1;
   }
+
   to {
     transform: scale(0.8);
     opacity: 0;
@@ -1049,12 +1140,19 @@ a, button, input, select, textarea,
 
 /* バウンスアニメーション */
 @keyframes anim-bounce {
-  0%, 20%, 50%, 80%, 100% {
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
     transform: translateY(0);
   }
+
   40% {
     transform: translateY(-10px);
   }
+
   60% {
     transform: translateY(-5px);
   }
@@ -1062,13 +1160,24 @@ a, button, input, select, textarea,
 
 /* シェイクアニメーション */
 @keyframes anim-shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-5px);
   }
-  20%, 40%, 60%, 80% {
+
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(5px);
   }
 }
@@ -1078,9 +1187,11 @@ a, button, input, select, textarea,
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
+
   100% {
     transform: scale(1);
   }
@@ -1091,9 +1202,11 @@ a, button, input, select, textarea,
   0% {
     box-shadow: 0 0 5px rgba(129, 140, 248, 0.5);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(129, 140, 248, 0.8), 0 0 40px rgba(129, 140, 248, 0.6);
   }
+
   100% {
     box-shadow: 0 0 5px rgba(129, 140, 248, 0.5);
   }
@@ -1104,6 +1217,7 @@ a, button, input, select, textarea,
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1114,23 +1228,56 @@ a, button, input, select, textarea,
   0% {
     transform: perspective(400px) rotateY(0);
   }
+
   100% {
     transform: perspective(400px) rotateY(360deg);
   }
 }
 
 /* アニメーションクラス */
-.anim-fadeIn-normal { animation-name: anim-fadeIn; }
-.anim-fadeOut-normal { animation-name: anim-fadeOut; }
-.anim-slideIn-normal { animation-name: anim-slideIn-up; }
-.anim-scaleIn-normal { animation-name: anim-scaleIn; }
-.anim-scaleOut-normal { animation-name: anim-scaleOut; }
-.anim-bounce-normal { animation-name: anim-bounce; }
-.anim-shake-normal { animation-name: anim-shake; }
-.anim-pulse-normal { animation-name: anim-pulse; }
-.anim-glow-normal { animation-name: anim-glow; }
-.anim-rotate-normal { animation-name: anim-rotate; }
-.anim-flip-normal { animation-name: anim-flip; }
+.anim-fadeIn-normal {
+  animation-name: anim-fadeIn;
+}
+
+.anim-fadeOut-normal {
+  animation-name: anim-fadeOut;
+}
+
+.anim-slideIn-normal {
+  animation-name: anim-slideIn-up;
+}
+
+.anim-scaleIn-normal {
+  animation-name: anim-scaleIn;
+}
+
+.anim-scaleOut-normal {
+  animation-name: anim-scaleOut;
+}
+
+.anim-bounce-normal {
+  animation-name: anim-bounce;
+}
+
+.anim-shake-normal {
+  animation-name: anim-shake;
+}
+
+.anim-pulse-normal {
+  animation-name: anim-pulse;
+}
+
+.anim-glow-normal {
+  animation-name: anim-glow;
+}
+
+.anim-rotate-normal {
+  animation-name: anim-rotate;
+}
+
+.anim-flip-normal {
+  animation-name: anim-flip;
+}
 
 /* 高強度アニメーション */
 .anim-scaleIn-high {
@@ -1303,6 +1450,7 @@ a, button, input, select, textarea,
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -1316,15 +1464,15 @@ a, button, input, select, textarea,
   .victory-title {
     font-size: 3rem;
   }
-  
+
   .victory-subtitle {
     font-size: 1.25rem;
   }
-  
+
   .defeat-title {
     font-size: 2.5rem;
   }
-  
+
   .defeat-subtitle {
     font-size: 1rem;
   }

@@ -1,27 +1,17 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onMounted, onUnmounted, ref, h } from 'vue'
-// import { useI18n } from 'vue-i18n'
-// import GameCanvas from './components/game/GameCanvas.vue' // 動的インポートに変更
 import transitionAnimations from './components/animations/TransitionAnimations.vue'
 import accessibilitySettings from './components/accessibility/AccessibilitySettings.vue'
 import visualIndicators from './components/accessibility/VisualIndicators.vue'
 import errorBoundary from './components/error/ErrorBoundary.vue'
 import errorNotification from './components/error/ErrorNotification.vue'
-// import mobileErrorHandler from './components/error/MobileErrorHandler.vue' // 動的インポートに変更
-// import StatisticsDashboard from './components/statistics/StatisticsDashboard.vue' // 動的インポートに変更
 import { KeyboardManager } from './components/accessibility/KeyboardManager'
 import { ScreenReaderManager } from './components/accessibility/ScreenReaderManager'
-// import FeedbackButton from './components/feedback/FeedbackButton.vue' // 動的インポートに変更
 
 // レイアウトコンポーネント
 import appHeader from './components/layout/AppHeader.vue'
 import navigationActions from './components/layout/NavigationActions.vue'
 
-// 国際化コンポーネント
-// import languageSwitcher from './components/i18n/LanguageSwitcher.vue'
-
-// 国際化機能
-// const { t } = useI18n()
 const showGame = ref(false)
 const showAccessibilitySettings = ref(false)
 const isMobile = ref(false)
@@ -72,9 +62,9 @@ const backToHome = (): void => {
 
 
 
-const handleAccessibilitySettingsChanged = (settings: Record<string, boolean | string | number>): void => {
+const handleAccessibilitySettingsChanged = (settings: any): void => {
   // アクセシビリティ設定が変更されたときの処理
-  console.log('アクセシビリティ設定が更新されました:', settings)
+  // アクセシビリティ設定が変更されたときの処理
   
   // スクリーンリーダーに通知
   if (settings['screenReaderEnabled']) {
@@ -105,18 +95,18 @@ const getErrorType = (error: Error): 'network' | 'dynamic-import' | 'runtime' | 
 }
 
 // ホーム画面のエラーハンドリング
-const handleHomeError = (error: Error, info: string) => {
+const handleHomeError = (error: Error, _instance: any, info: string) => {
   console.error('Home screen error:', error, info)
 }
 
 // エラーレポート送信
 const reportError = (error: Error) => {
-  console.log('Error report:', error)
+  console.info('Error report:', error)
   // 将来的にエラーレポートAPIに送信
 }
 
 onMounted(() => {
-  console.log('App Version: v2025.12.06.0230 - Debug Build')
+  console.info('App Version: v2025.12.06.0230 - Debug Build')
   
   // モバイル判定
   isMobile.value = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
@@ -258,22 +248,24 @@ onUnmounted(() => {
           
           <!-- カスタムエラーフォールバック（モバイル対応） -->
           <template #error="{ error, retry, reload }">
-            <MobileErrorHandler
-              v-if="isMobile"
-              :error="error"
-              :error-type="getErrorType(error)"
-              @retry="retry"
-              @go-home="reload"
-              @report-error="reportError"
-            />
-            <div v-else class="desktop-error">
-              <h2>エラーが発生しました</h2>
-              <p>{{ error.message }}</p>
-              <div class="desktop-error-actions">
-                <button class="error-btn" @click="retry">もう一度試す</button>
-                <button class="error-btn secondary" @click="reload">ページを再読み込み</button>
+            <template v-if="error">
+              <MobileErrorHandler
+                v-if="isMobile"
+                :error="error"
+                :error-type="getErrorType(error)"
+                @retry="retry"
+                @go-home="reload"
+                @report-error="reportError"
+              />
+              <div v-else class="desktop-error">
+                <h2>エラーが発生しました</h2>
+                <p>{{ error.message }}</p>
+                <div class="desktop-error-actions">
+                  <button class="error-btn" @click="retry">もう一度試す</button>
+                  <button class="error-btn secondary" @click="reload">ページを再読み込み</button>
+                </div>
               </div>
-            </div>
+            </template>
           </template>
         </errorBoundary>
       </div>
@@ -294,17 +286,11 @@ onUnmounted(() => {
     <!-- ビジュアルインジケーター -->
     <visualIndicators :enabled="true" />
     
-    <!-- 言語切り替えボタン -->
-    <!-- <div class="language-switcher-container"> -->
-    <!-- <languageSwitcher 
-        mode="dropdown" 
-        :compact="true"
-        :aria-label="t('accessibility.options.changeLanguage', 'Change Language')"
-      /> -->
-    <!-- </div> -->
+    <!-- 言語切り替えボタン (無効化中) -->
 
     <!-- アクセシビリティ設定ボタン -->
     <button
+      v-if="!showGame"
       class="accessibility-button"
       aria-label="アクセシビリティ設定を開く (Alt+A)"
       :aria-keyshortcuts="'Alt+A'"
@@ -491,8 +477,7 @@ onUnmounted(() => {
 .home-view {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   padding: var(--space-md);
   min-height: 100vh;
 }
@@ -500,7 +485,7 @@ onUnmounted(() => {
 .home-container {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-3xl);

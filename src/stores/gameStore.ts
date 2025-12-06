@@ -167,7 +167,7 @@ export const useGameStore = defineStore('game', () => {
         if (result.insuranceExpirations) {
             lastMessage.value = result.insuranceExpirations.message
         } else {
-            lastMessage.value = `Turn ${game.value.turn} started`
+            lastMessage.value = `ターン ${game.value.turn} 開始`
         }
         triggerUpdate()
     }

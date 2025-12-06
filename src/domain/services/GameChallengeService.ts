@@ -61,7 +61,7 @@ export class GameChallengeService {
     game.phase = 'challenge'
 
     // 経験学習システム: 同じチャレンジの失敗回数を取得
-    const failureCount = (game as any)._learningHistory.get(challengeCard.name) || 0
+    const failureCount = game.getLearningHistory(challengeCard.name)
     if (failureCount >= 2) {
       // 2回目以降の失敗で必要パワー-1（経験による効率化）
       // Card is immutable, so we create a copy with updated power
@@ -96,8 +96,8 @@ export class GameChallengeService {
     // 経験学習システム: 失敗時に学習履歴を更新
     if (!result.success && game.currentChallenge) {
       const challengeName = game.currentChallenge.name
-      const currentFailures = (game as any)._learningHistory.get(challengeName) || 0
-        ; (game as any)._learningHistory.set(challengeName, currentFailures + 1)
+      const currentFailures = game.getLearningHistory(challengeName)
+      game.updateLearningHistory(challengeName, currentFailures + 1)
     }
 
     // 成功時は保険種類選択肢を追加

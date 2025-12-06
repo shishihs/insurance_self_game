@@ -292,17 +292,18 @@
 }
 
 .bounce-in {
-  animation: bounce-in 0.8s ease-out forwards;
-  opacity: 0;
+  animation: bounce-in 0.8s ease-out both;
+  /* フォールバック: アニメーション失敗時は表示される */
+  opacity: 1;
 }
 
 /* モーション削減対応 */
 @media (prefers-reduced-motion: reduce) {
   .pulse,
   .bounce-in {
-    animation: none;
-    opacity: 1;
-    transform: none;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 
