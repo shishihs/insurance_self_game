@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import Hand from './Hand.vue'
 import CardComponent from './Card.vue'
@@ -11,6 +11,19 @@ import TutorialOverlay from './TutorialOverlay.vue'
 import type { GameConfig } from '@/domain/types/game.types'
 
 const store = useGameStore()
+
+const phaseDisplayName = computed(() => {
+  const map: Record<string, string> = {
+    draw: 'ドロー',
+    challenge_choice: '課題選択',
+    challenge: '挑戦',
+    resolution: '解決',
+    market: '保険市場',
+    end: 'ターン終了',
+    insurance_type_selection: '保険選択'
+  }
+  return map[store.currentPhase] || store.currentPhase.toUpperCase()
+})
 
 onMounted(() => {
   if (!store.game) {
@@ -72,7 +85,7 @@ async function onChallenge() {
         </div>
         <div class="flex flex-col items-end">
           <span class="text-xs text-slate-400 uppercase">フェーズ</span>
-          <span class="font-bold text-lg text-blue-300">{{ store.currentPhase }}</span>
+          <span class="font-bold text-lg text-blue-300">{{ phaseDisplayName }}</span>
         </div>
         
         <!-- Tutorial Toggle -->
