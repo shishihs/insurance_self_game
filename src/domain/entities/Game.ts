@@ -489,17 +489,6 @@ export class Game implements IGameState {
     return result.data || []
   }
 
-  /**
-   * カードをドローする（後方互換版）
-   * @param {number} count - ドローする枚数
-   * @returns {Card[]} ドローしたカードの配列
-   * @deprecated 新しいdrawCardsメソッドを使用してください
-   */
-  drawCardsSync(count: number): Card[] {
-    const result = this.cardManager.drawCards(count)
-    return result.drawnCards
-  }
-
 
   /**
    * チャレンジフェーズを開始する (v2)
