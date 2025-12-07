@@ -67,7 +67,7 @@ defineExpose({
 .action-section {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-xl);
 }
 
 .button-group {

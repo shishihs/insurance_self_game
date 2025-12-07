@@ -55,7 +55,7 @@
 
 .app-header {
   text-align: center;
-  padding: var(--space-2xl) 0;
+  padding: var(--space-lg) 0 var(--space-md);
   position: relative;
   overflow: hidden;
 }
@@ -129,7 +129,7 @@
 
 .brand-logo {
   display: inline-block;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
   position: relative;
 }
 
@@ -166,7 +166,7 @@
 }
 
 .hero-title {
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 800;
   margin-bottom: var(--space-md);
   
@@ -177,7 +177,8 @@
   background-size: 200% 200%;
   animation: gradient-shift 8s ease-in-out infinite;
   
-  filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.3));
+  /* filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.3)); -> 原因の可能性が高いので削除 */
+  text-decoration: none;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -194,7 +195,7 @@
 .hero-subtitle {
   font-size: clamp(1rem, 3vw, 1.375rem);
   color: rgba(209, 213, 219, 0.9);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -215,7 +216,7 @@
   border: 1px solid rgba(129, 140, 248, 0.2);
   border-radius: 9999px;
   backdrop-filter: blur(10px);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .accent-icon {
@@ -233,7 +234,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-xl);
-  margin-top: var(--space-2xl);
+  margin-top: var(--space-xl);
 }
 
 .stat-item {
@@ -310,7 +311,7 @@
 /* レスポンシブ対応 */
 @media (max-width: 640px) {
   .app-header {
-    padding: var(--space-xl) 0;
+    padding: var(--space-sm) 0;
   }
   
   .logo-icon {
@@ -324,7 +325,7 @@
   
   .hero-stats {
     gap: var(--space-lg);
-    margin-top: var(--space-xl);
+    margin-top: var(--space-lg);
   }
   
   .stat-divider {

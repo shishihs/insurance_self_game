@@ -488,7 +488,7 @@ onUnmounted(() => {
   margin: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3xl);
+  gap: var(--space-xl);
 }
 
 /* ヒーローセクションのスタイルは AppHeader.vue に移動 */
