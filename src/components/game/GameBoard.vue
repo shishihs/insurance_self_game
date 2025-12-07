@@ -167,11 +167,28 @@ async function onChallenge() {
             <div 
               v-for="choice in store.insuranceTypeChoices" 
               :key="choice.insuranceType"
-              class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition-colors"
-              @click="store.selectInsurance(choice.insuranceType)"
+              class="border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors flex flex-col h-full bg-slate-50"
             >
-              <h3 class="font-bold text-lg text-gray-800">{{ choice.name }}</h3>
-              <p class="text-sm text-gray-600">{{ choice.description }}</p>
+              <h3 class="font-bold text-lg text-gray-800 mb-2">{{ choice.name }}</h3>
+              <p class="text-sm text-gray-600 mb-4 flex-grow">{{ choice.description }}</p>
+              
+              <div class="space-y-2 mt-auto">
+                <button 
+                  @click.stop="store.selectInsurance(choice.insuranceType, 'term')"
+                  class="w-full py-2 px-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded text-sm font-semibold transition-colors flex justify-between items-center"
+                >
+                  <span>定期保険 ({{ choice.termOption.duration }}ターン)</span>
+                  <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">{{ choice.termOption.cost }}</span>
+                </button>
+                
+                <button 
+                  @click.stop="store.selectInsurance(choice.insuranceType, 'whole_life')"
+                  class="w-full py-2 px-3 bg-green-100 hover:bg-green-200 text-green-800 rounded text-sm font-semibold transition-colors flex justify-between items-center"
+                >
+                  <span>終身保険 (永続)</span>
+                  <span class="bg-green-600 text-white text-xs px-2 py-1 rounded-full">{{ choice.wholeLifeOption.cost }}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

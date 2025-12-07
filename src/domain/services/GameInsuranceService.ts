@@ -64,10 +64,7 @@ export class GameInsuranceService {
       return 0
     }
 
-    // テスト環境またはシンプルモードでは常にfallback計算を使用
-    if (process.env['NODE_ENV'] === 'test' || process.env['VITEST']) {
-      return this.fallbackBurdenCalculation(game)
-    }
+
 
     try {
       const totalBurden = this.premiumService.calculateTotalInsuranceBurden(

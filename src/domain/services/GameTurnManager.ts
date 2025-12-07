@@ -152,7 +152,7 @@ export class GameTurnManager {
    */
   private updateInsuranceExpirations(game: Game) {
     const expirationResult = this.expirationManager.updateInsuranceExpirations(
-      game.getActiveInsurances(),
+      game.activeInsurances,
       game.expiredInsurances,
       game.turn
     )

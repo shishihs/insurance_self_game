@@ -14,14 +14,14 @@ vi.mock('inquirer', () => ({
 vi.mock('chalk', () => {
   const createChainableMock = () => {
     const chainableHandler: ProxyHandler<any> = {
-      get: function(target: any, prop: string) {
+      get: function (target: any, prop: string) {
         // Handle special properties
-        if (prop === 'bold' || prop === 'dim' || prop === 'gray' || prop === 'cyan' || 
-            prop === 'blue' || prop === 'red' || prop === 'yellow' || prop === 'green' ||
-            prop === 'magenta' || prop === 'bgBlue' || prop === 'white' || prop === 'inverse' ||
-            prop === 'italic') {
+        if (prop === 'bold' || prop === 'dim' || prop === 'gray' || prop === 'cyan' ||
+          prop === 'blue' || prop === 'red' || prop === 'yellow' || prop === 'green' ||
+          prop === 'magenta' || prop === 'bgBlue' || prop === 'white' || prop === 'inverse' ||
+          prop === 'italic') {
           // Return a chainable mock
-          return new Proxy(function(text: string) {
+          return new Proxy(function (text: string) {
             // For dimmed text, actually prepend DIM: to make tests work
             if (prop === 'dim') {
               return `DIM:${text}`
@@ -29,17 +29,17 @@ vi.mock('chalk', () => {
             return `${prop.toUpperCase()}:${text}`
           }, chainableHandler)
         }
-        
+
         // Handle hex method
         if (prop === 'hex') {
           return vi.fn((color: string) => vi.fn((text: string) => `HEX(${color}):${text}`))
         }
-        
+
         // Handle rgb method
         if (prop === 'rgb') {
           return vi.fn((r: number, g: number, b: number) => vi.fn((text: string) => `RGB(${r},${g},${b}):${text}`))
         }
-        
+
         // For chained properties, support them
         if (typeof prop === 'string') {
           // Handle object access for specific colors
@@ -52,24 +52,24 @@ vi.mock('chalk', () => {
             'cyan': (text: string) => `CYAN:${text}`,
             'magenta': (text: string) => `MAGENTA:${text}`
           }
-          
+
           if (prop in colorMap) {
             return vi.fn(colorMap[prop])
           }
         }
-        
+
         // For functions, return a mock that applies styling
         return vi.fn((text: string) => `${prop.toUpperCase()}:${text}`)
       },
-      apply: function(target: any, thisArg: any, args: any[]) {
+      apply: function (target: any, thisArg: any, args: any[]) {
         // When called as a function
         return args[0] || ''
       }
     }
-    
+
     return new Proxy(() => '', chainableHandler)
   }
-  
+
   return {
     default: createChainableMock()
   }
@@ -104,11 +104,11 @@ describe('InteractiveCUIRenderer Tests', () => {
     TestDataGenerator.setSeed(12345)
     testConfig = TestDataGenerator.createTestGameConfig()
     testGame = new Game(testConfig)
-    
+
     // Spy on console methods
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+
     // Create renderer with test configuration
     renderer = new InteractiveCUIRenderer({
       theme: 'default',
@@ -116,7 +116,7 @@ describe('InteractiveCUIRenderer Tests', () => {
       showProgress: false,
       debugMode: true
     })
-    
+
     // Start memory monitoring
     MemoryTestHelper.startMemoryMonitoring()
   })
@@ -125,7 +125,7 @@ describe('InteractiveCUIRenderer Tests', () => {
     // Restore console methods
     consoleLogSpy.mockRestore()
     consoleErrorSpy.mockRestore()
-    
+
     // Clear performance measurements
     PerformanceTestHelper.clearMeasurements()
   })
@@ -144,7 +144,7 @@ describe('InteractiveCUIRenderer Tests', () => {
         showProgress: true,
         debugMode: false
       }
-      
+
       const customRenderer = new InteractiveCUIRenderer(customConfig)
       expect(customRenderer).toBeDefined()
     })
@@ -154,14 +154,14 @@ describe('InteractiveCUIRenderer Tests', () => {
         'renderer_initialization',
         () => renderer.initialize()
       )
-      
+
       // Should initialize in reasonable time (figlet/animation can take time)
       expect(timeMs).toBeLessThan(1000)
     })
 
     it('should support all available themes', () => {
       const themes = ['default', 'minimal', 'cyberpunk', 'retro', 'elegant']
-      
+
       themes.forEach(theme => {
         const themeRenderer = new InteractiveCUIRenderer({ theme: theme as any })
         expect(themeRenderer).toBeDefined()
@@ -172,7 +172,7 @@ describe('InteractiveCUIRenderer Tests', () => {
       await renderer.initialize()
       await renderer.initialize() // Second initialization
       await renderer.initialize() // Third initialization
-      
+
       // Should not throw or cause issues
       expect(true).toBe(true)
     })
@@ -185,18 +185,18 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should display game state correctly', () => {
       renderer.displayGameState(testGame)
-      
+
       // Verify console output was called
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
     it('should display hand cards', () => {
       const testCards = TestDataGenerator.createTestCards(5)
-      
+
       renderer.displayHand(testCards)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
-      
+
       // Verify all cards are mentioned in output
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
       testCards.forEach(card => {
@@ -207,9 +207,9 @@ describe('InteractiveCUIRenderer Tests', () => {
     it('should display challenge card', () => {
       const challengeCard = TestDataGenerator.createTestCards(1)[0]
       Object.defineProperty(challengeCard, 'name', { value: 'Test Challenge', configurable: true })
-      
+
       renderer.displayChallenge(challengeCard)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
       expect(allLogs).toContain('Test Challenge')
@@ -217,7 +217,7 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should display vitality correctly', () => {
       renderer.displayVitality(75, 100)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
       expect(allLogs).toContain('75')
@@ -230,15 +230,15 @@ describe('InteractiveCUIRenderer Tests', () => {
         Object.defineProperty(card, 'type', { value: 'insurance', configurable: true })
         Object.defineProperty(card, 'name', { value: `Insurance ${index}`, configurable: true })
       })
-      
+
       renderer.displayInsuranceCards(insuranceCards)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
     it('should display insurance burden', () => {
       renderer.displayInsuranceBurden(25)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
       expect(allLogs).toContain('25')
@@ -246,7 +246,7 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should display progress', () => {
       renderer.displayProgress('youth', 3)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
       expect(allLogs).toContain('youth')
@@ -258,47 +258,46 @@ describe('InteractiveCUIRenderer Tests', () => {
       testGame.addCardToHand(TestDataGenerator.createTestCards(1)[0])
       testGame.addCardToHand(TestDataGenerator.createTestCards(1)[0])
       testGame.addCardToDiscardPile(TestDataGenerator.createTestCards(1)[0])
-      
+
       renderer.displayCardCounts(testGame)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
-      
+
       // Should display hand count
-      expect(allLogs).toContain('Hand: 2')
-      
+      expect(allLogs).toContain('🃏 手札: 2 枚')
+
       // Should display deck count (initial deck has cards)
-      expect(allLogs).toMatch(/Deck: \d+/)
-      
+      expect(allLogs).toMatch(/🎴 デッキ: \d+ 枚/)
+
       // Should display discard count  
-      expect(allLogs).toContain('Discard: 1')
+      expect(allLogs).toContain('🗑️ 捨て札: 1 枚')
     })
 
     it('should display card counts with correct pluralization', () => {
       // Test with single cards
       testGame.clearHand()
       testGame.addCardToHand(TestDataGenerator.createTestCards(1)[0])
-      
+
       renderer.displayCardCounts(testGame)
-      
+
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
-      
-      // Should use singular form for 1 card
-      expect(allLogs).toContain('Hand: 1 card')
-      expect(allLogs).not.toContain('Hand: 1 cards')
+
+      // Should use Japanese format (no pluralization needed)
+      expect(allLogs).toContain('🃏 手札: 1 枚')
     })
 
     it('should handle empty card counts gracefully', () => {
       // Clear all cards
       testGame.clearHand()
-      
+
       renderer.displayCardCounts(testGame)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
-      
+
       // Should display zero counts
-      expect(allLogs).toContain('Hand: 0')
+      expect(allLogs).toContain('🃏 手札: 0 枚')
     })
   })
 
@@ -309,7 +308,7 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should display info messages', () => {
       renderer.showMessage('Test info message', 'info')
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
       const allLogs = consoleLogSpy.mock.calls.flat().join(' ')
       expect(allLogs).toContain('Test info message')
@@ -317,25 +316,25 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should display error messages', () => {
       renderer.showError('Test error message')
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
     it('should display success messages', () => {
       renderer.showMessage('Test success message', 'success')
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
     it('should display warning messages', () => {
       renderer.showMessage('Test warning message', 'warning')
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
     it('should handle different message levels', () => {
       const levels = ['info', 'warning', 'success'] as const
-      
+
       levels.forEach(level => {
         renderer.showMessage(`Test ${level} message`, level)
         expect(consoleLogSpy).toHaveBeenCalled()
@@ -344,7 +343,7 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should handle messages without level', () => {
       renderer.showMessage('Test message without level')
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
   })
@@ -356,18 +355,18 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should request card selection', async () => {
       const cards = TestDataGenerator.createTestCards(3)
-      
+
       const selectedCards = await renderer.askCardSelection(cards, 1, 1, 'Select a card')
-      
+
       expect(selectedCards).toBeDefined()
       expect(Array.isArray(selectedCards)).toBe(true)
     })
 
     it('should request insurance choice', async () => {
       const insurances = TestDataGenerator.createTestCards(3)
-      
+
       const selectedInsurance = await renderer.askInsuranceChoice(insurances, 'Select insurance')
-      
+
       expect(selectedInsurance).toBeDefined()
     })
 
@@ -375,27 +374,27 @@ describe('InteractiveCUIRenderer Tests', () => {
       // Mock inquirer response
       const inquirer = await import('inquirer')
       vi.mocked(inquirer.default.prompt).mockResolvedValueOnce({ confirmed: true })
-      
+
       const result = await renderer.askConfirmation('Do you agree?')
-      
+
       expect(result).toBe('yes')
     })
 
     it('should request challenge action', async () => {
       const challenge = TestDataGenerator.createTestCards(1)[0]
-      
+
       // Mock inquirer response
       const inquirer = await import('inquirer')
       vi.mocked(inquirer.default.prompt).mockResolvedValueOnce({ action: 'start' })
-      
+
       const result = await renderer.askChallengeAction(challenge)
-      
+
       expect(['start', 'skip']).toContain(result)
     })
 
     it('should handle empty card selection gracefully', async () => {
       const emptyCards: any[] = []
-      
+
       // Should not throw
       await expect(renderer.askCardSelection(emptyCards, 1, 1, 'Select from empty')).resolves.toBeDefined()
     })
@@ -404,7 +403,7 @@ describe('InteractiveCUIRenderer Tests', () => {
       // Mock inquirer to throw
       const inquirer = await import('inquirer')
       vi.mocked(inquirer.default.prompt).mockRejectedValueOnce(new Error('Input error'))
-      
+
       // Should handle error without crashing
       await expect(renderer.askConfirmation('Test')).resolves.toBeDefined()
     })
@@ -421,9 +420,9 @@ describe('InteractiveCUIRenderer Tests', () => {
         vitalityChange: -10,
         message: 'Challenge completed successfully'
       })
-      
+
       renderer.showChallengeResult(challengeResult)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
@@ -432,9 +431,9 @@ describe('InteractiveCUIRenderer Tests', () => {
         turnsPlayed: 20,
         highestVitality: 85
       })
-      
+
       renderer.showGameOver(playerStats)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
@@ -443,9 +442,9 @@ describe('InteractiveCUIRenderer Tests', () => {
         turnsPlayed: 20,
         successfulChallenges: 15
       })
-      
+
       renderer.showVictory(playerStats)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
@@ -454,9 +453,9 @@ describe('InteractiveCUIRenderer Tests', () => {
         turnsPlayed: 10,
         successfulChallenges: 8
       })
-      
+
       renderer.showStageClear('youth', playerStats)
-      
+
       expect(consoleLogSpy).toHaveBeenCalled()
     })
   })
@@ -468,32 +467,32 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should clear screen', () => {
       renderer.clear()
-      
+
       // Should not throw
       expect(true).toBe(true)
     })
 
     it('should check waiting for input', () => {
       const result = renderer.isWaitingForInput()
-      
+
       expect(typeof result).toBe('boolean')
     })
 
     it('should set debug mode', () => {
       renderer.setDebugMode(true)
-      
+
       // Should not throw
       expect(true).toBe(true)
-      
+
       renderer.setDebugMode(false)
-      
+
       // Should not throw
       expect(true).toBe(true)
     })
 
     it('should dispose resources', () => {
       renderer.dispose()
-      
+
       // Should complete without error
       expect(true).toBe(true)
     })
@@ -509,14 +508,14 @@ describe('InteractiveCUIRenderer Tests', () => {
         'game_state_render',
         () => renderer.displayGameState(testGame)
       )
-      
+
       // Should render quickly (< 10ms)
       expect(timeMs).toBeLessThan(10)
     })
 
     it('should handle multiple rapid renders efficiently', async () => {
       const renderCount = 100
-      
+
       const { timeMs } = await PerformanceTestHelper.measureExecutionTime(
         'rapid_renders',
         () => {
@@ -525,7 +524,7 @@ describe('InteractiveCUIRenderer Tests', () => {
           }
         }
       )
-      
+
       // Should handle rapid renders efficiently
       expect(timeMs).toBeLessThan(100)
       console.log(`Rendered ${renderCount} messages in ${timeMs.toFixed(2)}ms`)
@@ -533,12 +532,12 @@ describe('InteractiveCUIRenderer Tests', () => {
 
     it('should handle large card displays efficiently', async () => {
       const largeCardSet = TestDataGenerator.createTestCards(100)
-      
+
       const { timeMs } = await PerformanceTestHelper.measureExecutionTime(
         'large_card_display',
         () => renderer.displayHand(largeCardSet)
       )
-      
+
       // Should handle large card sets reasonably
       expect(timeMs).toBeLessThan(50)
     })
@@ -547,37 +546,37 @@ describe('InteractiveCUIRenderer Tests', () => {
   describe('Memory Usage Tests', () => {
     it('should not leak memory during normal operation', async () => {
       await renderer.initialize()
-      
+
       const initialDelta = MemoryTestHelper.getMemoryDelta()
-      
+
       // Perform many operations
       for (let i = 0; i < 100; i++) {
         renderer.showMessage(`Test message ${i}`)
         renderer.displayVitality(i, 100)
-        
+
         const cards = TestDataGenerator.createTestCards(5)
         renderer.displayHand(cards)
       }
-      
+
       const finalDelta = MemoryTestHelper.getMemoryDelta()
       const memoryIncrease = finalDelta - initialDelta
-      
+
       // Memory increase should be reasonable (< 5MB)
       MemoryTestHelper.assertMemoryUsage(5 * 1024 * 1024)
-      
+
       console.log(`Memory usage after 100 operations: ${MemoryTestHelper.formatBytes(memoryIncrease)}`)
     })
 
     it('should clean up properly after cleanup', async () => {
       await renderer.initialize()
-      
+
       // Perform operations
       renderer.displayGameState(testGame)
       renderer.showMessage('Test message')
-      
+
       // Cleanup
       renderer.dispose()
-      
+
       // Should not have significant memory retention
       const memoryDelta = MemoryTestHelper.getMemoryDelta()
       expect(memoryDelta).toBeLessThan(1024 * 1024) // Less than 1MB
@@ -622,7 +621,7 @@ describe('InteractiveCUIRenderer Tests', () => {
         { name: null },
         { id: undefined, name: 'Test' }
       ] as any[]
-      
+
       expect(() => renderer.displayHand(malformedCards)).not.toThrow()
     })
 
@@ -631,7 +630,7 @@ describe('InteractiveCUIRenderer Tests', () => {
       consoleLogSpy.mockImplementation(() => {
         throw new Error('Console error')
       })
-      
+
       // Should handle console errors without crashing
       expect(() => renderer.showMessage('Test')).not.toThrow()
     })
@@ -640,28 +639,28 @@ describe('InteractiveCUIRenderer Tests', () => {
   describe('Theme and Styling Tests', () => {
     it('should apply different themes correctly', async () => {
       const themes = ['default', 'minimal', 'cyberpunk', 'retro', 'elegant']
-      
+
       for (const theme of themes) {
         const themedRenderer = new InteractiveCUIRenderer({ theme: theme as any })
         await themedRenderer.initialize()
-        
+
         // Each theme should render without errors
         expect(() => themedRenderer.showMessage(`Testing ${theme} theme`)).not.toThrow()
-        
+
         themedRenderer.dispose()
       }
     })
 
     it('should handle animation speed settings', async () => {
       const speeds = ['slow', 'normal', 'fast', 'instant']
-      
+
       for (const speed of speeds) {
         const speedRenderer = new InteractiveCUIRenderer({ animationSpeed: speed as any })
         await speedRenderer.initialize()
-        
+
         // Each speed should work without errors
         expect(() => speedRenderer.displayGameState(testGame)).not.toThrow()
-        
+
         speedRenderer.dispose()
       }
     })
@@ -670,17 +669,17 @@ describe('InteractiveCUIRenderer Tests', () => {
       // Test with progress enabled
       const progressRenderer = new InteractiveCUIRenderer({ showProgress: true })
       await progressRenderer.initialize()
-      
+
       expect(() => progressRenderer.displayProgress('youth', 5)).not.toThrow()
-      
+
       progressRenderer.dispose()
-      
+
       // Test with progress disabled
       const noProgressRenderer = new InteractiveCUIRenderer({ showProgress: false })
       await noProgressRenderer.initialize()
-      
+
       expect(() => noProgressRenderer.displayProgress('youth', 5)).not.toThrow()
-      
+
       noProgressRenderer.dispose()
     })
   })
@@ -693,7 +692,7 @@ describe('InteractiveCUIRenderer Tests', () => {
     it('should handle rapid method calls', async () => {
       const iterations = 1000
       let errorCount = 0
-      
+
       for (let i = 0; i < iterations; i++) {
         try {
           renderer.showMessage(`Stress test ${i}`)
@@ -703,21 +702,21 @@ describe('InteractiveCUIRenderer Tests', () => {
           errorCount++
         }
       }
-      
+
       // Should handle rapid calls with minimal errors
       expect(errorCount).toBeLessThan(iterations * 0.01) // Less than 1% error rate
-      
+
       console.log(`Stress test: ${iterations - errorCount}/${iterations} successful calls`)
     })
 
     it('should handle concurrent operations', async () => {
-      const concurrentOperations = Array.from({ length: 10 }, (_, i) => 
+      const concurrentOperations = Array.from({ length: 10 }, (_, i) =>
         Promise.resolve().then(() => {
           renderer.showMessage(`Concurrent operation ${i}`)
           renderer.displayVitality(i * 10, 100)
         })
       )
-      
+
       // Should handle concurrent operations without issues
       await expect(Promise.all(concurrentOperations)).resolves.toBeDefined()
     })
@@ -731,37 +730,37 @@ describe('InteractiveCUIRenderer Tests', () => {
     it('should integrate with complete game flow', async () => {
       // Simulate complete game interaction
       renderer.displayGameState(testGame)
-      
+
       const cards = TestDataGenerator.createTestCards(5)
       renderer.displayHand(cards)
-      
+
       const challengeCard = TestDataGenerator.createTestCards(1)[0]
       renderer.displayChallenge(challengeCard)
-      
+
       const challengeResult = TestDataGenerator.createTestChallengeResult()
       renderer.showChallengeResult(challengeResult)
-      
+
       const playerStats = TestDataGenerator.createTestPlayerStats()
       renderer.showVictory(playerStats)
-      
+
       // All operations should complete without errors
       expect(consoleLogSpy).toHaveBeenCalled()
     })
 
     it('should maintain state consistency across operations', async () => {
       let operationCount = 0
-      
+
       // Override console.log to count operations
       consoleLogSpy.mockImplementation(() => {
         operationCount++
       })
-      
+
       // Perform sequence of operations
       renderer.displayGameState(testGame)
       renderer.showMessage('Test message')
       renderer.displayVitality(50, 100)
       renderer.displayInsuranceBurden(10)
-      
+
       // Should have recorded all operations
       expect(operationCount).toBeGreaterThan(0)
     })

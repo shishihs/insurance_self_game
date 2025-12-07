@@ -154,11 +154,22 @@ export const useGameStore = defineStore('game', () => {
         return result
     }
 
-    function selectInsurance(insuranceType: any) {
+    function selectInsurance(insuranceType: string, durationType: 'term' | 'whole_life' = 'whole_life') {
         if (!game.value) return
-        console.log('Selected insurance:', insuranceType)
-        game.value.phase = 'end'
-        triggerUpdate()
+        console.log('Selected insurance:', insuranceType, durationType)
+
+        try {
+            // モデルのロジックを実行して保険を追加
+            game.value.selectInsuranceType(insuranceType, durationType)
+
+            // フェーズはGame内のロジックで更新されるが、念の為Store側も通知
+            triggerUpdate()
+
+            lastMessage.value = `${durationType === 'term' ? '定期' : '終身'}${insuranceType}保険に加入しました`
+        } catch (e) {
+            console.error('Failed to select insurance:', e)
+            lastMessage.value = '保険の加入に失敗しました'
+        }
     }
 
     function endTurn() {

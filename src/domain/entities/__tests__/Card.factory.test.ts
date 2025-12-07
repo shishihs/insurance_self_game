@@ -5,7 +5,7 @@ describe('Card Factory Methods', () => {
   describe('createLifeCard', () => {
     it('正のパワーを持つライフカードを作成できる', () => {
       const card = Card.createLifeCard('アルバイト収入', 1)
-      
+
       expect(card.name).toBe('アルバイト収入')
       expect(card.type).toBe('life')
       expect(card.power).toBe(1)
@@ -18,7 +18,7 @@ describe('Card Factory Methods', () => {
 
     it('ゼロパワーのライフカードを作成できる', () => {
       const card = Card.createLifeCard('衝動買い', 0)
-      
+
       expect(card.name).toBe('衝動買い')
       expect(card.type).toBe('life')
       expect(card.power).toBe(0)
@@ -29,7 +29,7 @@ describe('Card Factory Methods', () => {
   describe('createChallengeCard', () => {
     it('チャレンジカードを作成できる', () => {
       const card = Card.createChallengeCard('健康づくり', 3)
-      
+
       expect(card.name).toBe('健康づくり')
       expect(card.type).toBe('challenge')
       expect(card.power).toBe(3)
@@ -38,7 +38,7 @@ describe('Card Factory Methods', () => {
 
     it('高難易度のチャレンジカードを作成できる', () => {
       const card = Card.createChallengeCard('マイホーム購入', 5)
-      
+
       expect(card.name).toBe('マイホーム購入')
       expect(card.type).toBe('challenge')
       expect(card.power).toBe(5)
@@ -51,9 +51,10 @@ describe('Card Factory Methods', () => {
       const card = Card.createInsuranceCard(
         '健康保険',
         2,
+        1, // コストを追加
         { type: 'basic', description: '健康に関する保険' }
       )
-      
+
       expect(card.name).toBe('健康保険')
       expect(card.type).toBe('insurance')
       expect(card.power).toBe(2)
@@ -67,9 +68,9 @@ describe('Card Factory Methods', () => {
         { type: 'basic' as const, description: '基本効果' },
         { type: 'powerUp' as const, value: 1, description: 'パワー+1' }
       ]
-      
-      const card = Card.createInsuranceCard('総合保険', 3, ...effects)
-      
+
+      const card = Card.createInsuranceCard('総合保険', 3, 2, ...effects) // コスト(2)を追加
+
       expect(card.name).toBe('総合保険')
       expect(card.type).toBe('insurance')
       expect(card.power).toBe(3)
@@ -80,10 +81,10 @@ describe('Card Factory Methods', () => {
   describe('Card Instance Properties', () => {
     it('チャレンジカードはisUsedプロパティを追加できる', () => {
       const card = Card.createChallengeCard('テスト', 1) as any
-      
+
       // 初期状態では存在しない
       expect(card.isUsed).toBe(undefined)
-      
+
       // プロパティを追加可能
       card.isUsed = true
       expect(card.isUsed).toBe(true)

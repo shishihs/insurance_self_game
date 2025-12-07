@@ -321,7 +321,7 @@ export class CardFactory {
       const termDuration = 10
 
       // 定期保険のコスト（基本コストの70%）
-      const termCost = Math.ceil(selectedType.baseCost * 0.7)
+      const termCost = Math.floor(selectedType.baseCost * 0.7)
 
       // 終身保険のコスト（基本コスト）
       const wholeLifeCost = selectedType.baseCost

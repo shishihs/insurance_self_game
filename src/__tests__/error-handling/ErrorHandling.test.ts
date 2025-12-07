@@ -11,12 +11,12 @@ import { ErrorRecovery } from '../../utils/error-handling/ErrorRecovery'
 class MockPerformanceObserver {
   static callback: (list: any) => void
   callback: (list: any) => void
-  
+
   constructor(callback: (list: any) => void) {
     this.callback = callback
     MockPerformanceObserver.callback = callback
   }
-  
+
   observe(options: any) {
     // Long taskをシミュレート
     if (options.entryTypes && options.entryTypes.includes('longtask')) {
@@ -44,8 +44,8 @@ class MockPerformanceObserver {
       }
     }
   }
-  
-  disconnect() {}
+
+  disconnect() { }
 }
 
 // requestIdleCallbackのモック
@@ -61,11 +61,12 @@ global.requestIdleCallback = vi.fn((callback, options) => {
 
 describe('ErrorHandling System Tests', () => {
   let performanceObserverSpy: any
-  
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
-    
+    vi.setSystemTime(new Date(2000000))
+
     // PerformanceObserverをモック
     Object.defineProperty(globalThis, 'PerformanceObserver', {
       writable: true,
@@ -73,7 +74,7 @@ describe('ErrorHandling System Tests', () => {
       configurable: true
     })
     performanceObserverSpy = MockPerformanceObserver
-    
+
     // windowオブジェクトにPerformanceObserverが存在することを保証
     if (typeof window !== 'undefined') {
       Object.defineProperty(window, 'PerformanceObserver', {
@@ -85,24 +86,25 @@ describe('ErrorHandling System Tests', () => {
   })
 
   afterEach(() => {
+    errorHandlingSystem.destroy()
     vi.useRealTimers()
   })
 
   describe('Long Task検出のテスト', () => {
     test('100ms以上のタスクのみ報告される', async () => {
-      const reportErrorSpy = vi.spyOn(errorHandlingSystem, 'reportError').mockImplementation(() => {})
-      
+      const reportErrorSpy = vi.spyOn(errorHandlingSystem, 'reportError').mockImplementation(() => { })
+
       // エラーハンドリングシステムを初期化
       errorHandlingSystem.initialize({
         enableLogging: true,
         enableReporting: true
       })
-      
+
       // PerformanceObserverのコールバックが設定されるまで待つ
       await vi.waitFor(() => {
         return MockPerformanceObserver.callback !== undefined
       }, { timeout: 1000 })
-      
+
       // Long taskのコールバックを手動で実行
       if (MockPerformanceObserver.callback) {
         MockPerformanceObserver.callback({
@@ -113,13 +115,13 @@ describe('ErrorHandling System Tests', () => {
           ]
         })
       }
-      
+
       // タイマーを進める
       vi.advanceTimersByTime(100)
-      
+
       // reportErrorが呼ばれることを確認
       expect(reportErrorSpy).toHaveBeenCalled()
-      
+
       // 最初の呼び出しの内容を確認
       const firstCall = reportErrorSpy.mock.calls[0]
       expect(firstCall[0]).toBe('Long task detected')
@@ -129,18 +131,18 @@ describe('ErrorHandling System Tests', () => {
     })
 
     test('1分間に1回のみ報告される', async () => {
-      const reportErrorSpy = vi.spyOn(errorHandlingSystem, 'reportError').mockImplementation(() => {})
-      
+      const reportErrorSpy = vi.spyOn(errorHandlingSystem, 'reportError').mockImplementation(() => { })
+
       errorHandlingSystem.initialize({
         enableLogging: true,
         enableReporting: true
       })
-      
+
       // PerformanceObserverのコールバックが設定されるまで待つ
       await vi.waitFor(() => {
         return MockPerformanceObserver.callback !== undefined
       }, { timeout: 1000 })
-      
+
       // 複数回Long taskを発生させる
       for (let i = 0; i < 5; i++) {
         if (MockPerformanceObserver.callback) {
@@ -150,26 +152,26 @@ describe('ErrorHandling System Tests', () => {
             ]
           })
         }
-        vi.advanceTimersByTime(10)
+        await vi.advanceTimersByTimeAsync(100)
       }
-      
+
       // 1回のみ報告されることを確認（レート制限のため）
       expect(reportErrorSpy).toHaveBeenCalledTimes(1)
     })
 
     test('最も長いタスクが報告される', async () => {
-      const reportErrorSpy = vi.spyOn(errorHandlingSystem, 'reportError').mockImplementation(() => {})
-      
+      const reportErrorSpy = vi.spyOn(errorHandlingSystem, 'reportError').mockImplementation(() => { })
+
       errorHandlingSystem.initialize({
         enableLogging: true,
         enableReporting: true
       })
-      
+
       // PerformanceObserverのコールバックが設定されるまで待つ
       await vi.waitFor(() => {
         return MockPerformanceObserver.callback !== undefined
       }, { timeout: 1000 })
-      
+
       // Long taskのコールバックを実行
       if (MockPerformanceObserver.callback) {
         MockPerformanceObserver.callback({
@@ -180,9 +182,9 @@ describe('ErrorHandling System Tests', () => {
           ]
         })
       }
-      
-      vi.advanceTimersByTime(100)
-      
+
+      await vi.advanceTimersByTimeAsync(100)
+
       const reportedData = reportErrorSpy.mock.calls[0][1]
       expect(reportedData.duration).toBe(200) // 最も長いタスク
       expect(reportedData.totalDuration).toBe(350) // 150 + 200
@@ -192,7 +194,7 @@ describe('ErrorHandling System Tests', () => {
 
 describe('ErrorRecovery Tests', () => {
   let errorRecovery: ErrorRecovery
-  
+
   beforeEach(() => {
     vi.clearAllMocks()
     errorRecovery = new ErrorRecovery()
@@ -209,7 +211,7 @@ describe('ErrorRecovery Tests', () => {
 
     test('メモリクリーンアップが重複実行されない', async () => {
       const performMemoryCleanupSpy = vi.spyOn(errorRecovery as any, 'performMemoryCleanup')
-      
+
       const memoryError = {
         message: 'out of memory',
         category: 'performance' as const,
@@ -217,15 +219,20 @@ describe('ErrorRecovery Tests', () => {
         timestamp: Date.now(),
         userAgent: 'test'
       }
-      
+
       // 連続でメモリクリーンアップを要求
       const promises = []
       for (let i = 0; i < 5; i++) {
         promises.push(errorRecovery.tryRecover(memoryError))
       }
-      
-      const results = await Promise.all(promises)
-      
+
+      const resultsPromise = Promise.all(promises)
+
+      // 非同期処理が含まれるため、タイマーを進める
+      await vi.advanceTimersByTimeAsync(5000)
+
+      const results = await resultsPromise
+
       // 最初の1回のみ実行され、残りはスキップされる
       expect(performMemoryCleanupSpy).toHaveBeenCalledTimes(1)
       expect(results[0].success).toBeDefined()
@@ -234,7 +241,7 @@ describe('ErrorRecovery Tests', () => {
 
     test('1分後には再度クリーンアップ可能', async () => {
       const performMemoryCleanupSpy = vi.spyOn(errorRecovery as any, 'performMemoryCleanup')
-      
+
       const memoryError = {
         message: 'out of memory',
         category: 'performance' as const,
@@ -242,37 +249,42 @@ describe('ErrorRecovery Tests', () => {
         timestamp: Date.now(),
         userAgent: 'test'
       }
-      
+
       // 最初のクリーンアップ
-      await errorRecovery.tryRecover(memoryError)
+      const p1 = errorRecovery.tryRecover(memoryError)
+      await vi.advanceTimersByTimeAsync(5000)
+      await p1
       expect(performMemoryCleanupSpy).toHaveBeenCalledTimes(1)
-      
+
       // 時間を進める（1分後）
-      vi.advanceTimersByTime(61000)
-      
+      await vi.advanceTimersByTimeAsync(61000)
+
       // 2回目のクリーンアップが可能
-      await errorRecovery.tryRecover(memoryError)
+      const p2 = errorRecovery.tryRecover(memoryError)
+      await vi.advanceTimersByTimeAsync(5000)
+      await p2
       expect(performMemoryCleanupSpy).toHaveBeenCalledTimes(2)
     })
 
     test('requestIdleCallbackが使用される', async () => {
       const requestIdleCallbackSpy = vi.spyOn(global, 'requestIdleCallback')
-      
+
       const cleanupPromise = (errorRecovery as any).performMemoryCleanup()
-      
+
       // タイマーを進めてrequestIdleCallbackとsetTimeoutを実行
-      vi.advanceTimersByTime(100)
-      
+      // performMemoryCleanup内で複数のsetTimeout(..., 10/1000/2000)などが呼ばれるため十分に進める
+      await vi.advanceTimersByTimeAsync(5000)
+
       await cleanupPromise
-      
+
       // DOM要素のクリーンアップなどがrequestIdleCallbackで実行される
       expect(requestIdleCallbackSpy).toHaveBeenCalled()
     })
 
     test('パフォーマンスエラーはdebugレベルでログ出力', async () => {
-      const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-      
+      const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => { })
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
+
       const performanceError = {
         message: 'Long task detected',
         category: 'performance' as const,
@@ -280,9 +292,11 @@ describe('ErrorRecovery Tests', () => {
         timestamp: Date.now(),
         userAgent: 'test'
       }
-      
-      await errorRecovery.tryAdvancedRecover(performanceError)
-      
+
+      const p = errorRecovery.tryAdvancedRecover(performanceError)
+      await vi.advanceTimersByTimeAsync(5000)
+      await p
+
       // debugが使用され、logは使用されない
       expect(consoleDebugSpy).toHaveBeenCalledWith('[Recovery] Starting advanced recovery for performance error')
       expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('Starting advanced recovery'))

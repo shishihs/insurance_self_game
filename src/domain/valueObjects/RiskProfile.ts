@@ -1,124 +1,85 @@
+import { RiskFactor, type RiskFactorType } from './RiskFactor'
+
 /**
- * リスクプロファイル値オブジェクト
- * 
- * プレイヤーのリスク特性を表現する値オブジェクト。
- * 保険料計算やゲーム難易度調整に使用される。
+ * リスクプロファイル - 複数のリスクファクターの集合
  */
 export class RiskProfile {
   private constructor(
-    private readonly healthRisk: number,
-    private readonly financialRisk: number,
-    private readonly behavioralRisk: number
-  ) {}
+    private readonly factors: Map<RiskFactorType, RiskFactor>
+  ) { }
+
+  /**
+   * 空のリスクプロファイルを作成
+   */
+  static empty(): RiskProfile {
+    return new RiskProfile(new Map())
+  }
 
   /**
    * デフォルトのリスクプロファイルを作成
    */
   static default(): RiskProfile {
-    return new RiskProfile(0.5, 0.5, 0.5)
+    const factors = new Map<RiskFactorType, RiskFactor>()
+    factors.set('age', RiskFactor.create(0.3, 'age'))
+    factors.set('health', RiskFactor.create(0.2, 'health'))
+    factors.set('claims', RiskFactor.create(0.0, 'claims'))
+    factors.set('lifestyle', RiskFactor.create(0.3, 'lifestyle'))
+    return new RiskProfile(factors)
   }
 
   /**
-   * カスタムリスクプロファイルを作成
-   * @param healthRisk 健康リスク（0.0-1.0）
-   * @param financialRisk 財務リスク（0.0-1.0）
-   * @param behavioralRisk 行動リスク（0.0-1.0）
-   * @returns RiskProfileインスタンス
-   * @throws {Error} 値が範囲外の場合
+   * リスクファクターを追加/更新
    */
-  static create(
-    healthRisk: number,
-    financialRisk: number,
-    behavioralRisk: number
-  ): RiskProfile {
-    const validateRisk = (value: number, name: string) => {
-      if (value < 0 || value > 1) {
-        throw new Error(`${name} must be between 0 and 1, got ${value}`)
-      }
-    }
-
-    validateRisk(healthRisk, 'Health risk')
-    validateRisk(financialRisk, 'Financial risk')
-    validateRisk(behavioralRisk, 'Behavioral risk')
-
-    return new RiskProfile(healthRisk, financialRisk, behavioralRisk)
+  withFactor(factor: RiskFactor): RiskProfile {
+    const newFactors = new Map(this.factors)
+    newFactors.set(factor.getType(), factor)
+    return new RiskProfile(newFactors)
   }
 
   /**
-   * 健康リスクを取得
+   * 特定のリスクファクターを取得
    */
-  getHealthRisk(): number {
-    return this.healthRisk
+  getFactor(type: RiskFactorType): RiskFactor | undefined {
+    return this.factors.get(type)
   }
 
   /**
-   * 財務リスクを取得
+   * 全体のリスクスコアを計算（0.0-1.0）
    */
-  getFinancialRisk(): number {
-    return this.financialRisk
+  getOverallRiskScore(): number {
+    if (this.factors.size === 0) return 0
+
+    let totalScore = 0
+    this.factors.forEach(factor => {
+      totalScore += factor.getValue()
+    })
+
+    return totalScore / this.factors.size
   }
 
   /**
-   * 行動リスクを取得
+   * 保険料への総合的な影響倍率を計算
    */
-  getBehavioralRisk(): number {
-    return this.behavioralRisk
+  getTotalPremiumMultiplier(): number {
+    if (this.factors.size === 0) return 1.0
+
+    let multiplier = 1.0
+    this.factors.forEach(factor => {
+      // 各ファクターの倍率を乗算的に適用
+      multiplier *= factor.getPremiumMultiplier()
+    })
+
+    return multiplier
   }
 
   /**
-   * 総合リスクスコアを計算
-   * @returns 0.0-1.0の範囲の総合リスクスコア
+   * リスクプロファイルの要約を取得
    */
-  getOverallRisk(): number {
-    return (this.healthRisk + this.financialRisk + this.behavioralRisk) / 3
-  }
+  getSummary(): string {
+    const overallScore = this.getOverallRiskScore()
+    const level = overallScore <= 0.3 ? '低リスク' :
+      overallScore <= 0.7 ? '中リスク' : '高リスク'
 
-  /**
-   * リスクレベルを取得
-   * @returns 'low' | 'medium' | 'high'
-   */
-  getRiskLevel(): 'low' | 'medium' | 'high' {
-    const overall = this.getOverallRisk()
-    if (overall <= 0.3) return 'low'
-    if (overall <= 0.7) return 'medium'
-    return 'high'
-  }
-
-  /**
-   * プレイヤーの行動に基づいてリスクプロファイルを更新
-   * @param healthChange 健康リスクの変化量
-   * @param financialChange 財務リスクの変化量
-   * @param behavioralChange 行動リスクの変化量
-   * @returns 新しいRiskProfileインスタンス
-   */
-  updateRisks(
-    healthChange: number = 0,
-    financialChange: number = 0,
-    behavioralChange: number = 0
-  ): RiskProfile {
-    const clamp = (value: number): number => Math.max(0, Math.min(1, value))
-
-    return new RiskProfile(
-      clamp(this.healthRisk + healthChange),
-      clamp(this.financialRisk + financialChange),
-      clamp(this.behavioralRisk + behavioralChange)
-    )
-  }
-
-  /**
-   * 保険料係数を計算
-   * @returns 保険料計算に使用する係数（0.5-2.0）
-   */
-  getPremiumMultiplier(): number {
-    const overall = this.getOverallRisk()
-    // リスクが低い場合は0.5倍、高い場合は2.0倍
-    return 0.5 + (overall * 1.5)
-  }
-
-  /**
-   * デバッグ用の文字列表現
-   */
-  toString(): string {
-    return `RiskProfile(health: ${this.healthRisk.toFixed(2)}, financial: ${this.financialRisk.toFixed(2)}, behavioral: ${this.behavioralRisk.toFixed(2)})`
+    return `${level} (スコア: ${overallScore.toFixed(2)})`
   }
 }

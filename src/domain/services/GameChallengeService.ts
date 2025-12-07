@@ -75,41 +75,53 @@ export class GameChallengeService {
    * チャレンジを解決
    */
   resolveChallenge(game: Game): ChallengeResult {
-    this.validateChallenge(game)
+    try {
+      this.validateChallenge(game)
 
-    // 新しいChallengeResolutionServiceを使用
-    const result = this.resolutionService.resolveChallenge(
-      game.currentChallenge!,
-      game.selectedCards,
-      game.cardManager,
-      game.stage,
-      game.insuranceBurden,
-      game
-    )
+      // 新しいChallengeResolutionServiceを使用
+      const result = this.resolutionService.resolveChallenge(
+        game.currentChallenge!,
+        game.selectedCards,
+        game.cardManager,
+        game.stage,
+        game.insuranceBurden,
+        game
+      )
 
-    // 統計更新
-    this.updateStatistics(game, result.success)
+      // 統計更新
+      this.updateStatistics(game, result.success)
 
-    // 活力更新
-    this.updateVitality(game, result.vitalityChange)
+      // 活力更新
+      this.updateVitality(game, result.vitalityChange)
 
-    // 経験学習システム: 失敗時に学習履歴を更新
-    if (!result.success && game.currentChallenge) {
-      const challengeName = game.currentChallenge.name
-      const currentFailures = game.getLearningHistory(challengeName)
-      game.updateLearningHistory(challengeName, currentFailures + 1)
+      // 経験学習システム: 失敗時に学習履歴を更新
+      if (!result.success && game.currentChallenge) {
+        const challengeName = game.currentChallenge.name
+        const currentFailures = game.getLearningHistory(challengeName)
+        game.updateLearningHistory(challengeName, currentFailures + 1)
+      }
+
+      // 成功時は保険種類選択肢を追加
+      if (result.success) {
+        const choices = CardFactory.createInsuranceTypeChoices(game.stage)
+        game.insuranceTypeChoices = choices
+        result.insuranceTypeChoices = choices
+      }
+
+      this.updateGameStateAfterChallenge(game, result)
+
+      return result
+    } catch (error) {
+      console.error('[GameChallengeService] Fatal error resolving challenge:', error)
+      // エラー時のフォールバック結果を返す
+      return {
+        success: false,
+        playerPower: 0,
+        challengePower: 0,
+        vitalityChange: 0,
+        message: `システムエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`
+      }
     }
-
-    // 成功時は保険種類選択肢を追加
-    if (result.success) {
-      const choices = CardFactory.createInsuranceTypeChoices(game.stage)
-      game.insuranceTypeChoices = choices
-      result.insuranceTypeChoices = choices
-    }
-
-    this.updateGameStateAfterChallenge(game, result)
-
-    return result
   }
 
   /**

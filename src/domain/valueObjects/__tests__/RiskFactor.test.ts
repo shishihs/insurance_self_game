@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { RiskFactor, RiskProfile } from '../RiskFactor'
+import { RiskFactor } from '../RiskFactor'
+import { RiskProfile } from '../RiskProfile'
 
 describe('RiskFactor', () => {
   describe('create', () => {
@@ -183,7 +184,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.empty()
       const factor = RiskFactor.create(0.5, 'age')
       const newProfile = profile.withFactor(factor)
-      
+
       expect(newProfile.getFactor('age')).toEqual(factor)
     })
 
@@ -191,7 +192,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.default()
       const newFactor = RiskFactor.create(0.8, 'age')
       const newProfile = profile.withFactor(newFactor)
-      
+
       expect(newProfile.getFactor('age')?.getValue()).toBe(0.8)
     })
   })
@@ -201,7 +202,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.empty()
         .withFactor(RiskFactor.create(0.4, 'age'))
         .withFactor(RiskFactor.create(0.6, 'health'))
-      
+
       // (0.4 + 0.6) / 2 = 0.5
       expect(profile.getOverallRiskScore()).toBe(0.5)
     })
@@ -218,7 +219,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.empty()
         .withFactor(RiskFactor.create(0.5, 'age'))      // 倍率: 1.25
         .withFactor(RiskFactor.create(0.6, 'health'))  // 倍率: 1.18
-      
+
       // 1.25 * 1.18 = 1.475
       expect(profile.getTotalPremiumMultiplier()).toBeCloseTo(1.475)
     })
@@ -234,7 +235,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.empty()
         .withFactor(RiskFactor.create(0.2, 'age'))
         .withFactor(RiskFactor.create(0.1, 'health'))
-      
+
       expect(profile.getSummary()).toBe('低リスク (スコア: 0.15)')
     })
 
@@ -242,7 +243,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.empty()
         .withFactor(RiskFactor.create(0.5, 'age'))
         .withFactor(RiskFactor.create(0.6, 'health'))
-      
+
       expect(profile.getSummary()).toBe('中リスク (スコア: 0.55)')
     })
 
@@ -250,7 +251,7 @@ describe('RiskProfile', () => {
       const profile = RiskProfile.empty()
         .withFactor(RiskFactor.create(0.8, 'age'))
         .withFactor(RiskFactor.create(0.9, 'health'))
-      
+
       expect(profile.getSummary()).toBe('高リスク (スコア: 0.85)')
     })
   })
