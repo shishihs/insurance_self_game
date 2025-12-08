@@ -23,6 +23,7 @@ export const useGameStore = defineStore('game', () => {
     const insuranceMarketState = ref<Card[]>([])
     const scoreState = ref(0)
     const cardChoicesState = ref<Card[]>([])
+    const insuranceTypeChoicesState = ref<any[]>([])
 
     // Tutorial State
     const isTutorialMode = ref(true)
@@ -40,11 +41,7 @@ export const useGameStore = defineStore('game', () => {
     const currentStatus = computed(() => currentStatusState.value)
     const currentChallenge = computed(() => currentChallengeState.value)
 
-    const insuranceTypeChoices = computed(() => {
-        if (!game.value) return []
-        lastUpdate.value
-        return game.value.insuranceTypeChoices
-    })
+    const insuranceTypeChoices = computed(() => insuranceTypeChoicesState.value)
 
     const activeInsurances = computed(() => activeInsurancesState.value)
     const insuranceMarket = computed(() => insuranceMarketState.value)
@@ -209,7 +206,9 @@ export const useGameStore = defineStore('game', () => {
         activeInsurancesState.value = [...game.value.activeInsurances]
         insuranceMarketState.value = [...game.value.insuranceMarket]
         scoreState.value = game.value.score
+        scoreState.value = game.value.score
         cardChoicesState.value = game.value.cardChoices ? [...game.value.cardChoices] : []
+        insuranceTypeChoicesState.value = game.value.insuranceTypeChoices ? [...game.value.insuranceTypeChoices] : []
 
         console.log('[GameStore] State synced. Hand size:', handState.value.length)
 

@@ -101,10 +101,17 @@ export class GameChallengeService {
         game.updateLearningHistory(challengeName, currentFailures + 1)
       }
 
-      // 成功時は保険種類選択肢を追加
+      // 成功時: 保険選択肢を提示
       if (result.success) {
         const choices = CardFactory.createInsuranceTypeChoices(game.stage)
         game.insuranceTypeChoices = choices
+        console.log('[GameChallengeService] Generated insurance choices:', game.insuranceTypeChoices?.length)
+
+        if (!game.insuranceTypeChoices || game.insuranceTypeChoices.length === 0) {
+          console.warn('[GameChallengeService] WARNING: No insurance choices generated!')
+        }
+
+        // Phase transition is handled by calling context or Game logic
         result.insuranceTypeChoices = choices
       }
 
