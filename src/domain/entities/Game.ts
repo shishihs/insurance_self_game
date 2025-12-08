@@ -469,6 +469,10 @@ export class Game implements IGameState {
     // Start actual game loop
     this.changePhase('draw')
     this.changeTurn(1)
+
+    // Initial Draw (Turn 1 start)
+    const initialDrawCount = GameConstantsAccessor.getBalanceSettings().CARD_LIMITS.startingHandSize
+    this.drawCards(initialDrawCount).catch(e => console.error('Initial draw failed', e))
   }
 
   /**

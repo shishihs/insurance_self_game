@@ -18,11 +18,11 @@ export const AGE_CONSTANTS = {
   STAGE_PARAMETERS: {
     youth: {
       label: '青年期',
-      maxVitality: 100,
+      maxVitality: 80,
       startTurn: 0,
       endTurn: 14,
       insuranceMultiplier: 1.0,
-      challengeDifficultyModifier: 1.0
+      challengeDifficultyModifier: 1.2
     },
     middle: {
       label: '中年期',
@@ -30,7 +30,7 @@ export const AGE_CONSTANTS = {
       startTurn: 15,
       endTurn: 29,
       insuranceMultiplier: 1.2,
-      challengeDifficultyModifier: 1.1
+      challengeDifficultyModifier: 1.3
     },
     fulfillment: {
       label: '充実期',
@@ -38,7 +38,7 @@ export const AGE_CONSTANTS = {
       startTurn: 30,
       endTurn: Infinity,
       insuranceMultiplier: 1.3,
-      challengeDifficultyModifier: 1.2
+      challengeDifficultyModifier: 1.4
     }
   } as const,
 
@@ -92,7 +92,7 @@ export const INSURANCE_CONSTANTS = {
    * 保険料計算の基本パラメータ
    */
   PREMIUM_CALCULATION: {
-    baseCostMultiplier: 1.0,      // 基本コスト倍率
+    baseCostMultiplier: 1.2,      // 基本コスト倍率
     ageMultiplierStart: 1.0,      // 年齢倍率開始値
     ageMultiplierIncrement: 0.2,  // 年齢倍率増分
     coverageRateBase: 50,         // カバレッジ基準値
@@ -164,7 +164,7 @@ export const BALANCE_CONSTANTS = {
     minDifficulty: 1,          // 最小難易度
     maxDifficulty: 20,         // 最大難易度
     successBonusBase: 2,       // 成功時ボーナス基準値
-    failurePenaltyRatio: 1.0,  // 失敗時ペナルティ比率
+    failurePenaltyRatio: 1.5,  // 失敗時ペナルティ比率
     enableDynamicDifficulty: true // 動的難易度調整の有効化
   } as const,
 
@@ -172,7 +172,7 @@ export const BALANCE_CONSTANTS = {
    * 活力関連
    */
   VITALITY_SETTINGS: {
-    defaultStarting: 100,      // デフォルト初期活力
+    defaultStarting: 80,      // デフォルト初期活力
     minimumValue: 0,           // 最小活力値
     maximumValue: 150,         // 最大活力値
     healingCap: 0.8           // 回復上限（最大活力の80%）

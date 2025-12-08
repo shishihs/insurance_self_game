@@ -106,7 +106,7 @@ const reportError = (error: Error) => {
 }
 
 onMounted(() => {
-  console.info('App Version: v2025.12.08.2201 - Debug Build')
+  console.info('App Version: v2025.12.08.2209 - Hard Mode')
   
   // モバイル判定
   isMobile.value = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
