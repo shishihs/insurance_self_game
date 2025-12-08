@@ -22,7 +22,11 @@ function isSelected(card: Card) {
 </script>
 
 <template>
-  <div data-testid="hand-container" class="fixed bottom-0 left-0 right-0 h-96 flex items-end justify-center pb-4 px-4 pointer-events-none z-30">
+  <div 
+    v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory'"
+    data-testid="hand-container" 
+    class="fixed bottom-0 left-0 right-0 h-96 flex items-end justify-center pb-4 px-4 pointer-events-none z-30"
+  >
     <div class="flex -space-x-12 hover:space-x-2 transition-all duration-300 pointer-events-auto">
       <div 
         v-for="(card, index) in hand" 
