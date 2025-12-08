@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, shallowRef } from 'vue'
 import { Game } from '@/domain/entities/Game'
+import { Vitality } from '@/domain/valueObjects/Vitality'
 import type { Card } from '@/domain/entities/Card'
 import type { GameConfig } from '@/domain/types/game.types'
 
@@ -53,7 +54,16 @@ export const useGameStore = defineStore('game', () => {
 
     // Actions
     function initializeGame(config?: GameConfig) {
+        console.log('[GameStore] initializeGame called with config:', JSON.stringify(config))
         game.value = new Game(config)
+
+        // Force Vitality Cheat if configured (Bypass Game constructor clamping)
+        if (config?.startingVitality && config.startingVitality > 200) {
+            console.log(`[GameStore] Forcing High Vitality Cheat: ${config.startingVitality}`)
+                // Access private property for testing
+                ; (game.value as any)._vitality = Vitality.create(config.startingVitality, config.startingVitality)
+        }
+
         isInitialized.value = true
         triggerUpdate()
     }
@@ -93,9 +103,9 @@ export const useGameStore = defineStore('game', () => {
         triggerUpdate()
     }
 
-    function selectDream(card: any) {
+    async function selectDream(card: any) {
         if (!game.value) return
-        game.value.selectDream(card as Card)
+        await game.value.selectDream(card as Card)
         triggerUpdate()
     }
 

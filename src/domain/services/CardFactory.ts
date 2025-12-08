@@ -1,14 +1,12 @@
 import { Card } from '../entities/Card'
 import type {
-  CardEffect,
   DreamCategory,
   GameStage,
   InsuranceType,
   LifeCardCategory,
   RewardType,
   SkillRarity,
-  InsuranceEffectType,
-  IAdvancedCard
+  InsuranceEffectType
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -410,34 +408,36 @@ export class CardFactory {
   static createChallengeCards(stage: GameStage): Card[] {
     const challengeDefinitionsByStage = {
       youth: [
-        // 基本チャレンジ（難易度: 低）
-        { name: 'アルバイト探し', description: '初めての収入を得る', power: 3, dreamCategory: 'physical' as DreamCategory },
-        { name: '一人暮らし', description: '独立への第一歩', power: 4, dreamCategory: 'physical' as DreamCategory },
-        { name: '資格試験', description: 'スキルアップのチャンス', power: 5, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '就職活動', description: '新たなキャリアの始まり', power: 6, dreamCategory: 'physical' as DreamCategory },
+        // 基本チャレンジ（難易度: 低〜中）- Hand Size 5に合わせて調整 (Power ~10-15 needed to challenge typical hand)
+        // Starter Deck Avg Power ~2.5 * 5 = 12.5.
+        // Challenge Power should be 8-12 for fair fight, 15+ for hard.
+        { name: 'アルバイト探し', description: '初めての収入を得る', power: 8, dreamCategory: 'physical' as DreamCategory },
+        { name: '一人暮らし', description: '独立への第一歩', power: 10, dreamCategory: 'physical' as DreamCategory },
+        { name: '資格試験', description: 'スキルアップのチャンス', power: 12, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '就職活動', description: '新たなキャリアの始まり', power: 14, dreamCategory: 'physical' as DreamCategory },
         // 中級チャレンジ
-        { name: '恋人との別れ', description: '初めての大きな失意', power: 5, dreamCategory: 'mixed' as DreamCategory },
-        { name: '転職活動', description: 'キャリアの分岐点', power: 6, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '恋人との別れ', description: '初めての大きな失意', power: 11, dreamCategory: 'mixed' as DreamCategory },
+        { name: '転職活動', description: 'キャリアの分岐点', power: 13, dreamCategory: 'intellectual' as DreamCategory }
       ],
       middle: [
-        // 基本チャレンジ（難易度: 中） - Issue #23: 難易度を調整
-        { name: '結婚資金', description: '新しい家族のスタート', power: 5, dreamCategory: 'mixed' as DreamCategory },
-        { name: '子育て', description: '家族の成長', power: 6, dreamCategory: 'physical' as DreamCategory },
-        { name: '両親の健康', description: '家族の支え合い', power: 6, dreamCategory: 'mixed' as DreamCategory },
-        { name: '住宅購入', description: '大きな決断', power: 7, dreamCategory: 'physical' as DreamCategory },
+        // 基本チャレンジ（難易度: 中）
+        { name: '結婚資金', description: '新しい家族のスタート', power: 15, dreamCategory: 'mixed' as DreamCategory },
+        { name: '子育て', description: '家族の成長', power: 16, dreamCategory: 'physical' as DreamCategory },
+        { name: '両親の健康', description: '家族の支え合い', power: 15, dreamCategory: 'mixed' as DreamCategory },
+        { name: '住宅購入', description: '大きな決断', power: 18, dreamCategory: 'physical' as DreamCategory },
         // 高難度チャレンジ
-        { name: '親の介護', description: '家族の責任', power: 8, dreamCategory: 'mixed' as DreamCategory },
-        { name: '教育資金', description: '子供の将来への投資', power: 7, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '親の介護', description: '家族の責任', power: 20, dreamCategory: 'mixed' as DreamCategory },
+        { name: '教育資金', description: '子供の将来への投資', power: 18, dreamCategory: 'intellectual' as DreamCategory }
       ],
       fulfillment: [
-        // 基本チャレンジ（難易度: 高） - Issue #23: 難易度を調整
-        { name: '健康管理', description: '健やかな老後のために', power: 7, dreamCategory: 'mixed' as DreamCategory },
-        { name: '趣味の充実', description: '人生の新たな楽しみ', power: 7, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '社会貢献', description: '経験を活かした活動', power: 8, dreamCategory: 'mixed' as DreamCategory },
-        { name: '定年退職', description: '新しい人生のスタート', power: 9, dreamCategory: 'intellectual' as DreamCategory },
+        // 基本チャレンジ（難易度: 高）
+        { name: '健康管理', description: '健やかな老後のために', power: 20, dreamCategory: 'mixed' as DreamCategory },
+        { name: '趣味の充実', description: '人生の新たな楽しみ', power: 18, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '社会貢献', description: '経験を活かした活動', power: 22, dreamCategory: 'mixed' as DreamCategory },
+        { name: '定年退職', description: '新しい人生のスタート', power: 25, dreamCategory: 'intellectual' as DreamCategory },
         // 最高難度チャレンジ
-        { name: '遺産相続', description: '家族への最後の贈り物', power: 10, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '健康上の大きな試練', description: '人生最大の挑戦', power: 11, dreamCategory: 'physical' as DreamCategory }
+        { name: '遺産相続', description: '家族への最後の贈り物', power: 28, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '健康上の大きな試練', description: '人生最大の挑戦', power: 30, dreamCategory: 'physical' as DreamCategory }
       ]
     }
 

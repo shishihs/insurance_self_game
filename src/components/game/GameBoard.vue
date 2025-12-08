@@ -33,17 +33,7 @@ onMounted(() => {
   }
 })
 
-async function onDraw() {
-  console.log('[GameBoard] onDraw called')
-  // alert('Debug: Draw Clicked') // Temporary debug alert
-  try {
-    await store.drawCards(1)
-    console.log('[GameBoard] onDraw completed. Current hand size:', store.hand.length)
-  } catch (e) {
-    console.error('[GameBoard] onDraw error:', e)
-    alert(`Draw Error: ${e}`) // Visual feedback for debugging
-  }
-}
+
 
 async function onEndTurn() {
   await store.endTurn()
@@ -126,13 +116,7 @@ async function onChallenge() {
 
       <!-- Actions -->
       <div v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory'" class="flex space-x-4 mt-4 relative z-fixed">
-        <button 
-          v-if="store.currentPhase === 'draw'"
-          @click="onDraw"
-          class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-lg transition-colors flex items-center"
-        >
-          カードを引く
-        </button>
+        <!-- Draw button removed: Auto-draw at start of turn -->
         
         <button 
           v-if="store.currentPhase === 'draw' && !store.currentChallenge"

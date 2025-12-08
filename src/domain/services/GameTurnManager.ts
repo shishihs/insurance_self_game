@@ -79,8 +79,9 @@ export class GameTurnManager {
       }
     }
 
-    // ターン開始時のドロー
-    game.drawCards(1)
+    // ターン開始時のドロー (手札を補充)
+    const drawCount = game.config.startingHandSize || 5
+    game.drawCards(drawCount)
 
     // 回復型保険の効果を適用
     this.applyRecoveryInsuranceEffects(game)

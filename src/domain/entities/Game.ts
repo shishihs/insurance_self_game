@@ -25,7 +25,7 @@ import type {
   PlayerStats,
   TurnResult
 } from '../types/game.types'
-import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
+import { DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -165,12 +165,47 @@ export class Game implements IGameState {
     this.stage = 'youth'
     this.turn = 0
 
+    // Config must be set before initializing CardManager or Vitality
+    const resolvedConfig: GameConfig = config || {
+      difficulty: 'normal',
+      startingVitality: config?.startingVitality ?? 100, // Fallback if undefined in passed config
+      startingHandSize: 5,
+      maxHandSize: 10,
+      dreamCardCount: 3
+    }
+    console.log('[Game] Constructor Config:', JSON.stringify(resolvedConfig)) // DEBUG
+
+    this.config = resolvedConfig
+
+    // Apply balance overrides if provided
+    if (this.config.balanceConfig) {
+      console.log('[Game] Applying Balance Overrides:', JSON.stringify(this.config.balanceConfig)) // DEBUG
+      GameConstantsAccessor.setOverrides(this.config.balanceConfig)
+    }
+
     // 値オブジェクトで初期化（年齢別最大活力を適用）
-    const startingVitality = config?.startingVitality ?? 100
-    const ageParams = AGE_PARAMETERS[this.stage] || AGE_PARAMETERS['youth']
-    if (!ageParams) throw new Error('Invalid stage parameters')
+    // NOTE: Override適用後にパラメータを取得する
+    const startingVitality = resolvedConfig.startingVitality
+    const ageParams = GameConstantsAccessor.getStageParameters(this.stage)
+    if (!ageParams) throw new Error(`Invalid stage parameters for ${this.stage}`)
+
     const maxVitality = ageParams.maxVitality
-    this._vitality = Vitality.create(Math.min(startingVitality, maxVitality), maxVitality)
+    console.log(`[Game] Init Vitality: Starting=${startingVitality}, Max=${maxVitality}, Stage=${this.stage}`) // DEBUG
+
+    // If starting vitality is higher than max (cheat mode), allow it for now by updating max temporarily or clamping?
+    // Current logic clamps: Math.min(startingVitality, maxVitality)
+    // To support cheat, we should respect startingVitality if it's explicitly high
+    const actualStartingVitality = (startingVitality > maxVitality && startingVitality > 200)
+      ? startingVitality
+      : Math.min(startingVitality, maxVitality)
+
+    // If we are cheating, we need a vitality object that supports the high value
+    // Vitality.create enforces checked logic, let's see if we need to adjust Max there too
+    const actualMaxVitality = Math.max(actualStartingVitality, maxVitality)
+
+    console.log(`[Game] Final Init Vitality: Value=${actualStartingVitality}, Max=${actualMaxVitality}`) // DEBUG
+
+    this._vitality = Vitality.create(actualStartingVitality, actualMaxVitality)
 
     // CardManagerを初期化
     this.cardManager = new CardManager()
@@ -188,15 +223,6 @@ export class Game implements IGameState {
     // 新しいアーキテクチャを初期化
     this.stateManager = new GameStateManager()
     this.actionProcessor = new GameActionProcessor()
-
-    // Config must be set before initializing CardManager
-    this.config = config || {
-      difficulty: 'normal',
-      startingVitality,
-      startingHandSize: 5,
-      maxHandSize: 10,
-      dreamCardCount: 3
-    }
 
     // Apply balance overrides if provided
     if (this.config.balanceConfig) {
@@ -455,7 +481,7 @@ export class Game implements IGameState {
   /**
    * 夢カードを選択
    */
-  selectDream(card: Card): void {
+  async selectDream(card: Card): Promise<void> {
     if (this.phase !== 'dream_selection') throw new Error('Not in dream selection phase')
 
     const choices = this.cardManager.getState().cardChoices
@@ -472,7 +498,7 @@ export class Game implements IGameState {
 
     // Initial Draw (Turn 1 start)
     const initialDrawCount = GameConstantsAccessor.getBalanceSettings().CARD_LIMITS.startingHandSize
-    this.drawCards(initialDrawCount).catch(e => console.error('Initial draw failed', e))
+    await this.drawCards(initialDrawCount)
   }
 
   /**
@@ -726,9 +752,11 @@ export class Game implements IGameState {
    * 年齢が上がるにつれて最大活力が減少し、現実的な体力変化を反映
    */
   private updateMaxVitalityForAge(): void {
-    const ageParams = AGE_PARAMETERS[this.stage]
+    const ageParams = GameConstantsAccessor.getStageParameters(this.stage)
+
+    // Legacy support or fallback if accessor returns generic type without maxVitality (it shouldn't)
     if (!ageParams) {
-      console.warn(`Unknown stage: ${this.stage}`)
+      console.warn(`Unknown stage parameters for: ${this.stage}`)
       return
     }
 

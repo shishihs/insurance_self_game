@@ -18,27 +18,27 @@ export const AGE_CONSTANTS = {
   STAGE_PARAMETERS: {
     youth: {
       label: '青年期',
-      maxVitality: 80,
+      maxVitality: 60, // Reduced from 80
       startTurn: 0,
       endTurn: 14,
       insuranceMultiplier: 1.0,
-      challengeDifficultyModifier: 1.2
+      challengeDifficultyModifier: 1.5 // Increased from 1.2
     },
     middle: {
       label: '中年期',
-      maxVitality: 80,
+      maxVitality: 60, // Reduced from 80
       startTurn: 15,
       endTurn: 29,
       insuranceMultiplier: 1.2,
-      challengeDifficultyModifier: 1.3
+      challengeDifficultyModifier: 2.0 // Increased from 1.3
     },
     fulfillment: {
       label: '充実期',
-      maxVitality: 60,
+      maxVitality: 50, // Reduced from 60
       startTurn: 30,
       endTurn: Infinity,
-      insuranceMultiplier: 1.3,
-      challengeDifficultyModifier: 1.4
+      insuranceMultiplier: 1.5, // Increased from 1.3
+      challengeDifficultyModifier: 2.5 // Increased from 1.4
     }
   } as const,
 

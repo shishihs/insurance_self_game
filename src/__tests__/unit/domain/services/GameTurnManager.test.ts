@@ -26,7 +26,12 @@ const mockGame = {
     getActiveInsurances: vi.fn().mockReturnValue([]),
     heal: vi.fn(),
     updateInsuranceBurden: vi.fn(), // Called inside updateInsuranceExpirations logic via (game as any)
+    cardManager: {
+        discardHand: vi.fn(),
+        drawCards: vi.fn()
+    },
     config: {
+        startingHandSize: 5,
         balanceConfig: {
             progressionSettings: {
                 maxTurns: 50,
@@ -76,5 +81,10 @@ describe('GameTurnManager v2', () => {
         turnManager.nextTurn(mockGame)
 
         expect(mockGame.heal).toHaveBeenCalledWith(5)
+    })
+
+    it('should draw correct number of cards at start of turn', () => {
+        turnManager.nextTurn(mockGame)
+        expect(mockGame.drawCards).toHaveBeenCalledWith(5)
     })
 })
