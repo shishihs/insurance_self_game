@@ -117,6 +117,7 @@ export interface ICardManager {
   getActiveInsurances(): Card[]
   refillChallengeDeck(cards: Card[]): void
   getChallengeDeckSize(): number
+  discardHand(): Card[]
 }
 
 /**
@@ -503,5 +504,16 @@ export class CardManager implements ICardManager {
    */
   getChallengeDeckSize(): number {
     return this.challengeDeck.getCards().length
+  }
+
+  /**
+   * 手札をすべて捨て札に移動
+   */
+  discardHand(): Card[] {
+    const discarded = [...this.hand]
+    this.discardPile.push(...discarded)
+    this.hand = []
+    this.invalidateCache()
+    return discarded
   }
 }

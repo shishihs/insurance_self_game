@@ -45,7 +45,9 @@ export class GameTurnManager {
   nextTurn(game: Game): TurnResult {
     this.validateGameState(game)
 
-    // ターンを進める
+    // 手札をすべて捨て札に移動 (デッキ構築ゲームの基本ルール)
+    game.cardManager.discardHand()
+
     game.turn++
     game.stats.turnsPlayed++
     game.phase = 'draw'

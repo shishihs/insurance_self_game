@@ -125,7 +125,7 @@ async function onChallenge() {
       </div>
 
       <!-- Actions -->
-      <div class="flex space-x-4 mt-4 relative z-fixed">
+      <div v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory'" class="flex space-x-4 mt-4 relative z-fixed">
         <button 
           v-if="store.currentPhase === 'draw'"
           @click="onDraw"
