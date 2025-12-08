@@ -15,7 +15,7 @@ function select(card: ICard) {
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-slate-900/90 z-50 flex flex-col items-center justify-center p-8 backdrop-blur-sm animate-fade-in">
+  <div v-if="isOpen" class="fixed inset-0 bg-slate-900/90 z-modal flex flex-col items-center justify-center p-8 backdrop-blur-sm animate-fade-in">
     <div class="text-center mb-8">
       <h2 class="text-3xl font-bold text-white mb-2">課題に立ち向かう</h2>
       <p class="text-slate-300">このターンに対処する課題を選択してください。</p>

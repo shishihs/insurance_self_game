@@ -125,7 +125,7 @@ async function onChallenge() {
       </div>
 
       <!-- Actions -->
-      <div class="flex space-x-4 mt-4 relative z-[9999]">
+      <div class="flex space-x-4 mt-4 relative z-fixed">
         <button 
           v-if="store.currentPhase === 'draw'"
           @click="onDraw"
@@ -160,7 +160,7 @@ async function onChallenge() {
       </div>
 
       <!-- Insurance Selection Overlay -->
-      <div v-if="store.insuranceTypeChoices && store.insuranceTypeChoices.length > 0" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-8">
+      <div v-if="store.insuranceTypeChoices && store.insuranceTypeChoices.length > 0" class="fixed inset-0 bg-black/80 z-modal flex items-center justify-center p-8">
         <div class="bg-white rounded-xl p-8 max-w-4xl w-full">
           <h2 class="text-2xl font-bold text-gray-800 mb-4">保険を選択</h2>
           <div class="grid grid-cols-3 gap-4">

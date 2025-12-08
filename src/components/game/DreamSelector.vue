@@ -15,7 +15,7 @@ function select(card: ICard) {
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-8 backdrop-blur-sm animate-fade-in">
+  <div v-if="isOpen" class="fixed inset-0 bg-slate-900/95 z-modal flex flex-col items-center justify-center p-8 backdrop-blur-sm animate-fade-in">
     <div class="text-center mb-10 max-w-2xl">
       <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-8">
       夢を選択してください
