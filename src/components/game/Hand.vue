@@ -23,7 +23,7 @@ function isSelected(card: Card) {
 
 <template>
   <div 
-    v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory'"
+    v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory' && store.currentPhase !== 'dream_selection' && store.currentPhase !== 'challenge_choice'"
     data-testid="hand-container" 
     class="fixed bottom-0 left-0 right-0 h-96 flex items-end justify-center pb-4 px-4 pointer-events-none z-30"
   >

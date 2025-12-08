@@ -15,9 +15,9 @@ const explanations: Record<string, { title: string; content: string; icon: strin
     icon: '🌠'
   },
   draw: {
-    title: 'ドローフェーズ',
-    content: '手札を補充してターンを開始します。カードはあなたの生活スキル、リソース、経験を表します。これらを使って課題を克服しましょう！',
-    icon: '🃏'
+    title: 'ターン開始',
+    content: '新しいターンが始まりました！手札は自動的に補充されます。次に立ち向かう課題を選びましょう！',
+    icon: '✨'
   },
   challenge_phase: { // v2 phase name
     title: '課題フェーズ',
@@ -40,9 +40,10 @@ const explanations: Record<string, { title: string; content: string; icon: strin
 watch(() => store.currentPhase, (newPhase) => {
   if (!store.isTutorialMode) return
   
+  // Draw phase: skip tutorial (drawing is automatic)
   let topic = ''
   if (newPhase === 'dream_selection') topic = 'dream_selection'
-  else if (newPhase === 'draw') topic = 'draw'
+  // else if (newPhase === 'draw') topic = 'draw' // Skip - drawing is automatic
   else if (newPhase === 'challenge_choice') topic = 'challenge_phase'
   else if (newPhase === 'challenge') topic = 'challenge_resolution'
   else if (newPhase === 'insurance') topic = 'insurance_phase'

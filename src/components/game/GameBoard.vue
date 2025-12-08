@@ -25,6 +25,15 @@ const phaseDisplayName = computed(() => {
   return map[store.currentPhase] || store.currentPhase.toUpperCase()
 })
 
+const stageDisplayName = computed(() => {
+  const map: Record<string, string> = {
+    youth: '青年期',
+    middle: '壮年期',
+    fulfillment: '充実期'
+  }
+  return map[store.currentStage] || store.currentStage
+})
+
 onMounted(() => {
   if (!store.game) {
     const config = (window as any).__GAME_CONFIG__ as GameConfig | undefined
@@ -57,7 +66,7 @@ async function onChallenge() {
         </div>
         <div class="flex flex-col">
           <span class="text-xs text-slate-400 uppercase">ステージ</span>
-          <span class="font-bold text-xl text-purple-400">{{ store.currentStage }}</span>
+          <span class="font-bold text-xl text-purple-400">{{ stageDisplayName }}</span>
         </div>
         <div data-testid="vitality" class="flex flex-col">
           <span class="text-xs text-slate-400 uppercase">バイタリティ</span>
