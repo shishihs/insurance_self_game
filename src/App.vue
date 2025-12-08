@@ -106,7 +106,7 @@ const reportError = (error: Error) => {
 }
 
 onMounted(() => {
-  console.info('App Version: v2025.12.08.2209 - Hard Mode')
+  console.info('App Version: v2025.12.09.0155 - Hard Mode (Hand Jump Fix)')
   console.log('[DEBUG] App mounted at ' + new Date().toISOString())
   
   // モバイル判定
