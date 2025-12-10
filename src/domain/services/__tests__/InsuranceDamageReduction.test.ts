@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { Card } from '../../entities/Card'
 import { Game } from '../../entities/Game'
-import { CardFactory } from '../CardFactory'
 import {
   MAX_DAMAGE_REDUCTION_PER_INSURANCE,
   MAX_TOTAL_DAMAGE_REDUCTION,
@@ -13,7 +12,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
   let game: Game
 
   beforeEach(() => {
-    game = new Game({ startingVitality: 100 })
+    game = new Game({ startingVitality: 100 } as any)
     game.start()
     game.setPhase('draw')
   })
@@ -30,7 +29,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'medical',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 10,  // 通常なら10ダメージ軽減
@@ -58,7 +57,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'medical',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 3,
@@ -85,7 +84,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'medical',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 5,
@@ -101,7 +100,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'accident',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 5,
@@ -117,7 +116,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'life',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 5,
@@ -136,7 +135,10 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         name: '強力な挑戦',
         description: 'テスト用チャレンジ',
         power: 20,
-        category: 'health'
+        penalty: 10, // 固定ダメージ
+        category: 'health',
+        cost: 0,
+        effects: []
       })
 
       // チャレンジを正式に開始
@@ -163,7 +165,8 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
       const basePower = 10
       const insuranceBurden = game.insuranceBurden
       const effectivePower = basePower - insuranceBurden // 保険料負担でパワーが減る
-      const baseDamage = challengePower - effectivePower
+      // const baseDamage = challengePower - effectivePower // 旧ロジック
+      const baseDamage = 10 // penaltyベース
 
       // 保険軽減の計算
       const insuranceReductions = game.activeInsurances.map(card => card.calculateDamageReduction())
@@ -197,9 +200,10 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
           name: `保険${i}`,
           description: `テスト用保険${i}`,
           power: 2,
+          cost: 0,
           insuranceType: 'medical',
           durationType: 'term',
-          duration: 3,
+          remainingTurns: 3,
           effects: [{
             type: 'damage_reduction',
             value: 10,
@@ -216,7 +220,9 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         name: '小さな挑戦',
         description: 'テスト用チャレンジ',
         power: 5,
-        category: 'health'
+        category: 'health',
+        cost: 0,
+        effects: []
       })
 
       // チャレンジを正式に開始
@@ -246,7 +252,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'medical',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 3,
@@ -262,7 +268,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         cost: 0,  // テスト用にコストを0に設定
         insuranceType: 'accident',
         durationType: 'term',
-        duration: 3,
+        remainingTurns: 3,
         effects: [{
           type: 'damage_reduction',
           value: 3,
@@ -280,7 +286,10 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         name: '中程度の挑戦',
         description: 'テスト用チャレンジ',
         power: 15,
-        category: 'health'
+        penalty: 5,
+        category: 'health',
+        cost: 0,
+        effects: []
       })
 
       // チャレンジを正式に開始
@@ -293,7 +302,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
 
       const result = game.resolveChallenge()
 
-      // 基本ダメージ: 15 - 10 = 5
+      // 基本ダメージ: 5 (penalty)
       // 保険軽減: 3 * 0.5 * 2 = 3（各保険1.5、合計3）
       // 実際のダメージ: 5 - 3 = 2
       expect(result.vitalityChange).toBe(-2)
@@ -307,7 +316,10 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         name: '挑戦',
         description: 'テスト用チャレンジ',
         power: 15,
-        category: 'health'
+        penalty: 5,
+        category: 'health',
+        cost: 0,
+        effects: []
       })
 
       // チャレンジを正式に開始
@@ -319,7 +331,7 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
 
       const result = game.resolveChallenge()
 
-      // 基本ダメージ: 15 - 10 = 5（軽減なし）
+      // 基本ダメージ: 5 (penalty)（軽減なし）
       expect(result.vitalityChange).toBe(-5)
     })
   })

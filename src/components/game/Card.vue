@@ -44,6 +44,13 @@ const typeLabel = computed(() => {
     :class="cardClasses"
     @click="emit('click', card)"
   >
+    <!-- Damage Indicator (Top-Right) -->
+    <div v-if="card.penalty && (card.type === 'challenge' || card.type === 'dream')" 
+         class="absolute top-0 right-0 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md -mr-1 -mt-1 z-10"
+         title="失敗時のダメージ">
+      <span class="text-[10px] mr-[1px]">💥</span>{{ card.penalty }}
+    </div>
+
     <!-- Header -->
     <div class="flex justify-start items-center mb-2 gap-2">
       <div v-if="card.cost > 0" class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md -ml-1 -mt-1 z-10 shrink-0">

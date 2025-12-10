@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { Game } from '@/domain/entities/Game'
-import { CardFactory } from '@/domain/services/CardFactory'
+import { AVAILABLE_CHARACTERS } from '@/domain/types/game.types'
 
 describe('Game Loop v2 Integration', () => {
     let game: Game
@@ -16,9 +16,19 @@ describe('Game Loop v2 Integration', () => {
     })
 
     it('should proceed through the full v2 game loop', async () => {
-        // 1. Game Start -> Dream Selection
+        // 1. Game Start -> Character Selection -> Dream Selection
         game.start()
         expect(game.status).toBe('in_progress')
+
+        // Character Selection
+        expect(game.phase).toBe('character_selection')
+        expect(AVAILABLE_CHARACTERS.length).toBeGreaterThan(0)
+
+        // Select Character
+        const characterId = AVAILABLE_CHARACTERS[0]!.id
+        game.selectCharacter(characterId)
+
+        // Dream Selection
         expect(game.phase).toBe('dream_selection')
         expect(game.cardChoices).toBeDefined()
         expect(game.cardChoices?.length).toBe(3)

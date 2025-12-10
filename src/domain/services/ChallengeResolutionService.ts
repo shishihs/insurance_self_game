@@ -63,8 +63,8 @@ export class ChallengeResolutionService {
         vitalityChange = baseReward
       }
     } else {
-      // 失敗時のダメージ計算: パワー差分の半分（切り上げ）を基本ダメージとする (ユーザーFB対応)
-      const baseDamage = Math.ceil((challengePower - playerPower) / 2)
+      // 失敗時のダメージ計算: カード固有のペナルティを使用 (ユーザーFB対応: パワーと分離)
+      const baseDamage = challenge.penalty ?? Math.ceil(challengePower * 0.3)
       // 防御型保険によるダメージ軽減（保険無効の場合は0）
       const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
       // 最小ダメージ保証を適用

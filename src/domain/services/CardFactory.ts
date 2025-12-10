@@ -411,33 +411,33 @@ export class CardFactory {
         // 基本チャレンジ（難易度: 低〜中）- Hand Size 5に合わせて調整 (Power ~10-15 needed to challenge typical hand)
         // Starter Deck Avg Power ~1.4 * 5 = 7.0 (Nerfed).
         // Challenge Power should be 8-12.
-        { name: 'アルバイト探し', description: '初めての収入を得る', power: 10, dreamCategory: 'physical' as DreamCategory },
-        { name: '一人暮らし', description: '独立への第一歩', power: 12, dreamCategory: 'physical' as DreamCategory },
-        { name: '資格試験', description: 'スキルアップのチャンス', power: 15, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '就職活動', description: '新たなキャリアの始まり', power: 18, dreamCategory: 'physical' as DreamCategory },
+        { name: 'アルバイト探し', description: '初めての収入を得る', power: 10, damage: 3, dreamCategory: 'physical' as DreamCategory },
+        { name: '一人暮らし', description: '独立への第一歩', power: 12, damage: 4, dreamCategory: 'physical' as DreamCategory },
+        { name: '資格試験', description: 'スキルアップのチャンス', power: 15, damage: 5, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '就職活動', description: '新たなキャリアの始まり', power: 18, damage: 6, dreamCategory: 'physical' as DreamCategory },
         // 中級チャレンジ
-        { name: '恋人との別れ', description: '初めての大きな失意', power: 14, dreamCategory: 'mixed' as DreamCategory },
-        { name: '転職活動', description: 'キャリアの分岐点', power: 16, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '恋人との別れ', description: '初めての大きな失意', power: 14, damage: 5, dreamCategory: 'mixed' as DreamCategory },
+        { name: '転職活動', description: 'キャリアの分岐点', power: 16, damage: 6, dreamCategory: 'intellectual' as DreamCategory }
       ],
       middle: [
         // 基本チャレンジ（難易度: 中）
-        { name: '結婚資金', description: '新しい家族のスタート', power: 20, dreamCategory: 'mixed' as DreamCategory },
-        { name: '子育て', description: '家族の成長', power: 22, dreamCategory: 'physical' as DreamCategory },
-        { name: '両親の健康', description: '家族の支え合い', power: 20, dreamCategory: 'mixed' as DreamCategory },
-        { name: '住宅購入', description: '大きな決断', power: 25, dreamCategory: 'physical' as DreamCategory },
+        { name: '結婚資金', description: '新しい家族のスタート', power: 20, damage: 8, dreamCategory: 'mixed' as DreamCategory },
+        { name: '子育て', description: '家族の成長', power: 22, damage: 8, dreamCategory: 'physical' as DreamCategory },
+        { name: '両親の健康', description: '家族の支え合い', power: 20, damage: 7, dreamCategory: 'mixed' as DreamCategory },
+        { name: '住宅購入', description: '大きな決断', power: 25, damage: 10, dreamCategory: 'physical' as DreamCategory },
         // 高難度チャレンジ
-        { name: '親の介護', description: '家族の責任', power: 28, dreamCategory: 'mixed' as DreamCategory },
-        { name: '教育資金', description: '子供の将来への投資', power: 24, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '親の介護', description: '家族の責任', power: 28, damage: 12, dreamCategory: 'mixed' as DreamCategory },
+        { name: '教育資金', description: '子供の将来への投資', power: 24, damage: 9, dreamCategory: 'intellectual' as DreamCategory }
       ],
       fulfillment: [
         // 充実期（難易度: 高 - 人生の集大成、より壮大な目標へ）
-        { name: '次世代の育成', description: '若者たちに知識と経験を伝える', power: 20, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '地域社会の変革', description: '住みよい社会を作るための活動', power: 24, dreamCategory: 'mixed' as DreamCategory },
-        { name: '生涯の研究発表', description: '長年の探究の成果を世に出す', power: 26, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '世界平和への貢献', description: '国境を越えた慈善活動', power: 30, dreamCategory: 'mixed' as DreamCategory },
+        { name: '次世代の育成', description: '若者たちに知識と経験を伝える', power: 20, damage: 8, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '地域社会の変革', description: '住みよい社会を作るための活動', power: 24, damage: 10, dreamCategory: 'mixed' as DreamCategory },
+        { name: '生涯の研究発表', description: '長年の探究の成果を世に出す', power: 26, damage: 10, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '世界平和への貢献', description: '国境を越えた慈善活動', power: 30, damage: 12, dreamCategory: 'mixed' as DreamCategory },
         // 最高難度チャレンジ
-        { name: '宇宙旅行', description: '人類の夢、星々の海へ', power: 35, dreamCategory: 'physical' as DreamCategory },
-        { name: '伝説の継承', description: '自身の生き様を伝説として残す', power: 40, dreamCategory: 'mixed' as DreamCategory }
+        { name: '宇宙旅行', description: '人類の夢、星々の海へ', power: 35, damage: 15, dreamCategory: 'physical' as DreamCategory },
+        { name: '伝説の継承', description: '自身の生き様を伝説として残す', power: 40, damage: 20, dreamCategory: 'mixed' as DreamCategory }
       ]
     }
 
@@ -449,7 +449,7 @@ export class CardFactory {
     const selectedCount = 3 + Math.floor(Math.random() * 2) // 3-4枚
     const selected = shuffled.slice(0, selectedCount)
 
-    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard({ ...def, isDream: false }))
+    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard({ ...def, penalty: def.damage, isDream: false }))
 
     // リスク・リワードチャレンジを追加（20%の確率）
     const riskChallenges = this.createRiskRewardChallenges(stage)
@@ -462,14 +462,14 @@ export class CardFactory {
    */
   static createDreamCards(): Card[] {
     const dreamDefinitions = [
-      { name: '世界一周旅行', description: '未知の世界を体験する', power: 50, dreamCategory: 'physical' as DreamCategory },
-      { name: '本の出版', description: '自分の知識を世に残す', power: 50, dreamCategory: 'intellectual' as DreamCategory },
-      { name: '幸せな家庭', description: '愛に満ちた生活', power: 50, dreamCategory: 'mixed' as DreamCategory },
-      { name: '起業して成功', description: '自分のビジネスを持つ', power: 60, dreamCategory: 'mixed' as DreamCategory },
-      { name: '隠居生活', description: '静かで穏やかな余生', power: 45, dreamCategory: 'physical' as DreamCategory }
+      { name: '世界一周旅行', description: '未知の世界を体験する', power: 50, damage: 20, dreamCategory: 'physical' as DreamCategory },
+      { name: '本の出版', description: '自分の知識を世に残す', power: 50, damage: 20, dreamCategory: 'intellectual' as DreamCategory },
+      { name: '幸せな家庭', description: '愛に満ちた生活', power: 50, damage: 20, dreamCategory: 'mixed' as DreamCategory },
+      { name: '起業して成功', description: '自分のビジネスを持つ', power: 60, damage: 25, dreamCategory: 'mixed' as DreamCategory },
+      { name: '隠居生活', description: '静かで穏やかな余生', power: 45, damage: 15, dreamCategory: 'physical' as DreamCategory }
     ]
 
-    return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard({ ...def, isDream: true }))
+    return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard({ ...def, penalty: def.damage, isDream: true }))
   }
 
   /**
@@ -555,6 +555,7 @@ export class CardFactory {
     power: number
     cost: number
   }): Card {
+    if (params.power < 0) throw new Error('Life card power cannot be negative')
     return new Card({
       id: IdGenerator.generateCardId(),
       type: 'life',
@@ -604,6 +605,7 @@ export class CardFactory {
     name: string
     description: string
     power: number
+    penalty: number
     dreamCategory?: DreamCategory
     isDream?: boolean
   }): Card {
@@ -618,6 +620,7 @@ export class CardFactory {
       description: params.description,
       power: params.power,
       cost: 0,
+      penalty: params.penalty,
       effects: [],
       dreamCategory: params.dreamCategory,
       rewardType // 報酬タイプを追加
