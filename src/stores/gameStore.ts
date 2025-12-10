@@ -29,7 +29,7 @@ export const useGameStore = defineStore('game', () => {
     const maxTurnsState = ref(20) // Default 20
 
     // Tutorial State
-    const isTutorialMode = ref(true)
+    const isTutorialMode = ref(false)
     function toggleTutorialMode() {
         isTutorialMode.value = !isTutorialMode.value
     }

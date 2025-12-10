@@ -28,6 +28,12 @@ describe('Game E2E Full Loop Tests - Victory & Game Over', () => {
      */
     function startGameAndSelectDream(): void {
         game.start()
+
+        // Handle Character Selection Phase if present (v2 update)
+        if (game.phase === 'character_selection') {
+            game.selectCharacter(game.config.characterId || 'solid')
+        }
+
         expect(game.phase).toBe('dream_selection')
         const dream = game.cardChoices?.[0]
         if (!dream) throw new Error('No dream choices available')

@@ -63,8 +63,8 @@ export class ChallengeResolutionService {
         vitalityChange = baseReward
       }
     } else {
-      // 失敗時のダメージ計算
-      const baseDamage = challengePower - playerPower
+      // 失敗時のダメージ計算: パワー差分の半分（切り上げ）を基本ダメージとする (ユーザーFB対応)
+      const baseDamage = Math.ceil((challengePower - playerPower) / 2)
       // 防御型保険によるダメージ軽減（保険無効の場合は0）
       const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
       // 最小ダメージ保証を適用
@@ -96,6 +96,7 @@ export class ChallengeResolutionService {
 
     // 結果作成
     const result: ChallengeResult = {
+      challenge, // Include the challenge card in the result
       success,
       playerPower,
       challengePower,

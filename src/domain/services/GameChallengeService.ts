@@ -113,6 +113,13 @@ export class GameChallengeService {
 
         // Phase transition is handled by calling context or Game logic
         result.insuranceTypeChoices = choices
+
+        // Check for card reward
+        if (game.currentChallenge?.rewardType === 'card') {
+          const rewardCards = CardFactory.createRewardCards(game.stage, 3)
+          result.cardChoices = rewardCards
+          console.log('[GameChallengeService] Generated reward card choices:', result.cardChoices.length)
+        }
       }
 
       this.updateGameStateAfterChallenge(game, result)
@@ -122,6 +129,10 @@ export class GameChallengeService {
       console.error('[GameChallengeService] Fatal error resolving challenge:', error)
       // エラー時のフォールバック結果を返す
       return {
+        challenge: game.currentChallenge || CardFactory.createCard({
+          base: { name: 'Error', type: 'life', description: 'System Error' },
+          variant: 'default'
+        }),
         success: false,
         playerPower: 0,
         challengePower: 0,

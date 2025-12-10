@@ -14,14 +14,14 @@ const emit = defineEmits<{
 
 const cardClasses = computed(() => {
   return {
-    'border-yellow-400 ring-2 ring-yellow-400': props.isSelected,
-    'cursor-pointer hover:-translate-y-2': props.isPlayable,
+    'border-yellow-400 ring-4 ring-yellow-400 shadow-xl scale-105': props.isSelected,
+    'cursor-pointer hover:-translate-y-2 hover:shadow-2xl': props.isPlayable,
     'opacity-50 cursor-not-allowed': !props.isPlayable,
-    'bg-blue-100 border-blue-300': props.card.type === 'life',
-    'bg-red-100 border-red-300': props.card.type === 'challenge',
-    'bg-green-100 border-green-300': props.card.type === 'insurance',
-    'bg-purple-100 border-purple-300': props.card.type === 'skill',
-    'bg-yellow-100 border-yellow-300': props.card.type === 'dream',
+    'bg-gradient-to-br from-blue-50 to-white border-blue-400': props.card.type === 'life',
+    'bg-gradient-to-br from-red-50 to-white border-red-500': props.card.type === 'challenge',
+    'bg-gradient-to-br from-emerald-50 to-white border-emerald-500': props.card.type === 'insurance',
+    'bg-gradient-to-br from-purple-50 to-white border-purple-500': props.card.type === 'skill',
+    'bg-gradient-to-br from-amber-50 to-white border-amber-500': props.card.type === 'dream',
   }
 })
 
@@ -45,11 +45,11 @@ const typeLabel = computed(() => {
     @click="emit('click', card)"
   >
     <!-- Header -->
-    <div class="flex justify-between items-start mb-2">
-      <span class="text-xs font-bold uppercase tracking-wider opacity-70">{{ typeLabel }}</span>
-      <div v-if="card.cost > 0" class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-sm">
+    <div class="flex justify-start items-center mb-2 gap-2">
+      <div v-if="card.cost > 0" class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md -ml-1 -mt-1 z-10 shrink-0">
         {{ card.cost }}
       </div>
+      <span class="text-xs font-bold uppercase tracking-wider opacity-70">{{ typeLabel }}</span>
     </div>
 
     <!-- Image Placeholder -->
@@ -67,12 +67,12 @@ const typeLabel = computed(() => {
     <p class="text-xs text-gray-600 flex-grow overflow-y-auto leading-snug break-words pr-1">{{ card.description }}</p>
 
     <!-- Footer -->
-    <div class="mt-2 pt-2 border-t border-gray-200 flex justify-between items-center">
+    <div class="mt-2 pt-2 border-t border-gray-200 flex justify-start items-center gap-3">
       <div v-if="card.power > 0" class="flex items-center text-red-600 font-bold">
         <span class="mr-1">⚔️</span>
         <span>{{ card.power }}</span>
       </div>
-      <div v-if="card.coverage" class="flex items-center text-green-600 font-bold ml-auto">
+      <div v-if="card.coverage" class="flex items-center text-green-600 font-bold">
         <span class="mr-1">🛡️</span>
         <span>{{ card.coverage }}</span>
       </div>

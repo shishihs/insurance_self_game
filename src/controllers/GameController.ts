@@ -271,7 +271,8 @@ export class GameController {
    * チャレンジ成功時の処理
    */
   private async handleChallengeSuccess(result: ChallengeResult): Promise<void> {
-    this.game.stats.successfulChallenges++
+    // 統計更新はGameChallengeServiceで行われるため削除
+    // this.game.stats.successfulChallenges++
 
     // 報酬カード選択がある場合
     if (result.cardChoices && result.cardChoices.length > 0) {
@@ -300,7 +301,8 @@ export class GameController {
    * チャレンジ失敗時の処理
    */
   private async handleChallengeFailure(_result: ChallengeResult): Promise<void> {
-    this.game.stats.failedChallenges++
+    // 統計更新はGameChallengeServiceで行われるため削除
+    // this.game.stats.failedChallenges++
 
     // 体力がなくなった場合はゲームオーバー
     if (this.game.vitality <= 0) {

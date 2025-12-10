@@ -78,7 +78,7 @@ function disableTutorial() {
   >
     <div 
       v-if="visible && store.isTutorialMode && explanations[currentTopic]" 
-      class="fixed bottom-8 left-8 z-[1000] max-w-sm w-full"
+      class="fixed top-24 left-8 z-[1000] max-w-sm w-full"
     >
       <div class="relative bg-slate-900/90 backdrop-blur-xl border border-blue-500/30 rounded-2xl shadow-2xl p-6 overflow-hidden">
         <!-- Decoration -->

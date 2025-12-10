@@ -143,7 +143,7 @@ async function onChallenge() {
     </div>
 
     <!-- Right Sidebar Operations -->
-    <div class="absolute right-0 top-0 bottom-0 w-64 pt-24 pb-48 px-6 flex flex-col justify-center items-end z-30 pointer-events-none">
+    <div class="absolute right-0 top-0 bottom-0 w-64 pt-24 pb-64 px-6 flex flex-col justify-center items-end z-30 pointer-events-none">
       <div class="pointer-events-auto space-y-4 flex flex-col items-end w-full">
         
         <!-- Button: Start Challenge -->
@@ -191,7 +191,8 @@ async function onChallenge() {
     </div>
 
     <!-- Bottom Areas (Deck / Discard) -->
-    <div class="fixed bottom-8 left-8 z-10 flex flex-col items-center opacity-40 group hover:opacity-100 transition-opacity cursor-help">
+    <!-- Bottom Areas (Deck / Discard) -->
+    <div class="fixed bottom-8 left-8 z-10 flex flex-col items-center opacity-40 group hover:opacity-100 transition-opacity cursor-default">
       <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/50">
         <span class="text-2xl">📚</span>
       </div>
@@ -199,7 +200,7 @@ async function onChallenge() {
       <span class="text-[10px] text-slate-500">{{ store.game?.playerDeck.size() ?? 0 }} Cards</span>
     </div>
 
-    <div class="fixed bottom-8 right-8 z-10 flex flex-col items-center opacity-40 group hover:opacity-100 transition-opacity cursor-help">
+    <div class="fixed bottom-8 right-8 z-10 flex flex-col items-center opacity-40 group hover:opacity-100 transition-opacity cursor-default">
       <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/50">
         <span class="text-2xl">🗑️</span>
       </div>

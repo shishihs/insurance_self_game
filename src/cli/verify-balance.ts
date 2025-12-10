@@ -5,7 +5,7 @@ import { GameControllerFactory } from '@/controllers/GameController'
 import type { GameConfig, PlayerStats } from '@/domain/types/game.types'
 import chalk from 'chalk'
 
-const GAMES_PER_PERSONA = 20;
+const GAMES_PER_PERSONA = 1000;
 
 const runVerification = async () => {
     console.log(chalk.bold.cyan('🎮 Starting Level Design Verification (Balance Check)'));
@@ -29,12 +29,12 @@ const runVerification = async () => {
             const renderer = new PersonaGameRenderer(persona);
             const controller = GameControllerFactory.createDefault(renderer);
 
-            // Disable debug logs if any
+            // Disable debug logs for bulk run
             controller.setDebugMode(false);
 
             try {
                 const finalStats = await controller.playGame();
-                const game = controller.getGameState(); // Access game to check status directly if stats doesn't have it
+                const game = controller.getGameState();
 
                 if (game.status === 'victory') {
                     results[persona.name].win++;
@@ -63,10 +63,7 @@ const printReport = (results: Record<string, { win: number, loss: number, stats:
 
         // Aggregate Stats
         const avgTurns = average(data.stats.map(s => s.turnsPlayed));
-        const avgVitality = average(data.stats.map(s => s.highestVitality)); // Note: This might be 'highest', not 'ending'. 
-        // Logic check: PlayerStats usually tracks accumulated stats. 
-        // We might want Ending Vitality, which is in GameState, but PlayerStats might not have it directly?
-        // Let's check PlayerStats type definition if needed. Assuming standard stats for now.
+        const avgVitality = average(data.stats.map(s => s.highestVitality));
         const avgCards = average(data.stats.map(s => s.cardsAcquired));
         const successChallenges = average(data.stats.map(s => s.successfulChallenges));
 

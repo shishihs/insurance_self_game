@@ -171,6 +171,7 @@ export interface InsuranceTypeChoice {
  * チャレンジ結果
  */
 export interface ChallengeResult {
+  challenge: Card
   success: boolean
   playerPower: number
   challengePower: number

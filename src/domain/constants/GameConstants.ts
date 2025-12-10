@@ -119,7 +119,7 @@ export const INSURANCE_CONSTANTS = {
    */
   DURATION_SETTINGS: {
     termInsurance: {
-      defaultDuration: 10,  // 定期保険のデフォルト期間
+      defaultDuration: 5,  // 定期保険のデフォルト期間 (10 -> 5)
       costDiscount: 0.7     // 定期保険のコスト割引率
     },
     wholeLifeInsurance: {

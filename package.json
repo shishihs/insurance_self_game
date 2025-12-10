@@ -19,6 +19,8 @@
     "test:e2e:report": "playwright show-report",
     "deploy": "gh-pages -d dist -b gh-pages",
     "prepare": "husky",
+    "test:ai": "npx vite-node src/ai/run-simulation.ts",
+    "verify:balance": "npx vite-node src/cli/verify-balance.ts",
     "cui": "vite-node src/cui/cli.ts",
     "cui:play": "vite-node src/cui/cli.ts play",
     "cui:demo": "vite-node src/cui/cli.ts demo",

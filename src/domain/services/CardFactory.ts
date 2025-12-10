@@ -42,17 +42,17 @@ export class CardFactory {
   static createStarterLifeCards(): Card[] {
     const starterCardDefinitions = [
       // 健康カード
-      { name: '朝のジョギング', description: '健康的な一日の始まり', category: 'health' as LifeCardCategory, power: 1, cost: 1 },
-      { name: '栄養バランスの良い食事', description: '体調管理の基本', category: 'health' as LifeCardCategory, power: 2, cost: 2 },
+      { name: '朝のジョギング', description: '健康的な一日の始まり', category: 'health' as LifeCardCategory, power: 2, cost: 1 },
+      { name: '栄養バランスの良い食事', description: '体調管理の基本', category: 'health' as LifeCardCategory, power: 4, cost: 2 },
       // キャリアカード
-      { name: '新しいスキルの習得', description: '成長への投資', category: 'career' as LifeCardCategory, power: 2, cost: 2 },
-      { name: 'チームワーク', description: '仲間との協力', category: 'career' as LifeCardCategory, power: 1, cost: 1 },
+      { name: '新しいスキルの習得', description: '成長への投資', category: 'career' as LifeCardCategory, power: 4, cost: 2 },
+      { name: 'チームワーク', description: '仲間との協力', category: 'career' as LifeCardCategory, power: 2, cost: 1 },
       // 家族カード
-      { name: '家族との団らん', description: '心の充電', category: 'family' as LifeCardCategory, power: 1, cost: 1 },
+      { name: '家族との団らん', description: '心の充電', category: 'family' as LifeCardCategory, power: 2, cost: 1 },
       // 趣味カード
-      { name: '趣味の時間', description: 'リフレッシュタイム', category: 'hobby' as LifeCardCategory, power: 1, cost: 1 },
+      { name: '趣味の時間', description: 'リフレッシュタイム', category: 'hobby' as LifeCardCategory, power: 2, cost: 1 },
       // 金融カード
-      { name: '計画的な貯蓄', description: '将来への備え', category: 'finance' as LifeCardCategory, power: 2, cost: 2 }
+      { name: '計画的な貯蓄', description: '将来への備え', category: 'finance' as LifeCardCategory, power: 4, cost: 2 }
     ]
 
     return this.createCardsFromDefinitions(starterCardDefinitions, def => this.createLifeCard(def))
@@ -316,7 +316,7 @@ export class CardFactory {
       const selectedType = availableTypes.splice(randomIndex, 1)[0]!
 
       // 定期保険の期間設定（10ターン）
-      const termDuration = 10
+      const termDuration = 5
 
       // 定期保険のコスト（基本コストの70%）
       const termCost = Math.floor(selectedType.baseCost * 0.7)
@@ -449,7 +449,7 @@ export class CardFactory {
     const selectedCount = 3 + Math.floor(Math.random() * 2) // 3-4枚
     const selected = shuffled.slice(0, selectedCount)
 
-    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard(def))
+    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard({ ...def, isDream: false }))
 
     // リスク・リワードチャレンジを追加（20%の確率）
     const riskChallenges = this.createRiskRewardChallenges(stage)
@@ -469,7 +469,7 @@ export class CardFactory {
       { name: '隠居生活', description: '静かで穏やかな余生', power: 45, dreamCategory: 'physical' as DreamCategory }
     ]
 
-    return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard(def))
+    return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard({ ...def, isDream: true }))
   }
 
   /**
@@ -605,13 +605,15 @@ export class CardFactory {
     description: string
     power: number
     dreamCategory?: DreamCategory
+    isDream?: boolean
   }): Card {
+    const type = params.isDream ? 'dream' : 'challenge'
     // チャレンジの難易度に基づいて報酬タイプを決定
-    const rewardType = this.determineRewardType(params.power, params.dreamCategory)
+    const rewardType = this.determineRewardType(params.power, type)
 
     return new Card({
       id: IdGenerator.generateCardId(),
-      type: params.dreamCategory ? 'dream' : 'challenge', // 夢カテゴリがある場合はdreamタイプ
+      type,
       name: params.name,
       description: params.description,
       power: params.power,
@@ -625,9 +627,9 @@ export class CardFactory {
   /**
    * チャレンジの難易度と種類に基づいて報酬タイプを決定
    */
-  private static determineRewardType(power: number, dreamCategory?: DreamCategory): RewardType {
+  private static determineRewardType(power: number, type: string): RewardType {
     // 夢カードの場合は活力回復
-    if (dreamCategory) {
+    if (type === 'dream') {
       return 'vitality'
     }
 
@@ -638,7 +640,6 @@ export class CardFactory {
       return 'insurance' // 中難易度：保険獲得（基本）
     }
     return 'card' // 高難易度：追加カード獲得
-
   }
 
   /**
@@ -840,5 +841,16 @@ export class CardFactory {
     return this.createCardsFromDefinitions(legendaryDefinitions, def =>
       Card.createLegendaryCard(def.name, def.power, def.unlockCondition)
     )
+  }
+  /**
+   * 報酬用カードを生成
+   */
+  static createRewardCards(stage: GameStage, count: number): Card[] {
+    // スキルカードを報酬の基本とする
+    const candidates = this.createSkillCards(stage)
+
+    // ランダムに選択
+    const shuffled = [...candidates].sort(() => Math.random() - 0.5)
+    return shuffled.slice(0, count)
   }
 }
