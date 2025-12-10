@@ -295,6 +295,24 @@ async function onResolveChallenge() {
             </div>
           </div>
         </div>
+
+        <!-- Skip Insurance Button -->
+        <div class="text-center pt-6 border-t border-gray-700">
+          <button 
+            @click.stop="store.skipInsurance()"
+            class="group relative px-8 py-4 bg-gray-800 hover:bg-red-900/50 border border-gray-600 hover:border-red-500/50 text-gray-300 hover:text-white rounded-xl transition-all duration-200"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">🚫</span>
+              <div class="text-left">
+                <span class="block font-bold text-lg">保険に入らない</span>
+                <span class="block text-xs text-gray-500 group-hover:text-gray-400">
+                  コスト節約 / ピンチ時の保障なし
+                </span>
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
 

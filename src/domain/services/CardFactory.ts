@@ -315,14 +315,16 @@ export class CardFactory {
       const randomIndex = Math.floor(Math.random() * availableTypes.length)
       const selectedType = availableTypes.splice(randomIndex, 1)[0]!
 
-      // 定期保険の期間設定（10ターン）
+      // 定期保険の期間設定（5ターン）
       const termDuration = 5
 
-      // 定期保険のコスト（基本コストの70%）
-      const termCost = Math.floor(selectedType.baseCost * 0.7)
+      // 定期保険のコスト（毎ターンコストが高い - 掛け捨て型）
+      // 基本コストの1.3倍（期間が短いので月々は高い）
+      const termCost = Math.ceil(selectedType.baseCost * 1.3)
 
-      // 終身保険のコスト（基本コスト）
-      const wholeLifeCost = selectedType.baseCost
+      // 終身保険のコスト（毎ターンコストが低い - 貯蓄型）
+      // 基本コストの0.6倍（永続なので月々は安い）
+      const wholeLifeCost = Math.floor(selectedType.baseCost * 0.6)
 
       const choice: InsuranceTypeChoice = {
         insuranceType: selectedType.type,
@@ -347,11 +349,11 @@ export class CardFactory {
         termOption: {
           cost: termCost,
           duration: termDuration,
-          description: `${termDuration}ターン限定の保障（低コスト）`
+          description: `${termDuration}ターン限定（毎ターン${termCost}コスト・高め）`
         },
         wholeLifeOption: {
           cost: wholeLifeCost,
-          description: '生涯にわたる永続保障（高コスト）'
+          description: `永続保障（毎ターン${wholeLifeCost}コスト・安め）`
         }
       }
 

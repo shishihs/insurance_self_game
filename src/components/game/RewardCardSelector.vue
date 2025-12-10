@@ -144,13 +144,21 @@ function getRarityBorderColor(rarity: string): string {
             </div>
           </div>
 
-          <!-- Skip Button -->
-          <div class="text-center">
+          <!-- Skip Button - More Prominent -->
+          <div class="text-center pt-4 border-t border-gray-700">
             <button 
               @click="skipReward"
-              class="text-gray-500 hover:text-gray-300 text-sm underline transition-colors"
+              class="group relative px-8 py-4 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-xl transition-all duration-200 transform hover:scale-105"
             >
-              スキップする（報酬を受け取らない）
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">🚫</span>
+                <div class="text-left">
+                  <span class="block font-bold text-lg">何も取らない</span>
+                  <span class="block text-xs text-gray-500 group-hover:text-gray-400">
+                    コストを節約してシンプルに進行
+                  </span>
+                </div>
+              </div>
             </button>
           </div>
         </div>

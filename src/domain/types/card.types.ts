@@ -209,6 +209,17 @@ export type InsuranceEffectType =
   | 'recovery'    // 回復型（体力回復）
   | 'specialized' // 特化型（特定チャレンジ特化）
   | 'comprehensive' // 包括型（複数効果）
+  | 'trigger'     // トリガー型（特定条件で一回発動）
+
+/**
+ * 保険トリガータイプ（トリガー型保険用）
+ * 保険がどの条件で発動するかを定義
+ */
+export type InsuranceTriggerType =
+  | 'on_death'         // 活力0になる瞬間（生命保険）
+  | 'on_heavy_damage'  // 10ダメージ以上受ける時（医療保険）
+  | 'on_aging_gameover' // 老化カード3枚で手詰まり時（障害保険）
+  | 'on_demand'        // いつでも発動可能（就業不能保険）
 
 /**
  * 拡張カードインターフェース

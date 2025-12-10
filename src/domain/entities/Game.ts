@@ -478,10 +478,34 @@ export class Game implements IGameState {
 
   /**
    * ゲームオーバーかどうか判定
+   * 以下の条件でゲームオーバーとなる:
+   * 1. ステータスが 'game_over'
+   * 2. 活力が0以下
+   * 3. 手札に老化カードが3枚以上（新ルール）
    * @returns {boolean} ゲームオーバーの場合true
    */
   isGameOver(): boolean {
-    return this.status === 'game_over' || this._vitality.isDepleted()
+    return this.status === 'game_over' ||
+      this._vitality.isDepleted() ||
+      this.hasAgingCardGameOver()
+  }
+
+  /**
+   * 老化カードによるゲームオーバー条件をチェック
+   * 手札に老化カードが3枚以上あるとゲームオーバー
+   * @returns {boolean} 老化カードゲームオーバーの場合true
+   */
+  hasAgingCardGameOver(): boolean {
+    const agingCardsInHand = this.hand.filter(card => card.type === 'aging')
+    return agingCardsInHand.length >= 3
+  }
+
+  /**
+   * 手札の老化カード数を取得
+   * @returns {number} 老化カードの枚数
+   */
+  getAgingCardCount(): number {
+    return this.hand.filter(card => card.type === 'aging').length
   }
 
   /**
@@ -760,6 +784,20 @@ export class Game implements IGameState {
    */
   selectInsuranceType(insuranceType: string, durationType: 'term' | 'whole_life'): InsuranceTypeSelectionResult {
     return this.insuranceService.selectInsuranceType(this, insuranceType, durationType)
+  }
+
+  /**
+   * 保険選択をスキップ（保険に入らない選択）
+   * 保険料負担なしで進行できるが、リスクに対する保障がない
+   */
+  skipInsuranceSelection(): void {
+    console.log('[Game] Skipping insurance selection - proceeding without insurance')
+
+    // 保険種類選択肢をクリア
+    this.insuranceTypeChoices = undefined
+
+    // 解決フェーズに移行
+    this.changePhase('resolution')
   }
 
   /**

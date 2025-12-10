@@ -220,6 +220,17 @@ export const useGameStore = defineStore('game', () => {
         triggerUpdate()
     }
 
+    function skipInsurance() {
+        if (!game.value) return
+        console.log('[GameStore] Skipping insurance selection')
+
+        // 保険選択をスキップ
+        game.value.skipInsuranceSelection()
+
+        lastMessage.value = '保険に入らずに進行します'
+        triggerUpdate()
+    }
+
     function endTurn() {
         if (!game.value) return
         const result = game.value.nextTurn()
@@ -296,6 +307,7 @@ export const useGameStore = defineStore('game', () => {
         selectInsurance,
         selectRewardCard, // 報酬カード選択
         skipRewardCard, // 報酬スキップ
+        skipInsurance, // 保険スキップ（保険に入らない選択）
         endTurn,
         toggleCardSelection,
         triggerUpdate,
