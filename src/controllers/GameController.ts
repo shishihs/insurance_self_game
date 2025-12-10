@@ -68,12 +68,11 @@ export class GameController {
     await this.handleDrawPhase()
     await this.handleChallengePhase()
 
-    // Phase 4: 保険フェーズ (ルールブック v2準拠)
-    await this.handleInsurancePhase()
+    // Phase 4: 保険フェーズ (ルールブック v2準拠) - 廃止 (高速化のため)
+    // await this.handleInsurancePhase()
 
-    // 保険更新（維持）フェーズ（ルールブックではPhase 4-B/Cだが、ここでは便宜上分けるか統合するか）
-    // GameControllerの既存構造では handleInsuranceRenewalPhase があるのでそれを活用
-    await this.handleInsuranceRenewalPhase()
+    // 保険更新（維持）フェーズ - 廃止 (自動化/簡略化のため)
+    // await this.handleInsuranceRenewalPhase()
 
     // ターン終了処理
     this.game.nextTurn()

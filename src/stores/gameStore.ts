@@ -25,6 +25,8 @@ export const useGameStore = defineStore('game', () => {
     const scoreState = ref(0)
     const cardChoicesState = ref<Card[]>([])
     const insuranceTypeChoicesState = ref<any[]>([])
+    const savingsState = ref(0)
+    const maxTurnsState = ref(20) // Default 20
 
     // Tutorial State
     const isTutorialMode = ref(true)
@@ -47,6 +49,8 @@ export const useGameStore = defineStore('game', () => {
     const activeInsurances = computed(() => activeInsurancesState.value)
     const insuranceMarket = computed(() => insuranceMarketState.value)
     const score = computed(() => scoreState.value)
+    const savings = computed(() => savingsState.value)
+    const maxTurns = computed(() => maxTurnsState.value)
     const cardChoices = computed(() => cardChoicesState.value)
 
 
@@ -106,6 +110,12 @@ export const useGameStore = defineStore('game', () => {
     async function selectDream(card: any) {
         if (!game.value) return
         await game.value.selectDream(card as Card)
+        triggerUpdate()
+    }
+
+    function selectCharacter(characterId: string) {
+        if (!game.value) return
+        game.value.selectCharacter(characterId)
         triggerUpdate()
     }
 
@@ -216,7 +226,11 @@ export const useGameStore = defineStore('game', () => {
         activeInsurancesState.value = [...game.value.activeInsurances]
         insuranceMarketState.value = [...game.value.insuranceMarket]
         scoreState.value = game.value.score
-        scoreState.value = game.value.score
+        savingsState.value = game.value.savings
+
+        const settings = game.value.config?.balanceConfig?.progressionSettings || { maxTurns: 20 }
+        maxTurnsState.value = settings.maxTurns ?? 20
+
         cardChoicesState.value = game.value.cardChoices ? [...game.value.cardChoices] : []
         insuranceTypeChoicesState.value = game.value.insuranceTypeChoices ? [...game.value.insuranceTypeChoices] : []
 
@@ -255,10 +269,13 @@ export const useGameStore = defineStore('game', () => {
         activeInsurances,
         insuranceMarket,
         score,
+        savings,
+        maxTurns,
         cardChoices,
         startChallengePhase,
         selectChallengeChoice,
         selectDream,
+        selectCharacter,
         buyInsurance,
         isTutorialMode,
         toggleTutorialMode

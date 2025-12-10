@@ -20,22 +20,22 @@ export const AGE_CONSTANTS = {
       label: '青年期',
       maxVitality: 60, // Reduced from 80
       startTurn: 0,
-      endTurn: 14,
+      endTurn: 6,
       insuranceMultiplier: 1.0,
       challengeDifficultyModifier: 1.5 // Increased from 1.2
     },
     middle: {
       label: '中年期',
       maxVitality: 60, // Reduced from 80
-      startTurn: 15,
-      endTurn: 29,
+      startTurn: 7,
+      endTurn: 13,
       insuranceMultiplier: 1.2,
       challengeDifficultyModifier: 2.0 // Increased from 1.3
     },
     fulfillment: {
       label: '充実期',
       maxVitality: 50, // Reduced from 60
-      startTurn: 30,
+      startTurn: 14,
       endTurn: Infinity,
       insuranceMultiplier: 1.5, // Increased from 1.3
       challengeDifficultyModifier: 2.5 // Increased from 1.4
@@ -182,13 +182,13 @@ export const BALANCE_CONSTANTS = {
    * ゲーム進行関連
    */
   PROGRESSION_SETTINGS: {
-    maxTurns: 50,              // 最大ターン数
+    maxTurns: 20,              // 最大ターン数 (50 -> 20)
     stageTransitionTurns: {    // ステージ転換ターン
-      youthToMiddle: 15,
-      middleToFulfillment: 30
+      youthToMiddle: 7,        // 青年期: 0-6 (7ターン)
+      middleToFulfillment: 14  // 中年期: 7-13 (7ターン), 充実期: 14-20
     },
     victoryConditions: {
-      minTurns: 20,            // 勝利条件最小ターン
+      minTurns: 15,            // 勝利条件最小ターン
       minVitality: 50          // 勝利条件最小活力
     }
   } as const

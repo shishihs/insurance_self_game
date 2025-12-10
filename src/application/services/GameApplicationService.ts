@@ -98,7 +98,6 @@ export class GameApplicationService {
 
     // Game集約に結果を反映
     this.game.recordChallengeResult(
-      result.getTotalPower().getValue(),
       result.isSuccess()
     )
 

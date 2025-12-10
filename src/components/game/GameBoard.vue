@@ -3,6 +3,7 @@ import { onMounted, computed } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import Hand from './Hand.vue'
 import CardComponent from './Card.vue'
+import CharacterSelector from './CharacterSelector.vue'
 import DreamSelector from './DreamSelector.vue'
 import ChallengeSelector from './ChallengeSelector.vue'
 import InsuranceMarket from './InsuranceMarket.vue'
@@ -65,6 +66,10 @@ async function onChallenge() {
           <span class="font-bold text-xl text-yellow-400">{{ store.score }}</span>
         </div>
         <div class="flex flex-col">
+          <span class="text-xs text-slate-400 uppercase">貯蓄</span>
+          <span class="font-bold text-xl text-blue-400">{{ store.savings }}</span>
+        </div>
+        <div class="flex flex-col">
           <span class="text-xs text-slate-400 uppercase">ステージ</span>
           <span class="font-bold text-xl text-purple-400">{{ stageDisplayName }}</span>
         </div>
@@ -80,7 +85,10 @@ async function onChallenge() {
       <div class="flex items-center space-x-4">
         <div class="flex flex-col items-end">
           <span class="text-xs text-slate-400 uppercase">ターン</span>
-          <span class="font-bold text-xl">{{ store.currentTurn }}</span>
+          <div class="flex items-end">
+             <span class="font-bold text-xl">{{ store.currentTurn }}</span>
+             <span class="text-xs text-slate-500 mb-1 ml-1">/ {{ store.maxTurns }}</span>
+          </div>
         </div>
         <div class="flex flex-col items-end">
           <span class="text-xs text-slate-400 uppercase">フェーズ</span>
@@ -189,6 +197,7 @@ async function onChallenge() {
 
 
       <!-- v2 Components -->
+      <CharacterSelector v-if="store.currentPhase === 'character_selection'" @select="store.selectCharacter" />
       <DreamSelector />
       <ChallengeSelector />
       <GameResult />

@@ -18,6 +18,7 @@ export type GameStatus =
  */
 export type GamePhase =
   | 'setup'                    // セットアップ
+  | 'character_selection'      // キャラクター選択 (v2)
   | 'dream_selection'          // 夢選択 (v2)
   | 'draw'                     // ドロー
   | 'challenge_choice'         // チャレンジ選択 (v2)
@@ -60,7 +61,50 @@ export interface GameConfig {
   maxTurns?: number
   // バランス調整設定
   balanceConfig?: BalanceConfig
+  characterId?: string // 選択されたキャラクターID
 }
+
+/**
+ * キャラクター定義
+ */
+export interface Character {
+  id: string
+  name: string
+  description: string
+  initialVitalityModifier: number
+  initialSavings?: number
+  specialAbility: string
+}
+
+/**
+ * 利用可能なキャラクターリスト
+ */
+export const AVAILABLE_CHARACTERS: Character[] = [
+  {
+    id: 'solid',
+    name: '堅実家',
+    description: '守り重視。初期活力が高く、貯蓄の効果が高い。',
+    initialVitalityModifier: 10,
+    initialSavings: 10,
+    specialAbility: 'savings_bonus'
+  },
+  {
+    id: 'adventurer',
+    name: '冒険家',
+    description: 'リスク志向。初期活力は低いが、チャンスに強い。',
+    initialVitalityModifier: -10,
+    initialSavings: 0,
+    specialAbility: 'risk_taker'
+  },
+  {
+    id: 'minimalist',
+    name: 'ミニマリスト',
+    description: '効率重視。無駄を嫌う生活スタイル。',
+    initialVitalityModifier: 0,
+    initialSavings: 5,
+    specialAbility: 'efficiency'
+  }
+]
 
 /**
  * バランス調整設定
@@ -254,6 +298,7 @@ export interface IGameState {
   agingDeck: Deck
   score: number             // 現在のスコア
   selectedDream: Card | undefined      // 選択した夢カード (DreamCard)
+  savings: number           // 貯蓄 (新要素)
 
   // 統計
   stats: PlayerStats

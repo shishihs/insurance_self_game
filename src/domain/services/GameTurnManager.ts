@@ -79,6 +79,14 @@ export class GameTurnManager {
       }
     }
 
+    // Check if game ended due to insurance cost
+    if (game.status === 'game_over') {
+      return {
+        newExpiredCount: expirationResult?.expiredCards.length || 0,
+        remainingInsuranceCount: game.getActiveInsurances().length
+      }
+    }
+
     // ターン開始時のドロー (手札を補充)
     const drawCount = game.config.startingHandSize || 5
     game.drawCards(drawCount)

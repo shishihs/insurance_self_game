@@ -19,13 +19,15 @@ import type {
   GamePhase,
   GameStatus,
   IGameState,
-  InsuranceExpirationNotice,
   InsuranceTypeChoice,
   InsuranceTypeSelectionResult,
   PlayerStats,
   TurnResult
 } from '../types/game.types'
-import { DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
+import {
+  AVAILABLE_CHARACTERS,
+  DREAM_AGE_ADJUSTMENTS
+} from '../types/game.types'
 import type { GameStage } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -95,6 +97,7 @@ export class Game implements IGameState {
   // v2: 新要素
   agingDeck: Deck
   score: number = 0
+  savings: number = 0
   insuranceMarket: Card[] = []
   selectedDream: Card | undefined = undefined
 
@@ -166,44 +169,60 @@ export class Game implements IGameState {
     this.turn = 0
 
     // Config must be set before initializing CardManager or Vitality
-    const resolvedConfig: GameConfig = config || {
+    const defaults: GameConfig = {
       difficulty: 'normal',
-      startingVitality: config?.startingVitality ?? 100, // Fallback if undefined in passed config
+      startingVitality: 100,
       startingHandSize: 5,
       maxHandSize: 10,
       dreamCardCount: 3
     }
-    console.log('[Game] Constructor Config:', JSON.stringify(resolvedConfig)) // DEBUG
+    const resolvedConfig: GameConfig = { ...defaults, ...config }
+
+    // console.log('[Game] Constructor Config:', JSON.stringify(resolvedConfig)) // DEBUG
 
     this.config = resolvedConfig
 
     // Apply balance overrides if provided
     if (this.config.balanceConfig) {
-      console.log('[Game] Applying Balance Overrides:', JSON.stringify(this.config.balanceConfig)) // DEBUG
+      // console.log('[Game] Applying Balance Overrides:', JSON.stringify(this.config.balanceConfig)) // DEBUG
       GameConstantsAccessor.setOverrides(this.config.balanceConfig)
     }
 
     // 値オブジェクトで初期化（年齢別最大活力を適用）
     // NOTE: Override適用後にパラメータを取得する
-    const startingVitality = resolvedConfig.startingVitality
+    // Phase 4: キャラクター適用
+    const characterId = resolvedConfig.characterId || 'solid' // Default to Solid
+    const character = AVAILABLE_CHARACTERS.find(c => c.id === characterId) || AVAILABLE_CHARACTERS[0]
+
+    if (!character) {
+      // Should not happen as we fallback to [0], but for TS safety
+      throw new Error('No available characters found')
+    }
+
+    // console.log(`[Game] Selected Character: ${character.name}`)
+
+    const startingVitality = (resolvedConfig.startingVitality ?? 100) + character.initialVitalityModifier
     const ageParams = GameConstantsAccessor.getStageParameters(this.stage)
     if (!ageParams) throw new Error(`Invalid stage parameters for ${this.stage}`)
 
-    const maxVitality = ageParams.maxVitality
-    console.log(`[Game] Init Vitality: Starting=${startingVitality}, Max=${maxVitality}, Stage=${this.stage}`) // DEBUG
+    // キャラクター補正を含めた最大活力
+    const baseMaxVitality = ageParams.maxVitality + character.initialVitalityModifier
+    const maxVitality = baseMaxVitality // maxVitality is now character adjusted base
+
+    // console.log(`[Game] Init Vitality: Starting=${startingVitality}, Max=${maxVitality}, Stage=${this.stage}`) // DEBUG
 
     // If starting vitality is higher than max (cheat mode), allow it for now by updating max temporarily or clamping?
     // Current logic clamps: Math.min(startingVitality, maxVitality)
     // To support cheat, we should respect startingVitality if it's explicitly high
-    const actualStartingVitality = (startingVitality > maxVitality && startingVitality > 200)
+    // Only apply clamp if not cheating (e.g. initial < 200)
+    const cheatThreshold = 200
+    const actualStartingVitality = (startingVitality > maxVitality && startingVitality > cheatThreshold)
       ? startingVitality
       : Math.min(startingVitality, maxVitality)
 
-    // If we are cheating, we need a vitality object that supports the high value
-    // Vitality.create enforces checked logic, let's see if we need to adjust Max there too
     const actualMaxVitality = Math.max(actualStartingVitality, maxVitality)
 
-    console.log(`[Game] Final Init Vitality: Value=${actualStartingVitality}, Max=${actualMaxVitality}`) // DEBUG
+    // console.log(`[Game] Final Init Vitality: Value=${actualStartingVitality}, Max=${actualMaxVitality}`) // DEBUG
 
     this._vitality = Vitality.create(actualStartingVitality, actualMaxVitality)
 
@@ -230,6 +249,9 @@ export class Game implements IGameState {
     } else {
       GameConstantsAccessor.clearOverrides()
     }
+    // ...
+
+
 
     // 状態変更イベントの監視を設定
     this.setupStateListeners()
@@ -252,7 +274,7 @@ export class Game implements IGameState {
       successfulChallenges: 0,
       failedChallenges: 0,
       cardsAcquired: 0,
-      highestVitality: startingVitality,
+      highestVitality: actualStartingVitality,
       turnsPlayed: 0
     }
 
@@ -273,23 +295,16 @@ export class Game implements IGameState {
     this.insuranceMarket = []
 
     // v2: 初期化
-    this.agingDeck = new Deck('Aging Deck') // Keeps explicit reference if needed, but CardManager also has one.
-    // Sync logic: CardManager has its own. We should populate CardManager's deck.
-    // Or if this.agingDeck is intended to be the same, Game should use CardManager's deck reference?
-    // Accessing CardManager's state for population
+    this.agingDeck = new Deck('Aging Deck')
     const agingCards = CardFactory.createAgingCards(20)
-    // We need to access CardManager's aging deck.
-    // Since Game.ts doesn't expose cardManager.agingDeck directly but via getState():
-    // But we are in constructor, cardManager is just initialized.
     this.cardManager.getState().agingDeck.addCards(agingCards)
     this.cardManager.getState().agingDeck.shuffle()
 
     this.score = 0
+    this.savings = character.initialSavings || 0 // Apply character initial savings
 
     // Phase 3: 保険料負担の初期化
     this._insuranceBurden = InsurancePremium.create(0)
-
-
   }
 
   /**
@@ -356,7 +371,30 @@ export class Game implements IGameState {
     if (!isFinite(damage)) {
       throw new Error('Change amount must be a finite number')
     }
-    this.updateVitality(-damage)
+
+    let remainingDamage = damage
+
+    // 貯蓄がある場合は優先して使用
+    if (this.savings > 0) {
+      const savingsDeduction = Math.min(this.savings, remainingDamage)
+      this.savings -= savingsDeduction
+      remainingDamage -= savingsDeduction
+      console.log(`🛡️ 貯蓄を使用: -${savingsDeduction} ポイント (残り貯蓄: ${this.savings})`)
+    }
+
+    if (remainingDamage > 0) {
+      this.updateVitality(-remainingDamage)
+    }
+  }
+
+  /**
+   * 貯蓄に追加する
+   * @param {number} amount - 追加する量
+   */
+  depositSavings(amount: number): void {
+    if (amount <= 0) return
+    this.savings += amount
+    console.log(`💰 貯蓄: +${amount} ポイント (合計: ${this.savings})`)
   }
 
   /**
@@ -365,6 +403,10 @@ export class Game implements IGameState {
    * @throws {Error} 回復量が負の値の場合
    */
   heal(amount: number): void {
+    if (this.status === 'game_over') {
+      console.warn('[Game] Cannot heal: Game is over')
+      return
+    }
     // 型チェック
     if (amount === null || amount === undefined) {
       throw new Error('Change amount must not be null or undefined')
@@ -420,6 +462,21 @@ export class Game implements IGameState {
   }
 
   /**
+   * 自由度スコアを計算 (0.0 to 1.0)
+   * 保険料負担が低いほど高くなる
+   */
+  getFreedomScore(): number {
+    const burden = this.insuranceBurden
+    // 負担が0なら1.0 (完全自由)
+    // 負担が最大活力の20%以上なら0.0 (不自由)
+    const maxBurden = this.maxVitality * 0.2
+    if (burden === 0) return 1.0
+
+    const freedom = 1.0 - (burden / maxBurden)
+    return Math.max(0, Math.min(1.0, freedom))
+  }
+
+  /**
    * ゲームオーバーかどうか判定
    * @returns {boolean} ゲームオーバーの場合true
    */
@@ -457,12 +514,37 @@ export class Game implements IGameState {
     this.changeStatus('in_progress')
     this.startedAt = new Date()
 
-    // v2: Start with Dream Selection
+    // v2: Start with Character Selection
+    // this.startDreamSelectionPhase() -> moved to after character selection
+    this.changePhase('character_selection')
+    console.info('[Game Phase] Character Selection Started')
+  }
+
+  /**
+   * キャラクターを選択
+   */
+  selectCharacter(characterId: string): void {
+    if (this.phase !== 'character_selection') throw new Error('Not in character selection phase')
+
+    const character = AVAILABLE_CHARACTERS.find(c => c.id === characterId)
+    if (!character) throw new Error('Invalid character selection')
+
+    this.config.characterId = characterId
+
+    // Re-apply modifiers logic
+    const ageParams = GameConstantsAccessor.getStageParameters(this.stage)
+    const baseStarting = this.config.startingVitality
+    const startVal = baseStarting + character.initialVitalityModifier
+    const maxVal = ageParams.maxVitality + character.initialVitalityModifier
+
+    const actualMax = Math.max(startVal, maxVal)
+    this._vitality = Vitality.create(Math.min(startVal, actualMax), actualMax)
+
+    this.savings = character.initialSavings || 0
+    console.log(`[Game] Character switched to ${character.name}. Vitality: ${this.vitality}/${this.maxVitality}, Savings: ${this.savings}`)
+
+    // Proceed to Dream Selection
     this.startDreamSelectionPhase()
-    // turn starts after dream selection? Or turn 1 involves dream selection?
-    // Usually Setup -> Dream Selection -> Turn 1
-    // So turn remains 0 or 1?
-    // Let's keep turn 0 until actual play starts.
   }
 
   /**
@@ -622,7 +704,7 @@ export class Game implements IGameState {
    * @param {number} totalPower プレイヤーの総パワー
    * @param {boolean} success チャレンジの成功/失敗
    */
-  recordChallengeResult(totalPower: number, success: boolean): void {
+  recordChallengeResult(success: boolean): void {
     // 統計更新
     this.stats.totalChallenges++
     if (success) {
@@ -700,7 +782,7 @@ export class Game implements IGameState {
     // 変更がない場合は処理をスキップ
     if (change === 0) return
 
-    const previousVitality = this.vitality
+    // const previousVitality = this.vitality // Unused variable removed
 
     if (change >= 0) {
       this._vitality = this._vitality.increase(change)
@@ -745,6 +827,12 @@ export class Game implements IGameState {
       throw new Error('Game over state inconsistency: vitality not depleted')
     }
   }
+
+  // ...
+
+
+
+
 
 
   /**
@@ -1169,6 +1257,8 @@ export class Game implements IGameState {
    * フェーズ変更のハンドリング
    */
   private handlePhaseChange(previousPhase: GamePhase, newPhase: GamePhase): void {
+    // previousPhase is reserved for future logic
+    void previousPhase
     switch (newPhase) {
       case 'draw':
         // ドローフェーズ開始時の処理
@@ -1243,6 +1333,7 @@ export class Game implements IGameState {
     if (Game.OBJECT_POOLS.gameStates.length < 10) {
       // オブジェクトをクリア
       Object.keys(snapshot).forEach(key => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (snapshot as Record<string, any>)[key]
       })
       Game.OBJECT_POOLS.gameStates.push(snapshot as Partial<IGameState>)

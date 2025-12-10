@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Game } from '../Game'
 import { Card } from '../Card'
-import type { GameConfig, GamePhase, GameStatus } from '../../types/game.types'
-import type { GameStage } from '../../types/card.types'
+import type { GameConfig } from '../../types/game.types'
 
 /**
  * Game エンティティ - 状態遷移・不整合データテスト
@@ -21,10 +20,16 @@ describe('Game - 状態遷移・不整合データテスト', () => {
   beforeEach(() => {
     mockConfig = {
       difficulty: 'normal',
-      startingVitality: 100,
+      startingVitality: 110, // Compensate for Adventurer -10
       startingHandSize: 5,
       maxHandSize: 10,
-      dreamCardCount: 3
+      dreamCardCount: 3,
+      characterId: 'adventurer', // 0 Savings, -10 Vitality
+      balanceConfig: {
+        stageParameters: {
+          youth: { maxVitality: 110 } // Ensure max is 100 (110 - 10)
+        }
+      }
     }
     game = new Game(mockConfig)
   })
@@ -131,7 +136,7 @@ describe('Game - 状態遷移・不整合データテスト', () => {
 
       // 並行実行
       const promises = operations.map(async op => Promise.resolve().then(op))
-      const results = await Promise.all(promises)
+      await Promise.all(promises)
 
       // 最終状態の一貫性確認
       expect(game.vitality).toBe(95) // 100 - 10 + 5
@@ -143,17 +148,17 @@ describe('Game - 状態遷移・不整合データテスト', () => {
 
       // パフォーマンス統計でダーティフラグ状態を確認
       const stats1 = game.getPerformanceStats()
-      expect(stats1.dirtyFlags.vitality).toBe(false)
+      expect(stats1.dirtyFlags['vitality']).toBe(false)
 
       // 活力変更
       game.applyDamage(10)
       const stats2 = game.getPerformanceStats()
-      expect(stats2.dirtyFlags.vitality).toBe(true)
+      expect(stats2.dirtyFlags['vitality']).toBe(true)
 
       // キャッシュアクセス後のフラグリセット
       game.getAvailableVitality()
       const stats3 = game.getPerformanceStats()
-      expect(stats3.dirtyFlags.vitality).toBe(false)
+      expect(stats3.dirtyFlags['vitality']).toBe(false)
     })
   })
 
@@ -300,8 +305,8 @@ describe('Game - 状態遷移・不整合データテスト', () => {
       }
 
       // ガベージコレクション実行（環境依存）
-      if (global.gc) {
-        global.gc()
+      if ((global as any).gc) {
+        (global as any).gc()
       }
 
       // メモリ使用量の確認（概算）
@@ -316,7 +321,7 @@ describe('Game - 状態遷移・不整合データテスト', () => {
 
       // 大量のチャレンジ実行
       for (let i = 0; i < 1000; i++) {
-        game.recordChallengeResult(10, i % 2 === 0)
+        game.recordChallengeResult(i % 2 === 0)
       }
 
       expect(game.stats.totalChallenges).toBe(1000)
@@ -325,7 +330,7 @@ describe('Game - 状態遷移・不整合データテスト', () => {
 
         // Number.MAX_SAFE_INTEGER近くでの動作
         ; (game.stats as any).totalChallenges = Number.MAX_SAFE_INTEGER - 1
-      game.recordChallengeResult(5, true)
+      game.recordChallengeResult(true)
 
       expect(game.stats.totalChallenges).toBe(Number.MAX_SAFE_INTEGER)
     })
@@ -451,7 +456,7 @@ describe('Game - 状態遷移・不整合データテスト', () => {
 
       // 統計値を極限まで押し上げる
       for (let i = 0; i < 10000; i++) {
-        game.recordChallengeResult(100, true)
+        game.recordChallengeResult(true)
       }
 
       expect(game.stats.totalChallenges).toBe(10000)
