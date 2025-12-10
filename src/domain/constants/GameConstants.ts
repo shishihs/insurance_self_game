@@ -92,7 +92,7 @@ export const INSURANCE_CONSTANTS = {
    * 保険料計算の基本パラメータ
    */
   PREMIUM_CALCULATION: {
-    baseCostMultiplier: 1.2,      // 基本コスト倍率
+    baseCostMultiplier: 0.5,      // 基本コスト倍率 (Reduced from 1.2 to 0.5)
     ageMultiplierStart: 1.0,      // 年齢倍率開始値
     ageMultiplierIncrement: 0.2,  // 年齢倍率増分
     coverageRateBase: 50,         // カバレッジ基準値
@@ -106,6 +106,7 @@ export const INSURANCE_CONSTANTS = {
     medical: 1.0,     // 医療保険: 基準料率
     life: 1.2,        // 生命保険: 20%高
     income: 1.0,      // 収入保障: 基準料率
+    asset: 0.5,       // 資産形成保険: 50%安
     disability: 0.8,  // 障害保険: 20%安
     accident: 0.6,    // 事故保険: 40%安
     cancer: 1.5,      // がん保険: 50%高
@@ -163,8 +164,8 @@ export const BALANCE_CONSTANTS = {
   CHALLENGE_SETTINGS: {
     minDifficulty: 1,          // 最小難易度
     maxDifficulty: 20,         // 最大難易度
-    successBonusBase: 2,       // 成功時ボーナス基準値
-    failurePenaltyRatio: 1.5,  // 失敗時ペナルティ比率
+    successBonusBase: 5,       // 成功時ボーナス基準値 (Increased from 2)
+    failurePenaltyRatio: 1.0,  // 失敗時ペナルティ比率 (Reduced from 1.5)
     enableDynamicDifficulty: true // 動的難易度調整の有効化
   } as const,
 

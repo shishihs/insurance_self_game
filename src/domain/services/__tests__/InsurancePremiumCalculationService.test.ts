@@ -41,32 +41,32 @@ describe('InsurancePremiumCalculationService', () => {
       const card = createInsuranceCard('health', 10, 50)
       const result = service.calculateComprehensivePremium(card, 'youth')
 
-      // 基本料金10 * 年齢調整1.0 * 種別調整1.0 * カバレッジ調整1.0
-      expect(result.getValue()).toBe(10)
+      // 基本料金10 * 年齢調整1.0 * 種別調整1.0 * カバレッジ調整0.625 (0.5 + 50/400) = 6.25 -> 6
+      expect(result.getValue()).toBe(6)
     })
 
     it('がん保険は50%高い', () => {
       const card = createInsuranceCard('cancer', 10, 50)
       const result = service.calculateComprehensivePremium(card, 'youth')
 
-      // 基本料金10 * 年齢調整1.0 * 種別調整1.5 * カバレッジ調整1.0
-      expect(result.getValue()).toBe(15)
+      // 基本料金10 * 年齢調整1.0 * 種別調整1.5 * カバレッジ調整0.625 = 9.375 -> 9
+      expect(result.getValue()).toBe(9)
     })
 
     it('中年期のがん保険は年齢＋種別の両方の調整が適用される', () => {
       const card = createInsuranceCard('cancer', 10, 50)
       const result = service.calculateComprehensivePremium(card, 'middle')
 
-      // 基本料金10 * 年齢調整1.2 * 種別調整1.5 * カバレッジ調整1.0
-      expect(result.getValue()).toBe(18) // 10 * 1.2 * 1.5
+      // 基本料金10 * 年齢調整1.2 * 種別調整1.5 * カバレッジ調整0.625 = 11.25 -> 11
+      expect(result.getValue()).toBe(11)
     })
 
     it('高カバレッジの保険は料金が高くなる', () => {
       const card = createInsuranceCard('health', 10, 100) // カバレッジ100
       const result = service.calculateComprehensivePremium(card, 'youth')
 
-      // 基本料金10 * 年齢調整1.0 * 種別調整1.0 * カバレッジ調整2.0
-      expect(result.getValue()).toBe(20)
+      // 基本料金10 * 年齢調整1.0 * 種別調整1.0 * カバレッジ調整0.75 (0.5 + 100/400) = 7.5 -> 7
+      expect(result.getValue()).toBe(7)
     })
   })
 
@@ -80,8 +80,8 @@ describe('InsurancePremiumCalculationService', () => {
       const cards = [createInsuranceCard('health', 10, 50)]
       const result = service.calculateTotalInsuranceBurden(cards, 'youth')
 
-      // 基本料金10のまま（ペナルティなし）
-      expect(result.getValue()).toBe(10)
+      // 基本料金6
+      expect(result.getValue()).toBe(6)
     })
 
     it('3枚の保険では基本料金のまま（5枚未満）', () => {
@@ -92,16 +92,16 @@ describe('InsurancePremiumCalculationService', () => {
       ]
       const result = service.calculateTotalInsuranceBurden(cards, 'youth')
 
-      // (10 + 10 + 10) * 1.0 = 30 (5枚未満なのでペナルティなし)
-      expect(result.getValue()).toBe(30)
+      // (6 + 6 + 6) * 1.0 = 18
+      expect(result.getValue()).toBe(18)
     })
 
     it('5枚の保険で10%のペナルティ', () => {
       const cards = Array(5).fill(null).map(() => createInsuranceCard('health', 10, 50))
       const result = service.calculateTotalInsuranceBurden(cards, 'youth')
 
-      // (10 * 5) * 1.1 = 55
-      expect(result.getValue()).toBe(55)
+      // (6 * 5) * 1.1 = 33
+      expect(result.getValue()).toBe(33)
     })
 
     it('大量の保険でもペナルティには上限がある', () => {
@@ -109,8 +109,8 @@ describe('InsurancePremiumCalculationService', () => {
       const result = service.calculateTotalInsuranceBurden(cards, 'youth')
 
       // 大量の保険でも上限があり、無制限にペナルティが増えることはない
-      expect(result.getValue()).toBeLessThan(200) // 実装の詳細は99という値だが、上限があることをテスト
-      expect(result.getValue()).toBeGreaterThan(90) // 一定のペナルティは適用される
+      expect(result.getValue()).toBeLessThan(200)
+      expect(result.getValue()).toBeGreaterThan(50)
     })
   })
 
@@ -119,24 +119,24 @@ describe('InsurancePremiumCalculationService', () => {
       const card = createInsuranceCard('health', 10, 50)
       const result = service.calculateRenewalPremium(card, 'youth', 0)
 
-      // 基本料金10 * 継続割引0.9 * リスク調整1.0 = 9
-      expect(result.getValue()).toBe(9)
+      // 基本料金6 * 継続割引0.9 * リスク調整1.0 = 5.4 -> 5
+      expect(result.getValue()).toBe(5)
     })
 
     it('使用履歴2回で5%割引', () => {
       const card = createInsuranceCard('health', 10, 50)
       const result = service.calculateRenewalPremium(card, 'youth', 2)
 
-      // 基本料金10 * 継続割引0.95 * リスク調整1.0 = 9.5 → 9（切り捨て）
-      expect(result.getValue()).toBe(9)
+      // 基本料金6 * 継続割引0.95 * リスク調整1.0 = 5.7 -> 5
+      expect(result.getValue()).toBe(5)
     })
 
     it('使用履歴5回以上で30%リスク増加', () => {
       const card = createInsuranceCard('health', 10, 50)
       const result = service.calculateRenewalPremium(card, 'youth', 5)
 
-      // 基本料金10 * 継続割引1.0 * リスク調整1.3 = 13
-      expect(result.getValue()).toBe(13)
+      // 基本料金6 * 継続割引1.0 * リスク調整1.3 = 7.8 -> 7
+      expect(result.getValue()).toBe(7)
     })
   })
 
@@ -218,8 +218,8 @@ describe('InsurancePremiumCalculationService', () => {
       const card = createInsuranceCard('health', 10, 50)
       const result = service.calculateRiskAdjustedPremium(card, 'youth')
 
-      // リスクプロファイルなしの場合は通常の計算
-      expect(result.getValue()).toBe(10)
+      // リスクプロファイルなしの場合は通常の計算 (6)
+      expect(result.getValue()).toBe(6)
     })
 
     it('低リスクプロファイルでの保険料計算', () => {
@@ -230,8 +230,8 @@ describe('InsurancePremiumCalculationService', () => {
 
       const result = service.calculateRiskAdjustedPremium(card, 'youth', riskProfile)
 
-      // 基本料金10 * リスク倍率（低リスクなので1.0に近い）
-      expect(result.getValue()).toBeLessThan(12)
+      // 基本料金6 * リスク倍率（低リスクなので1.0に近い）
+      expect(result.getValue()).toBeLessThan(8)
     })
 
     it('高リスクプロファイルでの保険料計算', () => {
@@ -244,7 +244,7 @@ describe('InsurancePremiumCalculationService', () => {
       const result = service.calculateRiskAdjustedPremium(card, 'youth', riskProfile)
 
       // 高リスクなので保険料が大幅に増加
-      expect(result.getValue()).toBeGreaterThan(15)
+      expect(result.getValue()).toBeGreaterThan(8)
     })
 
     it('特定のリスクファクターが保険種別に応じて影響する', () => {

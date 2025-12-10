@@ -14,17 +14,12 @@ import { RiskProfile } from '../valueObjects/RiskProfile'
  * このサービスは状態を持たず、純粋なビジネスロジックのみを提供します。
  */
 export class InsurancePremiumCalculationService {
-  
   /**
    * 年齢ステージによる保険料倍率
    */
   private static readonly AGE_MULTIPLIERS: Record<GameStage, number> = {
     'youth': 1.0,          // 青年期: 基準倍率
-    'adult': 1.0,          // 成人期: 基準倍率
-    'middle_age': 1.2,     // 中年期: 20%増し
-    'middle': 1.2,         // 中年期（旧定義）: 20%増し
-    'elder': 1.5,          // 老年期: 50%増し
-    'elderly': 1.5,        // 老年期（旧定義）: 50%増し
+    'middle': 1.2,         // 中年期: 20%増し
     'fulfillment': 1.3     // 充実期: 30%増し
   }
 
@@ -32,8 +27,11 @@ export class InsurancePremiumCalculationService {
    * 保険種別による基本料率
    */
   private static readonly INSURANCE_TYPE_RATES: Record<InsuranceType, number> = {
-    'health': 1.0,         // 健康保険: 基準料率
+    'health': 1.0,         // 健康保険(deprecated? -> medical in v2)
+    'medical': 1.0,        // 医療保険: 基準料率
     'life': 1.2,           // 生命保険: 20%高
+    'income': 1.0,         // 収入保障: 基準料率
+    'asset': 0.5,          // 資産形成保険: 50%安 (長期投資前提)
     'disability': 0.8,     // 障害保険: 20%安
     'accident': 0.6,       // 事故保険: 40%安
     'cancer': 1.5,         // がん保険: 50%高
@@ -64,7 +62,7 @@ export class InsurancePremiumCalculationService {
    * @returns 総合保険料
    */
   calculateComprehensivePremium(
-    card: Card, 
+    card: Card,
     stage: GameStage,
     riskProfile?: RiskProfile
   ): InsurancePremium {
@@ -74,22 +72,22 @@ export class InsurancePremiumCalculationService {
 
     // 基本保険料取得
     const basePremium = card.getCost()
-    
+
     // 年齢調整
     const ageAdjustedPremium = this.calculateAgeAdjustedPremium(basePremium, stage)
-    
+
     // 保険種別調整
     const typeAdjustedPremium = this.applyInsuranceTypeAdjustment(ageAdjustedPremium, card.insuranceType)
-    
+
     // カバレッジ調整
     const coverageAdjustedPremium = this.applyCoverageAdjustment(typeAdjustedPremium, card.coverage)
-    
+
     // リスクプロファイル調整
     if (riskProfile) {
       const riskMultiplier = this.calculateRiskAdjustment(riskProfile, card.insuranceType)
       return coverageAdjustedPremium.applyMultiplier(riskMultiplier)
     }
-    
+
     return coverageAdjustedPremium
   }
 
@@ -105,23 +103,23 @@ export class InsurancePremiumCalculationService {
    * @returns 総保険料負担
    */
   calculateTotalInsuranceBurden(
-    insuranceCards: Card[], 
+    insuranceCards: Card[],
     stage: GameStage,
     riskProfile?: RiskProfile
   ): InsurancePremium {
     // 各保険の個別料金計算
     const individualPremiums = insuranceCards
       .filter(card => card && card.type === 'insurance')
-      .map(card => 
+      .map(card =>
         this.calculateComprehensivePremium(card, stage, riskProfile)
       )
-    
+
     // 基本合計
     const baseTotalPremium = InsurancePremium.sum(individualPremiums)
-    
+
     // 3枚ごとの負担増加ルール
     const penaltyMultiplier = this.calculateMultiInsurancePenalty(insuranceCards.length)
-    
+
     return baseTotalPremium.applyMultiplier(penaltyMultiplier)
   }
 
@@ -139,14 +137,14 @@ export class InsurancePremiumCalculationService {
   calculateRenewalPremium(card: Card, currentStage: GameStage, usageHistory: number): InsurancePremium {
     // 基本更新料金
     const basePremium = this.calculateComprehensivePremium(card, currentStage)
-    
+
     // 継続割引適用（長期継続者優遇）
     const continuityDiscount = this.calculateContinuityDiscount(usageHistory)
     const discountedPremium = basePremium.applyDiscount(continuityDiscount)
-    
+
     // 使用実績による調整（リスク評価）
     const riskMultiplier = this.calculateRiskMultiplier(usageHistory)
-    
+
     return discountedPremium.applyMultiplier(riskMultiplier)
   }
 
@@ -156,13 +154,13 @@ export class InsurancePremiumCalculationService {
    * プレイヤーの状況に応じた最適な保険組み合わせを計算
    * 
    * @param availableBudget 利用可能予算（活力）
-   * @param stage 現在ステージ
+   * @param _stage 現在ステージ (未使用)
    * @param riskProfile リスクプロファイル
    * @returns 推奨保険料上限
    */
   calculateOptimalInsuranceBudget(
-    availableBudget: number, 
-    stage: GameStage, 
+    availableBudget: number,
+    _stage: GameStage,
     riskProfile: 'conservative' | 'balanced' | 'aggressive' = 'balanced'
   ): InsurancePremium {
     const budgetRatios = {
@@ -170,10 +168,10 @@ export class InsurancePremiumCalculationService {
       'balanced': 0.25,      // 予算の25%
       'aggressive': 0.35     // 予算の35%
     }
-    
+
     const ratio = budgetRatios[riskProfile]
     const recommendedBudget = Math.floor(availableBudget * ratio)
-    
+
     return InsurancePremium.create(recommendedBudget)
   }
 
@@ -182,13 +180,13 @@ export class InsurancePremiumCalculationService {
    * @private
    */
   private applyInsuranceTypeAdjustment(
-    premium: InsurancePremium, 
+    premium: InsurancePremium,
     insuranceType?: InsuranceType
   ): InsurancePremium {
     if (!insuranceType) {
       return premium
     }
-    
+
     const typeRate = InsurancePremiumCalculationService.INSURANCE_TYPE_RATES[insuranceType] || 1.0
     return premium.applyMultiplier(typeRate)
   }
@@ -202,12 +200,12 @@ export class InsurancePremiumCalculationService {
       // カバレッジ0の場合は基本料金の50%割引
       return premium.applyMultiplier(0.5)
     }
-    
-    // カバレッジが高いほど保険料も高くなる
-    // 基準カバレッジを50として、比例計算
-    const baselineCoverage = 50
-    const coverageMultiplier = Math.max(0.5, coverage / baselineCoverage)
-    
+
+    // カバレッジ調整
+    // カバレッジ200を基準（1.0倍）として、緩やかに変動させる
+    // 以前の計算式 (coverage / 50) は過度な負担を生んでいたため修正
+    const coverageMultiplier = 0.5 + (coverage / 400)
+
     return premium.applyMultiplier(coverageMultiplier)
   }
 
@@ -251,7 +249,7 @@ export class InsurancePremiumCalculationService {
   private calculateRiskAdjustment(riskProfile: RiskProfile, insuranceType?: InsuranceType): number {
     // 基本的なリスク倍率
     let baseMultiplier = riskProfile.getTotalPremiumMultiplier()
-    
+
     // 保険種類ごとに特定のリスクファクターの影響を強化
     if (insuranceType) {
       const typeSpecificAdjustments: Partial<Record<InsuranceType, RiskFactorType>> = {
@@ -261,7 +259,7 @@ export class InsurancePremiumCalculationService {
         'accident': 'lifestyle', // 事故保険はライフスタイルの影響大
         'cancer': 'health',      // がん保険は健康リスクの影響大
       }
-      
+
       const relevantFactorType = typeSpecificAdjustments[insuranceType]
       if (relevantFactorType) {
         const specificFactor = riskProfile.getFactor(relevantFactorType)
@@ -272,7 +270,7 @@ export class InsurancePremiumCalculationService {
         }
       }
     }
-    
+
     return baseMultiplier
   }
 
@@ -285,23 +283,23 @@ export class InsurancePremiumCalculationService {
    */
   generateRiskProfile(playerHistory: PlayerHistory, currentStage: GameStage): RiskProfile {
     let profile = RiskProfile.default()
-    
+
     // 年齢リスクの計算
     const ageRiskValue = this.calculateAgeRisk(currentStage)
     profile = profile.withFactor(RiskFactor.create(ageRiskValue, 'age'))
-    
+
     // 健康リスクの計算（ダメージ履歴から）
     const healthRiskValue = this.calculateHealthRisk(playerHistory)
     profile = profile.withFactor(RiskFactor.create(healthRiskValue, 'health'))
-    
+
     // 請求履歴リスクの計算
     const claimsRiskValue = this.calculateClaimsRisk(playerHistory)
     profile = profile.withFactor(RiskFactor.create(claimsRiskValue, 'claims'))
-    
+
     // ライフスタイルリスクの計算（プレイスタイルから）
     const lifestyleRiskValue = this.calculateLifestyleRisk(playerHistory)
     profile = profile.withFactor(RiskFactor.create(lifestyleRiskValue, 'lifestyle'))
-    
+
     return profile
   }
 
@@ -320,15 +318,15 @@ export class InsurancePremiumCalculationService {
   ): InsurancePremium {
     // 基本的な総合保険料を計算
     const basePremium = this.calculateComprehensivePremium(card, stage)
-    
+
     // リスクプロファイルがない場合は基本保険料をそのまま返す
     if (!riskProfile) {
       return basePremium
     }
-    
+
     // リスク調整倍率を計算
     const riskMultiplier = this.calculateRiskAdjustment(riskProfile, card.insuranceType)
-    
+
     // リスク調整を適用
     return basePremium.applyMultiplier(riskMultiplier)
   }
@@ -340,11 +338,7 @@ export class InsurancePremiumCalculationService {
   private calculateAgeRisk(stage: GameStage): number {
     const ageRiskMap: Record<GameStage, number> = {
       'youth': 0.2,
-      'adult': 0.3,
-      'middle_age': 0.5,
       'middle': 0.5,
-      'elder': 0.8,
-      'elderly': 0.8,
       'fulfillment': 0.6
     }
     return ageRiskMap[stage] || 0.5
@@ -358,7 +352,7 @@ export class InsurancePremiumCalculationService {
     const totalDamageTaken = history.totalDamageTaken || 0
     const turnsPlayed = history.turnsPlayed || 1
     const averageDamagePerTurn = totalDamageTaken / turnsPlayed
-    
+
     // 平均ダメージが多いほどリスクが高い
     if (averageDamagePerTurn >= 3) return 0.8
     if (averageDamagePerTurn >= 2) return 0.6
@@ -374,7 +368,7 @@ export class InsurancePremiumCalculationService {
     const claimCount = history.insuranceClaimCount || 0
     const totalInsurances = history.totalInsurancePurchased || 1
     const claimRate = claimCount / totalInsurances
-    
+
     // 請求率が高いほどリスクが高い
     if (claimRate >= 0.5) return 0.9
     if (claimRate >= 0.3) return 0.6
@@ -390,7 +384,7 @@ export class InsurancePremiumCalculationService {
     const riskyChoices = history.riskyChoiceCount || 0
     const totalChoices = history.totalChoiceCount || 1
     const riskRate = riskyChoices / totalChoices
-    
+
     // リスキーな選択が多いほどリスクが高い
     if (riskRate >= 0.6) return 0.8
     if (riskRate >= 0.4) return 0.5

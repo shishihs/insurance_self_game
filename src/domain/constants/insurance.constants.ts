@@ -7,13 +7,13 @@
  * 保険によるダメージ軽減の上限値
  * 1枚の保険カードで軽減できる最大ダメージ量
  */
-export const MAX_DAMAGE_REDUCTION_PER_INSURANCE = 2
+export const MAX_DAMAGE_REDUCTION_PER_INSURANCE = 50
 
 /**
  * 保険によるダメージ軽減の合計上限値
  * 複数の保険を持っていても、これ以上はダメージを軽減できない
  */
-export const MAX_TOTAL_DAMAGE_REDUCTION = 5
+export const MAX_TOTAL_DAMAGE_REDUCTION = 100
 
 /**
  * 保険効果の段階的な適用レート

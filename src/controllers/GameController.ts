@@ -539,7 +539,7 @@ export class GameControllerFactory {
   static createDefault(renderer: GameRenderer): GameController {
     const defaultConfig: GameConfig = {
       difficulty: 'normal',
-      startingVitality: 20,
+      startingVitality: 15,
       startingHandSize: 5,
       maxHandSize: 7,
       dreamCardCount: 2

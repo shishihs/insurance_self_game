@@ -107,8 +107,8 @@ export class GameTurnManager {
    */
   private checkVictoryCondition(game: Game): void {
     const settings = game.config.balanceConfig?.progressionSettings || {
-      maxTurns: 50,
-      victoryConditions: { minTurns: 20, minVitality: 50 }
+      maxTurns: 20,
+      victoryConditions: { minTurns: 15, minVitality: 50 }
     }
 
     const maxTurns = settings.maxTurns ?? 50

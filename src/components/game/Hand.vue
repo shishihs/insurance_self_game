@@ -2,28 +2,27 @@
 import { computed } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import CardComponent from './Card.vue'
-import type { Card } from '@/domain/entities/Card'
 
 const store = useGameStore()
 
 const hand = computed(() => {
   const h = store.hand
-  console.log('[Hand] computed hand updated:', h.length)
+  // console.log('[Hand] computed hand updated:', h.length)
   return h
 })
 
-function onCardClick(card: Card) {
+function onCardClick(card: any) {
   store.toggleCardSelection(card)
 }
 
-function isSelected(card: Card) {
-  return store.game?.selectedCards.includes(card)
+function isSelected(card: any) {
+  return store.game?.selectedCards.includes(card) ?? false
 }
 </script>
 
 <template>
   <div 
-    v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory' && store.currentPhase !== 'dream_selection' && store.currentPhase !== 'challenge_choice'"
+    v-if="store.currentStatus !== 'game_over' && store.currentStatus !== 'victory' && store.currentPhase !== 'dream_selection' && store.currentPhase !== 'challenge_choice' && store.currentPhase !== 'character_selection' && store.currentPhase !== 'insurance_type_selection'"
     data-testid="hand-container" 
     class="fixed bottom-0 left-0 right-0 h-96 flex items-end justify-center pb-4 px-4 pointer-events-none z-30"
   >

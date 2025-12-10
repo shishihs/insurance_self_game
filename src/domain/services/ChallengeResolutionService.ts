@@ -1,10 +1,12 @@
 import type { Card } from '../entities/Card'
-import type { ChallengeResult, GameStage } from '../types/card.types'
+import type { GameStage } from '../types/card.types'
+import type { ChallengeResult } from '../types/game.types'
 import type { ICardManager } from './CardManager'
 import type { Game } from '../entities/Game'
 import { RiskRewardChallenge } from '../entities/RiskRewardChallenge'
 import { AGE_PARAMETERS } from '../types/game.types'
 import { MAX_TOTAL_DAMAGE_REDUCTION, MINIMUM_DAMAGE_AFTER_INSURANCE } from '../constants/insurance.constants'
+import { GameConstantsAccessor } from '../constants/GameConstants'
 
 /**
  * チャレンジ解決サービス
@@ -33,24 +35,27 @@ export class ChallengeResolutionService {
     // リスクチャレンジの特殊ルールを確認
     const isRiskChallenge = challenge instanceof RiskRewardChallenge
     const insuranceImmunity = isRiskChallenge && challenge.insuranceImmunity
-    
+
     // 保険効果を適用（特化型保険のボーナス）
     const insuranceBonus = (game && !insuranceImmunity) ? this.calculateInsuranceBonus(game, challenge) : 0
-    
+
     // パワー計算の詳細
     const powerBreakdown = this.calculateTotalPower(selectedCards, insuranceBurden, insuranceBonus)
     const playerPower = powerBreakdown.total
-    
+
     // 夢カードの場合は年齢調整を適用
     const challengePower = this.getDreamRequiredPower(challenge, stage)
-    
+
     // 成功判定
     const success = playerPower >= challengePower
-    
+
     // 活力変更計算
     let vitalityChange = 0
     if (success) {
-      const baseReward = Math.floor((playerPower - challengePower) / 2)
+      const bonusBase = GameConstantsAccessor.getBalanceSettings().CHALLENGE_SETTINGS.successBonusBase
+      const powerDiff = playerPower - challengePower
+      const baseReward = bonusBase + Math.floor(powerDiff / 2)
+
       // リスクチャレンジの場合は報酬を調整
       if (isRiskChallenge) {
         vitalityChange = challenge.calculateActualReward(baseReward)
@@ -64,14 +69,14 @@ export class ChallengeResolutionService {
       const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
       // 最小ダメージ保証を適用
       const actualDamage = Math.max(MINIMUM_DAMAGE_AFTER_INSURANCE, baseDamage - damageReduction)
-      
+
       // リスクチャレンジの場合はペナルティを調整
       if (isRiskChallenge) {
         vitalityChange = -challenge.calculateActualPenalty(actualDamage)
       } else {
         vitalityChange = -actualDamage
       }
-      
+
       // NaNチェック
       if (!isFinite(vitalityChange)) {
         console.error('Invalid vitalityChange:', {
@@ -85,22 +90,22 @@ export class ChallengeResolutionService {
         vitalityChange = -actualDamage
       }
     }
-    
+
     // 使用したカードを捨て札に
     cardManager.discardSelectedCards()
-    
+
     // 結果作成
     const result: ChallengeResult = {
       success,
       playerPower,
       challengePower,
       vitalityChange,
-      message: success 
+      message: success
         ? `チャレンジ成功！ +${vitalityChange} 活力`
         : `チャレンジ失敗... ${vitalityChange} 活力`,
       powerBreakdown
     }
-    
+
     return result
   }
 
@@ -120,7 +125,7 @@ export class ChallengeResolutionService {
     // 基本パワー（保険以外のカード）
     let basePower = 0
     let insurancePower = 0
-    
+
     cards.forEach(card => {
       if (card.type === 'insurance') {
         // 保険カードのパワー（年齢ボーナス込み）
@@ -130,46 +135,18 @@ export class ChallengeResolutionService {
         basePower += card.calculateEffectivePower()
       }
     })
-    
+
     // 保険ボーナスを保険パワーに加算
     insurancePower += insuranceBonus
-    
+
     // 総合パワー
     const total = basePower + insurancePower - insuranceBurden
-    
+
     return {
       base: basePower,
       insurance: insurancePower,
       burden: -insuranceBurden, // 負の値として表示
       total: Math.max(0, total) // 総合パワーは0以下にならない
-    }
-  }
-
-  /**
-   * 保険無効チャレンジ用のパワー計算
-   * @private
-   */
-  private calculatePowerWithoutInsurance(cards: Card[], insuranceBurden: number): {
-    base: number
-    insurance: number
-    burden: number
-    total: number
-  } {
-    let basePower = 0
-    
-    // 保険以外のカードのみパワーを計算
-    cards.forEach(card => {
-      if (card.type !== 'insurance') {
-        basePower += card.calculateEffectivePower()
-      }
-    })
-    
-    // 保険パワーは0、保険料負担はそのまま
-    return {
-      base: basePower,
-      insurance: 0,
-      burden: -insuranceBurden,
-      total: Math.max(0, basePower - insuranceBurden)
     }
   }
 
@@ -181,17 +158,17 @@ export class ChallengeResolutionService {
     if (!challenge.isDreamCard() || !challenge.dreamCategory) {
       return challenge.power
     }
-    
+
     // 青年期は調整なし
     if (stage === 'youth') {
       return challenge.power
     }
-    
+
     // 中年期・充実期の年齢調整を適用（段階的に調整）
     // Issue #23: 難易度上昇をよりスムーズに
     const adjustment = stage === 'middle' ? 0.5 : 1.0
     const adjustedPower = Math.round(challenge.power + adjustment)
-    
+
     // 最小値は1
     return Math.max(1, adjustedPower)
   }
@@ -204,26 +181,26 @@ export class ChallengeResolutionService {
     let totalBonus = 0
     const insuranceCards = game.getActiveInsurances()
     const currentStage = game.stage
-    const ageParams = AGE_PARAMETERS[currentStage] || AGE_PARAMETERS.youth
-    const ageMultiplier = ageParams.ageMultiplier
-    
+    const ageParams = AGE_PARAMETERS[currentStage] || AGE_PARAMETERS['youth']
+    const ageMultiplier = ageParams?.ageMultiplier ?? 0
+
     insuranceCards.forEach(insurance => {
       // 終身保険の年齢価値上昇を適用
       let bonus = 0
-      
+
       if (insurance.isSpecializedInsurance()) {
         const challengeType = challenge.name
         bonus = insurance.calculateChallengeBonus(challengeType)
       }
-      
+
       // 終身保険の場合、年齢倍率を適用
       if (insurance.isWholeLifeInsurance() && ageMultiplier > 0) {
         bonus += ageMultiplier  // 中年期+0.5、充実期+1.0
       }
-      
+
       totalBonus += bonus
     })
-    
+
     return totalBonus
   }
 
@@ -235,13 +212,13 @@ export class ChallengeResolutionService {
   private calculateDamageReduction(game: Game): number {
     let totalReduction = 0
     const insuranceCards = game.getActiveInsurances()
-    
+
     insuranceCards.forEach(insurance => {
       // calculateDamageReduction内で防御効果のチェックを行うため、
       // 全ての保険カードで計算を実行
       totalReduction += insurance.calculateDamageReduction()
     })
-    
+
     // 合計軽減量の上限を適用
     return Math.min(totalReduction, MAX_TOTAL_DAMAGE_REDUCTION)
   }
