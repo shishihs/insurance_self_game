@@ -92,11 +92,11 @@ export const INSURANCE_CONSTANTS = {
    * 保険料計算の基本パラメータ
    */
   PREMIUM_CALCULATION: {
-    baseCostMultiplier: 0.5,      // 基本コスト倍率 (Reduced from 1.2 to 0.5)
+    baseCostMultiplier: 0.35,      // 基本コスト倍率 (Reduced from 0.5 to 0.35 for easier gameplay)
     ageMultiplierStart: 1.0,      // 年齢倍率開始値
-    ageMultiplierIncrement: 0.2,  // 年齢倍率増分
+    ageMultiplierIncrement: 0.15,  // 年齢倍率増分 (Reduced from 0.2)
     coverageRateBase: 50,         // カバレッジ基準値
-    multiInsurancePenalty: 0.1    // 複数保険ペナルティ（3枚ごと）
+    multiInsurancePenalty: 0.05    // 複数保険ペナルティ（3枚ごと）(Reduced from 0.1)
   } as const,
 
   /**
@@ -164,8 +164,8 @@ export const BALANCE_CONSTANTS = {
   CHALLENGE_SETTINGS: {
     minDifficulty: 1,          // 最小難易度
     maxDifficulty: 20,         // 最大難易度
-    successBonusBase: 5,       // 成功時ボーナス基準値 (Increased from 2)
-    failurePenaltyRatio: 1.0,  // 失敗時ペナルティ比率 (Reduced from 1.5)
+    successBonusBase: 7,       // 成功時ボーナス基準値 (Increased from 5 to 7)
+    failurePenaltyRatio: 0.8,  // 失敗時ペナルティ比率 (Reduced from 1.0 to 0.8)
     enableDynamicDifficulty: true // 動的難易度調整の有効化
   } as const,
 
@@ -173,10 +173,10 @@ export const BALANCE_CONSTANTS = {
    * 活力関連
    */
   VITALITY_SETTINGS: {
-    defaultStarting: 80,      // デフォルト初期活力
+    defaultStarting: 100,      // デフォルト初期活力 (Increased from 80 to 100)
     minimumValue: 0,           // 最小活力値
     maximumValue: 150,         // 最大活力値
-    healingCap: 0.8           // 回復上限（最大活力の80%）
+    healingCap: 0.85           // 回復上限（最大活力の85%）(Increased from 0.8)
   } as const,
 
   /**

@@ -94,17 +94,33 @@ export class ChallengeResolutionService {
     // 使用したカードを捨て札に
     cardManager.discardSelectedCards()
 
+    // 結果タイプと適切なメッセージを決定
+    const resultType = success ? 'success' : 'damage_taken'
+    const damageAmount = success ? undefined : Math.abs(vitalityChange)
+
+    // メッセージを改善: 「失敗」ではなく「ダメージを受けた」
+    let message: string
+    if (success) {
+      message = `🎉 チャレンジ成功！ +${vitalityChange} 活力`
+    } else {
+      message = `💥 ${damageAmount} ダメージを受けた`
+    }
+
     // 結果作成
     const result: ChallengeResult = {
       challenge, // Include the challenge card in the result
       success,
+      resultType,
       playerPower,
       challengePower,
       vitalityChange,
-      message: success
-        ? `チャレンジ成功！ +${vitalityChange} 活力`
-        : `チャレンジ失敗... ${vitalityChange} 活力`,
+      message,
       powerBreakdown
+    }
+
+    // ダメージ量は damage_taken 時のみ設定
+    if (!success && damageAmount !== undefined) {
+      result.damageAmount = damageAmount
     }
 
     return result

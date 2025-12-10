@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import Hand from './Hand.vue'
 import CardComponent from './Card.vue'
@@ -10,9 +10,15 @@ import InsuranceMarket from './InsuranceMarket.vue'
 import GameResult from './GameResult.vue'
 import TutorialOverlay from './TutorialOverlay.vue'
 import RewardCardSelector from './RewardCardSelector.vue'
-import type { GameConfig } from '@/domain/types/game.types'
+import type { GameConfig, ChallengeResult } from '@/domain/types/game.types'
 
 const store = useGameStore()
+
+// ダメージエフェクト用の状態
+const isDamageEffect = ref(false)
+const isBigDamageEffect = ref(false)
+const lastDamageAmount = ref(0)
+const showDamageToast = ref(false)
 
 const phaseDisplayName = computed(() => {
   const map: Record<string, string> = {
@@ -44,7 +50,27 @@ onMounted(() => {
   }
 })
 
-
+// ダメージエフェクトをトリガー
+function triggerDamageEffect(damageAmount: number) {
+  lastDamageAmount.value = damageAmount
+  isDamageEffect.value = true
+  showDamageToast.value = true
+  
+  // 大ダメージ（10以上）の場合は強調エフェクト
+  if (damageAmount >= 10) {
+    isBigDamageEffect.value = true
+  }
+  
+  // エフェクト終了タイマー
+  setTimeout(() => {
+    isDamageEffect.value = false
+    isBigDamageEffect.value = false
+  }, 500)
+  
+  setTimeout(() => {
+    showDamageToast.value = false
+  }, 2000)
+}
 
 async function onEndTurn() {
   await store.endTurn()
@@ -55,10 +81,19 @@ async function onChallenge() {
   store.startChallengePhase()
 }
 
+// チャレンジ解決をラップしてダメージエフェクトを追加
+async function onResolveChallenge() {
+  const result = store.resolveChallenge() as ChallengeResult | undefined
+  
+  if (result && result.resultType === 'damage_taken' && result.damageAmount) {
+    triggerDamageEffect(result.damageAmount)
+  }
+}
+
 </script>
 
 <template>
-  <div data-testid="game-board" class="w-full h-screen bg-slate-900 text-white overflow-hidden relative font-sans selection:bg-purple-500 selection:text-white">
+  <div data-testid="game-board" class="w-full h-screen bg-slate-900 text-white overflow-hidden relative font-sans selection:bg-purple-500 selection:text-white" :class="{ 'animate-shake': isDamageEffect, 'animate-shake-big': isBigDamageEffect }">
     <!-- Background -->
     <div class="absolute inset-0 z-0">
       <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black"></div>
@@ -162,7 +197,7 @@ async function onChallenge() {
         <!-- Button: Resolve -->
         <button 
           v-if="store.currentPhase === 'challenge'"
-          @click="store.resolveChallenge()"
+          @click="onResolveChallenge()"
           class="group w-full relative overflow-hidden bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white rounded-xl font-bold shadow-lg transition-all duration-200 transform hover:scale-105 hover:shadow-red-500/20"
         >
           <div class="px-6 py-4 flex items-center justify-between">
@@ -273,6 +308,31 @@ async function onChallenge() {
     <!-- Result Overlay -->
     <GameResult />
     
+    <!-- Damage Effect Overlay -->
+    <Transition name="damage-flash">
+      <div 
+        v-if="isDamageEffect" 
+        class="fixed inset-0 pointer-events-none z-[200]"
+        :class="isBigDamageEffect ? 'bg-red-600/40' : 'bg-red-500/25'"
+      ></div>
+    </Transition>
+    
+    <!-- Damage Toast -->
+    <Transition name="damage-toast">
+      <div 
+        v-if="showDamageToast && lastDamageAmount > 0" 
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[201] pointer-events-none"
+      >
+        <div class="bg-red-600/90 text-white px-8 py-6 rounded-2xl shadow-2xl border-2 border-red-400 animate-bounce-in">
+          <div class="text-center">
+            <span class="text-4xl mb-2 block">💥</span>
+            <span class="text-3xl font-bold">-{{ lastDamageAmount }}</span>
+            <span class="block text-sm opacity-80 mt-1">ダメージ</span>
+          </div>
+        </div>
+      </div>
+    </Transition>
+    
     <!-- Market Button / Area -->
     <div v-if="store.currentPhase === 'draw'" class="fixed bottom-32 right-8 z-40 max-w-xl pointer-events-auto">
        <InsuranceMarket />
@@ -287,3 +347,72 @@ async function onChallenge() {
     <TutorialOverlay />
   </div>
 </template>
+
+<style scoped>
+/* Damage Shake Animation */
+.animate-shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.animate-shake-big {
+  animation: shake-big 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-3px); }
+  40%, 60% { transform: translateX(3px); }
+}
+
+@keyframes shake-big {
+  10%, 90% { transform: translateX(-2px) rotate(-0.5deg); }
+  20%, 80% { transform: translateX(4px) rotate(0.5deg); }
+  30%, 50%, 70% { transform: translateX(-6px) rotate(-1deg); }
+  40%, 60% { transform: translateX(6px) rotate(1deg); }
+}
+
+/* Damage Flash Transition */
+.damage-flash-enter-active {
+  animation: flash-in 0.1s ease-out;
+}
+
+.damage-flash-leave-active {
+  animation: flash-out 0.3s ease-out;
+}
+
+@keyframes flash-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes flash-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Damage Toast Transition */
+.damage-toast-enter-active {
+  animation: bounce-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.damage-toast-leave-active {
+  animation: fade-out 0.3s ease-out;
+}
+
+@keyframes bounce-in {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translate(-50%, -40%) scale(0.9); }
+}
+
+/* Bounce in helper */
+.animate-bounce-in {
+  animation: bounce-in 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+</style>

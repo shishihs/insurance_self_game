@@ -84,24 +84,24 @@ export const AVAILABLE_CHARACTERS: Character[] = [
     id: 'solid',
     name: '堅実家',
     description: '守り重視。初期活力が高く、貯蓄の効果が高い。',
-    initialVitalityModifier: 10,
-    initialSavings: 10,
+    initialVitalityModifier: 15,  // Increased from 10
+    initialSavings: 15,           // Increased from 10
     specialAbility: 'savings_bonus'
   },
   {
     id: 'adventurer',
     name: '冒険家',
     description: 'リスク志向。初期活力は低いが、チャンスに強い。',
-    initialVitalityModifier: -10,
-    initialSavings: 0,
+    initialVitalityModifier: -5,  // Increased from -10
+    initialSavings: 5,            // Increased from 0
     specialAbility: 'risk_taker'
   },
   {
     id: 'minimalist',
     name: 'ミニマリスト',
     description: '効率重視。無駄を嫌う生活スタイル。',
-    initialVitalityModifier: 0,
-    initialSavings: 5,
+    initialVitalityModifier: 5,   // Increased from 0
+    initialSavings: 10,           // Increased from 5
     specialAbility: 'efficiency'
   }
 ]
@@ -168,17 +168,26 @@ export interface InsuranceTypeChoice {
 }
 
 /**
+ * チャレンジ結果タイプ
+ * - success: チャレンジ成功（報酬獲得）
+ * - damage_taken: パワー不足でダメージを受けた
+ */
+export type ChallengeResultType = 'success' | 'damage_taken'
+
+/**
  * チャレンジ結果
  */
 export interface ChallengeResult {
   challenge: Card
   success: boolean
+  resultType: ChallengeResultType  // 成功 or ダメージ受容
   playerPower: number
   challengePower: number
   rewards?: Card[]
   cardChoices?: Card[]  // カード選択肢（3枚）
   insuranceTypeChoices?: InsuranceTypeChoice[]  // 保険種類選択肢（3種類）
   vitalityChange: number
+  damageAmount?: number  // ダメージ量（damage_taken時のみ）
   message: string
   // Phase 3: パワー計算の詳細
   powerBreakdown?: {
