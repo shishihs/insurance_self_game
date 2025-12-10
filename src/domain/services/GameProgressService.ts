@@ -1,6 +1,8 @@
-import type { PlayerStats, GameStage, TurnResult } from '../types/game.types'
+import type { PlayerStats, TurnResult } from '../types/game.types'
 import type { ChallengeResult } from '../types/game.types'
+import type { GameStage } from '../types/card.types'
 import { IdGenerator } from '../../common/IdGenerator'
+import { GameConstantsAccessor } from '../constants/GameConstants'
 
 /**
  * ゲーム進行管理サービス
@@ -132,19 +134,43 @@ export interface StageProgression {
  * ステージ進行管理サービス
  */
 export class StageProgressionManager {
-  private static readonly STAGE_DEFINITIONS: StageProgression[] = [
-    { stage: 'youth', requiredTurns: 0, label: '青年期', maxVitality: 100 },
-    { stage: 'middle', requiredTurns: 15, label: '中年期', maxVitality: 80 },
-    { stage: 'fulfillment', requiredTurns: 30, label: '充実期', maxVitality: 60 }
-  ]
+  // private static readonly STAGE_DEFINITIONS removed in favor of dynamic lookup
+
+  private getStageDefinitions(): StageProgression[] {
+    const settings = GameConstantsAccessor.getBalanceSettings().PROGRESSION_SETTINGS
+
+    // We construct this dynamically to respect any overrides (e.g. maxTurns changes) 
+    // and ensuring vitality matches constants
+    return [
+      {
+        stage: 'youth',
+        requiredTurns: 0,
+        label: GameConstantsAccessor.getStageParameters('youth').label,
+        maxVitality: GameConstantsAccessor.getStageParameters('youth').maxVitality
+      },
+      {
+        stage: 'middle',
+        requiredTurns: settings.stageTransitionTurns.youthToMiddle,
+        label: GameConstantsAccessor.getStageParameters('middle').label,
+        maxVitality: GameConstantsAccessor.getStageParameters('middle').maxVitality
+      },
+      {
+        stage: 'fulfillment',
+        requiredTurns: settings.stageTransitionTurns.middleToFulfillment,
+        label: GameConstantsAccessor.getStageParameters('fulfillment').label,
+        maxVitality: GameConstantsAccessor.getStageParameters('fulfillment').maxVitality
+      }
+    ]
+  }
 
   /**
    * ターン数に基づいて適切なステージを取得
    */
   getStageForTurn(turn: number): GameStage {
-    for (let i = this.STAGE_DEFINITIONS.length - 1; i >= 0; i--) {
-      const stage = this.STAGE_DEFINITIONS[i]
-      if (turn >= stage.requiredTurns) {
+    const definitions = this.getStageDefinitions()
+    for (let i = definitions.length - 1; i >= 0; i--) {
+      const stage = definitions[i]
+      if (stage && turn >= stage.requiredTurns) {
         return stage.stage
       }
     }
@@ -155,18 +181,20 @@ export class StageProgressionManager {
    * ステージ情報を取得
    */
   getStageInfo(stage: GameStage): StageProgression | undefined {
-    return this.STAGE_DEFINITIONS.find(s => s.stage === stage)
+    return this.getStageDefinitions().find(s => s.stage === stage)
   }
 
   /**
    * 次のステージを取得
    */
   getNextStage(currentStage: GameStage): GameStage | null {
-    const currentIndex = this.STAGE_DEFINITIONS.findIndex(s => s.stage === currentStage)
-    if (currentIndex === -1 || currentIndex === this.STAGE_DEFINITIONS.length - 1) {
+    const definitions = this.getStageDefinitions()
+    const currentIndex = definitions.findIndex(s => s.stage === currentStage)
+    if (currentIndex === -1 || currentIndex === definitions.length - 1) {
       return null
     }
-    return this.STAGE_DEFINITIONS[currentIndex + 1].stage
+    const nextStage = definitions[currentIndex + 1]
+    return nextStage ? nextStage.stage : null
   }
 
   /**
@@ -220,7 +248,7 @@ export class GameProgressService {
 
     const currentTurn = this.turnManager.getCurrentTurn()
     const newStage = this.stageProgressionManager.getStageForTurn(currentTurn)
-    
+
     let stageChanged = false
     if (newStage !== this.currentStage) {
       this.currentStage = newStage
@@ -315,8 +343,8 @@ export class GameProgressService {
     cardAcquisitionRate: number
   } {
     const stats = this.getStatistics()
-    const successRate = stats.totalChallenges > 0 
-      ? stats.successfulChallenges / stats.totalChallenges 
+    const successRate = stats.totalChallenges > 0
+      ? stats.successfulChallenges / stats.totalChallenges
       : 0
 
     const averageTurnsPerChallenge = stats.totalChallenges > 0
@@ -424,7 +452,7 @@ export class ProgressEventEmitter {
     // リスナーに通知
     const typeListeners = this.listeners.get(type) || []
     const allListeners = this.listeners.get('*') || []
-    
+
     [...typeListeners, ...allListeners].forEach(listener => {
       try {
         listener(event)

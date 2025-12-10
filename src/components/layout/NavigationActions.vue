@@ -28,19 +28,38 @@
         <span class="btn-text">チュートリアル</span>
       </button>
       
-
+      <button
+        ref="rulebookButtonRef"
+        class="btn btn-tertiary ripple-container"
+        aria-label="ゲームルールを読む (Alt+R)"
+        :aria-keyshortcuts="'Alt+R'"
+        aria-describedby="rulebook-description"
+        @click="showRulebook = true"
+      >
+        <span class="btn-bg-effect"></span>
+        <span class="btn-icon" aria-hidden="true">📖</span>
+        <span class="btn-text">ルールを読む</span>
+      </button>
     </div>
     
     <!-- ボタンの説明（スクリーンリーダー用） -->
     <div class="sr-only">
       <div id="game-description">保険をテーマにした人生シミュレーションゲームを開始します</div>
       <div id="tutorial-description">ゲームの遊び方を学習するチュートリアルを開始します</div>
+      <div id="rulebook-description">ゲームのルールと遊び方を詳しく読むことができます</div>
     </div>
+    
+    <!-- ルールブックモーダル -->
+    <RulebookModal 
+      :is-open="showRulebook" 
+      @close="showRulebook = false" 
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import RulebookModal from './RulebookModal.vue'
 
 // イベント定義
 defineEmits<{
@@ -48,14 +67,19 @@ defineEmits<{
   'start-tutorial': []
 }>()
 
+// ルールブックモーダルの表示状態
+const showRulebook = ref(false)
+
 // テンプレート参照
 const gameButtonRef = ref<HTMLButtonElement>()
 const tutorialButtonRef = ref<HTMLButtonElement>()
+const rulebookButtonRef = ref<HTMLButtonElement>()
 
 // 外部から参照可能にする（親コンポーネント用）
 defineExpose({
   gameButtonRef,
-  tutorialButtonRef
+  tutorialButtonRef,
+  rulebookButtonRef
 })
 </script>
 
@@ -190,6 +214,42 @@ defineExpose({
 
 .btn-secondary:hover::after {
   opacity: 1;
+}
+
+/* ターシャリーボタン（ルールブック用） */
+.btn-tertiary {
+  background: rgba(16, 185, 129, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1.5px solid rgba(16, 185, 129, 0.4);
+  position: relative;
+}
+
+.btn-tertiary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(16, 185, 129, 0.15) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  border-radius: inherit;
+}
+
+.btn-tertiary:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.7);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    0 8px 25px rgba(16, 185, 129, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.btn-tertiary:hover::after {
+  opacity: 1;
+}
+
+.btn-tertiary .btn-icon {
+  filter: drop-shadow(0 2px 4px rgba(16, 185, 129, 0.3));
 }
 
 /* アクティブ状態 */

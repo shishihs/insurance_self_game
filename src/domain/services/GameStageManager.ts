@@ -83,12 +83,9 @@ export class GameStageManager {
    * ステージ別の体力上限を取得
    */
   private getStageVitalityLimit(stage: GameStage): number {
-    const limits = {
-      youth: 35,
-      middle: 30,
-      fulfillment: 27
-    }
-    return limits[stage]
+    const params = GameConstantsAccessor.getStageParameters(stage)
+    // Fallback if something is wrong, though accessor usually handles defaults
+    return params ? params.maxVitality : 60
   }
 
   /**
