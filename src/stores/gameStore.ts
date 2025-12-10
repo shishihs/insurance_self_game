@@ -25,6 +25,7 @@ export const useGameStore = defineStore('game', () => {
     const scoreState = ref(0)
     const cardChoicesState = ref<Card[]>([])
     const insuranceTypeChoicesState = ref<any[]>([])
+    const rewardCardChoicesState = ref<Card[]>([]) // 報酬カード選択肢
     const savingsState = ref(0)
     const maxTurnsState = ref(20) // Default 20
 
@@ -45,6 +46,7 @@ export const useGameStore = defineStore('game', () => {
     const currentChallenge = computed(() => currentChallengeState.value)
 
     const insuranceTypeChoices = computed(() => insuranceTypeChoicesState.value)
+    const rewardCardChoices = computed(() => rewardCardChoicesState.value) // 報酬カード選択肢
 
     const activeInsurances = computed(() => activeInsurancesState.value)
     const insuranceMarket = computed(() => insuranceMarketState.value)
@@ -167,6 +169,13 @@ export const useGameStore = defineStore('game', () => {
         if (!game.value) return
         const result = game.value.resolveChallenge()
         lastMessage.value = result.message
+
+        // 報酬カードがある場合は選択肢を設定
+        if (result.success && result.cardChoices && result.cardChoices.length > 0) {
+            rewardCardChoicesState.value = [...result.cardChoices]
+            console.log('[GameStore] Reward cards available:', result.cardChoices.length)
+        }
+
         triggerUpdate()
         return result
     }
@@ -187,6 +196,28 @@ export const useGameStore = defineStore('game', () => {
             console.error('Failed to select insurance:', e)
             lastMessage.value = '保険の加入に失敗しました'
         }
+    }
+
+    function selectRewardCard(card: Card) {
+        if (!game.value) return
+        console.log('[GameStore] Selecting reward card:', card.name)
+
+        // カードをプレイヤーデッキに追加
+        game.value.addCardToPlayerDeck(card)
+        game.value.stats.cardsAcquired++
+
+        // 報酬選択肢をクリア
+        rewardCardChoicesState.value = []
+
+        lastMessage.value = `「${card.name}」を獲得しました！`
+        triggerUpdate()
+    }
+
+    function skipRewardCard() {
+        // 報酬をスキップする場合
+        rewardCardChoicesState.value = []
+        lastMessage.value = '報酬カードをスキップしました'
+        triggerUpdate()
     }
 
     function endTurn() {
@@ -254,6 +285,7 @@ export const useGameStore = defineStore('game', () => {
         currentStatus,
         currentChallenge,
         insuranceTypeChoices,
+        rewardCardChoices, // 報酬カード選択肢
         lastMessage,
         initializeGame,
         startGame,
@@ -262,6 +294,8 @@ export const useGameStore = defineStore('game', () => {
         drawChallenge,
         resolveChallenge,
         selectInsurance,
+        selectRewardCard, // 報酬カード選択
+        skipRewardCard, // 報酬スキップ
         endTurn,
         toggleCardSelection,
         triggerUpdate,

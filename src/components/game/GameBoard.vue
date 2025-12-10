@@ -9,6 +9,7 @@ import ChallengeSelector from './ChallengeSelector.vue'
 import InsuranceMarket from './InsuranceMarket.vue'
 import GameResult from './GameResult.vue'
 import TutorialOverlay from './TutorialOverlay.vue'
+import RewardCardSelector from './RewardCardSelector.vue'
 import type { GameConfig } from '@/domain/types/game.types'
 
 const store = useGameStore()
@@ -267,6 +268,7 @@ async function onChallenge() {
     <CharacterSelector v-if="store.currentPhase === 'character_selection'" @select="store.selectCharacter" />
     <DreamSelector />
     <ChallengeSelector />
+    <RewardCardSelector />
     
     <!-- Result Overlay -->
     <GameResult />
