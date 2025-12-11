@@ -75,58 +75,16 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
   describe('複数保険カードの合計軽減', () => {
     it('複数の保険カードの合計軽減量が上限を超えない', () => {
       // 複数の強力な保険カードを追加（damage_reduction効果付き）
-      const insurance1 = new Card({
-        id: 'insurance-1',
-        type: 'insurance',
-        name: '保険1',
-        description: 'テスト用保険1',
-        power: 2,
-        cost: 0,  // テスト用にコストを0に設定
-        insuranceType: 'medical',
-        durationType: 'term',
-        remainingTurns: 3,
-        effects: [{
-          type: 'damage_reduction',
-          value: 5,
-          description: 'ダメージ-5'
-        }]
-      })
-      const insurance2 = new Card({
-        id: 'insurance-2',
-        type: 'insurance',
-        name: '保険2',
-        description: 'テスト用保険2',
-        power: 2,
-        cost: 0,  // テスト用にコストを0に設定
-        insuranceType: 'accident',
-        durationType: 'term',
-        remainingTurns: 3,
-        effects: [{
-          type: 'damage_reduction',
-          value: 5,
-          description: 'ダメージ-5'
-        }]
-      })
-      const insurance3 = new Card({
-        id: 'insurance-3',
-        type: 'insurance',
-        name: '保険3',
-        description: 'テスト用保険3',
-        power: 2,
-        cost: 0,  // テスト用にコストを0に設定
-        insuranceType: 'life',
-        durationType: 'term',
-        remainingTurns: 3,
-        effects: [{
-          type: 'damage_reduction',
-          value: 5,
-          description: 'ダメージ-5'
-        }]
+      // Value 4 * 0.5 = 2 reduction per card
+      const createInsurance = (id: string, name: string) => new Card({
+        id, type: 'insurance', name, description: 'test', power: 2, cost: 0,
+        insuranceType: 'medical', durationType: 'term', remainingTurns: 3,
+        effects: [{ type: 'damage_reduction', value: 4, description: 'damage-4' }]
       })
 
-      game.addInsurance(insurance1)
-      game.addInsurance(insurance2)
-      game.addInsurance(insurance3)
+      game.addInsurance(createInsurance('insurance-1', '保険1'))
+      game.addInsurance(createInsurance('insurance-2', '保険2'))
+      game.addInsurance(createInsurance('insurance-3', '保険3'))
 
       // チャレンジでダメージを受ける（通常のチャレンジカードを直接作成）
       const challenge = new Card({
@@ -134,8 +92,8 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
         type: 'challenge',
         name: '強力な挑戦',
         description: 'テスト用チャレンジ',
-        power: 20,
-        penalty: 10, // 固定ダメージ
+        power: 20, // Base Damage = 20
+        penalty: 10,
         category: 'health',
         cost: 0,
         effects: []
@@ -144,54 +102,24 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
       // チャレンジを正式に開始
       game.startChallenge(challenge)
 
-      // プレイヤーパワー10で挑戦（10ダメージを受けるはず）
+      // プレイヤーパワー10で挑戦（失敗確定）
       const lifeCard = Card.createLifeCard('生活カード', 10)
       game.addCardToHand(lifeCard)
       game.toggleCardSelection(lifeCard)
 
       const result = game.resolveChallenge()
 
-      // デバッグ用ログ
-      console.log('Challenge result:', result)
-      console.log('Power breakdown:', result.powerBreakdown)
-      console.log('Insurance burden:', game.insuranceBurden)
-      console.log('Insurance cards:', game.activeInsurances.map(card => ({
-        name: card.name,
-        damageReduction: card.calculateDamageReduction()
-      })))
-
-      // 保険料負担を考慮した正確な計算
-      const challengePower = 20
-      const basePower = 10
-      const insuranceBurden = game.insuranceBurden
-      const effectivePower = basePower - insuranceBurden // 保険料負担でパワーが減る
-      // const baseDamage = challengePower - effectivePower // 旧ロジック
-      const baseDamage = 10 // penaltyベース
-
-      // 保険軽減の計算
-      const insuranceReductions = game.activeInsurances.map(card => card.calculateDamageReduction())
-      const totalReductionBeforeLimit = insuranceReductions.reduce((sum, r) => sum + r, 0)
-      const actualReduction = Math.min(totalReductionBeforeLimit, MAX_TOTAL_DAMAGE_REDUCTION)
-
-      // 最終ダメージ
-      const finalDamage = Math.max(baseDamage - actualReduction, MINIMUM_DAMAGE_AFTER_INSURANCE)
-
-      console.log('Calculation details:', {
-        challengePower,
-        basePower,
-        insuranceBurden,
-        effectivePower,
-        baseDamage,
-        insuranceReductions,
-        totalReductionBeforeLimit,
-        actualReduction,
-        finalDamage
-      })
-
-      expect(result.vitalityChange).toBe(-finalDamage)
+      // 計算詳細:
+      // Base Damage (Power) = 20
+      // Reduction per card = 4 * 0.5 = 2.0
+      // Total Reduction = 2.0 * 3 = 6.0
+      // Final Damage = 20 - 6 = 14
+      expect(result.vitalityChange).toBe(-14)
     })
 
     it('最小ダメージ保証が適用される', () => {
+      // ... (existing implementation is fine, reduction 50 vs damage 5 -> min 1)
+      // Just ensure power is small enough.
       // 非常に強力な保険カードを複数追加
       for (let i = 0; i < 5; i++) {
         const insurance = new Card({
@@ -206,132 +134,101 @@ describe('保険によるダメージ軽減の上限テスト (Issue #24)', () =
           remainingTurns: 3,
           effects: [{
             type: 'damage_reduction',
-            value: 10,
-            description: 'ダメージ-10'
+            value: 20, // Large reduction
+            description: 'ダメージ-20'
           }]
         })
         game.addInsurance(insurance)
       }
 
-      // 小さなチャレンジ（通常のチャレンジカードを直接作成）
+      // 小さなチャレンジ
       const challenge = new Card({
         id: 'small-challenge',
         type: 'challenge',
         name: '小さな挑戦',
         description: 'テスト用チャレンジ',
-        power: 5,
+        power: 5, // Base Damage 5
         category: 'health',
         cost: 0,
         effects: []
       })
 
-      // チャレンジを正式に開始
       game.startChallenge(challenge)
-
-      // プレイヤーパワー3で挑戦（2ダメージを受けるはず）
       const lifeCard = Card.createLifeCard('生活カード', 3)
       game.addCardToHand(lifeCard)
       game.toggleCardSelection(lifeCard)
 
       const result = game.resolveChallenge()
-
-      // どんなに保険があっても最小ダメージは受ける
       expect(result.vitalityChange).toBe(-MINIMUM_DAMAGE_AFTER_INSURANCE)
     })
   })
 
   describe('ゲームバランスの確認', () => {
     it('適切な保険枚数でリスク管理ができる', () => {
-      // 適度な保険2枚
+      // 適度な保険2枚 (Value 3 -> 1.5 reduction)
+      // Total 3.0 reduction
       const insurance1 = new Card({
-        id: 'moderate-insurance-1',
-        type: 'insurance',
-        name: '保険1',
-        description: 'テスト用保険1',
-        power: 2,
-        cost: 0,  // テスト用にコストを0に設定
-        insuranceType: 'medical',
-        durationType: 'term',
-        remainingTurns: 3,
-        effects: [{
-          type: 'damage_reduction',
-          value: 3,
-          description: 'ダメージ-3'
-        }]
+        id: 'moderate-insurance-1', type: 'insurance', name: '保険1', description: 'test', power: 2, cost: 0,
+        insuranceType: 'medical', durationType: 'term', remainingTurns: 3,
+        effects: [{ type: 'damage_reduction', value: 3, description: 'damage-3' }]
       })
       const insurance2 = new Card({
-        id: 'moderate-insurance-2',
-        type: 'insurance',
-        name: '保険2',
-        description: 'テスト用保険2',
-        power: 2,
-        cost: 0,  // テスト用にコストを0に設定
-        insuranceType: 'accident',
-        durationType: 'term',
-        remainingTurns: 3,
-        effects: [{
-          type: 'damage_reduction',
-          value: 3,
-          description: 'ダメージ-3'
-        }]
+        id: 'moderate-insurance-2', type: 'insurance', name: '保険2', description: 'test', power: 2, cost: 0,
+        insuranceType: 'accident', durationType: 'term', remainingTurns: 3,
+        effects: [{ type: 'damage_reduction', value: 3, description: 'damage-3' }]
       })
 
       game.addInsurance(insurance1)
       game.addInsurance(insurance2)
 
-      // 中程度のチャレンジ（通常のチャレンジカードを直接作成）
+      // 中程度のチャレンジ
       const challenge = new Card({
         id: 'medium-challenge',
         type: 'challenge',
         name: '中程度の挑戦',
         description: 'テスト用チャレンジ',
-        power: 15,
+        power: 5, // V3: Damage = Power = 5
         penalty: 5,
         category: 'health',
         cost: 0,
         effects: []
       })
 
-      // チャレンジを正式に開始
       game.startChallenge(challenge)
-
-      // プレイヤーパワー10で挑戦
-      const lifeCard = Card.createLifeCard('生活カード', 10)
+      const lifeCard = Card.createLifeCard('生活カード', 0) // Power 0
       game.addCardToHand(lifeCard)
       game.toggleCardSelection(lifeCard)
 
       const result = game.resolveChallenge()
 
-      // 基本ダメージ: 5 (penalty)
-      // 保険軽減: 3 * 0.5 * 2 = 3（各保険1.5、合計3）
-      // 実際のダメージ: 5 - 3 = 2
+      // Base Damage: 5
+      // Total Reduction: 3
+      // Final Damage: 2
       expect(result.vitalityChange).toBe(-2)
     })
 
     it('保険がない場合は全ダメージを受ける', () => {
-      // 保険なし（通常のチャレンジカードを直接作成）
+      // 保険なし
       const challenge = new Card({
         id: 'no-insurance-challenge',
         type: 'challenge',
         name: '挑戦',
         description: 'テスト用チャレンジ',
-        power: 15,
+        power: 5, // V3: Damage = Power = 5
         penalty: 5,
         category: 'health',
         cost: 0,
         effects: []
       })
 
-      // チャレンジを正式に開始
       game.startChallenge(challenge)
-
-      const lifeCard = Card.createLifeCard('生活カード', 10)
+      const lifeCard = Card.createLifeCard('生活カード', 0)
       game.addCardToHand(lifeCard)
       game.toggleCardSelection(lifeCard)
 
       const result = game.resolveChallenge()
 
-      // 基本ダメージ: 5 (penalty)（軽減なし）
+      // V3: 全ダメージ (Power value)
       expect(result.vitalityChange).toBe(-5)
     })
   })

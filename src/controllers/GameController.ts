@@ -1,10 +1,10 @@
-import type { GameRenderer } from '@/interfaces/GameRenderer'
-import { Game } from '@/domain/entities/Game'
-import { Card } from '@/domain/entities/Card'
-import { CardFactory } from '@/domain/services/CardFactory'
-import type { ChallengeResult, GameConfig, PlayerStats } from '@/domain/types/game.types'
-import type { GameStage } from '@/domain/types/card.types'
-import { IdGenerator } from '@/common/IdGenerator'
+import type { GameRenderer } from '../interfaces/GameRenderer'
+import { Game } from '../domain/entities/Game'
+import { Card } from '../domain/entities/Card'
+import { CardFactory } from '../domain/services/CardFactory'
+import type { ChallengeResult, GameConfig, PlayerStats } from '../domain/types/game.types'
+import type { GameStage } from '../domain/types/card.types'
+import { IdGenerator } from '../common/IdGenerator'
 
 /**
  * ゲーム制御クラス
@@ -327,7 +327,7 @@ export class GameController {
   /**
    * 保険種類選択フロー（チャレンジ成功報酬）
    */
-  private async handleInsuranceTypeSelection(choices: import('@/domain/types/game.types').InsuranceTypeChoice[]): Promise<void> {
+  private async handleInsuranceTypeSelection(choices: import('../domain/types/game.types').InsuranceTypeChoice[]): Promise<void> {
     this.log('保険種類選択フロー開始')
 
     // 1. 保険の種類を選択（医療、生命など）

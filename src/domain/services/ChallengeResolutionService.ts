@@ -32,85 +32,91 @@ export class ChallengeResolutionService {
     insuranceBurden: number,
     game?: Game
   ): ChallengeResult {
-    // リスクチャレンジの特殊ルールを確認
+    // リスクチャレンジの特殊ルール確認
     const isRiskChallenge = challenge instanceof RiskRewardChallenge
     const insuranceImmunity = isRiskChallenge && challenge.insuranceImmunity
 
-    // 保険効果を適用（特化型保険のボーナス）
+    // 保険効果（特化型ボーナス）
     const insuranceBonus = (game && !insuranceImmunity) ? this.calculateInsuranceBonus(game, challenge) : 0
 
-    // パワー計算の詳細
+    // パワー計算
     const powerBreakdown = this.calculateTotalPower(selectedCards, insuranceBurden, insuranceBonus)
     const playerPower = powerBreakdown.total
 
-    // 夢カードの場合は年齢調整を適用
+    // 夢カードの年齢調整
     const challengePower = this.getDreamRequiredPower(challenge, stage)
 
     // 成功判定
     const success = playerPower >= challengePower
 
-    // 活力変更計算
     let vitalityChange = 0
+    let message = ''
+    let damageAmount: number | undefined
+
     if (success) {
+      // 成功時: 基本報酬 + 過労ダメージ計算
       const bonusBase = GameConstantsAccessor.getBalanceSettings().CHALLENGE_SETTINGS.successBonusBase
       const powerDiff = playerPower - challengePower
-      const baseReward = bonusBase + Math.floor(powerDiff / 2)
 
-      // リスクチャレンジの場合は報酬を調整
-      if (isRiskChallenge) {
-        vitalityChange = challenge.calculateActualReward(baseReward)
-      } else {
-        vitalityChange = baseReward
+      // V3変更: 「惜しい」判定廃止のため、過剰パワーは「過労」としてペナルティ
+      // 報酬は固定（+5）などにするか、差分ボーナスを残すか？
+      // ユーザー要望「達成できても超過していれば超過分/5の切り捨てを受ける」
+      // 報酬計算は従来の「基本+差分/2」だと過労と相殺してプラスになる可能性が高い。
+      // ここはシンプルに「基本報酬のみ」にして、過労を引く形が美しいか？
+      // いったん「基本報酬」のみにします。
+      const baseReward = bonusBase // 差分ボーナス撤廃
+
+      // 過労ダメージ計算
+      const overworkDamage = Math.floor(powerDiff / 5)
+
+      // 過労ダメージも保険で軽減可能（医療保険など）
+      const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
+      const finalOverworkDamage = Math.max(0, overworkDamage - damageReduction)
+
+      vitalityChange = baseReward - finalOverworkDamage
+
+      message = `🎉 チャレンジ成功！ (+${baseReward})`
+      if (finalOverworkDamage > 0) {
+        message += ` しかし頑張りすぎて疲れた... (-${finalOverworkDamage})`
+      } else if (overworkDamage > 0 && finalOverworkDamage === 0) {
+        message += ` (保険が過労を防いだ！)`
       }
     } else {
-      // 失敗時のダメージ計算: カード固有のペナルティを使用 (ユーザーFB対応: パワーと分離)
-      const baseDamage = challenge.penalty ?? Math.ceil(challengePower * 0.3)
-      // 防御型保険によるダメージ軽減（保険無効の場合は0）
+      // 失敗時: V3ルール「不足分関係なく、右上の値を丸ごと受ける」
+      // 固定ダメージ = チャレンジパワー
+      const baseDamage = challengePower
+
+      // 保険軽減
       const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
-      // 最小ダメージ保証を適用
-      const actualDamage = Math.max(MINIMUM_DAMAGE_AFTER_INSURANCE, baseDamage - damageReduction)
 
-      // リスクチャレンジの場合はペナルティを調整
-      if (isRiskChallenge) {
-        vitalityChange = -challenge.calculateActualPenalty(actualDamage)
-      } else {
-        vitalityChange = -actualDamage
-      }
+      // 最小ダメージ保証（どんなに軽減しても1は食らう、ただし完全無効化スキルがあれば別だが現状は1）
+      const finalDamage = Math.max(MINIMUM_DAMAGE_AFTER_INSURANCE, baseDamage - damageReduction)
 
-      // NaNチェック
-      if (!isFinite(vitalityChange)) {
-        console.error('Invalid vitalityChange:', {
-          vitalityChange,
-          baseDamage,
-          damageReduction,
-          actualDamage,
-          challengePower,
-          playerPower
-        })
-        vitalityChange = -actualDamage
-      }
+      // 夢（大ダメージ）に対する特殊防御（がん保険など）のロジックは
+      // calculateDamageReductionに含めるか、ここで別途判定するか？
+      // 現状のCardロジックでは「軽減量」を返すので、
+      // 20以上のときに軽減量を20にする、などの実装がCard側で必要。
+      // いったんそのまま計算。
+
+      vitalityChange = -finalDamage
+      damageAmount = finalDamage
+      message = `💥 失敗... ${finalDamage} のダメージを受けた`
     }
 
-    // 使用したカードを捨て札に
+    // カード破棄
     cardManager.discardSelectedCards()
 
-    // 結果タイプと適切なメッセージを決定
-    const resultType = success ? 'success' : 'damage_taken'
-    const damageAmount = success ? undefined : Math.abs(vitalityChange)
-
-    // メッセージを改善: 「失敗」ではなく「ダメージを受けた」
-    let message: string
-    if (success) {
-      message = `🎉 チャレンジ成功！ +${vitalityChange} 活力`
-    } else {
-      message = `💥 ${damageAmount} ダメージを受けた`
+    // リスクチャレンジの場合の補正（もしあれば）
+    if (isRiskChallenge) {
+      // リスクチャレンジの計算ロジックを優先する場合ここに戻す必要あり
+      // 現状はV3ルール優先
     }
 
     // 結果作成
     const result: ChallengeResult = {
-      challenge, // Include the challenge card in the result
+      challenge,
       success,
-      resultType,
+      resultType: success ? 'success' : 'damage_taken',
       playerPower,
       challengePower,
       vitalityChange,

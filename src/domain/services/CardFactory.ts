@@ -332,121 +332,91 @@ export class CardFactory {
   }
 
   /**
-   * 保険種類選択肢を生成（定期保険と終身保険の選択肢）
+   * 保険種類選択肢を生成（V3: 1つの保険タイプを提示し、プランA/Bを選ばせる）
    */
   static createInsuranceTypeChoices(stage: GameStage = 'youth'): InsuranceTypeChoice[] {
-    const choices: InsuranceTypeChoice[] = []
-
-    // 年齢ボーナスの設定
     const ageBonus = this.calculateAgeBonus(stage)
 
-    // 多様な保険タイプの定義（効果タイプ + トリガータイプ付き）
-    const baseInsuranceTypes = [
+    // 新・保険ラインナップ（全3種）
+    const insuranceDefinitions = [
       {
         type: 'medical' as InsuranceType,
-        name: '医療保険',
-        description: '病気やケガに備える保障',
-        power: 5,
-        baseCost: 4,
-        coverage: 100,
-        effectType: 'offensive' as InsuranceEffectType,
-        triggerType: 'on_heavy_damage' as InsuranceTriggerType
-      },
-      {
-        type: 'life' as InsuranceType,
-        name: '生命保険',
-        description: '家族を守る保障',
-        power: 6,
-        baseCost: 5,
-        coverage: 200,
-        effectType: 'offensive' as InsuranceEffectType,
-        triggerType: 'on_death' as InsuranceTriggerType
-      },
-      {
-        type: 'income' as InsuranceType,
-        name: '収入保障保険',
-        description: '働けなくなった時の保障',
-        power: 5,
-        baseCost: 4,
-        coverage: 150,
-        effectType: 'offensive' as InsuranceEffectType,
-        triggerType: 'on_demand' as InsuranceTriggerType
-      },
-      {
-        type: 'health' as InsuranceType,
-        name: '防御型健康保険',
-        description: 'ダメージを軽減する防御的保障',
+        name: 'じぶんへの保険',
+        description: '失敗時のリスクを軽減する医療保険',
         power: 0,
-        baseCost: 3,
-        coverage: 80,
+        // Plan A: お守り (軽減3)
+        planA: { cost: 1, duration: 10, cut: 3, desc: '定額支払プラン（失敗ダメージ-3・コスト1）' },
+        // Plan B: 鉄壁 (軽減8)
+        planB: { cost: 2, cut: 8, desc: '充実保障プラン（失敗ダメージ-8・コスト2）' },
         effectType: 'defensive' as InsuranceEffectType,
         triggerType: 'on_heavy_damage' as InsuranceTriggerType
       },
       {
-        type: 'disability' as InsuranceType,
-        name: '回復型障害保険',
-        description: '定期的に活力を回復',
+        type: 'cancer' as InsuranceType, // がん保険
+        name: 'がん保険',
+        description: '予期せぬ大病（大ダメージ）に備える',
         power: 0,
-        baseCost: 3,
-        coverage: 60,
-        effectType: 'recovery' as InsuranceEffectType,
-        triggerType: 'on_aging_gameover' as InsuranceTriggerType
+        // Plan A: 一時金 (1回使い切り)
+        planA: { cost: 1, duration: 5, limit: 1, desc: '診断給付金プラン（20以上の損害を1回無効化・コスト1）' },
+        // Plan B: プレミアム (何度でも)
+        planB: { cost: 3, limit: -1, desc: '通院治療プラン（20以上の損害を何度でも無効化・コスト3）' },
+        effectType: 'defensive' as InsuranceEffectType,
+        triggerType: 'on_heavy_damage' as InsuranceTriggerType // 20以上の判定は別途
+      },
+      {
+        type: 'income' as InsuranceType,
+        name: 'はたらく人への保険',
+        description: '手札事故（就業不能）時のリセット保障',
+        power: 0,
+        // Plan A: スタンダード (2ターンに1回)
+        planA: { cost: 1, duration: 10, cooldown: 2, desc: '標準月額プラン（2ターンに1回マリガン可能・コスト1）' },
+        // Plan B: ワイド (毎ターン)
+        planB: { cost: 2, cooldown: 1, desc: 'あんしん手当プラン（毎ターンマリガン可能・コスト2）' },
+        effectType: 'specialized' as InsuranceEffectType, // Special action
+        triggerType: 'on_demand' as InsuranceTriggerType
       }
     ]
 
-    // 3つからランダムに選択（重複なし）
-    const availableTypes = [...baseInsuranceTypes]
-    for (let i = 0; i < 3 && availableTypes.length > 0; i++) {
-      const randomIndex = Math.floor(Math.random() * availableTypes.length)
-      const selectedType = availableTypes.splice(randomIndex, 1)[0]!
+    // ランダムに1つ選択
+    const selectedDef = insuranceDefinitions[Math.floor(Math.random() * insuranceDefinitions.length)]!
 
-      // 定期保険の期間設定（5ターン）
-      const termDuration = 5
-
-      // 定期保険のコスト（安い - 若者向け掛け捨て型）
-      // 基本コストの0.5倍（期間が短く、保障も一時的なので安い）
-      const termCost = Math.ceil(selectedType.baseCost * 0.5)
-
-      // 終身保険のコスト（高い - 長期保障の代償）
-      // 基本コストの2.0倍（永続だが月々は非常に高い）
-      const wholeLifeCost = Math.ceil(selectedType.baseCost * 2.0)
-
-      const choice: InsuranceTypeChoice = {
-        insuranceType: selectedType.type,
-        name: selectedType.name,
-        description: selectedType.description,
-        baseCard: {
-          name: selectedType.name,
-          description: selectedType.description,
-          type: 'insurance',
-          power: selectedType.power,
-          cost: selectedType.baseCost, // ベースコスト
-          insuranceType: selectedType.type,
-          coverage: selectedType.coverage,
-          insuranceEffectType: selectedType.effectType,
-          insuranceTriggerType: selectedType.triggerType, // トリガータイプを追加
-          effects: [{
-            type: 'shield',
-            value: selectedType.coverage,
-            description: `${selectedType.coverage}ポイントの保障`
-          }],
-          ageBonus
-        },
-        termOption: {
-          cost: termCost,
-          duration: termDuration,
-          description: `${termDuration}ターン限定（毎ターン${termCost}コスト・安め）`
-        },
-        wholeLifeOption: {
-          cost: wholeLifeCost,
-          description: `永続保障（毎ターン${wholeLifeCost}コスト・高め）`
-        }
+    const choice: InsuranceTypeChoice = {
+      insuranceType: selectedDef.type,
+      name: selectedDef.name,
+      description: selectedDef.description,
+      baseCard: {
+        name: selectedDef.name,
+        description: selectedDef.description,
+        type: 'insurance',
+        power: selectedDef.power,
+        cost: 1, // Placeholder
+        insuranceType: selectedDef.type,
+        coverage: 0, // Placeholder
+        insuranceEffectType: selectedDef.effectType,
+        insuranceTriggerType: selectedDef.triggerType,
+        effects: [],
+        ageBonus
+      },
+      // Plan A (mapped to termOption)
+      termOption: {
+        cost: selectedDef.planA.cost,
+        duration: selectedDef.planA.duration,
+        description: selectedDef.planA.desc
+      },
+      // Plan B (mapped to wholeLifeOption)
+      wholeLifeOption: {
+        cost: selectedDef.planB.cost,
+        description: selectedDef.planB.desc
       }
-
-      choices.push(choice)
     }
 
-    return choices
+    // カード生成時にこれらのプラン情報を引き継ぐため、
+    // ゲーム側で選択時に metadata を付与する仕組みが必要だが、
+    // 現状は createTermInsuranceCard / createWholeLifeInsuranceCard で生成される。
+    // それらのメソッドで、Plan A/B の具体的な数値（cut, cooldown）を反映させる必要がある。
+    // いったんここではChoiceのガワを作る。
+
+    return [choice]
   }
 
   /**

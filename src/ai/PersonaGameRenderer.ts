@@ -1,8 +1,8 @@
 
-import type { GameRenderer } from '@/interfaces/GameRenderer'
-import type { Game } from '@/domain/entities/Game'
-import type { Card } from '@/domain/entities/Card'
-import type { ChallengeResult, PlayerStats } from '@/domain/types/game.types'
+import type { GameRenderer } from '../interfaces/GameRenderer'
+import type { Game } from '../domain/entities/Game'
+import type { Card } from '../domain/entities/Card'
+import type { ChallengeResult, PlayerStats } from '../domain/types/game.types'
 import type { AIStrategy, GameState } from './AdvancedStrategies'
 
 export class PersonaGameRenderer implements GameRenderer {

@@ -1,8 +1,8 @@
 
-import { BeginnerPersona, IntermediatePersona, AdvancedPersona } from '@/ai/Personas'
-import { PersonaGameRenderer } from '@/ai/PersonaGameRenderer'
-import { GameControllerFactory } from '@/controllers/GameController'
-import type { GameConfig, PlayerStats } from '@/domain/types/game.types'
+import { BeginnerPersona, IntermediatePersona, AdvancedPersona } from '../ai/Personas'
+import { PersonaGameRenderer } from '../ai/PersonaGameRenderer'
+import { GameControllerFactory } from '../controllers/GameController'
+import type { GameConfig, PlayerStats } from '../domain/types/game.types'
 import chalk from 'chalk'
 
 const GAMES_PER_PERSONA = 50;

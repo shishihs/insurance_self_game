@@ -34,6 +34,7 @@ const spacingClass = computed(() => {
     <TransitionGroup 
       name="hand" 
       tag="div" 
+      appear
       class="flex items-end justify-center perspective-1000 w-full max-w-6xl pointer-events-auto"
       :class="[spacingClass, { 'is-playing': store.lastHandAction === 'play' }]"
     >

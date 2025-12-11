@@ -240,22 +240,22 @@ export interface AgeParameters {
  */
 export const AGE_PARAMETERS: Record<string, AgeParameters> = {
   youth: {
-    maxVitality: 100,
+    maxVitality: 25,
     label: '青年期',
     ageMultiplier: 0
   },
   middle: {
-    maxVitality: 80,
+    maxVitality: 20,
     label: '中年期',
     ageMultiplier: 0.5
   },
   middle_age: {
-    maxVitality: 80,
+    maxVitality: 20,
     label: '中年期',
     ageMultiplier: 0.5
   },
   fulfillment: {
-    maxVitality: 60,
+    maxVitality: 15,
     label: '充実期',
     ageMultiplier: 1.0
   }
