@@ -223,12 +223,6 @@ export class GameController {
     // チャレンジ開始（選択されなかったカードはデッキに戻る/捨てられる等の処理が内部で行われる）
     this.game.startChallenge(selectedChallenge)
 
-    // v2: 追加ルール - チャレンジ決定後にカードを7枚引く（勝率向上のため増量）
-    console.log('[DEBUG-GC] Pre-Draw')
-    await this.game.drawCards(7)
-    console.log('[DEBUG-GC] Post-Draw')
-    this.log(`チャレンジ「${selectedChallenge.name}」に合わせてカードを7枚引きました`)
-
     this.updateDisplay()
     console.log('[DEBUG-GC] Pre-Execution')
 
