@@ -1,6 +1,14 @@
 <template>
   <header class="app-header">
     <div class="hero-section">
+      <!-- 浮遊パーティクル -->
+      <div class="particles-container">
+        <div class="particle" v-for="n in 20" :key="n" :style="particleStyle(n)"></div>
+      </div>
+      <!-- スターダスト -->
+      <div class="stardust-container">
+        <div class="stardust" v-for="n in 15" :key="'star' + n" :style="stardustStyle(n)"></div>
+      </div>
       <div class="hero-background">
         <div class="hero-orb hero-orb-1"></div>
         <div class="hero-orb hero-orb-2"></div>
@@ -44,8 +52,24 @@
 </template>
 
 <script setup lang="ts">
-// ヘッダーは純粋なプレゼンテーション層
-// プロップスやイベントは不要
+// パーティクルのスタイルを動的に生成
+const particleStyle = (n: number) => ({
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  animationDelay: `${n * 0.3}s`,
+  animationDuration: `${3 + Math.random() * 4}s`,
+  width: `${4 + Math.random() * 6}px`,
+  height: `${4 + Math.random() * 6}px`,
+  opacity: 0.3 + Math.random() * 0.5
+})
+
+// スターダストのスタイル
+const stardustStyle = (n: number) => ({
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  animationDelay: `${n * 0.5}s`,
+  animationDuration: `${2 + Math.random() * 3}s`
+})
 </script>
 
 <style scoped>
@@ -67,12 +91,78 @@
   position: relative;
 }
 
+/* パーティクルコンテナ */
+.particles-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.particle {
+  position: absolute;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.9) 0%, rgba(168, 85, 247, 0.6) 50%, transparent 70%);
+  border-radius: 50%;
+  animation: particle-float linear infinite;
+  filter: blur(1px);
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* スターダスト */
+.stardust-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.stardust {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle ease-in-out infinite;
+  box-shadow: 
+    0 0 6px 2px rgba(255, 255, 255, 0.6),
+    0 0 12px 4px rgba(129, 140, 248, 0.4);
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
 /* 背景装飾 */
 .hero-background {
   position: absolute;
   inset: -50%;
   pointer-events: none;
-  opacity: 0.15;
+  opacity: 0.2;
 }
 
 .hero-orb {
@@ -169,6 +259,7 @@
   font-size: clamp(2rem, 5vw, 4rem);
   font-weight: 800;
   margin-bottom: var(--space-md);
+  position: relative;
   
   background: var(--brand-gradient-hero);
   background-clip: text;
@@ -177,10 +268,35 @@
   background-size: 200% 200%;
   animation: gradient-shift 8s ease-in-out infinite;
   
-  /* filter: drop-shadow(0 4px 20px rgba(102, 126, 234, 0.3)); -> 原因の可能性が高いので削除 */
   text-decoration: none;
   line-height: 1.1;
   letter-spacing: -0.02em;
+}
+
+/* タイトルのシマーエフェクト */
+.hero-title::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  50%, 100% {
+    left: 100%;
+  }
 }
 
 @keyframes gradient-shift {
