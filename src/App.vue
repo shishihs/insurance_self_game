@@ -377,7 +377,7 @@ onUnmounted(() => {
 
 .back-to-home-btn {
   position: absolute;
-  bottom: var(--space-md);
+  top: var(--space-md);
   left: var(--space-md);
   z-index: 9999;
   

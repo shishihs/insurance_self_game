@@ -107,10 +107,9 @@ export class GameChallengeService {
         if (game.currentChallenge?.type === 'dream' || (game.currentChallenge as any).isDream) {
           console.log('[GameChallengeService] Dream fulfilled! Victory!');
           game.finishGame(true);
-          // Ensure result consistency
-          result.success = true;
-          // 勝利時はここでリターンしてしまっても良いが、統計更新などはこの後なので注意。
-          // finishGameでstatusが変わるはず。
+          // 勝利時は保険選択をスキップして即リターン
+          this.updateGameStateAfterChallenge(game, result);
+          return result;
         }
 
         const choices = CardFactory.createInsuranceTypeChoices(game.stage)
