@@ -28,7 +28,6 @@ export const useGameStore = defineStore('game', () => {
     const rewardCardChoicesState = ref<Card[]>([]) // 報酬カード選択肢
     const pendingInsuranceClaimState = ref<PendingInsuranceClaim | undefined>(undefined) // 保留中の保険請求
     const availableOnDemandInsurancesState = ref<Card[]>([]) // 使用可能な就業不能保険
-    const savingsState = ref(0)
     const maxTurnsState = ref(20) // Default 20
 
     // Tutorial State
@@ -55,7 +54,6 @@ export const useGameStore = defineStore('game', () => {
     const activeInsurances = computed(() => activeInsurancesState.value)
     const insuranceMarket = computed(() => insuranceMarketState.value)
     const score = computed(() => scoreState.value)
-    const savings = computed(() => savingsState.value)
     const maxTurns = computed(() => maxTurnsState.value)
     const cardChoices = computed(() => cardChoicesState.value)
 
@@ -293,7 +291,6 @@ export const useGameStore = defineStore('game', () => {
         activeInsurancesState.value = [...game.value.activeInsurances]
         insuranceMarketState.value = [...game.value.insuranceMarket]
         scoreState.value = game.value.score
-        savingsState.value = game.value.savings
 
         const settings = game.value.config?.balanceConfig?.progressionSettings || { maxTurns: 20 }
         maxTurnsState.value = settings.maxTurns ?? 20
@@ -347,7 +344,6 @@ export const useGameStore = defineStore('game', () => {
         activeInsurances,
         insuranceMarket,
         score,
-        savings,
         maxTurns,
         cardChoices,
         startChallengePhase,

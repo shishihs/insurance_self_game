@@ -124,11 +124,6 @@ async function onResolveChallenge() {
              <div class="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-500" :style="{ width: `${Math.min(100, (store.vitality / store.maxVitality) * 100)}%` }"></div>
           </div>
         </div>
-
-        <div class="flex flex-col">
-          <span class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest font-semibold">Savings</span>
-          <span class="font-bold text-xl text-blue-400">{{ store.savings }}</span>
-        </div>
       </div>
 
       <!-- Right Info -->

@@ -22,7 +22,7 @@ export const AGE_CONSTANTS = {
       startTurn: 0,
       endTurn: 6,
       insuranceMultiplier: 1.0,
-      challengeDifficultyModifier: 1.5 // Increased from 1.2
+      challengeDifficultyModifier: 1.0 // Reduced from 1.5 to help Advanced
     },
     middle: {
       label: '中年期',
@@ -30,7 +30,7 @@ export const AGE_CONSTANTS = {
       startTurn: 7,
       endTurn: 13,
       insuranceMultiplier: 1.2,
-      challengeDifficultyModifier: 2.0 // Increased from 1.3
+      challengeDifficultyModifier: 1.5 // Reduced from 2.0
     },
     fulfillment: {
       label: '充実期',
@@ -38,7 +38,7 @@ export const AGE_CONSTANTS = {
       startTurn: 14,
       endTurn: Infinity,
       insuranceMultiplier: 1.5, // Increased from 1.3
-      challengeDifficultyModifier: 2.5 // Increased from 1.4
+      challengeDifficultyModifier: 2.0 // Reduced from 2.5
     }
   } as const,
 
@@ -92,11 +92,11 @@ export const INSURANCE_CONSTANTS = {
    * 保険料計算の基本パラメータ
    */
   PREMIUM_CALCULATION: {
-    baseCostMultiplier: 0.35,      // 基本コスト倍率 (Reduced from 0.5 to 0.35 for easier gameplay)
+    baseCostMultiplier: 0.4,      // 基本コスト倍率 (Increased to 0.4 to pinch finances)
     ageMultiplierStart: 1.0,      // 年齢倍率開始値
-    ageMultiplierIncrement: 0.15,  // 年齢倍率増分 (Reduced from 0.2)
+    ageMultiplierIncrement: 0.15,  // 年齢倍率増分
     coverageRateBase: 50,         // カバレッジ基準値
-    multiInsurancePenalty: 0.05    // 複数保険ペナルティ（3枚ごと）(Reduced from 0.1)
+    multiInsurancePenalty: 0.1    // 複数保険ペナルティ（3枚ごと）
   } as const,
 
   /**
@@ -119,8 +119,8 @@ export const INSURANCE_CONSTANTS = {
    */
   DURATION_SETTINGS: {
     termInsurance: {
-      defaultDuration: 5,  // 定期保険のデフォルト期間 (10 -> 5)
-      costDiscount: 0.7     // 定期保険のコスト割引率
+      defaultDuration: 5,  // 定期保険のデフォルト期間
+      costDiscount: 0.1     // 定期保険のコスト割引率 (Discounted to 0.1 - huge advantage for Term)
     },
     wholeLifeInsurance: {
       costMultiplier: 1.0   // 終身保険のコスト倍率
@@ -164,8 +164,8 @@ export const BALANCE_CONSTANTS = {
   CHALLENGE_SETTINGS: {
     minDifficulty: 1,          // 最小難易度
     maxDifficulty: 20,         // 最大難易度
-    successBonusBase: 7,       // 成功時ボーナス基準値 (Increased from 5 to 7)
-    failurePenaltyRatio: 0.8,  // 失敗時ペナルティ比率 (Reduced from 1.0 to 0.8)
+    successBonusBase: 6,       // 成功時ボーナス基準値 (Increased to help survival)
+    failurePenaltyRatio: 1.0,  // 失敗時ペナルティ比率 (Reduced to prevent instant death)
     enableDynamicDifficulty: true // 動的難易度調整の有効化
   } as const,
 
@@ -173,10 +173,10 @@ export const BALANCE_CONSTANTS = {
    * 活力関連
    */
   VITALITY_SETTINGS: {
-    defaultStarting: 100,      // デフォルト初期活力 (Increased from 80 to 100)
+    defaultStarting: 80,       // デフォルト初期活力 (Increased to 80 for survival)
     minimumValue: 0,           // 最小活力値
     maximumValue: 150,         // 最大活力値
-    healingCap: 0.85           // 回復上限（最大活力の85%）(Increased from 0.8)
+    healingCap: 0.85           // 回復上限（最大活力の85%）
   } as const,
 
   /**

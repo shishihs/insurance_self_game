@@ -18,11 +18,13 @@ const mockGame = {
     status: 'in_progress',
     stage: 'youth',
     insuranceBurden: 0,
+    vitality: 100, // Add vitality
     activeInsurances: [], // internal usage mock
     expiredInsurances: [],
     applyDamage: vi.fn(),
     drawCards: vi.fn(),
     setStage: vi.fn(),
+    expireAllInsurances: vi.fn(), // Add missing method
     getActiveInsurances: vi.fn().mockReturnValue([]),
     heal: vi.fn(),
     updateInsuranceBurden: vi.fn(), // Called inside updateInsuranceExpirations logic via (game as any)

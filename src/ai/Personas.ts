@@ -32,8 +32,8 @@ export class BeginnerPersona implements AIStrategy {
 
     shouldAttemptChallenge(challenge: Card, availableCards: Card[], gameState: GameState): boolean {
         const totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
-        // Needs 90% confidence essentially. Or just Total Power > Requirement * 1.2
-        return totalPower >= (challenge.power || 0) * 1.2
+        // Recklessly attempts challenges even when underpowered - leads to failures
+        return totalPower >= (challenge.power || 0) * 0.8
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {
@@ -85,7 +85,8 @@ export class IntermediatePersona implements AIStrategy {
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {
-        // Prefers Term (Cheaper)
+        // Prefers Whole Life - Term is broken
+        if (availableTypes.includes('whole_life')) return 'whole_life'
         return 'term'
     }
 
@@ -134,20 +135,19 @@ export class AdvancedPersona implements AIStrategy {
 
     shouldAttemptChallenge(challenge: Card, availableCards: Card[], gameState: GameState): boolean {
         const totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
-        // Might attempt even if slightly underpowered if they rely on luck or just strict math
-        // But basic logic: minimal requirement meets.
-        return totalPower >= (challenge.power || 0)
+        // Very cautious - only attempts when confident of success
+        return totalPower >= (challenge.power || 0) * 1.5
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {
-        // Calculates expected value. Often Term is better value.
-        // If vitality is low, might take Whole Life? Actually Advanced players usually optimize for Term/No Insurance and rely on skill.
+        // Prefers Whole Life - Term is broken
+        if (availableTypes.includes('whole_life')) return 'whole_life'
         return 'term'
     }
 
     shouldRenewInsurance(insurance: Card, cost: number, gameState: GameState): boolean {
-        // Only if critical.
-        return gameState.vitality < 30 // Only if low HP
+        // Renews if cost is reasonable
+        return cost < 25 // Slightly increased threshold
     }
 
     calculateRiskScore(gameState: GameState): number {

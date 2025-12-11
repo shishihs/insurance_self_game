@@ -83,25 +83,22 @@ export const AVAILABLE_CHARACTERS: Character[] = [
   {
     id: 'solid',
     name: '堅実家',
-    description: '守り重視。初期活力が高く、貯蓄の効果が高い。',
-    initialVitalityModifier: 15,  // Increased from 10
-    initialSavings: 15,           // Increased from 10
-    specialAbility: 'savings_bonus'
+    description: '守り重視。初期活力が高く、保険の効果が高い。',
+    initialVitalityModifier: 20,  // 貯蓄ボーナスの代わりに活力ボーナスを増加
+    specialAbility: 'insurance_bonus'  // 貯蓄ボーナスから保険ボーナスに変更
   },
   {
     id: 'adventurer',
     name: '冒険家',
     description: 'リスク志向。初期活力は低いが、チャンスに強い。',
-    initialVitalityModifier: -5,  // Increased from -10
-    initialSavings: 5,            // Increased from 0
+    initialVitalityModifier: -5,
     specialAbility: 'risk_taker'
   },
   {
     id: 'minimalist',
     name: 'ミニマリスト',
-    description: '効率重視。無駄を嫌う生活スタイル。',
-    initialVitalityModifier: 5,   // Increased from 0
-    initialSavings: 10,           // Increased from 5
+    description: '効率重視。バランスの取れた生活スタイル。',
+    initialVitalityModifier: 10,
     specialAbility: 'efficiency'
   }
 ]
@@ -319,7 +316,6 @@ export interface IGameState {
   agingDeck: Deck
   score: number             // 現在のスコア
   selectedDream: Card | undefined      // 選択した夢カード (DreamCard)
-  savings: number           // 貯蓄 (新要素)
 
   // 統計
   stats: PlayerStats

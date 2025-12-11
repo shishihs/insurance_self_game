@@ -98,7 +98,6 @@ export class Game implements IGameState {
   // v2: 新要素
   agingDeck: Deck
   score: number = 0
-  savings: number = 0
   insuranceMarket: Card[] = []
   selectedDream: Card | undefined = undefined
 
@@ -303,7 +302,6 @@ export class Game implements IGameState {
     this.cardManager.getState().agingDeck.shuffle()
 
     this.score = 0
-    this.savings = character.initialSavings || 0 // Apply character initial savings
 
     // Phase 3: 保険料負担の初期化
     this._insuranceBurden = InsurancePremium.create(0)
@@ -374,30 +372,11 @@ export class Game implements IGameState {
       throw new Error('Change amount must be a finite number')
     }
 
-    let remainingDamage = damage
-
-    // 貯蓄がある場合は優先して使用
-    if (this.savings > 0) {
-      const savingsDeduction = Math.min(this.savings, remainingDamage)
-      this.savings -= savingsDeduction
-      remainingDamage -= savingsDeduction
-      console.log(`🛡️ 貯蓄を使用: -${savingsDeduction} ポイント (残り貯蓄: ${this.savings})`)
-    }
-
-    if (remainingDamage > 0) {
-      this.updateVitality(-remainingDamage)
-    }
+    // ダメージを直接活力に適用
+    this.updateVitality(-damage)
   }
 
-  /**
-   * 貯蓄に追加する
-   * @param {number} amount - 追加する量
-   */
-  depositSavings(amount: number): void {
-    if (amount <= 0) return
-    this.savings += amount
-    console.log(`💰 貯蓄: +${amount} ポイント (合計: ${this.savings})`)
-  }
+
 
   /**
    * 体力を回復させる
@@ -614,8 +593,7 @@ export class Game implements IGameState {
     const actualMax = Math.max(startVal, maxVal)
     this._vitality = Vitality.create(Math.min(startVal, actualMax), actualMax)
 
-    this.savings = character.initialSavings || 0
-    console.log(`[Game] Character switched to ${character.name}. Vitality: ${this.vitality}/${this.maxVitality}, Savings: ${this.savings}`)
+    console.log(`[Game] Character switched to ${character.name}. Vitality: ${this.vitality}/${this.maxVitality}`)
 
     // Proceed to Dream Selection
     this.startDreamSelectionPhase()
@@ -930,6 +908,8 @@ export class Game implements IGameState {
     }
   }
 
+
+
   /**
    * 保険請求を拒否
    */
@@ -995,11 +975,8 @@ export class Game implements IGameState {
     // 医療保険チェック (on_heavy_damage) - ダメージ適用前に判定
     if (change < 0 && Math.abs(change) >= 10) {
       // activeInsurancesの確認
-      console.error(`[Game] Checking Medical Insurance. Active: ${this.activeInsurances.length}`)
-      console.error(`[Game] Active Types: ${this.activeInsurances.map(c => c.insuranceTriggerType).join(',')}`)
       const insurance = this.activeInsurances.find(c => c.insuranceTriggerType === 'on_heavy_damage')
       if (insurance) {
-        console.error('[Game] Heavy damage detected, Medical Insurance triggering')
         this.triggerInsuranceClaim(insurance, 'on_heavy_damage')
 
         // 保留状態で処理中断（ダメージ適用しない）
@@ -1046,17 +1023,20 @@ export class Game implements IGameState {
     }
 
     // ゲームオーバー判定
-    console.log(`[Game] Vitality Check: ${this.vitality}, isDepleted: ${this._vitality.isDepleted()}`)
-    console.log(`[Game] Active Insurances: ${this.activeInsurances.map(c => c.name + ':' + c.insuranceTriggerType).join(',')}`)
-
     if (this._vitality.isDepleted()) {
+      console.error('[DEBUG] Vitality Depleted!')
+      console.error(`[DEBUG] Active Insurances: ${this.activeInsurances.length}`)
+      this.activeInsurances.forEach((c, i) => console.error(`[DEBUG] Ins[${i}]: id=${c.id}, trigger=${c.insuranceTriggerType}`))
+
       // 生命保険チェック (on_death)
       const insurance = this.activeInsurances.find(c => c.insuranceTriggerType === 'on_death')
       if (insurance) {
-        console.log('[Game] Vitality depleted but Life Insurance found!')
+        console.error(`[DEBUG] FOUND Life Insurance: ${insurance.id}`)
         this.triggerInsuranceClaim(insurance, 'on_death')
         // まだゲームオーバーにしない
         return
+      } else {
+        console.error('[DEBUG] NOT FOUND Life Insurance')
       }
 
       this.changeStatus('game_over')

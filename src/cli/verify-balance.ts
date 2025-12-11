@@ -24,7 +24,7 @@ const runVerification = async () => {
         results[persona.name] = { win: 0, loss: 0, stats: [] };
 
         for (let i = 0; i < GAMES_PER_PERSONA; i++) {
-            process.stdout.write(`\r   Game ${i + 1}/${GAMES_PER_PERSONA}`);
+            process.stdout.write(`\r   Running Game ${i + 1}/${GAMES_PER_PERSONA} (${Math.round(((i + 1) / GAMES_PER_PERSONA) * 100)}%)...`);
 
             const renderer = new PersonaGameRenderer(persona);
             const controller = GameControllerFactory.createDefault(renderer);
