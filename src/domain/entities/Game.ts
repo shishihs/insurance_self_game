@@ -630,9 +630,9 @@ export class Game implements IGameState {
     this.changePhase('draw')
     this.changeTurn(1)
 
-    // Initial Draw (Turn 1 start) - Removed for v2 (Draw after challenge selection)
-    // const initialDrawCount = GameConstantsAccessor.getBalanceSettings().CARD_LIMITS.startingHandSize
-    // await this.drawCards(initialDrawCount)
+    // Initial Draw (Turn 1 start) - Reactivated for v3 (Draw at turn start)
+    const initialDrawCount = 7
+    await this.drawCards(initialDrawCount)
   }
 
   /**
