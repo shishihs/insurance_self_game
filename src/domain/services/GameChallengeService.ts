@@ -99,6 +99,13 @@ export class GameChallengeService {
         const challengeName = game.currentChallenge.name
         const currentFailures = game.getLearningHistory(challengeName)
         game.updateLearningHistory(challengeName, currentFailures + 1)
+
+        // 夢カードに敗北した場合のペナルティ（難易度上昇）
+        if (game.currentChallenge.isDreamCard()) {
+          console.log(`[Game] Defeated by dream: ${challengeName}. Increasing difficulty.`)
+          game.challengeDifficultyModifier += 2
+          console.log(`[Game] Difficulty modifier increased to ${game.challengeDifficultyModifier}`)
+        }
       }
 
       // 成功時: 保険選択肢を提示

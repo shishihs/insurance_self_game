@@ -13,6 +13,7 @@ export const useGameStore = defineStore('game', () => {
 
     // Explicit reactive state for UI
     const handState = ref<Card[]>([])
+    const lastHandAction = ref<'play' | 'discard'>('discard') // Control animation direction
     const vitalityState = ref(0)
     const maxVitalityState = ref(100)
     const currentStageState = ref<string>('youth')
@@ -25,7 +26,7 @@ export const useGameStore = defineStore('game', () => {
     const scoreState = ref(0)
     const cardChoicesState = ref<Card[]>([])
     const insuranceTypeChoicesState = ref<any[]>([])
-    const rewardCardChoicesState = ref<Card[]>([]) // 報酬カード選択肢
+
     const pendingInsuranceClaimState = ref<PendingInsuranceClaim | undefined>(undefined) // 保留中の保険請求
     const availableOnDemandInsurancesState = ref<Card[]>([]) // 使用可能な就業不能保険
     const maxTurnsState = ref(20) // Default 20
@@ -47,7 +48,7 @@ export const useGameStore = defineStore('game', () => {
     const currentChallenge = computed(() => currentChallengeState.value)
 
     const insuranceTypeChoices = computed(() => insuranceTypeChoicesState.value)
-    const rewardCardChoices = computed(() => rewardCardChoicesState.value) // 報酬カード選択肢
+
     const pendingInsuranceClaim = computed(() => pendingInsuranceClaimState.value)
     const availableOnDemandInsurances = computed(() => availableOnDemandInsurancesState.value)
 
@@ -174,16 +175,18 @@ export const useGameStore = defineStore('game', () => {
 
     function resolveChallenge() {
         if (!game.value) return
+
+        lastHandAction.value = 'play'
         const result = game.value.resolveChallenge()
         lastMessage.value = result.message
 
-        // 報酬カードがある場合は選択肢を設定
-        if (result.success && result.cardChoices && result.cardChoices.length > 0) {
-            rewardCardChoicesState.value = [...result.cardChoices]
-            console.log('[GameStore] Reward cards available:', result.cardChoices.length)
-        }
-
         triggerUpdate()
+
+        // Reset to default 'discard' after a delay to ensure future discards (e.g. at end of turn) use discard animation
+        setTimeout(() => {
+            lastHandAction.value = 'discard'
+        }, 1000)
+
         return result
     }
 
@@ -203,28 +206,6 @@ export const useGameStore = defineStore('game', () => {
             console.error('Failed to select insurance:', e)
             lastMessage.value = '保険の加入に失敗しました'
         }
-    }
-
-    function selectRewardCard(card: Card) {
-        if (!game.value) return
-        console.log('[GameStore] Selecting reward card:', card.name)
-
-        // カードをプレイヤーデッキに追加
-        game.value.addCardToPlayerDeck(card)
-        game.value.stats.cardsAcquired++
-
-        // 報酬選択肢をクリア
-        rewardCardChoicesState.value = []
-
-        lastMessage.value = `「${card.name}」を獲得しました！`
-        triggerUpdate()
-    }
-
-    function skipRewardCard() {
-        // 報酬をスキップする場合
-        rewardCardChoicesState.value = []
-        lastMessage.value = '報酬カードをスキップしました'
-        triggerUpdate()
     }
 
     function skipInsurance() {
@@ -325,8 +306,8 @@ export const useGameStore = defineStore('game', () => {
         currentStatus,
         currentChallenge,
         insuranceTypeChoices,
-        rewardCardChoices, // 報酬カード選択肢
         lastMessage,
+        lastHandAction,
         initializeGame,
         startGame,
         drawCards,
@@ -334,8 +315,7 @@ export const useGameStore = defineStore('game', () => {
         drawChallenge,
         resolveChallenge,
         selectInsurance,
-        selectRewardCard, // 報酬カード選択
-        skipRewardCard, // 報酬スキップ
+
         skipInsurance, // 保険スキップ（保険に入らない選択）
         pendingInsuranceClaim,
         claimInsurance,

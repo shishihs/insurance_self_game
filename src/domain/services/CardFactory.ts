@@ -546,14 +546,15 @@ export class CardFactory {
 
     // fulfillmentステージでは夢カードを大量に追加（夢達成で勝利できる）
     const challenges = [...normalChallenges, ...riskChallenges]
-    if (stage === 'fulfillment') {
-      const dreamCards = this.createDreamCards()
-      // ランダムに3枚の夢カードを追加（確実に出会えるように）
-      for (let i = 0; i < 3; i++) {
-        const randomDream = dreamCards[Math.floor(Math.random() * dreamCards.length)]
-        if (randomDream) {
-          challenges.push(randomDream)
-        }
+
+    // すべてのステージで夢カードが出現するチャンス（ユーザー要望）
+    // 夢カードをランダムに1-2枚追加
+    const dreamCards = this.createDreamCards()
+    const dreamCount = Math.floor(Math.random() * 2) + 1 // 1-2枚
+    for (let i = 0; i < dreamCount; i++) {
+      const randomDream = dreamCards[Math.floor(Math.random() * dreamCards.length)]
+      if (randomDream) {
+        challenges.push(randomDream)
       }
     }
 
@@ -565,12 +566,13 @@ export class CardFactory {
    */
   static createDreamCards(): Card[] {
     const dreamDefinitions = [
-      // 夢カード: 高難易度チャレンジ（失敗すると大ダメージ、保険必須）
-      { name: '世界一周旅行', description: '未知の世界を体験する大冒険', power: 35, damage: 40, dreamCategory: 'physical' as DreamCategory },
-      { name: '本の出版', description: '自分の知識を世に残す挑戦', power: 35, damage: 40, dreamCategory: 'intellectual' as DreamCategory },
-      { name: '幸せな家庭', description: '愛に満ちた生活を築く', power: 30, damage: 35, dreamCategory: 'mixed' as DreamCategory },
-      { name: '起業して成功', description: '自分のビジネスで成功を掴む', power: 40, damage: 50, dreamCategory: 'mixed' as DreamCategory },
-      { name: '隠居生活', description: '静かで穏やかな余生を送る', power: 25, damage: 30, dreamCategory: 'physical' as DreamCategory }
+      // 夢カード: 超高難易度チャレンジ（失敗・回避で難易度上昇）
+      // ユーザー要望: 難易度80
+      { name: '世界一周旅行', description: '未知の世界を体験する大冒険', power: 80, damage: 40, dreamCategory: 'physical' as DreamCategory },
+      { name: '本の出版', description: '自分の知識を世に残す挑戦', power: 80, damage: 40, dreamCategory: 'intellectual' as DreamCategory },
+      { name: '幸せな家庭', description: '愛に満ちた生活を築く', power: 75, damage: 35, dreamCategory: 'mixed' as DreamCategory },
+      { name: '起業して成功', description: '自分のビジネスで成功を掴む', power: 85, damage: 50, dreamCategory: 'mixed' as DreamCategory },
+      { name: '隠居生活', description: '静かで穏やかな余生を送る', power: 70, damage: 30, dreamCategory: 'physical' as DreamCategory }
     ]
 
     return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard({ ...def, penalty: def.damage, isDream: true }))

@@ -35,52 +35,62 @@ const spacingClass = computed(() => {
       name="hand" 
       tag="div" 
       class="flex items-end justify-center perspective-1000 w-full max-w-6xl pointer-events-auto"
-      :class="spacingClass"
+      :class="[spacingClass, { 'is-playing': store.lastHandAction === 'play' }]"
     >
       <div 
         v-for="(card, index) in hand" 
         :key="card.id"
-        class="relative transition-all duration-200 ease-out hover:z-50 hover:!-translate-y-32 hover:scale-125 origin-bottom"
+        class="group relative origin-bottom transition-all duration-300 ease-out hover:!z-50"
         :style="{ zIndex: index }"
       >
-        <CardComponent 
-          :card="card" 
-          :is-selected="isSelected(card)"
-          :is-playable="true"
-          class="shadow-2xl"
-          @click="onCardClick"
-        />
+        <div class="transition-all duration-200 ease-out origin-bottom group-hover:-translate-y-32 group-hover:scale-125">
+          <CardComponent 
+            :card="card" 
+            :is-selected="isSelected(card)"
+            :is-playable="true"
+            class="shadow-2xl"
+            @click="onCardClick"
+          />
+        </div>
       </div>
     </TransitionGroup>
   </div>
 </template>
 
 <style scoped>
-/* Container 3D perspective if needed, but 'perspective-1000' class handled it */
+/* Container 3D perspective */
 .perspective-1000 {
   perspective: 1000px;
 }
 
 /* List Transitions */
-.hand-move, /* apply transition to moving elements */
+.hand-move,
 .hand-enter-active,
 .hand-leave-active {
-  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+/* Enter: Draw from Left Deck (Bottom-Left offscreen) */
 .hand-enter-from {
   opacity: 0;
-  transform: translateY(120%) scale(0.8);
+  transform: translate(-100vw, 100px) rotate(-45deg) scale(0.5);
 }
 
+/* Leave: Default Discard (Fly Up) */
 .hand-leave-to {
   opacity: 0;
   transform: translateY(-150%) rotate(15deg) scale(0.6);
 }
 
-/* ensure leaving items are taken out of layout flow so others move smoothly */
+/* Leave: Play to Right (towards discord/challenge result area) */
+.is-playing .hand-leave-to {
+  opacity: 0;
+  transform: translate(50vw, -50vh) rotate(45deg) scale(1.2); /* Fly towards top-right/center */
+}
+
+/* Ensure leaving items don't mess up layout width immediately */
 .hand-leave-active {
   position: absolute;
-  z-index: 0; /* Ensure fading card doesn't block clicks */
+  z-index: 0;
 }
 </style>
