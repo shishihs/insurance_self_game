@@ -91,6 +91,7 @@ defineExpose({
 .action-section {
   display: flex;
   justify-content: center;
+  margin-top: var(--space-lg);
   margin-bottom: var(--space-xl);
 }
 

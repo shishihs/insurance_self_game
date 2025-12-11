@@ -30,22 +30,6 @@
           <span class="accent-text">一人の時間を、最高の冒険に</span>
           <span class="accent-icon">✨</span>
         </div>
-        <div class="hero-stats bounce-in" style="animation-delay: 0.8s;">
-          <div class="stat-item">
-            <span class="stat-value">100+</span>
-            <span class="stat-label">イベントカード</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-value">7</span>
-            <span class="stat-label">人生ステージ</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-value">∞</span>
-            <span class="stat-label">プレイパターン</span>
-          </div>
-        </div>
       </div>
     </div>
   </header>
