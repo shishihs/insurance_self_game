@@ -43,17 +43,17 @@ export class CardFactory {
   static createStarterLifeCards(): Card[] {
     const starterCardDefinitions = [
       // 健康カード
-      { name: '朝のジョギング', description: '健康的な一日の始まり', category: 'health' as LifeCardCategory, power: 2, cost: 1 },
-      { name: '栄養バランスの良い食事', description: '体調管理の基本', category: 'health' as LifeCardCategory, power: 4, cost: 2 },
+      { name: '朝のジョギング', description: '健康的な一日の始まり', category: 'health' as LifeCardCategory, power: 3, cost: 1 },
+      { name: '栄養バランスの良い食事', description: '体調管理の基本', category: 'health' as LifeCardCategory, power: 5, cost: 2 },
       // キャリアカード
-      { name: '新しいスキルの習得', description: '成長への投資', category: 'career' as LifeCardCategory, power: 4, cost: 2 },
-      { name: 'チームワーク', description: '仲間との協力', category: 'career' as LifeCardCategory, power: 2, cost: 1 },
+      { name: '新しいスキルの習得', description: '成長への投資', category: 'career' as LifeCardCategory, power: 5, cost: 2 },
+      { name: 'チームワーク', description: '仲間との協力', category: 'career' as LifeCardCategory, power: 3, cost: 1 },
       // 家族カード
-      { name: '家族との団らん', description: '心の充電', category: 'family' as LifeCardCategory, power: 2, cost: 1 },
+      { name: '家族との団らん', description: '心の充電', category: 'family' as LifeCardCategory, power: 3, cost: 1 },
       // 趣味カード
-      { name: '趣味の時間', description: 'リフレッシュタイム', category: 'hobby' as LifeCardCategory, power: 2, cost: 1 },
+      { name: '趣味の時間', description: 'リフレッシュタイム', category: 'hobby' as LifeCardCategory, power: 3, cost: 1 },
       // 金融カード
-      { name: '計画的な貯蓄', description: '将来への備え', category: 'finance' as LifeCardCategory, power: 4, cost: 2 }
+      { name: '計画的な貯蓄', description: '将来への備え', category: 'finance' as LifeCardCategory, power: 5, cost: 2 }
     ]
 
     return this.createCardsFromDefinitions(starterCardDefinitions, def => this.createLifeCard(def))
@@ -340,7 +340,7 @@ export class CardFactory {
     // 年齢ボーナスの設定
     const ageBonus = this.calculateAgeBonus(stage)
 
-    // 多様な保険タイプの定義（効果タイプ付き）
+    // 多様な保険タイプの定義（効果タイプ + トリガータイプ付き）
     const baseInsuranceTypes = [
       {
         type: 'medical' as InsuranceType,
@@ -349,7 +349,8 @@ export class CardFactory {
         power: 5,
         baseCost: 4,
         coverage: 100,
-        effectType: 'offensive' as InsuranceEffectType
+        effectType: 'offensive' as InsuranceEffectType,
+        triggerType: 'on_heavy_damage' as InsuranceTriggerType
       },
       {
         type: 'life' as InsuranceType,
@@ -358,7 +359,8 @@ export class CardFactory {
         power: 6,
         baseCost: 5,
         coverage: 200,
-        effectType: 'offensive' as InsuranceEffectType
+        effectType: 'offensive' as InsuranceEffectType,
+        triggerType: 'on_death' as InsuranceTriggerType
       },
       {
         type: 'income' as InsuranceType,
@@ -367,7 +369,8 @@ export class CardFactory {
         power: 5,
         baseCost: 4,
         coverage: 150,
-        effectType: 'offensive' as InsuranceEffectType
+        effectType: 'offensive' as InsuranceEffectType,
+        triggerType: 'on_demand' as InsuranceTriggerType
       },
       {
         type: 'health' as InsuranceType,
@@ -376,7 +379,8 @@ export class CardFactory {
         power: 0,
         baseCost: 3,
         coverage: 80,
-        effectType: 'defensive' as InsuranceEffectType
+        effectType: 'defensive' as InsuranceEffectType,
+        triggerType: 'on_heavy_damage' as InsuranceTriggerType
       },
       {
         type: 'disability' as InsuranceType,
@@ -385,7 +389,8 @@ export class CardFactory {
         power: 0,
         baseCost: 3,
         coverage: 60,
-        effectType: 'recovery' as InsuranceEffectType
+        effectType: 'recovery' as InsuranceEffectType,
+        triggerType: 'on_aging_gameover' as InsuranceTriggerType
       }
     ]
 
@@ -398,13 +403,13 @@ export class CardFactory {
       // 定期保険の期間設定（5ターン）
       const termDuration = 5
 
-      // 定期保険のコスト（毎ターンコストが高い - 掛け捨て型）
-      // 基本コストの1.3倍（期間が短いので月々は高い）
-      const termCost = Math.ceil(selectedType.baseCost * 1.3)
+      // 定期保険のコスト（安い - 若者向け掛け捨て型）
+      // 基本コストの0.5倍（期間が短く、保障も一時的なので安い）
+      const termCost = Math.ceil(selectedType.baseCost * 0.5)
 
-      // 終身保険のコスト（毎ターンコストが低い - 貯蓄型）
-      // 基本コストの0.6倍（永続なので月々は安い）
-      const wholeLifeCost = Math.floor(selectedType.baseCost * 0.6)
+      // 終身保険のコスト（高い - 長期保障の代償）
+      // 基本コストの2.0倍（永続だが月々は非常に高い）
+      const wholeLifeCost = Math.ceil(selectedType.baseCost * 2.0)
 
       const choice: InsuranceTypeChoice = {
         insuranceType: selectedType.type,
@@ -419,6 +424,7 @@ export class CardFactory {
           insuranceType: selectedType.type,
           coverage: selectedType.coverage,
           insuranceEffectType: selectedType.effectType,
+          insuranceTriggerType: selectedType.triggerType, // トリガータイプを追加
           effects: [{
             type: 'shield',
             value: selectedType.coverage,
@@ -429,11 +435,11 @@ export class CardFactory {
         termOption: {
           cost: termCost,
           duration: termDuration,
-          description: `${termDuration}ターン限定（毎ターン${termCost}コスト・高め）`
+          description: `${termDuration}ターン限定（毎ターン${termCost}コスト・安め）`
         },
         wholeLifeOption: {
           cost: wholeLifeCost,
-          description: `永続保障（毎ターン${wholeLifeCost}コスト・安め）`
+          description: `永続保障（毎ターン${wholeLifeCost}コスト・高め）`
         }
       }
 
@@ -459,6 +465,7 @@ export class CardFactory {
       effects: choice.baseCard.effects,
       ageBonus: choice.baseCard.ageBonus,
       insuranceEffectType: choice.baseCard.insuranceEffectType,
+      insuranceTriggerType: choice.baseCard.insuranceTriggerType, // トリガータイプを追加
       durationType: 'term',
       remainingTurns: choice.termOption.duration
     } as any)
@@ -480,6 +487,7 @@ export class CardFactory {
       effects: choice.baseCard.effects,
       ageBonus: choice.baseCard.ageBonus,
       insuranceEffectType: choice.baseCard.insuranceEffectType,
+      insuranceTriggerType: choice.baseCard.insuranceTriggerType, // トリガータイプを追加
       durationType: 'whole_life'
     } as any)
   }
@@ -518,8 +526,8 @@ export class CardFactory {
         { name: '生涯の研究発表', description: '長年の探究の成果を世に出す', power: 26, damage: 10, dreamCategory: 'intellectual' as DreamCategory },
         { name: '世界平和への貢献', description: '国境を越えた慈善活動', power: 30, damage: 12, dreamCategory: 'mixed' as DreamCategory },
         // 最高難度チャレンジ
-        { name: '宇宙旅行', description: '人類の夢、星々の海へ', power: 35, damage: 15, dreamCategory: 'physical' as DreamCategory },
-        { name: '伝説の継承', description: '自身の生き様を伝説として残す', power: 40, damage: 20, dreamCategory: 'mixed' as DreamCategory }
+        { name: '宇宙旅行', description: '人類の夢、星々の海へ', power: 35, damage: 15, dreamCategory: 'physical' as DreamCategory, isDream: true },
+        { name: '伝説の継承', description: '自身の生き様を伝説として残す', power: 40, damage: 20, dreamCategory: 'mixed' as DreamCategory, isDream: true }
       ]
     }
 
@@ -531,12 +539,25 @@ export class CardFactory {
     const selectedCount = 3 + Math.floor(Math.random() * 2) // 3-4枚
     const selected = shuffled.slice(0, selectedCount)
 
-    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard({ ...def, penalty: def.damage, isDream: false }))
+    const normalChallenges = this.createCardsFromDefinitions(selected, def => this.createChallengeCard({ ...def, penalty: def.damage, isDream: (def as any).isDream || false }))
 
     // リスク・リワードチャレンジを追加（20%の確率）
     const riskChallenges = this.createRiskRewardChallenges(stage)
 
-    return [...normalChallenges, ...riskChallenges]
+    // fulfillmentステージでは夢カードを大量に追加（夢達成で勝利できる）
+    const challenges = [...normalChallenges, ...riskChallenges]
+    if (stage === 'fulfillment') {
+      const dreamCards = this.createDreamCards()
+      // ランダムに3枚の夢カードを追加（確実に出会えるように）
+      for (let i = 0; i < 3; i++) {
+        const randomDream = dreamCards[Math.floor(Math.random() * dreamCards.length)]
+        if (randomDream) {
+          challenges.push(randomDream)
+        }
+      }
+    }
+
+    return challenges
   }
 
   /**
@@ -544,11 +565,12 @@ export class CardFactory {
    */
   static createDreamCards(): Card[] {
     const dreamDefinitions = [
-      { name: '世界一周旅行', description: '未知の世界を体験する', power: 50, damage: 20, dreamCategory: 'physical' as DreamCategory },
-      { name: '本の出版', description: '自分の知識を世に残す', power: 50, damage: 20, dreamCategory: 'intellectual' as DreamCategory },
-      { name: '幸せな家庭', description: '愛に満ちた生活', power: 50, damage: 20, dreamCategory: 'mixed' as DreamCategory },
-      { name: '起業して成功', description: '自分のビジネスを持つ', power: 60, damage: 25, dreamCategory: 'mixed' as DreamCategory },
-      { name: '隠居生活', description: '静かで穏やかな余生', power: 45, damage: 15, dreamCategory: 'physical' as DreamCategory }
+      // 夢カード: 高難易度チャレンジ（失敗すると大ダメージ、保険必須）
+      { name: '世界一周旅行', description: '未知の世界を体験する大冒険', power: 35, damage: 40, dreamCategory: 'physical' as DreamCategory },
+      { name: '本の出版', description: '自分の知識を世に残す挑戦', power: 35, damage: 40, dreamCategory: 'intellectual' as DreamCategory },
+      { name: '幸せな家庭', description: '愛に満ちた生活を築く', power: 30, damage: 35, dreamCategory: 'mixed' as DreamCategory },
+      { name: '起業して成功', description: '自分のビジネスで成功を掴む', power: 40, damage: 50, dreamCategory: 'mixed' as DreamCategory },
+      { name: '隠居生活', description: '静かで穏やかな余生を送る', power: 25, damage: 30, dreamCategory: 'physical' as DreamCategory }
     ]
 
     return this.createCardsFromDefinitions(dreamDefinitions, def => this.createChallengeCard({ ...def, penalty: def.damage, isDream: true }))

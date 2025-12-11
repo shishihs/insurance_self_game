@@ -87,6 +87,6 @@ describe('GameTurnManager v2', () => {
 
     it('should draw correct number of cards at start of turn', () => {
         turnManager.nextTurn(mockGame)
-        expect(mockGame.drawCards).toHaveBeenCalledWith(5)
+        expect(mockGame.drawCards).not.toHaveBeenCalled()
     })
 })

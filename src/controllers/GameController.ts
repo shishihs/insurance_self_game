@@ -66,14 +66,19 @@ export class GameController {
     this.log(`=== ターン ${this.game.turn} 開始 ===`)
 
     // フェーズごとの処理
-    await this.handleDrawPhase()
+    // await this.handleDrawPhase() // 廃止: チャレンジ決定後にドローする
+
+    if (this.game.status !== 'in_progress') return
     await this.handleChallengePhase()
 
     // Phase 4: 保険フェーズ (ルールブック v2準拠) - 廃止 (チャレンジ成功報酬に統合)
     // await this.handleInsurancePhase()
 
+    if (this.game.status !== 'in_progress') return
     // 保険更新（維持）フェーズ - 有効化
     await this.handleInsuranceRenewalPhase()
+
+    if (this.game.status !== 'in_progress') return
 
     // ターン終了処理
     this.game.nextTurn()
@@ -114,6 +119,13 @@ export class GameController {
     // ゲーム開始（ステータス変更）
     this.game.start()
 
+    // v2: キャラクター選択フェーズの処理
+    if (this.game.phase === 'character_selection') {
+      // TODO: インタラクティブな選択をRendererに追加する
+      // 現在はデフォルト(Solid)を自動選択
+      this.game.selectCharacter('solid')
+    }
+
     // v2: 夢選択フェーズの処理
     if (this.game.phase === 'dream_selection') {
       await this.handleDreamSelectionPhase()
@@ -131,9 +143,10 @@ export class GameController {
     // handleDrawPhase は "maxHandSizeまで補充" するロジックなので、
     // ここで引いておけば handleDrawPhase では引かない（満タンなら）。
 
-    if (this.game.hand.length === 0) {
-      this.game.drawCards(this.game.config.startingHandSize)
-    }
+    // v2変更: 初期手札は0で開始し、チャレンジ選択後に引く
+    // if (this.game.hand.length === 0) {
+    //   this.game.drawCards(this.game.config.startingHandSize)
+    // }
 
     this.updateDisplay()
     await this.renderer.showMessage('ゲームが開始されました！', 'success')
@@ -210,10 +223,18 @@ export class GameController {
     // チャレンジ開始（選択されなかったカードはデッキに戻る/捨てられる等の処理が内部で行われる）
     this.game.startChallenge(selectedChallenge)
 
+    // v2: 追加ルール - チャレンジ決定後にカードを7枚引く（勝率向上のため増量）
+    console.log('[DEBUG-GC] Pre-Draw')
+    await this.game.drawCards(7)
+    console.log('[DEBUG-GC] Post-Draw')
+    this.log(`チャレンジ「${selectedChallenge.name}」に合わせてカードを7枚引きました`)
+
     this.updateDisplay()
+    console.log('[DEBUG-GC] Pre-Execution')
 
     // チャレンジ実行
     await this.executeChallengeFlow(selectedChallenge)
+    console.log('[DEBUG-GC] Post-Execution')
   }
 
   /**
@@ -222,6 +243,7 @@ export class GameController {
   private async executeChallengeFlow(challengeCard: Card): Promise<void> {
     // カード選択
     if (this.game.hand.length === 0) {
+      console.log('[DEBUG-GC] No hand!')
       await this.renderer.showMessage('手札がありません。チャレンジに失敗しました。', 'warning')
       // startChallengeは既に呼ばれている
       const result = this.game.resolveChallenge()
@@ -231,7 +253,9 @@ export class GameController {
     }
 
     // チャレンジ用カード選択依頼
+    console.log(`[DEBUG-GC] Asking card selection... Hand size: ${this.game.hand.length}`)
     const selectedCards = await this.askCardSelectionForChallenge(challengeCard)
+    console.log(`[DEBUG-GC] Selected cards: ${selectedCards.length}`)
 
     // 選択されたカードをセット（トグル）
     for (const card of selectedCards) {
@@ -239,7 +263,9 @@ export class GameController {
     }
 
     // チャレンジ実行（判定）
+    console.log(`[DEBUG-GC] Resolving challenge...`)
     const result = this.game.resolveChallenge()
+    console.log(`[DEBUG-GC] Challenge resolved. Success: ${result.success}`)
     this.renderer.showChallengeResult(result)
 
     // 結果に応じた処理

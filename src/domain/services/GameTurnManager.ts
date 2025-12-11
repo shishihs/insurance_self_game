@@ -98,8 +98,9 @@ export class GameTurnManager {
     }
 
     // ターン開始時のドロー (手札を補充)
-    const drawCount = game.config.startingHandSize || 5
-    game.drawCards(drawCount)
+    // GameController側でチャレンジ決定後に引くように変更するため削除
+    // const drawCount = game.config.startingHandSize || 5
+    // game.drawCards(drawCount)
 
     // 回復型保険の効果を適用
     this.applyRecoveryInsuranceEffects(game)
@@ -113,29 +114,22 @@ export class GameTurnManager {
 
   /**
    * 勝利条件をチェック
+   * 勝利条件: 夢チャレンジをクリアした場合のみ（Game.tsのresolveChallengeで判定）
+   * 敗北条件: 最大ターン数に達しても夢を達成できなかった場合
    * @private
    */
   private checkVictoryCondition(game: Game): void {
-    const settings = game.config.balanceConfig?.progressionSettings || {
-      maxTurns: 20,
-      victoryConditions: { minTurns: 15, minVitality: 50 }
+    // 最大ターン数（夢を達成できなければゲームオーバー）
+    // 夢達成には時間がかかるため、少し長めに設定
+    const maxTurns = 100
+
+    if (game.turn >= maxTurns && game.status !== 'victory') {
+      game.status = 'game_over'
+      game.completedAt = new Date()
+      console.log(`💔 ゲームオーバー: ${maxTurns}ターン経過しても夢を達成できませんでした`)
     }
 
-    const maxTurns = settings.maxTurns ?? 50
-    const minVitality = settings.victoryConditions?.minVitality ?? 50
-
-    // 勝利条件: 最大ターン数に到達 & 活力が最小値以上
-    if (game.turn >= maxTurns && game.vitality >= minVitality) {
-      game.status = 'victory'
-      game.completedAt = new Date()
-      console.log(`🎉 勝利！ ターン${game.turn}で活力${game.vitality}を維持してクリア！`)
-    }
-    // 代替勝利条件: 充実期で一定ターン生存
-    else if (game.stage === 'fulfillment' && game.turn >= 40 && game.vitality >= minVitality) {
-      game.status = 'victory'
-      game.completedAt = new Date()
-      console.log(`🎉 充実期クリア！ ターン${game.turn}で活力${game.vitality}を維持！`)
-    }
+    // Note: 夢達成はGame.tsのresolveChallenge内で判定
   }
 
   /**

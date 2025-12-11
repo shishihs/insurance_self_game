@@ -31,6 +31,7 @@ const runVerification = async () => {
 
             // Disable debug logs for bulk run
             controller.setDebugMode(false);
+            renderer.setDebugMode(false);
 
             try {
                 const finalStats = await controller.playGame();

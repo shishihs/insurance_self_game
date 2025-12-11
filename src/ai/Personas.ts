@@ -31,9 +31,16 @@ export class BeginnerPersona implements AIStrategy {
     }
 
     shouldAttemptChallenge(challenge: Card, availableCards: Card[], gameState: GameState): boolean {
-        const totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
-        // Recklessly attempts challenges even when underpowered - leads to failures
-        return totalPower >= (challenge.power || 0) * 0.8
+        let totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
+
+        // v2: 手札0枚の場合は将来ドローする5枚の期待値で判定
+        if (availableCards.length === 0) {
+            // Beginner: 楽観的 (平均パワー6 * 5枚 = 30)
+            totalPower = 30
+        }
+
+        // Extremely reckless - attempts almost any challenge (very low bar)
+        return totalPower >= (challenge.power || 0) * 0.2
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {
@@ -78,16 +85,31 @@ export class IntermediatePersona implements AIStrategy {
         return selected
     }
 
-    shouldAttemptChallenge(challenge: Card, availableCards: Card[], gameState: GameState): boolean {
-        const totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
-        // Attempts if they have enough power (Logic based)
-        return totalPower >= (challenge.power || 0)
+    shouldAttemptChallenge(challenge: Card, availableCards: Card[], _gameState: GameState): boolean {
+        let totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
+
+        // v2: 手札0枚の場合は期待値で判定
+        if (availableCards.length === 0) {
+            // Intermediate: 平均的 (平均パワー4 * 5枚 = 20)
+            totalPower = 20
+        }
+
+        const requiredPower = challenge.power || 0
+
+        // 夢カードには挑戦（勝利に必要）
+        if (challenge.isDreamCard && challenge.isDreamCard()) {
+            // でも1.2倍は欲しい（少し余裕を持つ）
+            return totalPower >= requiredPower * 1.2
+        }
+
+        // 通常チャレンジは必要パワーがあれば挑戦
+        return totalPower >= requiredPower * 1.0
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {
-        // Prefers Whole Life - Term is broken
-        if (availableTypes.includes('whole_life')) return 'whole_life'
-        return 'term'
+        // Prefers Term - it's cheaper now for smart players
+        if (availableTypes.includes('term')) return 'term'
+        return 'whole_life'
     }
 
     shouldRenewInsurance(insurance: Card, cost: number, gameState: GameState): boolean {
@@ -133,16 +155,32 @@ export class AdvancedPersona implements AIStrategy {
         return selected
     }
 
-    shouldAttemptChallenge(challenge: Card, availableCards: Card[], gameState: GameState): boolean {
-        const totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
-        // Very cautious - only attempts when confident of success
-        return totalPower >= (challenge.power || 0) * 1.5
+    shouldAttemptChallenge(challenge: Card, availableCards: Card[], _gameState: GameState): boolean {
+        let totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
+
+        // v2: 手札0枚の場合は期待値で判定
+        if (availableCards.length === 0) {
+            // Advanced: 保守的 (平均パワー3 * 5枚 = 15)
+            // 実際はもっと高いかもしれないが、リスクを避けるため低めに見積もる
+            totalPower = 15
+        }
+
+        const requiredPower = challenge.power || 0
+
+        // 夢カードには積極的に挑戦（勝利条件）
+        if (challenge.isDreamCard && challenge.isDreamCard()) {
+            // 夢チャレンジは必要パワーがあれば挑戦
+            return totalPower >= requiredPower * 1.0
+        }
+
+        // 通常チャレンジには慎重に（少し余裕を持って）
+        return totalPower >= requiredPower * 1.3
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {
-        // Prefers Whole Life - Term is broken
-        if (availableTypes.includes('whole_life')) return 'whole_life'
-        return 'term'
+        // Advanced: Uses Term insurance strategically - cheaper and efficient
+        if (availableTypes.includes('term')) return 'term'
+        return 'whole_life'
     }
 
     shouldRenewInsurance(insurance: Card, cost: number, gameState: GameState): boolean {

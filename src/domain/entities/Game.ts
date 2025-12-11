@@ -630,9 +630,9 @@ export class Game implements IGameState {
     this.changePhase('draw')
     this.changeTurn(1)
 
-    // Initial Draw (Turn 1 start)
-    const initialDrawCount = GameConstantsAccessor.getBalanceSettings().CARD_LIMITS.startingHandSize
-    await this.drawCards(initialDrawCount)
+    // Initial Draw (Turn 1 start) - Removed for v2 (Draw after challenge selection)
+    // const initialDrawCount = GameConstantsAccessor.getBalanceSettings().CARD_LIMITS.startingHandSize
+    // await this.drawCards(initialDrawCount)
   }
 
   /**
@@ -665,7 +665,7 @@ export class Game implements IGameState {
     // Phase check
     if (this.phase !== 'draw') {
       // Allow re-roll or other special cases? For now strict.
-      throw new Error('Can only start challenge phase from draw phase')
+      throw new Error(`Can only start challenge phase from draw phase. Current phase: ${this.phase}`)
     }
 
     const choices: Card[] = []
@@ -751,7 +751,15 @@ export class Game implements IGameState {
    * @throws {Error} アクティブなチャレンジがない場合
    */
   resolveChallenge(): ChallengeResult {
-    return this.challengeService.resolveChallenge(this)
+    const result = this.challengeService.resolveChallenge(this)
+
+    // 夢達成チェック: 夢チャレンジに成功したら勝利
+    if (result.success && this.currentChallenge?.isDreamCard()) {
+      console.log('[Game] 🎉 Dream achieved! Victory!')
+      this.changeStatus('victory')
+    }
+
+    return result
   }
 
   /**
@@ -1043,9 +1051,10 @@ export class Game implements IGameState {
     }
 
     // 不変条件チェック
-    if (this.status === 'game_over' && !this._vitality.isDepleted()) {
-      throw new Error('Game over state inconsistency: vitality not depleted')
-    }
+    // Note: ターン切れによるゲームオーバーもあり得るため、活力が残っていてもOKとする
+    // if (this.status === 'game_over' && !this._vitality.isDepleted()) {
+    //   throw new Error('Game over state inconsistency: vitality not depleted')
+    // }
   }
 
   // ...
@@ -1514,6 +1523,13 @@ export class Game implements IGameState {
   /**
    * ステータスを安全に変更
    */
+  /**
+   * 外部からゲームを終了させる（勝利または敗北）
+   */
+  finishGame(isWin: boolean): void {
+    this.changeStatus(isWin ? 'victory' : 'game_over')
+  }
+
   private changeStatus(newStatus: GameStatus): void {
     const previousStatus = this.status
     this.status = newStatus

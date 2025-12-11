@@ -178,7 +178,11 @@ export class PersonaGameRenderer implements GameRenderer {
         console.error(`[PersonaRenderer Error] ${error}`)
     }
     showGameOver(stats: PlayerStats): void {
-        this.log(`[DEBUG] GameOver`);
+        console.log(`[GameOver] Persona: ${this.strategy.name}, Turn: ${stats.turnsPlayed}, Vitality: ${stats.finalVitality}`)
+        if (this.game) {
+            console.log(`[GameOver Details] Status: ${this.game.status}, Phase: ${this.game.phase}`)
+            // 最後のログ履歴を少し出すと原因が分かるかも
+        }
     }
     showVictory(stats: PlayerStats): void {
         this.log(`[DEBUG] Victory`);

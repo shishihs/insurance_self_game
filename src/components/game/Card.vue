@@ -21,7 +21,7 @@ const cardClasses = computed(() => {
     'bg-gradient-to-br from-red-50 to-white border-red-500': props.card.type === 'challenge',
     'bg-gradient-to-br from-emerald-50 to-white border-emerald-500': props.card.type === 'insurance',
     'bg-gradient-to-br from-purple-50 to-white border-purple-500': props.card.type === 'skill',
-    'bg-gradient-to-br from-amber-50 to-white border-amber-500': props.card.type === 'dream',
+    'bg-gradient-to-br from-red-100 to-white border-red-600 ring-4 ring-offset-2 ring-red-500': props.card.type === 'dream',
   }
 })
 

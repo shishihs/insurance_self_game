@@ -164,8 +164,8 @@ export const BALANCE_CONSTANTS = {
   CHALLENGE_SETTINGS: {
     minDifficulty: 1,          // 最小難易度
     maxDifficulty: 20,         // 最大難易度
-    successBonusBase: 6,       // 成功時ボーナス基準値 (Increased to help survival)
-    failurePenaltyRatio: 1.0,  // 失敗時ペナルティ比率 (Reduced to prevent instant death)
+    successBonusBase: 8,       // 成功時ボーナス基準値 (Increased to reward skilled play)
+    failurePenaltyRatio: 1.5,  // 失敗時ペナルティ比率 (Increased to punish reckless play)
     enableDynamicDifficulty: true // 動的難易度調整の有効化
   } as const,
 
@@ -173,7 +173,7 @@ export const BALANCE_CONSTANTS = {
    * 活力関連
    */
   VITALITY_SETTINGS: {
-    defaultStarting: 80,       // デフォルト初期活力 (Increased to 80 for survival)
+    defaultStarting: 40,       // デフォルト初期活力 (Decreased to 40 for harder start)
     minimumValue: 0,           // 最小活力値
     maximumValue: 150,         // 最大活力値
     healingCap: 0.85           // 回復上限（最大活力の85%）

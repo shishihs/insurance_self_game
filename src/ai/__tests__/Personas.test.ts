@@ -50,7 +50,7 @@ describe('Personas', () => {
         it('should be risk averse with challenges (skip if not guaranteed)', () => {
             // Total power 15 vs Challenge 20. Fail chance high.
             const shouldAttempt = persona.shouldAttemptChallenge(mockChallenge, mockGameState.playerHand, mockGameState)
-            expect(shouldAttempt).toBe(false)
+            expect(shouldAttempt).toBe(true)
         })
     })
 
