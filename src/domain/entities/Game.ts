@@ -22,13 +22,14 @@ import type {
   InsuranceTypeChoice,
   InsuranceTypeSelectionResult,
   PlayerStats,
-  TurnResult
+  TurnResult,
+  PendingInsuranceClaim
 } from '../types/game.types'
 import {
   AVAILABLE_CHARACTERS,
   DREAM_AGE_ADJUSTMENTS
 } from '../types/game.types'
-import type { GameStage } from '../types/card.types'
+import type { GameStage, InsuranceTriggerType } from '../types/card.types'
 import { Vitality } from '../valueObjects/Vitality'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
 import { RiskProfile } from '../valueObjects/RiskProfile'
@@ -103,6 +104,7 @@ export class Game implements IGameState {
 
   // 選択肢
   insuranceTypeChoices: InsuranceTypeChoice[] | undefined = undefined
+  pendingInsuranceClaim: PendingInsuranceClaim | undefined = undefined
 
   // 経験学習システム（GAME_DESIGN.mdより）
   private readonly _learningHistory: Map<string, number> = new Map() // チャレンジ名 -> 失敗回数
@@ -496,8 +498,39 @@ export class Game implements IGameState {
    * @returns {boolean} 老化カードゲームオーバーの場合true
    */
   hasAgingCardGameOver(): boolean {
-    const agingCardsInHand = this.hand.filter(card => card.type === 'aging')
-    return agingCardsInHand.length >= 3
+    return this.hand.filter(c => c.type === 'aging').length >= 3
+  }
+
+
+
+  /**
+   * 老化カードゲームオーバー条件をチェックし、保険があれば発動
+   * @returns {boolean} 条件に該当した場合true (ゲームオーバー または 保険発動)
+   */
+  checkAgingCardGameOverCondition(): boolean {
+    if (this.hasAgingCardGameOver()) {
+      console.log('[Game] Aging Card Game Over Condition Met!')
+
+      // 障害保険チェック
+      const insurance = this.activeInsurances.find(c =>
+        c.insuranceTriggerType === 'on_aging_gameover'
+      )
+
+      if (insurance) {
+        console.log('[Game] Disability Insurance found! Triggering claim.')
+        this.triggerInsuranceClaim(insurance, 'on_aging_gameover')
+        // 保険発動待ち状態になるため、ここではゲームオーバーにしない
+        // ただし、もし保険を拒否すればゲームオーバーになる必要がある
+        // declineInsuranceClaim内で再度チェックするか、
+        // 保険拒否時は即座にゲームオーバーにするロジックが必要
+        return true
+      }
+
+      console.log('[Game] No insurance found. Game Over.')
+      this.changeStatus('game_over')
+      return true
+    }
+    return false
   }
 
   /**
@@ -621,6 +654,9 @@ export class Game implements IGameState {
       console.error('[Game] drawCards failed:', result.error)
       throw new Error(result.error || 'カードドローに失敗しました')
     }
+
+    // 老化カードチェック
+    this.checkAgingCardGameOverCondition()
 
     return result.data || []
   }
@@ -801,6 +837,125 @@ export class Game implements IGameState {
   }
 
   /**
+   * 保険発動をトリガー
+   */
+  triggerInsuranceClaim(insurance: Card, triggerType: InsuranceTriggerType): void {
+    console.log(`[Game] Insurance Triggered: ${insurance.name} (${triggerType})`)
+    this.pendingInsuranceClaim = {
+      insurance,
+      triggerType
+    }
+  }
+
+  /**
+   * 保険請求を実行（効果適用と契約終了）
+   */
+  async resolveInsuranceClaim(): Promise<void> {
+    if (!this.pendingInsuranceClaim) return
+
+    const { insurance, triggerType } = this.pendingInsuranceClaim
+    console.log(`[Game] Resolving Insurance Claim: ${insurance.name}`)
+
+    // 1. 契約終了（削除）
+    this.removeInsurance(insurance)
+
+    // 2. 期限切れ（使用済み）リストに追加
+    this.expiredInsurances = this.expiredInsurances || []
+    this.expiredInsurances.push(insurance)
+
+    // 3. 効果適用
+    await this.applyInsuranceEffect(triggerType)
+
+    // 4. クレーム状態をクリア
+    this.pendingInsuranceClaim = undefined
+
+    // StateManager通知はフェーズ変更などで行うため、ここでは特別な保存は不要
+    // this.stateManager.saveState(this)
+  }
+
+  /**
+   * 保険効果を適用
+   */
+  private async applyInsuranceEffect(triggerType: InsuranceTriggerType): Promise<void> {
+    switch (triggerType) {
+      case 'on_aging_gameover':
+        // 障害保険: 手札を全て捨てて引き直す
+        console.log('[Game] Applying Disability Insurance Effect: Reset Hand')
+        this.cardManager.discardHand()
+        // 初期枚数（5枚）引く
+        await this.drawCards(this.config.startingHandSize)
+        break
+
+      case 'on_death':
+        // 生命保険: 活力回復
+        console.log('[Game] Applying Life Insurance Effect: Revive')
+        this.heal(10) // Fixed amount 10
+        break
+
+      case 'on_heavy_damage':
+        console.log('[Game] Applying Medical Insurance Effect: Damage Reduction')
+        // 医療保険: ダメージを1に軽減
+        this.applyDamage(1)
+        // コンテキストクリアは不要（終了後にpendingごと消える）
+        break
+
+      case 'on_demand':
+        console.log('[Game] Applying Income Protection Effect: Skip Challenge')
+        // 就業不能保険: チャレンジをスキップ
+        // 現在のチャレンジ状態をクリア
+        this.currentChallenge = undefined
+        this.cardManager.clearSelection()
+
+        // フェーズを解決（の後の状態）へ
+        // 結果なしで解決フェーズへ移行すれば、報酬選択なしで次へ進めるはず
+        this.changePhase('resolution')
+        break
+    }
+  }
+
+  /**
+   * 保険請求を拒否
+   */
+  declineInsuranceClaim(): void {
+    console.log(`[Game] Insurance Claim Declined`)
+
+    const triggerType = this.pendingInsuranceClaim?.triggerType
+    const context = this.pendingInsuranceClaim?.context
+
+    // 1. 保留処理の再開 (on_heavy_damage)
+    if (triggerType === 'on_heavy_damage' && context?.damage) {
+      console.log('[Game] Applying original damage after decline')
+      this.applyDamage(context.damage)
+    }
+
+    // クレーム状態をクリア
+    this.pendingInsuranceClaim = undefined
+
+    // 2. ゲームオーバー確定チェック (on_death, on_aging_gameover)
+    // 注意: applyDamageで再度on_deathチェックが入る可能性があるが、pendingがundefinedならgame_overになるはず
+    // しかしここでのチェックは、保険発動前に「止めていた」ゲームオーバー処理を再開するため
+    if (triggerType === 'on_death') {
+      if (this._vitality.isDepleted()) {
+        console.log('[Game] Life Insurance declined. Game Over confirmed.')
+        this.changeStatus('game_over')
+      }
+    }
+    else if (triggerType === 'on_aging_gameover') {
+      if (this.hasAgingCardGameOver()) {
+        console.log('[Game] Disability Insurance declined. Game Over confirmed.')
+        this.changeStatus('game_over')
+      }
+    }
+  }
+
+  /**
+   * 保険を削除
+   */
+  private removeInsurance(card: Card): void {
+    this.insuranceService.removeInsurance(this, card)
+  }
+
+  /**
    * 活力を更新（契約による設計版）
    * 
    * 事前条件: changeは数値である
@@ -819,6 +974,23 @@ export class Game implements IGameState {
 
     // 変更がない場合は処理をスキップ
     if (change === 0) return
+
+    // 医療保険チェック (on_heavy_damage) - ダメージ適用前に判定
+    if (change < 0 && Math.abs(change) >= 10) {
+      // activeInsurancesの確認
+      console.error(`[Game] Checking Medical Insurance. Active: ${this.activeInsurances.length}`)
+      const insurance = this.activeInsurances.find(c => c.insuranceTriggerType === 'on_heavy_damage')
+      if (insurance) {
+        console.error('[Game] Heavy damage detected, Medical Insurance triggering')
+        this.triggerInsuranceClaim(insurance, 'on_heavy_damage')
+
+        // 保留状態で処理中断（ダメージ適用しない）
+        if (this.pendingInsuranceClaim) {
+          this.pendingInsuranceClaim.context = { damage: Math.abs(change) }
+          return
+        }
+      }
+    }
 
     // const previousVitality = this.vitality // Unused variable removed
 
@@ -856,7 +1028,19 @@ export class Game implements IGameState {
     }
 
     // ゲームオーバー判定
+    console.log(`[Game] Vitality Check: ${this.vitality}, isDepleted: ${this._vitality.isDepleted()}`)
+    console.log(`[Game] Active Insurances: ${this.activeInsurances.map(c => c.name + ':' + c.insuranceTriggerType).join(',')}`)
+
     if (this._vitality.isDepleted()) {
+      // 生命保険チェック (on_death)
+      const insurance = this.activeInsurances.find(c => c.insuranceTriggerType === 'on_death')
+      if (insurance) {
+        console.log('[Game] Vitality depleted but Life Insurance found!')
+        this.triggerInsuranceClaim(insurance, 'on_death')
+        // まだゲームオーバーにしない
+        return
+      }
+
       this.changeStatus('game_over')
     }
 
@@ -939,6 +1123,13 @@ export class Game implements IGameState {
    */
   get hand(): Card[] {
     return this.cardManager.getState().hand
+  }
+
+  /**
+   * 手動で使用可能な保険（就業不能保険など）を取得
+   */
+  get availableOnDemandInsurances(): Card[] {
+    return this.activeInsurances.filter(c => c.insuranceTriggerType === 'on_demand')
   }
 
   /**

@@ -1,10 +1,10 @@
-import type { 
-  CardEffect, 
+import type {
+  CardEffect,
   CardEffectType,
-  CardType, 
+  CardType,
   ComboCardProperties,
-  DreamCategory, 
-  EventCardProperties, 
+  DreamCategory,
+  EventCardProperties,
   IAdvancedCard,
   ICard,
   InsuranceDurationType,
@@ -13,7 +13,8 @@ import type {
   LifeCardCategory,
   RewardType,
   SkillCardProperties,
-  SkillRarity
+  SkillRarity,
+  InsuranceTriggerType // 追加
 } from '../types/card.types'
 import { CardPower } from '../valueObjects/CardPower'
 import { InsurancePremium } from '../valueObjects/InsurancePremium'
@@ -57,9 +58,10 @@ export class Card implements IAdvancedCard {
   readonly durationType?: InsuranceDurationType
   remainingTurns?: number // 可変プロパティ（ターンごとに減少）
   readonly insuranceEffectType?: InsuranceEffectType
+  readonly insuranceTriggerType?: InsuranceTriggerType // トリガー型保険の発動条件
   // Phase 4 夢カード用プロパティ
   readonly dreamCategory?: DreamCategory
-  
+
   // 拡張カード用プロパティ
   readonly skillProperties?: SkillCardProperties
   readonly comboProperties?: ComboCardProperties
@@ -77,23 +79,23 @@ export class Card implements IAdvancedCard {
     this.name = params.name
     this.description = params.description
     this.type = params.type
-    
+
     // 値オブジェクトでラップ
     this._power = CardPower.create(params.power)
     this._cost = InsurancePremium.create(params.cost)
-    
+
     this.effects = params.effects
     this.imageUrl = params.imageUrl
     this.category = params.category
     this.insuranceType = params.insuranceType
     this.coverage = params.coverage
     this.penalty = params.penalty
-    
+
     // 年齢ボーナスのプロパティ
     if ('ageBonus' in params) {
       this.ageBonus = params.ageBonus
     }
-    
+
     // 保険期間のプロパティ
     if ('durationType' in params) {
       this.durationType = params.durationType
@@ -104,12 +106,15 @@ export class Card implements IAdvancedCard {
     if ('insuranceEffectType' in params) {
       this.insuranceEffectType = params.insuranceEffectType
     }
-    
+    if ('insuranceTriggerType' in params) {
+      this.insuranceTriggerType = params.insuranceTriggerType
+    }
+
     // Phase 4 夢カードのプロパティ
     if ('dreamCategory' in params) {
       this.dreamCategory = params.dreamCategory
     }
-    
+
     // 拡張カード用プロパティ
     if ('skillProperties' in params) {
       this.skillProperties = params.skillProperties
@@ -246,24 +251,24 @@ export class Card implements IAdvancedCard {
   calculateDamageReduction(): number {
     // 保険カードでない場合は0
     if (!this.isInsurance()) return 0
-    
+
     // ダメージ軽減効果を持つかチェック
     const hasDefensiveEffect = this.isDefensiveInsurance() || this.hasEffect('damage_reduction')
     if (!hasDefensiveEffect) return 0
-    
+
     let totalReduction = 0
-    
+
     // 防御型保険の場合、カバレッジベースの軽減
     if (this.isDefensiveInsurance()) {
       totalReduction += (this.coverage || 0) * INSURANCE_EFFECTIVENESS_RATE
     }
-    
+
     // damage_reduction効果がある場合はその値を加算（効果率適用）
     const reductionEffect = this.getEffect('damage_reduction')
     if (reductionEffect) {
       totalReduction += reductionEffect.value * INSURANCE_EFFECTIVENESS_RATE
     }
-    
+
     // 1枚の保険カードあたりの上限を適用
     return Math.min(totalReduction, MAX_DAMAGE_REDUCTION_PER_INSURANCE)
   }
@@ -274,14 +279,14 @@ export class Card implements IAdvancedCard {
    */
   calculateTurnHeal(): number {
     if (!this.isRecoveryInsurance()) return 0
-    
+
     // カバレッジに基づいて回復量を計算
     const baseHeal = Math.floor((this.coverage || 0) / 20)
-    
+
     // ターン回復効果がある場合はその値を加算
     const healEffect = this.getEffect('turn_heal')
     const effectHeal = healEffect ? healEffect.value : 0
-    
+
     return baseHeal + effectHeal
   }
 
@@ -292,16 +297,16 @@ export class Card implements IAdvancedCard {
    */
   calculateChallengeBonus(challengeType: string): number {
     if (!this.isSpecializedInsurance()) return 0
-    
+
     // 特定チャレンジボーナス効果を確認
     const bonusEffect = this.getEffect('challenge_bonus')
     if (!bonusEffect?.condition) return 0
-    
+
     // 条件が一致する場合のみボーナスを返す
     if (bonusEffect.condition.includes(challengeType)) {
       return bonusEffect.value
     }
-    
+
     return 0
   }
 
@@ -345,7 +350,7 @@ export class Card implements IAdvancedCard {
     if (!this.isTermInsurance() || !this.remainingTurns) {
       return this
     }
-    
+
     return this.copy({
       remainingTurns: Math.max(0, this.remainingTurns - 1)
     })
@@ -395,7 +400,7 @@ export class Card implements IAdvancedCard {
     if (bonus !== undefined) {
       effectivePower += bonus
     }
-    
+
     // 攻撃型保険以外はパワーを提供しない
     if (this.isInsurance() && this.getInsuranceEffectType() !== 'offensive') {
       return 0
@@ -465,12 +470,12 @@ export class Card implements IAdvancedCard {
    */
   toDisplayString(): string {
     let display = `${this.name} - Power: ${this.power}, Cost: ${this.cost}`
-    
+
     if (this.effects.length > 0) {
       const effectDescriptions = this.effects.map(effect => effect.description).join(', ')
       display += ` - Effects: ${effectDescriptions}`
     }
-    
+
     return display
   }
 
@@ -514,7 +519,7 @@ export class Card implements IAdvancedCard {
       cost: 0,
       effects: []
     })
-    
+
     return card
   }
 
@@ -539,11 +544,11 @@ export class Card implements IAdvancedCard {
   static createSkillCard(name: string, rarity: SkillRarity, power: number, cooldown?: number): Card {
     const rarityDescriptions = {
       common: 'コモン',
-      rare: 'レア', 
+      rare: 'レア',
       epic: 'エピック',
       legendary: 'レジェンダリー'
     }
-    
+
     return new Card({
       id: IdGenerator.generate('skill'),
       name,

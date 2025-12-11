@@ -3,7 +3,7 @@ import { ref, computed, shallowRef } from 'vue'
 import { Game } from '@/domain/entities/Game'
 import { Vitality } from '@/domain/valueObjects/Vitality'
 import type { Card } from '@/domain/entities/Card'
-import type { GameConfig } from '@/domain/types/game.types'
+import type { GameConfig, PendingInsuranceClaim } from '@/domain/types/game.types'
 
 export const useGameStore = defineStore('game', () => {
     // State - using shallowRef to avoid deep reactivity on Game instance
@@ -26,6 +26,8 @@ export const useGameStore = defineStore('game', () => {
     const cardChoicesState = ref<Card[]>([])
     const insuranceTypeChoicesState = ref<any[]>([])
     const rewardCardChoicesState = ref<Card[]>([]) // 報酬カード選択肢
+    const pendingInsuranceClaimState = ref<PendingInsuranceClaim | undefined>(undefined) // 保留中の保険請求
+    const availableOnDemandInsurancesState = ref<Card[]>([]) // 使用可能な就業不能保険
     const savingsState = ref(0)
     const maxTurnsState = ref(20) // Default 20
 
@@ -47,6 +49,8 @@ export const useGameStore = defineStore('game', () => {
 
     const insuranceTypeChoices = computed(() => insuranceTypeChoicesState.value)
     const rewardCardChoices = computed(() => rewardCardChoicesState.value) // 報酬カード選択肢
+    const pendingInsuranceClaim = computed(() => pendingInsuranceClaimState.value)
+    const availableOnDemandInsurances = computed(() => availableOnDemandInsurancesState.value)
 
     const activeInsurances = computed(() => activeInsurancesState.value)
     const insuranceMarket = computed(() => insuranceMarketState.value)
@@ -231,6 +235,27 @@ export const useGameStore = defineStore('game', () => {
         triggerUpdate()
     }
 
+    async function claimInsurance() {
+        if (!game.value) return
+        await game.value.resolveInsuranceClaim()
+        triggerUpdate()
+        lastMessage.value = '保険を請求しました'
+    }
+
+    function declineInsuranceClaim() {
+        if (!game.value) return
+        game.value.declineInsuranceClaim()
+        triggerUpdate()
+        lastMessage.value = '保険請求を見送りました'
+    }
+
+    function useOnDemandInsurance(card: Card) {
+        if (!game.value) return
+        game.value.triggerInsuranceClaim(card, 'on_demand')
+        triggerUpdate()
+        lastMessage.value = '就業不能保険の使用を確認しています...'
+    }
+
     function endTurn() {
         if (!game.value) return
         const result = game.value.nextTurn()
@@ -275,6 +300,8 @@ export const useGameStore = defineStore('game', () => {
 
         cardChoicesState.value = game.value.cardChoices ? [...game.value.cardChoices] : []
         insuranceTypeChoicesState.value = game.value.insuranceTypeChoices ? [...game.value.insuranceTypeChoices] : []
+        pendingInsuranceClaimState.value = game.value.pendingInsuranceClaim
+        availableOnDemandInsurancesState.value = game.value.availableOnDemandInsurances
 
         console.log('[GameStore] State synced. Hand size:', handState.value.length)
 
@@ -308,6 +335,11 @@ export const useGameStore = defineStore('game', () => {
         selectRewardCard, // 報酬カード選択
         skipRewardCard, // 報酬スキップ
         skipInsurance, // 保険スキップ（保険に入らない選択）
+        pendingInsuranceClaim,
+        claimInsurance,
+        declineInsuranceClaim,
+        availableOnDemandInsurances,
+        useOnDemandInsurance,
         endTurn,
         toggleCardSelection,
         triggerUpdate,

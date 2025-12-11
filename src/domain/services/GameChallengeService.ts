@@ -137,7 +137,8 @@ export class GameChallengeService {
         playerPower: 0,
         challengePower: 0,
         vitalityChange: 0,
-        message: `システムエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`
+        message: `システムエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`,
+        resultType: 'error' // エラー扱い
       }
     }
   }
@@ -231,7 +232,21 @@ export class GameChallengeService {
     if (change >= 0) {
       game.heal(change)
     } else {
-      game.applyDamage(-change)
+      const damage = -change
+
+      // 医療保険トリガーチェック (ダメージ10以上)
+      if (damage >= 10) {
+        const insurance = game.activeInsurances.find(c => c.insuranceTriggerType === 'on_heavy_damage')
+        if (insurance) {
+          game.triggerInsuranceClaim(insurance, 'on_heavy_damage')
+          if (game.pendingInsuranceClaim) {
+            game.pendingInsuranceClaim.context = { damage }
+            return // ダメージ適用を保留
+          }
+        }
+      }
+
+      game.applyDamage(damage)
     }
   }
 

@@ -29,6 +29,23 @@ export class GameInsuranceService {
   }
 
   /**
+   * 保険を解約・削除
+   */
+  removeInsurance(game: Game, card: Card): void {
+    // GameのactiveInsurancesから削除
+    const index = game.activeInsurances.findIndex(c => c.id === card.id)
+    if (index !== -1) {
+      game.activeInsurances.splice(index, 1)
+    }
+
+    // デッキ/手札/捨て札から削除
+    game.cardManager.removeCardFromGame(card)
+
+    // 保険料再計算
+    this.updateInsuranceBurden(game)
+  }
+
+  /**
    * 保険種類を選択
    */
   selectInsuranceType(

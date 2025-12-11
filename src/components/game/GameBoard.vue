@@ -10,6 +10,7 @@ import InsuranceMarket from './InsuranceMarket.vue'
 import GameResult from './GameResult.vue'
 import TutorialOverlay from './TutorialOverlay.vue'
 import RewardCardSelector from './RewardCardSelector.vue'
+import InsuranceClaimDialog from './InsuranceClaimDialog.vue'
 import type { GameConfig, ChallengeResult } from '@/domain/types/game.types'
 
 const store = useGameStore()
@@ -206,6 +207,19 @@ async function onResolveChallenge() {
           </div>
         </button>
 
+        <!-- On-Demand Insurance Buttons -->
+        <template v-if="store.currentPhase === 'challenge' && store.availableOnDemandInsurances && store.availableOnDemandInsurances.length > 0">
+           <button v-for="insurance in store.availableOnDemandInsurances" :key="insurance.id"
+               @click="store.useOnDemandInsurance(insurance)"
+               class="group w-full relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white rounded-xl font-bold shadow-lg transition-all duration-200 transform hover:scale-105 mb-2"
+           >
+              <div class="px-6 py-4 flex items-center justify-between">
+                <span class="text-lg">{{ insurance.name }}を使う</span>
+                <span class="text-2xl group-hover:scale-110 transition-transform">🛡️</span>
+              </div>
+           </button>
+        </template>
+
         <!-- Button: End Turn -->
         <button 
           v-if="store.currentPhase === 'resolution' || store.currentPhase === 'end'"
@@ -363,6 +377,13 @@ async function onResolveChallenge() {
     
     <!-- Tutorial Overlay -->
     <TutorialOverlay />
+    <!-- Insurance Claim Dialog -->
+    <InsuranceClaimDialog v-if="store.pendingInsuranceClaim" 
+        :pending-claim="store.pendingInsuranceClaim"
+        @claim="store.claimInsurance"
+        @decline="store.declineInsuranceClaim"
+    />
+
   </div>
 </template>
 

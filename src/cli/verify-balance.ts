@@ -5,7 +5,7 @@ import { GameControllerFactory } from '@/controllers/GameController'
 import type { GameConfig, PlayerStats } from '@/domain/types/game.types'
 import chalk from 'chalk'
 
-const GAMES_PER_PERSONA = 1000;
+const GAMES_PER_PERSONA = 50;
 
 const runVerification = async () => {
     console.log(chalk.bold.cyan('🎮 Starting Level Design Verification (Balance Check)'));

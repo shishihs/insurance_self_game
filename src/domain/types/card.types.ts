@@ -114,6 +114,7 @@ export interface ICard {
   durationType?: InsuranceDurationType // 保険期間種別
   remainingTurns?: number // 定期保険の残りターン数（定期保険のみ）
   insuranceEffectType?: InsuranceEffectType // 保険効果タイプ
+  insuranceTriggerType?: InsuranceTriggerType // トリガー型保険の発動条件
 
   // 落とし穴カード固有
   penalty?: number // ペナルティ値

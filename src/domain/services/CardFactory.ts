@@ -6,7 +6,8 @@ import type {
   LifeCardCategory,
   RewardType,
   SkillRarity,
-  InsuranceEffectType
+  InsuranceEffectType,
+  InsuranceTriggerType
 } from '../types/card.types'
 import type { InsuranceTypeChoice } from '../types/game.types'
 import { IdGenerator } from '../../common/IdGenerator'
@@ -247,6 +248,85 @@ export class CardFactory {
       ageBonus,
       durationType: 'whole_life'
     }))
+
+    return cards
+  }
+
+  /**
+   * トリガー型保険カードを生成
+   * 特定の条件で一回限り発動し、契約終了となる保険
+   */
+  static createTriggerInsuranceCards(stage: GameStage = 'youth'): Card[] {
+    const cards: Card[] = []
+    const ageBonus = this.calculateAgeBonus(stage)
+
+    // 生命保険（活力0で復活）
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '生命保険',
+      description: '活力が0になる瞬間、活力10で復活。請求後は契約終了。',
+      power: 0,
+      cost: 2,
+      insuranceType: 'life',
+      insuranceEffectType: 'trigger',
+      insuranceTriggerType: 'on_death',
+      coverage: 10, // 復活時の活力
+      effects: [],
+      ageBonus,
+      durationType: 'whole_life'
+    } as any))
+
+    // 医療保険（10ダメージ以上を1に軽減）
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '医療保険',
+      description: '10ダメージ以上受ける時、1ダメージに軽減。請求後は契約終了。',
+      power: 0,
+      cost: 3,
+      insuranceType: 'medical',
+      insuranceEffectType: 'trigger',
+      insuranceTriggerType: 'on_heavy_damage',
+      coverage: 10, // 発動閾値（10ダメージ以上）
+      effects: [],
+      ageBonus,
+      durationType: 'whole_life'
+    } as any))
+
+    // 障害保険（老化カード3枚で手札リセット）
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '障害保険',
+      description: '老化カードが3枚揃った時、手札を全て引き直し。請求後は契約終了。',
+      power: 0,
+      cost: 2,
+      insuranceType: 'disability',
+      insuranceEffectType: 'trigger',
+      insuranceTriggerType: 'on_aging_gameover',
+      coverage: 0,
+      effects: [],
+      ageBonus,
+      durationType: 'whole_life'
+    } as any))
+
+    // 就業不能保険（課題スキップ）
+    cards.push(new Card({
+      id: IdGenerator.generateCardId(),
+      type: 'insurance',
+      name: '就業不能保険',
+      description: 'いつでも発動可能。現在の課題をスキップ（ダメージなし）。請求後は契約終了。',
+      power: 0,
+      cost: 3,
+      insuranceType: 'income',
+      insuranceEffectType: 'trigger',
+      insuranceTriggerType: 'on_demand',
+      coverage: 0,
+      effects: [],
+      ageBonus,
+      durationType: 'whole_life'
+    } as any))
 
     return cards
   }

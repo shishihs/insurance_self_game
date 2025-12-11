@@ -1,4 +1,4 @@
-import type { Difficulty, GameStage, InsuranceType, ICard } from './card.types'
+import type { Difficulty, GameStage, InsuranceType, ICard, InsuranceTriggerType } from './card.types'
 export type { ICard }
 import type { Card } from '../entities/Card'
 import type { Deck } from '../entities/Deck'
@@ -172,7 +172,7 @@ export interface InsuranceTypeChoice {
  * - success: チャレンジ成功（報酬獲得）
  * - damage_taken: パワー不足でダメージを受けた
  */
-export type ChallengeResultType = 'success' | 'damage_taken'
+export type ChallengeResultType = 'success' | 'damage_taken' | 'error'
 
 /**
  * チャレンジ結果
@@ -275,6 +275,16 @@ export const DREAM_AGE_ADJUSTMENTS = {
 
 
 
+
+/**
+ * 保留中の保険請求情報
+ */
+export interface PendingInsuranceClaim {
+  insurance: Card
+  triggerType: InsuranceTriggerType
+  context?: any
+}
+
 export interface IGameState {
   id: string
   status: GameStatus
@@ -295,6 +305,7 @@ export interface IGameState {
   selectedCards: Card[]
   cardChoices: Card[] | undefined  // 現在の選択肢カード
   insuranceTypeChoices: InsuranceTypeChoice[] | undefined  // 現在の保険種類選択肢
+  pendingInsuranceClaim: PendingInsuranceClaim | undefined // 保留中の保険請求
 
   // Phase 2-4: 保険カード管理
   activeInsurances: Card[]  // 現在有効な保険カード (renamed from insuranceCards)

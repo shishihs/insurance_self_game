@@ -1,9 +1,10 @@
 import type { GameRenderer } from '@/interfaces/GameRenderer'
 import { Game } from '@/domain/entities/Game'
-import type { Card } from '@/domain/entities/Card'
+import { Card } from '@/domain/entities/Card'
 import { CardFactory } from '@/domain/services/CardFactory'
 import type { ChallengeResult, GameConfig, PlayerStats } from '@/domain/types/game.types'
 import type { GameStage } from '@/domain/types/card.types'
+import { IdGenerator } from '@/common/IdGenerator'
 
 /**
  * ゲーム制御クラス
@@ -68,11 +69,11 @@ export class GameController {
     await this.handleDrawPhase()
     await this.handleChallengePhase()
 
-    // Phase 4: 保険フェーズ (ルールブック v2準拠) - 廃止 (高速化のため)
+    // Phase 4: 保険フェーズ (ルールブック v2準拠) - 廃止 (チャレンジ成功報酬に統合)
     // await this.handleInsurancePhase()
 
-    // 保険更新（維持）フェーズ - 廃止 (自動化/簡略化のため)
-    // await this.handleInsuranceRenewalPhase()
+    // 保険更新（維持）フェーズ - 有効化
+    await this.handleInsuranceRenewalPhase()
 
     // ターン終了処理
     this.game.nextTurn()
@@ -274,7 +275,12 @@ export class GameController {
     // 統計更新はGameChallengeServiceで行われるため削除
     // this.game.stats.successfulChallenges++
 
-    // 報酬カード選択がある場合
+    // 1. 保険種類選択フロー（チャレンジ成功報酬）
+    if (result.insuranceTypeChoices && result.insuranceTypeChoices.length > 0) {
+      await this.handleInsuranceTypeSelection(result.insuranceTypeChoices)
+    }
+
+    // 2. 報酬カード選択がある場合
     if (result.cardChoices && result.cardChoices.length > 0) {
       const selectedCard = await this.renderer.askCardSelection(
         result.cardChoices,
@@ -282,7 +288,6 @@ export class GameController {
         1,
         '報酬として受け取るカードを選択してください'
       )
-
 
       if (selectedCard.length > 0) {
         const cardToAcquire = selectedCard[0]
@@ -293,8 +298,54 @@ export class GameController {
         }
       }
     }
+  }
 
-    // ランダム保険獲得(30%)は廃止 -> Phase 4へ
+  /**
+   * 保険種類選択フロー（チャレンジ成功報酬）
+   */
+  private async handleInsuranceTypeSelection(choices: import('@/domain/types/game.types').InsuranceTypeChoice[]): Promise<void> {
+    this.log('保険種類選択フロー開始')
+
+    // 1. 保険の種類を選択（医療、生命など）
+    const insuranceCards = choices.map(choice =>
+      new Card({
+        id: IdGenerator.generateCardId(),
+        name: choice.baseCard.name,
+        description: choice.baseCard.description,
+        type: 'insurance',
+        power: choice.baseCard.power,
+        cost: choice.termOption.cost, // デフォルトで定期保険のコストを表示
+        effects: []
+      })
+    )
+
+    const selectedInsuranceCard = await this.renderer.askInsuranceChoice(
+      insuranceCards,
+      '獲得する保険の種類を選択してください'
+    )
+
+    // 選択された保険の種類を特定
+    const selectedChoice = choices.find(c => c.baseCard.name === selectedInsuranceCard.name)
+    if (!selectedChoice) {
+      this.log('保険選択がキャンセルされました')
+      return
+    }
+
+    // 2. 定期保険 or 終身保険を選択
+    const availableTypes: ('whole_life' | 'term')[] = ['term', 'whole_life']
+    const durationType = await this.renderer.askInsuranceTypeChoice(availableTypes)
+
+    // 3. 保険カードを生成してゲームに追加
+    const insuranceResult = this.game.selectInsuranceType(selectedChoice.insuranceType, durationType)
+
+    if (insuranceResult.success && insuranceResult.selectedCard) {
+      await this.renderer.showMessage(
+        `「${insuranceResult.selectedCard.name}」(${durationType === 'term' ? '定期' : '終身'})を獲得しました！`,
+        'success'
+      )
+    }
+
+    this.updateDisplay()
   }
 
   /**
