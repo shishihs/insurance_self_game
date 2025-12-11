@@ -106,7 +106,7 @@ const reportError = (error: Error) => {
 }
 
 onMounted(() => {
-  console.info('App Version: v2025.12.09.0212 - UI Polish (JP Labels, Hand/Overlay Fix)')
+  console.info('App Version: v3.3.1 (2025.12.12) - Deck Viewer Fix & Dream Limit')
   console.log('[DEBUG] App mounted at ' + new Date().toISOString())
   
   // モバイル判定
