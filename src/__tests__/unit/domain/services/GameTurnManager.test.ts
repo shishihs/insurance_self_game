@@ -87,6 +87,7 @@ describe('GameTurnManager v2', () => {
 
     it('should draw correct number of cards at start of turn', () => {
         turnManager.nextTurn(mockGame)
-        expect(mockGame.drawCards).toHaveBeenCalledWith(7)
+        // v2: 課題選択後にドローする仕様なので、ターン開始時にはドローしない
+        expect(mockGame.drawCards).not.toHaveBeenCalled()
     })
 })

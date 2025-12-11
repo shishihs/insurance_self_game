@@ -97,10 +97,9 @@ export class GameTurnManager {
       }
     }
 
-    // ターン開始時のドロー (手札を補充)
-    // v2: ターン開始時に7枚ドロー (GameController等での遅延ドローは廃止)
-    const drawCount = 7
-    game.drawCards(drawCount)
+    // ターン開始時のドローは行わない
+    // v2: 課題選択後にドローする仕様（ドキドキ感のため）
+    // GameController / gameStore でチャレンジ選択後に drawCards(7) を呼ぶ
 
     // 回復型保険の効果を適用
     this.applyRecoveryInsuranceEffects(game)

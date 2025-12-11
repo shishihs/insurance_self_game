@@ -630,9 +630,8 @@ export class Game implements IGameState {
     this.changePhase('draw')
     this.changeTurn(1)
 
-    // Initial Draw (Turn 1 start) - Reactivated for v3 (Draw at turn start)
-    const initialDrawCount = 7
-    await this.drawCards(initialDrawCount)
+    // Initial Draw - NOT performed here
+    // v2: 課題選択後にドローする仕様（ドキドキ感のため）
   }
 
   /**

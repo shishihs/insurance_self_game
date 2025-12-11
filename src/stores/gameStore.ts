@@ -105,9 +105,14 @@ export const useGameStore = defineStore('game', () => {
         triggerUpdate()
     }
 
-    function selectChallengeChoice(card: any) {
+    async function selectChallengeChoice(card: any) {
         if (!game.value) return
         game.value.startChallenge(card as Card)
+
+        // v2: 課題選択後にカードを7枚引く（ドキドキ感のため）
+        console.log('[GameStore] 課題選択後、カードを7枚ドロー')
+        await game.value.drawCards(7)
+
         triggerUpdate()
     }
 
