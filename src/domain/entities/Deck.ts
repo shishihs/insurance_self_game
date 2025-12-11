@@ -38,6 +38,11 @@ export class Deck {
    * カードを追加
    */
   addCard(card: Card): void {
+    // V3.3 Debug: Trace Dream Card Leak
+    if (this.name === 'Player Deck' && (card.type === 'dream' || card.power >= 25)) {
+      console.warn(`[Deck: ${this.name}] 🚨 SUSPICIOUS ADDITION DETECTED 🚨: ${card.name} (Type: ${card.type}, Power: ${card.power})`)
+      // console.trace() // Trace stack to find the culprit
+    }
     this.cards.push(card)
   }
 
@@ -45,6 +50,14 @@ export class Deck {
    * 複数のカードを追加
    */
   addCards(cards: Card[]): void {
+    // V3.3 Debug: Trace Dream Card Leak
+    if (this.name === 'Player Deck') {
+      const suspicious = cards.filter(c => c.type === 'dream' || c.power >= 25)
+      if (suspicious.length > 0) {
+        console.warn(`[Deck: ${this.name}] 🚨 SUSPICIOUS BATCH ADDITION 🚨:`, suspicious.map(c => `${c.name} (${c.type})`))
+        // console.trace()
+      }
+    }
     this.cards.push(...cards)
   }
 

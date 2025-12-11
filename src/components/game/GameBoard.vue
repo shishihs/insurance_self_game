@@ -11,11 +11,45 @@ import GameResult from './GameResult.vue'
 import TutorialOverlay from './TutorialOverlay.vue'
 
 import InsuranceClaimDialog from './InsuranceClaimDialog.vue'
+import CardListModal from './CardListModal.vue'
 import type { GameConfig, ChallengeResult, Difficulty } from '@/domain/types/game.types'
 
 const store = useGameStore()
 
-// ... (existing code)
+// Deck/Discard Viewers
+const showDeckModal = ref(false)
+const showDiscardModal = ref(false)
+
+// ダメージエフェクト用の状態
+const isDamageEffect = ref(false)
+const isBigDamageEffect = ref(false)
+const lastDamageAmount = ref(0)
+const showDamageToast = ref(false)
+
+const phaseDisplayName = computed(() => {
+  const map: Record<string, string> = {
+    draw: 'ドロー',
+    challenge_choice: '課題選択',
+    challenge: '挑戦',
+    resolution: '解決',
+    market: '保険市場',
+    end: 'ターン終了',
+    insurance_type_selection: '保険選択',
+    dream_selection: '夢選択',
+    character_selection: '主人公選択',
+    setup: '準備'
+  }
+  return map[store.currentPhase] || store.currentPhase.toUpperCase()
+})
+
+const stageDisplayName = computed(() => {
+  const map: Record<string, string> = {
+    youth: '青年期',
+    middle: '壮年期',
+    fulfillment: '充実期'
+  }
+  return map[store.currentStage] || store.currentStage
+})
 
 onMounted(() => {
   if (!store.game) {
@@ -251,21 +285,41 @@ async function onResolveChallenge() {
 
     <!-- Bottom Areas (Deck / Discard) -->
     <!-- Bottom Areas (Deck / Discard) -->
-    <div class="fixed bottom-8 left-8 z-10 flex flex-col items-center opacity-40 group hover:opacity-100 transition-opacity cursor-default">
-      <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/50">
+    <div 
+      class="fixed bottom-8 left-8 z-10 flex flex-col items-center opacity-80 group hover:opacity-100 transition-opacity cursor-pointer transform hover:scale-105"
+      @click="showDeckModal = true"
+    >
+      <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/80 shadow-lg group-hover:border-slate-300 transition-colors">
         <span class="text-2xl">📚</span>
       </div>
-      <span class="text-xs text-slate-400 mt-2 font-bold tracking-wider">DECK</span>
-      <span class="text-[10px] text-slate-500">{{ store.game?.playerDeck.size() ?? 0 }} Cards</span>
+      <span class="text-xs text-slate-400 mt-2 font-bold tracking-wider group-hover:text-white transition-colors">DECK</span>
+      <span class="text-[10px] text-slate-500 group-hover:text-slate-300 transition-colors">{{ store.playerDeck?.length ?? 0 }} Cards</span>
     </div>
 
-    <div class="fixed bottom-8 right-8 z-10 flex flex-col items-center opacity-40 group hover:opacity-100 transition-opacity cursor-default">
-      <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/50">
+    <div 
+      class="fixed bottom-8 right-8 z-10 flex flex-col items-center opacity-80 group hover:opacity-100 transition-opacity cursor-pointer transform hover:scale-105"
+      @click="showDiscardModal = true"
+    >
+      <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/80 shadow-lg group-hover:border-slate-300 transition-colors">
         <span class="text-2xl">🗑️</span>
       </div>
-      <span class="text-xs text-slate-400 mt-2 font-bold tracking-wider">DISCARD</span>
-      <span class="text-[10px] text-slate-500">Reset on Turn End</span>
+      <span class="text-xs text-slate-400 mt-2 font-bold tracking-wider group-hover:text-white transition-colors">DISCARD</span>
+      <span class="text-[10px] text-slate-500 group-hover:text-slate-300 transition-colors">{{ store.discardPile?.length ?? 0 }} Cards</span>
     </div>
+
+    <!-- Modals -->
+    <CardListModal 
+      :is-open="showDeckModal" 
+      title="デッキ一覧" 
+      :cards="store.playerDeck ?? []" 
+      @close="showDeckModal = false" 
+    />
+    <CardListModal 
+      :is-open="showDiscardModal" 
+      title="捨て札一覧" 
+      :cards="store.discardPile ?? []" 
+      @close="showDiscardModal = false" 
+    />
 
     <!-- Insurance Selection Overlay -->
     <div v-if="store.insuranceTypeChoices && store.insuranceTypeChoices.length > 0" class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-8 backdrop-blur-sm animate-fade-in">

@@ -13,6 +13,8 @@ export const useGameStore = defineStore('game', () => {
 
     // Explicit reactive state for UI
     const handState = ref<Card[]>([])
+    const playerDeckState = ref<Card[]>([]) // For inspection
+    const discardPileState = ref<Card[]>([]) // For inspection
     const lastHandAction = ref<'play' | 'discard'>('discard') // Control animation direction
     const vitalityState = ref(0)
     const maxVitalityState = ref(100)
@@ -41,6 +43,8 @@ export const useGameStore = defineStore('game', () => {
     const vitality = computed(() => vitalityState.value)
     const maxVitality = computed(() => maxVitalityState.value)
     const hand = computed(() => handState.value)
+    const playerDeck = computed(() => playerDeckState.value)
+    const discardPile = computed(() => discardPileState.value)
     const currentStage = computed(() => currentStageState.value)
     const currentTurn = computed(() => currentTurnState.value)
     const currentPhase = computed(() => currentPhaseState.value)
@@ -264,7 +268,11 @@ export const useGameStore = defineStore('game', () => {
         lastUpdate.value = Date.now()
 
         // Sync explicit state
-        handState.value = [...game.value.hand] // Create new array reference
+        const cmState = game.value.cardManager.getState()
+        handState.value = [...cmState.hand] // Create new array reference
+        playerDeckState.value = cmState.playerDeck.getCards()
+        discardPileState.value = [...cmState.discardPile]
+
         vitalityState.value = game.value.vitality
         maxVitalityState.value = game.value.maxVitality
         currentStageState.value = game.value.stage
@@ -300,6 +308,8 @@ export const useGameStore = defineStore('game', () => {
         vitality,
         maxVitality,
         hand,
+        playerDeck,
+        discardPile,
         currentStage,
         currentTurn,
         currentPhase,
