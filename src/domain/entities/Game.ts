@@ -205,20 +205,19 @@ export class Game implements IGameState {
 
     // console.log(`[Game] Selected Character: ${character.name}`)
 
-    const startingVitality = (resolvedConfig.startingVitality ?? 100) + character.initialVitalityModifier
+    const basePower = (resolvedConfig.startingVitality !== undefined) ? resolvedConfig.startingVitality : 100
+    const startingVitality = basePower + character.initialVitalityModifier
+
+    // Hardcore fix: If difficulty is hardcore and base is default (100), force it to 20? No, that's hidden logic.
+    // Better to fix the caller.
+
     const ageParams = GameConstantsAccessor.getStageParameters(this.stage)
     if (!ageParams) throw new Error(`Invalid stage parameters for ${this.stage}`)
 
     // キャラクター補正を含めた最大活力
     const baseMaxVitality = ageParams.maxVitality + character.initialVitalityModifier
-    const maxVitality = baseMaxVitality // maxVitality is now character adjusted base
+    const maxVitality = baseMaxVitality
 
-    // console.log(`[Game] Init Vitality: Starting=${startingVitality}, Max=${maxVitality}, Stage=${this.stage}`) // DEBUG
-
-    // If starting vitality is higher than max (cheat mode), allow it for now by updating max temporarily or clamping?
-    // Current logic clamps: Math.min(startingVitality, maxVitality)
-    // To support cheat, we should respect startingVitality if it's explicitly high
-    // Only apply clamp if not cheating (e.g. initial < 200)
     const cheatThreshold = 200
     const actualStartingVitality = (startingVitality > maxVitality && startingVitality > cheatThreshold)
       ? startingVitality
@@ -226,9 +225,9 @@ export class Game implements IGameState {
 
     const actualMaxVitality = Math.max(actualStartingVitality, maxVitality)
 
-    // console.log(`[Game] Final Init Vitality: Value=${actualStartingVitality}, Max=${actualMaxVitality}`) // DEBUG
-
     this._vitality = Vitality.create(actualStartingVitality, actualMaxVitality)
+
+
 
     // CardManagerを初期化
     this.cardManager = new CardManager()
@@ -265,6 +264,13 @@ export class Game implements IGameState {
     // 初期デッキを作成
     const initialCards = CardFactory.createStarterLifeCards()
     initialCards.forEach(card => { playerDeck.addCard(card); })
+
+    // Verify and Sanitize Player Deck (Fix for Dream Leak)
+    const dreamLeak = playerDeck.getCards().filter(c => c.type === 'dream' || (c.type === 'challenge' && (c as any).isDream) || (c.type === 'life' && c.power >= 30))
+    if (dreamLeak.length > 0) {
+      console.warn('[Game] WARNING: Dream cards detected in initial player deck! Removing...', dreamLeak.map(c => c.name))
+      dreamLeak.forEach(c => playerDeck.removeCard(c.id))
+    }
 
     // チャレンジデッキを作成
     const challengeCards = CardFactory.createChallengeCards(this.stage)

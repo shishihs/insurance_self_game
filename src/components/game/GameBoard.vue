@@ -11,41 +11,21 @@ import GameResult from './GameResult.vue'
 import TutorialOverlay from './TutorialOverlay.vue'
 
 import InsuranceClaimDialog from './InsuranceClaimDialog.vue'
-import type { GameConfig, ChallengeResult } from '@/domain/types/game.types'
+import type { GameConfig, ChallengeResult, Difficulty } from '@/domain/types/game.types'
 
 const store = useGameStore()
 
-// ダメージエフェクト用の状態
-const isDamageEffect = ref(false)
-const isBigDamageEffect = ref(false)
-const lastDamageAmount = ref(0)
-const showDamageToast = ref(false)
-
-const phaseDisplayName = computed(() => {
-  const map: Record<string, string> = {
-    draw: 'ドロー',
-    challenge_choice: '課題選択',
-    challenge: '挑戦',
-    resolution: '解決',
-    market: '保険市場',
-    end: 'ターン終了',
-    insurance_type_selection: '保険選択'
-  }
-  return map[store.currentPhase] || store.currentPhase.toUpperCase()
-})
-
-const stageDisplayName = computed(() => {
-  const map: Record<string, string> = {
-    youth: '青年期',
-    middle: '壮年期',
-    fulfillment: '充実期'
-  }
-  return map[store.currentStage] || store.currentStage
-})
+// ... (existing code)
 
 onMounted(() => {
   if (!store.game) {
-    const config = (window as any).__GAME_CONFIG__ as GameConfig | undefined
+    const windowConfig = (window as any).__GAME_CONFIG__ as GameConfig | undefined
+    // V3.2 Hardcore Fix: Enforce startingVitality 20
+    const config = {
+      ...windowConfig,
+      difficulty: 'hardcore' as Difficulty,
+      startingVitality: 20
+    }
     store.initializeGame(config)
     store.startGame()
   }
