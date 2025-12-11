@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 // RULEBOOK.md を直接インポート（Vite raw import）
-import rulebookMarkdown from '../../../docs/RULEBOOK.md?raw'
+import rulebookMarkdown from '../../../docs/user/RULEBOOK.md?raw'
 
 const props = defineProps<{
   isOpen: boolean

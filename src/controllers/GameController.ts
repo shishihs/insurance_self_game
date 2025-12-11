@@ -418,8 +418,8 @@ export class GameController {
   }
 
   /**
-   * 保険更新フェーズ
-   */
+ * 保険更新フェーズ
+ */
   private async handleInsuranceRenewalPhase(): Promise<void> {
     if (this.game.activeInsurances.length === 0) {
       return
@@ -427,25 +427,39 @@ export class GameController {
 
     this.log('保険更新フェーズ開始')
 
+    // コピーを作成してループ（失効による配列変更対策）
     for (const insurance of [...this.game.activeInsurances]) {
-      const renewalCost = this.calculateRenewalCost(insurance)
+      // 終身保険は更新不要
+      if (insurance.isWholeLifeInsurance()) {
+        continue
+      }
 
-      const choice = await this.renderer.askInsuranceRenewalChoice(insurance, renewalCost)
-
-      if (choice === 'renew') {
-        if (this.game.vitality >= renewalCost) {
-          this.game.heal(-renewalCost)
-          // burden更新はService経由だが、Controllerからはアクセス困難なため、
-          // 一旦活力消費のみで表現する（またはGameクラスにメソッド追加が必要）
-
-          await this.renderer.showMessage(`「${insurance.name}」を更新しました（コスト: ${renewalCost}）`, 'success')
-        } else {
-          await this.renderer.showMessage(`体力不足のため「${insurance.name}」を更新できませんでした`, 'warning')
-          this.expireInsurance(insurance)
+      // 定期保険: 残り期間が1ターン以内の場合のみ更新確認
+      if (insurance.isTermInsurance()) {
+        const remaining = insurance.remainingTurns || 0
+        if (remaining > 1) {
+          continue
         }
-      } else {
-        this.expireInsurance(insurance)
-        await this.renderer.showMessage(`「${insurance.name}」が失効しました`)
+
+        const renewalCost = this.calculateRenewalCost(insurance)
+        const choice = await this.renderer.askInsuranceRenewalChoice(insurance, renewalCost)
+
+        if (choice === 'renew') {
+          if (this.game.vitality >= renewalCost) {
+            this.game.heal(-renewalCost)
+
+            // 期間を延長（元の期間またはデフォルト5ターン）
+            insurance.remainingTurns = (insurance.durationType === 'term' ? 5 : 10)
+
+            await this.renderer.showMessage(`「${insurance.name}」を更新しました（期間延長, コスト: ${renewalCost}）`, 'success')
+          } else {
+            await this.renderer.showMessage(`体力不足のため「${insurance.name}」を更新できませんでした`, 'warning')
+            // ここでは失効させない（次ターンの期限切れ処理に任せる）
+          }
+        } else {
+          // 「更新しない」を選んだ場合も、ここでは即時失効させず、期間満了を待つ
+          await this.renderer.showMessage(`「${insurance.name}」の更新を見送りました`)
+        }
       }
     }
 

@@ -551,6 +551,23 @@ export class Game implements IGameState {
   }
 
   /**
+   * 全ての保険を強制失効させる
+   * 活力不足などで保険料が支払えない場合に使用
+   */
+  expireAllInsurances(): void {
+    if (this.activeInsurances.length === 0) return
+
+    // 配列を展開して追加（pushが使えることを前提）
+    this.activeInsurances.forEach(card => this.expiredInsurances.push(card))
+    this.activeInsurances = []
+
+    // 負担額を更新
+    this.updateInsuranceBurden()
+
+    console.log('[Game] All insurances expired due to insufficient vitality')
+  }
+
+  /**
    * ゲームIDを生成
    * @returns {string} ユニークなゲームID
    * @private
@@ -979,6 +996,7 @@ export class Game implements IGameState {
     if (change < 0 && Math.abs(change) >= 10) {
       // activeInsurancesの確認
       console.error(`[Game] Checking Medical Insurance. Active: ${this.activeInsurances.length}`)
+      console.error(`[Game] Active Types: ${this.activeInsurances.map(c => c.insuranceTriggerType).join(',')}`)
       const insurance = this.activeInsurances.find(c => c.insuranceTriggerType === 'on_heavy_damage')
       if (insurance) {
         console.error('[Game] Heavy damage detected, Medical Insurance triggering')

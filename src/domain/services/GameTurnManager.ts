@@ -67,15 +67,25 @@ export class GameTurnManager {
     // 保険期限の更新
     const expirationResult = this.updateInsuranceExpirations(game)
 
-    // 保険料の支払い logic (GameTurnManager or Game entity responsibility? 
-    // Usually game entity applyDamage calling is fine here)
+    // 保険料の支払い logic (GameTurnManager or Game entity responsibility)
     const insuranceCost = game.insuranceBurden
     if (insuranceCost > 0) {
-      try {
-        game.applyDamage(insuranceCost)
-        console.log(`💸 保険料支払い: -${insuranceCost} 活力`)
-      } catch (e) {
-        console.error('保険料支払いに失敗しました', e) // Should be game over if vitality depleted
+      // 活力が足りる場合のみ支払う
+      if (game.vitality > insuranceCost) {
+        try {
+          game.applyDamage(insuranceCost)
+          console.log(`💸 保険料支払い: -${insuranceCost} 活力`)
+        } catch (e) {
+          console.error('保険料支払いに失敗しました', e)
+        }
+      } else {
+        // 払えない場合は保険失効（即死はさせない）
+        console.warn(`⚠️ 保険料(${insuranceCost})を支払う活力が不足しています。全ての保険が失効します。`)
+
+        // 全ての有効な保険を失効させる
+        game.expireAllInsurances()
+
+        // ユーザーにお知らせ（Gameエンティティに通知機能があれば呼ぶが、ここではログのみ）
       }
     }
 
