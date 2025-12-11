@@ -471,33 +471,36 @@ export class CardFactory {
         // 基本チャレンジ（難易度: 低〜中）- Hand Size 5に合わせて調整 (Power ~10-15 needed to challenge typical hand)
         // Starter Deck Avg Power ~1.4 * 5 = 7.0 (Nerfed).
         // Challenge Power should be 8-12.
-        { name: 'アルバイト探し', description: '初めての収入を得る', power: 10, damage: 3, dreamCategory: 'physical' as DreamCategory },
-        { name: '一人暮らし', description: '独立への第一歩', power: 12, damage: 4, dreamCategory: 'physical' as DreamCategory },
-        { name: '資格試験', description: 'スキルアップのチャンス', power: 15, damage: 5, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '就職活動', description: '新たなキャリアの始まり', power: 18, damage: 6, dreamCategory: 'physical' as DreamCategory },
+        // V3.2 Balance: Hardcore. Power 10-16. 2 fails = death.
+        { name: 'アルバイト探し', description: '初めての収入を得る', power: 10, damage: 10, dreamCategory: 'physical' as DreamCategory },
+        { name: '一人暮らし', description: '独立への第一歩', power: 12, damage: 12, dreamCategory: 'physical' as DreamCategory },
+        { name: '資格試験', description: 'スキルアップのチャンス', power: 14, damage: 14, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '就職活動', description: '新たなキャリアの始まり', power: 16, damage: 16, dreamCategory: 'physical' as DreamCategory },
         // 中級チャレンジ
-        { name: '恋人との別れ', description: '初めての大きな失意', power: 14, damage: 5, dreamCategory: 'mixed' as DreamCategory },
-        { name: '転職活動', description: 'キャリアの分岐点', power: 16, damage: 6, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '恋人との別れ', description: '初めての大きな失意', power: 13, damage: 13, dreamCategory: 'mixed' as DreamCategory },
+        { name: '転職活動', description: 'キャリアの分岐点', power: 15, damage: 15, dreamCategory: 'intellectual' as DreamCategory }
       ],
       middle: [
         // 基本チャレンジ（難易度: 中）
-        { name: '結婚資金', description: '新しい家族のスタート', power: 20, damage: 8, dreamCategory: 'mixed' as DreamCategory },
-        { name: '子育て', description: '家族の成長', power: 22, damage: 8, dreamCategory: 'physical' as DreamCategory },
-        { name: '両親の健康', description: '家族の支え合い', power: 20, damage: 7, dreamCategory: 'mixed' as DreamCategory },
-        { name: '住宅購入', description: '大きな決断', power: 25, damage: 10, dreamCategory: 'physical' as DreamCategory },
+        // V3.1 Balance: Late game too easy (100% win rate). Buffing significantly.
+        { name: '結婚資金', description: '新しい家族のスタート', power: 22, damage: 8, dreamCategory: 'mixed' as DreamCategory },
+        { name: '子育て', description: '家族の成長', power: 24, damage: 8, dreamCategory: 'physical' as DreamCategory },
+        { name: '両親の健康', description: '家族の支え合い', power: 22, damage: 7, dreamCategory: 'mixed' as DreamCategory },
+        { name: '住宅購入', description: '大きな決断', power: 28, damage: 10, dreamCategory: 'physical' as DreamCategory },
         // 高難度チャレンジ
-        { name: '親の介護', description: '家族の責任', power: 28, damage: 12, dreamCategory: 'mixed' as DreamCategory },
-        { name: '教育資金', description: '子供の将来への投資', power: 24, damage: 9, dreamCategory: 'intellectual' as DreamCategory }
+        { name: '親の介護', description: '家族の責任', power: 32, damage: 12, dreamCategory: 'mixed' as DreamCategory },
+        { name: '教育資金', description: '子供の将来への投資', power: 26, damage: 9, dreamCategory: 'intellectual' as DreamCategory }
       ],
       fulfillment: [
         // 充実期（難易度: 高 - 人生の集大成、より壮大な目標へ）
-        { name: '次世代の育成', description: '若者たちに知識と経験を伝える', power: 20, damage: 8, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '地域社会の変革', description: '住みよい社会を作るための活動', power: 24, damage: 10, dreamCategory: 'mixed' as DreamCategory },
-        { name: '生涯の研究発表', description: '長年の探究の成果を世に出す', power: 26, damage: 10, dreamCategory: 'intellectual' as DreamCategory },
-        { name: '世界平和への貢献', description: '国境を越えた慈善活動', power: 30, damage: 12, dreamCategory: 'mixed' as DreamCategory },
+        // V3.1 Balance: Advanced players must face lethal threats.
+        { name: '次世代の育成', description: '若者たちに知識と経験を伝える', power: 25, damage: 8, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '地域社会の変革', description: '住みよい社会を作るための活動', power: 28, damage: 10, dreamCategory: 'mixed' as DreamCategory },
+        { name: '生涯の研究発表', description: '長年の探究の成果を世に出す', power: 30, damage: 10, dreamCategory: 'intellectual' as DreamCategory },
+        { name: '世界平和への貢献', description: '国境を越えた慈善活動', power: 35, damage: 12, dreamCategory: 'mixed' as DreamCategory },
         // 最高難度チャレンジ
-        { name: '宇宙旅行', description: '人類の夢、星々の海へ', power: 35, damage: 15, dreamCategory: 'physical' as DreamCategory, isDream: true },
-        { name: '伝説の継承', description: '自身の生き様を伝説として残す', power: 40, damage: 20, dreamCategory: 'mixed' as DreamCategory, isDream: true }
+        { name: '宇宙旅行', description: '人類の夢、星々の海へ', power: 45, damage: 15, dreamCategory: 'physical' as DreamCategory, isDream: true },
+        { name: '伝説の継承', description: '自身の生き様を伝説として残す', power: 50, damage: 20, dreamCategory: 'mixed' as DreamCategory, isDream: true }
       ]
     }
 
@@ -518,7 +521,7 @@ export class CardFactory {
     const challenges = [...normalChallenges, ...riskChallenges]
 
     // すべてのステージで夢カードが出現するチャンス（ユーザー要望）
-    // 夢カードをランダムに1-2枚追加
+    // V3.2 Hardcore: Youthステージでも夢（理不尽な死）が出現する
     const dreamCards = this.createDreamCards()
     const dreamCount = Math.floor(Math.random() * 2) + 1 // 1-2枚
     for (let i = 0; i < dreamCount; i++) {

@@ -137,44 +137,88 @@ export class AdvancedPersona implements AIStrategy {
     description = 'Min-maxer, optimizes ratios, takes calculated risks.'
 
     selectCards(availableCards: Card[], requiredPower: number, gameState: GameState): Card[] {
-        // Optimize for Efficiency: Power / Cost
+        // v3.6 Advanced: Greedy + Optimization (Power -> Cost)
+        // Sort by Power DESC, then Cost ASC (Cheaper is better for same power)
         const sorted = [...availableCards].sort((a, b) => {
-            const ratioA = (a.power || 0) / Math.max(a.cost || 1, 0.1) // Avoid div/0
-            const ratioB = (b.power || 0) / Math.max(b.cost || 1, 0.1)
-            return ratioB - ratioA // High efficiency first
+            const pDiff = (b.power || 0) - (a.power || 0)
+            if (pDiff !== 0) return pDiff
+            return (a.cost || 0) - (b.cost || 0) // Cost Ascending
         })
 
         const selected: Card[] = []
-        let totalPower = 0
+        let currentSum = 0
+        const unused: Card[] = []
 
         for (const card of sorted) {
-            if (totalPower >= requiredPower) break
-            selected.push(card)
-            totalPower += card.power || 0
+            if (currentSum >= requiredPower) {
+                unused.push(card)
+            } else {
+                selected.push(card)
+                currentSum += card.power || 0
+            }
         }
-        return selected
+
+        // そもそも足りない場合はそのまま返す
+        if (currentSum < requiredPower) {
+            return selected
+        }
+
+        // 最適化: 「過労」を減らす、または「コスト」を減らす
+        // コスト計算ヘルパー
+        const getCost = (cards: Card[]) => cards.reduce((sum, c) => sum + (c.cost || 0), 0)
+
+        let bestSelection = [...selected]
+        let minOverflow = currentSum - requiredPower
+        let minCost = getCost(bestSelection)
+
+        if (selected.length > 0) {
+            const lastIdx = selected.length - 1
+            const cardToRemove = selected[lastIdx]!
+            const baseSum = currentSum - (cardToRemove.power || 0)
+            const baseCost = minCost - (cardToRemove.cost || 0)
+
+            // unused（選ばれなかったカード）の中から交換候補を探す
+            for (let i = unused.length - 1; i >= 0; i--) {
+                const candidate = unused[i]!
+                const newTotal = baseSum + (candidate.power || 0)
+
+                if (newTotal >= requiredPower) {
+                    const newOverflow = newTotal - requiredPower
+                    const newCost = baseCost + (candidate.cost || 0)
+
+                    // 1. Overflowが減るなら交換
+                    // 2. Overflowが同じでも、Costが減るなら交換
+                    if (newOverflow < minOverflow || (newOverflow === minOverflow && newCost < minCost)) {
+                        minOverflow = newOverflow
+                        minCost = newCost
+                        bestSelection = [...selected]
+                        bestSelection[lastIdx] = candidate
+                    }
+                }
+            }
+        }
+
+        return bestSelection
     }
 
     shouldAttemptChallenge(challenge: Card, availableCards: Card[], _gameState: GameState): boolean {
         let totalPower = availableCards.reduce((sum, card) => sum + (card.power || 0), 0)
 
-        // v2: 手札0枚の場合は期待値で判定
         if (availableCards.length === 0) {
-            // Advanced: 保守的 (平均パワー3 * 5枚 = 15)
-            // 実際はもっと高いかもしれないが、リスクを避けるため低めに見積もる
-            totalPower = 15
+            // Hand is empty, assume average power
+            totalPower = 20
         }
 
         const requiredPower = challenge.power || 0
 
-        // 夢カードには積極的に挑戦（勝利条件）
         if (challenge.isDreamCard && challenge.isDreamCard()) {
-            // 夢チャレンジは必要パワーがあれば挑戦
-            return totalPower >= requiredPower * 1.0
+            // Dream cards: Need 1.0x (Advanced is smarter/riskier than Inter 1.2x?)
+            // Let's copy Intermediate exactly first: 1.2x
+            return totalPower >= requiredPower * 1.2
         }
 
-        // 通常チャレンジには慎重に（少し余裕を持って）
-        return totalPower >= requiredPower * 1.3
+        // Normal: 1.0x
+        return totalPower >= requiredPower * 1.0
     }
 
     selectInsuranceType(availableTypes: ('whole_life' | 'term')[], gameState: GameState): 'whole_life' | 'term' {

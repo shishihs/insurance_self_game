@@ -108,9 +108,43 @@ async function onResolveChallenge() {
     <div class="absolute top-0 left-0 right-0 h-20 px-8 flex justify-between items-center bg-slate-900/50 backdrop-blur-xl border-b border-white/5 z-20 shadow-2xl">
       <!-- Left Stats -->
       <div class="flex items-center space-x-8">
-        <div class="flex flex-col">
-          <span class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest font-semibold">Stage</span>
-          <span class="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-purple-100">{{ stageDisplayName }}</span>
+        <div class="flex flex-col relative group cursor-help">
+          <span class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest font-semibold flex items-center gap-1">
+            Stage <span class="text-[8px] opacity-50">ℹ️</span>
+          </span>
+          <span class="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-purple-100 border-b border-dashed border-purple-500/30 w-fit">{{ stageDisplayName }}</span>
+          
+          <!-- Stage Difficulty Tooltip -->
+          <div class="absolute left-0 top-full mt-2 w-64 bg-slate-900/95 border border-slate-600 rounded-lg shadow-2xl p-4 opacity-0 group-hover:opacity-100 transition-all duration-200 z-[100] pointer-events-none translate-y-2 group-hover:translate-y-0 backdrop-blur-md">
+            <h4 class="text-xs font-bold text-slate-300 mb-2 border-b border-slate-700 pb-1 flex justify-between">
+              <span>各ステージの課題強度</span>
+              <span>Power</span>
+            </h4>
+            <table class="w-full text-xs">
+              <tbody class="divide-y divide-slate-800">
+                <tr>
+                  <td class="py-1.5 text-purple-300 font-medium">青年期 (Youth)</td>
+                  <td class="py-1.5 text-right font-mono text-slate-200">10 - 16</td>
+                </tr>
+                <tr>
+                  <td class="py-1.5 text-blue-300 font-medium">壮年期 (Middle)</td>
+                  <td class="py-1.5 text-right font-mono text-slate-200">22 - 32</td>
+                </tr>
+                <tr>
+                  <td class="py-1.5 text-amber-300 font-medium">充実期 (Fulfillment)</td>
+                  <td class="py-1.5 text-right font-mono text-slate-200">25 - 50+</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="mt-2 pt-2 border-t border-slate-700/50">
+               <p class="text-[10px] text-slate-400 leading-tight">
+                ※数値は課題の<span class="text-red-400 font-bold">パワー</span>（＝失敗時のダメージ量）の目安です。
+              </p>
+               <p class="text-[10px] text-slate-500 leading-tight mt-1">
+                ※「理不尽な死」イベント（Power 30+）は全期間で発生する可能性があります。
+              </p>
+            </div>
+          </div>
         </div>
         
         <div data-testid="vitality" class="flex flex-col relative group">

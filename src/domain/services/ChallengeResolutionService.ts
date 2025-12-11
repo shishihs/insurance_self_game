@@ -67,7 +67,9 @@ export class ChallengeResolutionService {
       const baseReward = bonusBase // 差分ボーナス撤廃
 
       // 過労ダメージ計算
-      const overworkDamage = Math.floor(powerDiff / 5)
+      // V3.1 Balance: Increase overwork penalty to punish inefficient play (Beginner).
+      // Overflow / 2 (was 5).
+      const overworkDamage = Math.floor(powerDiff / 2)
 
       // 過労ダメージも保険で軽減可能（医療保険など）
       const damageReduction = (game && !insuranceImmunity) ? this.calculateDamageReduction(game) : 0
