@@ -286,7 +286,7 @@ async function onResolveChallenge() {
     <!-- Bottom Areas (Deck / Discard) -->
     <!-- Bottom Areas (Deck / Discard) -->
     <div 
-      class="fixed bottom-8 left-8 z-10 flex flex-col items-center opacity-80 group hover:opacity-100 transition-opacity cursor-pointer transform hover:scale-105"
+      class="fixed bottom-8 left-8 z-50 flex flex-col items-center opacity-80 group hover:opacity-100 transition-opacity cursor-pointer transform hover:scale-105"
       @click="showDeckModal = true"
     >
       <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/80 shadow-lg group-hover:border-slate-300 transition-colors">
@@ -297,7 +297,7 @@ async function onResolveChallenge() {
     </div>
 
     <div 
-      class="fixed bottom-8 right-8 z-10 flex flex-col items-center opacity-80 group hover:opacity-100 transition-opacity cursor-pointer transform hover:scale-105"
+      class="fixed bottom-8 right-8 z-50 flex flex-col items-center opacity-80 group hover:opacity-100 transition-opacity cursor-pointer transform hover:scale-105"
       @click="showDiscardModal = true"
     >
       <div class="w-20 h-28 border-2 border-dashed border-slate-500 rounded-lg flex items-center justify-center bg-slate-800/80 shadow-lg group-hover:border-slate-300 transition-colors">

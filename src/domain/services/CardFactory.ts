@@ -523,7 +523,7 @@ export class CardFactory {
     // すべてのステージで夢カードが出現するチャンス（ユーザー要望）
     // V3.2 Hardcore: Youthステージでも夢（理不尽な死）が出現する
     const dreamCards = this.createDreamCards()
-    const dreamCount = Math.floor(Math.random() * 2) + 1 // 1-2枚
+    const dreamCount = 1 // V3.3 Fix: multiple dreams are "yabai" (too much). Limit to 1.
     for (let i = 0; i < dreamCount; i++) {
       const randomDream = dreamCards[Math.floor(Math.random() * dreamCards.length)]
       if (randomDream) {
