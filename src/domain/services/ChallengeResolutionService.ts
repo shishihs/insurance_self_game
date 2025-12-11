@@ -4,7 +4,7 @@ import type { ChallengeResult } from '../types/game.types'
 import type { ICardManager } from './CardManager'
 import type { Game } from '../entities/Game'
 import { RiskRewardChallenge } from '../entities/RiskRewardChallenge'
-import { AGE_PARAMETERS } from '../types/game.types'
+import { AGE_PARAMETERS, DREAM_AGE_ADJUSTMENTS } from '../types/game.types'
 import { MAX_TOTAL_DAMAGE_REDUCTION, MINIMUM_DAMAGE_AFTER_INSURANCE } from '../constants/insurance.constants'
 import { GameConstantsAccessor } from '../constants/GameConstants'
 
@@ -172,7 +172,8 @@ export class ChallengeResolutionService {
    */
   private getDreamRequiredPower(challenge: Card, stage: GameStage): number {
     // 夢カードでない場合は基本パワーをそのまま返す
-    if (!challenge.isDreamCard() || !challenge.dreamCategory) {
+    // NOTE: 通常のチャレンジでもdreamCategory（身体的/知識的）が設定されていれば年齢調整を適用する
+    if (!challenge.dreamCategory) {
       return challenge.power
     }
 
@@ -181,10 +182,11 @@ export class ChallengeResolutionService {
       return challenge.power
     }
 
-    // 中年期・充実期の年齢調整を適用（段階的に調整）
-    // Issue #23: 難易度上昇をよりスムーズに
-    const adjustment = stage === 'middle' ? 0.5 : 1.0
-    const adjustedPower = Math.round(challenge.power + adjustment)
+    // 中年期・充実期の年齢調整を適用（GAME_DESIGN.md準拠）
+    // Physical: +3, Intellectual: -2, Mixed: 0
+    // @ts-ignore
+    const adjustment = DREAM_AGE_ADJUSTMENTS[challenge.dreamCategory] || 0
+    const adjustedPower = challenge.power + adjustment
 
     // 最小値は1
     return Math.max(1, adjustedPower)

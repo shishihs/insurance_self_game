@@ -43,7 +43,7 @@ export default defineConfig({
       '**/ComprehensiveEdgeCases.test.ts', // エッジケーステスト - API変更
       '**/endToEnd.scenario.test.ts', // E2Eシナリオテスト - API変更
       '**/Game.test.ts', // Gameテスト - 一部API不整合 (domain/__tests__)
-      '**/Game.phase4.test.ts', // Phase4テスト - API変更
+      // '**/Game.phase4.test.ts', // Phase4テスト - API変更
       '**/Game.insurance-simplified.test.ts', // 保険簡略化テスト - API変更
       '**/Game.contract.test.ts', // 契約テスト - API変更
       '**/Card.factory.test.ts', // カードファクトリーテスト - API変更

@@ -123,12 +123,8 @@ export class GameChallengeService {
         // Phase transition is handled by calling context or Game logic
         result.insuranceTypeChoices = choices
 
-        // Check for card reward
-        if (game.currentChallenge?.rewardType === 'card') {
-          const rewardCards = CardFactory.createRewardCards(game.stage, 3)
-          result.cardChoices = rewardCards
-          console.log('[GameChallengeService] Generated reward card choices:', result.cardChoices.length)
-        }
+        // User Request: Omit Reward Cards explicitly.
+        // Reward generation logic has been removed to prevent deck bloat ("パワカ" issue)
       }
 
       this.updateGameStateAfterChallenge(game, result)

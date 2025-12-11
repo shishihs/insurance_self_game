@@ -142,6 +142,9 @@ export class Game implements IGameState {
     gameState: false
   }
 
+  // 難易度調整用モディファイア（夢を諦めた場合などに上昇）
+  challengeDifficultyModifier: number = 0
+
   // キャッシュシステム
   private readonly _cachedValues = {
     insuranceBurden: 0,
@@ -692,9 +695,22 @@ export class Game implements IGameState {
       throw new Error('No challenge cards available')
     }
 
-    this.cardManager.setCardChoices(choices)
+    // 難易度補正を適用
+    const modifiedChoices = choices.map(card => {
+      // 夢カード自体には適用しない？ -> 夢カードも難しくなっていくのが「人生のハードル」っぽい。
+      // 全てのチャレンジに適用。
+      if (this.challengeDifficultyModifier > 0 && card.isChallengeCard()) {
+        console.log(`[Game] Applying difficulty modifier +${this.challengeDifficultyModifier} to ${card.name}`)
+        return card.copy({
+          power: card.power + this.challengeDifficultyModifier
+        })
+      }
+      return card
+    })
+
+    this.cardManager.setCardChoices(modifiedChoices)
     this.changePhase('challenge_choice')
-    console.debug(`[Game] Challenge choices set: ${choices.map(c => c.name).join(', ')}`)
+    console.debug(`[Game] Challenge choices set: ${modifiedChoices.map(c => c.name).join(', ')}`)
   }
 
   /**
@@ -709,17 +725,20 @@ export class Game implements IGameState {
       if (!choices || !choices.some(c => c.id === challengeCard.id)) {
         throw new Error('Selected card is not in current choices')
       }
-      // 他の選択肢は破棄される（チャレンジデッキに戻すルール? 捨て札? discard usually）
-      // Rulebook check: "Draw 2, Choose 1. The other goes to discard pile."
+
+      // 選択されなかったカードの処理
       choices.forEach(c => {
         if (c.id !== challengeCard.id) {
-          this.cardManager.addToDiscardPile(c) // Or explicitly challenge discard?
-          // ChallengeDeck uses discard? Usually challenges are discarded to bottom or separate pile?
-          // CardManager has discardPile (player's).
-          // ChallengeDeck might need its own discard or shuffle back.
-          // Assuming simple flow: unused challenge goes back to bottom or discarded.
-          // For now, let's assume discard pile (shared?) or just ignored (lost). 
-          // Actual rule: "Discard the other".
+          // 夢カードを選ばなかった場合のペナルティ（挫折）
+          if (c.isDreamCard()) {
+            console.log(`[Game] Dream ignored: ${c.name}. Increasing difficulty.`)
+            // 夢をあきらめたことによるペナルティ：今後の課題難易度が上昇
+            // ユーザー要望: 活力を失うのは安直。次ターン以降出てくる課題のレベルがアップする。
+            this.challengeDifficultyModifier += 2
+            console.log(`[Game] Difficulty modifier increased to ${this.challengeDifficultyModifier}`)
+          }
+
+          this.cardManager.addToDiscardPile(c)
         }
       })
       this.cardManager.clearCardChoices()
@@ -1199,7 +1218,8 @@ export class Game implements IGameState {
    */
   getDreamRequiredPower(challenge: Card): number {
     // 夢カードでない場合は基本パワーをそのまま返す
-    if (!challenge.isDreamCard() || !challenge.dreamCategory) {
+    // NOTE: 通常のチャレンジでもdreamCategory（身体的/知識的）が設定されていれば年齢調整を適用する
+    if (!challenge.dreamCategory) {
       return challenge.power
     }
 
